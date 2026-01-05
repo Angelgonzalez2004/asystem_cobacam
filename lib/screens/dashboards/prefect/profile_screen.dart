@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -27,7 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _userRole = 'Cargando...';
   String _userCampus = 'Cargando...';
   String? _userPhotoUrl;
-  File? _imageFile;
+  XFile? _imageFile;
   bool _isLoading = true;
   bool _isEditing = false;
 
@@ -81,7 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _imageFile = File(pickedFile.path);
+        _imageFile = pickedFile;
       });
     }
   }
@@ -102,12 +103,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Future<String> _uploadImageToStorage(File imageFile) async {
+  Future<String> _uploadImageToStorage(XFile imageFile) async {
     final user = FirebaseAuth.instance.currentUser;
     final storageRef =
         FirebaseStorage.instance.ref().child('profile_pictures/${user!.uid}');
-    final uploadTask = storageRef.putFile(imageFile);
-    final snapshot = await uploadTask.whenComplete(() => null);
+    
+    TaskSnapshot snapshot;
+    if (kIsWeb) {
+      final bytes = await imageFile.readAsBytes();
+      snapshot = await storageRef.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+    } else {
+      snapshot = await storageRef.putFile(File(imageFile.path));
+    }
     return await snapshot.ref.getDownloadURL();
   }
 
@@ -315,10 +322,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   child: CircleAvatar(
                                     radius: 50,
                                     backgroundImage: _imageFile != null
-                                        ? FileImage(_imageFile!)
+                                        ? (kIsWeb 
+                                            ? NetworkImage(_imageFile!.path) 
+                                            : FileImage(File(_imageFile!.path))) as ImageProvider
                                         : (_userPhotoUrl != null
                                             ? NetworkImage(_userPhotoUrl!)
-                                            : null) as ImageProvider?,
+                                            : null),
                                     child: _imageFile == null &&
                                             _userPhotoUrl == null
                                         ? const Icon(Icons.person, size: 50)
