@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "847754643180",
+    "project_id": "asystemcobacam",
+    "storage_bucket": "asystemcobacam.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:847754643180:android:26e661c1f8438cf9cdc7c9",
+        "android_client_info": {
+          "package_name": "com.example.asystem_cobacam"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_TgZ-0x-NcNMpMJB86Yo_7yUnfoVWkok"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

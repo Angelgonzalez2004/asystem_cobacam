@@ -1,0 +1,39 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "asystemcobacam",
+          "appId": "1:847754643180:android:26e661c1f8438cf9cdc7c9",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "asystemcobacam",
+          "configurations": {
+            "android": "1:847754643180:android:26e661c1f8438cf9cdc7c9",
+            "ios": "1:847754643180:ios:3547f5e2af4281cbcdc7c9",
+            "macos": "1:847754643180:ios:3547f5e2af4281cbcdc7c9",
+            "web": "1:847754643180:web:6d9ad455315a565bcdc7c9",
+            "windows": "1:847754643180:web:7fe9d09aab3505b1cdc7c9"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

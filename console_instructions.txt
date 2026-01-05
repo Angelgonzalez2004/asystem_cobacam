@@ -1,0 +1,9 @@
+Para revisar la consola del navegador, sigue estos pasos:
+
+1.  Abre la URL de tu aplicación (`https://asystemcobacam.web.app/`) en tu navegador (Chrome, Firefox, Edge, etc.).
+2.  Una vez que la página esté cargada (o atascada en el logo), presiona la tecla `F12` en tu teclado.
+    *   Alternativamente, puedes hacer clic derecho en cualquier parte de la página y seleccionar "Insccionar" o "Inspect element".
+3.  Se abrirá un panel en un lado o en la parte inferior de tu navegador. Busca y haz clic en la pestaña que dice "**Console**" o "**Consola**".
+4.  En esta pestaña, verás mensajes, advertencias y, lo más importante, **errores**. Busca cualquier texto en color rojo.
+
+Por favor, copia y pega aquí cualquier mensaje de error que aparezca en la pestaña "Console". Esto nos ayudará a entender por qué la aplicación no se inicia correctamente.

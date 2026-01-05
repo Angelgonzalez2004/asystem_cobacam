@@ -1,0 +1,247 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:asystem_cobacam/models/student_model.dart';
+import 'package:firebase_database_platform_interface/firebase_database_platform_interface.dart'; // For MockDataSnapshot
+
+// A mock DataSnapshot for testing purposes
+class MockDataSnapshot implements DataSnapshot {
+  final String? _key;
+  final dynamic _value;
+  final DatabaseReference _ref;
+
+  MockDataSnapshot(this._key, this._value, this._ref);
+
+  @override
+  String? get key => _key;
+
+  @override
+  dynamic get value => _value;
+
+  @override
+  DatabaseReference get ref => _ref;
+
+  @override
+  // TODO: implement children
+  Iterable<DataSnapshot> get children => throw UnimplementedError();
+
+  @override
+  // TODO: implement exists
+  bool get exists => throw UnimplementedError();
+
+  @override
+  DataSnapshot child(String path) {
+    // TODO: implement child
+    throw UnimplementedError();
+  }
+
+  @override
+  // TODO: implement index
+  int? get index => throw UnimplementedError();
+
+  @override
+  // TODO: implement priority
+  dynamic get priority => throw UnimplementedError();
+}
+
+// A mock DatabaseReference for testing purposes
+class MockDatabaseReference implements DatabaseReference {
+  final String _path;
+
+  MockDatabaseReference(this._path);
+
+  @override
+  // TODO: implement database
+  FirebaseDatabase get database => throw UnimplementedError();
+
+  @override
+  // TODO: implement key
+  String? get key => throw UnimplementedError();
+
+  @override
+  // TODO: implement parent
+  DatabaseReference? get parent => throw UnimplementedError();
+
+  @override
+  // TODO: implement path
+  String get path => throw UnimplementedError();
+
+  @override
+  // TODO: implement root
+  DatabaseReference get root => throw UnimplementedError();
+
+  @override
+  DatabaseReference child(String path) {
+    // TODO: implement child
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> remove() {
+    // TODO: implement remove
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<DataSnapshot> get() {
+    // TODO: implement get
+    throw UnimplementedError();
+  }
+
+  @override
+  Query orderByChild(String key) {
+    // TODO: implement orderByChild
+    throw UnimplementedError();
+  }
+
+  @override
+  Query orderByKey() {
+    // TODO: implement orderByKey
+    throw UnimplementedError();
+  }
+
+  @override
+  Query orderByValue() {
+    // TODO: implement orderByValue
+    throw UnimplementedError();
+  }
+
+  @override
+  Query startAt(dynamic value, {String? key}) {
+    // TODO: implement startAt
+    throw UnimplementedError();
+  }
+
+  @override
+  Query endAt(dynamic value, {String? key}) {
+    // TODO: implement endAt
+    throw UnimplementedError();
+  }
+
+  @override
+  Query equalTo(dynamic value, {String? key}) {
+    // TODO: implement equalTo
+    throw UnimplementedError();
+  }
+
+  @override
+  Query limitToFirst(int limit) {
+    // TODO: implement limitToFirst
+    throw UnimplementedError();
+  }
+
+  @override
+  Query limitToLast(int limit) {
+    // TODO: implement limitToLast
+    throw UnimplementedError();
+  }
+
+  @override
+  // TODO: implement onValue
+  Stream<DatabaseEvent> get onValue => throw UnimplementedError();
+
+  @override
+  DatabaseReference push() {
+    // TODO: implement push
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> set(dynamic value) {
+    // TODO: implement set
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> update(Map<String, Object?> value) {
+    // TODO: implement update
+    throw UnimplementedError();
+  }
+
+  @override
+  Query startAfter(dynamic value, {String? key}) {
+    // TODO: implement startAfter
+    throw UnimplementedError();
+  }
+
+  @override
+  Query endBefore(dynamic value, {String? key}) {
+    // TODO: implement endBefore
+    throw UnimplementedError();
+  }
+}
+
+
+void main() {
+  group('Student', () {
+    final mockStudentData = {
+      'fullName': 'Angel Del Carmen Gonzalez Alcocer',
+      'guardianFullName': 'Maria Alcocer',
+      'age': 17,
+      'guardianPhone': '9811234567',
+      'studentPhone': '9817654321',
+      'gender': 'Masculino',
+      'placeOfResidence': 'Atasta',
+      'schoolCycle': '2025-B',
+      'group': '603',
+      'institutionalEmail': 'angel.gonzalez@cobacam.edu.mx',
+      'studentId': 'MAT603-001',
+    };
+
+    test('fromJson creates a valid Student object', () {
+      final student = Student(
+        id: 'testKey',
+        fullName: mockStudentData['fullName'] as String,
+        guardianFullName: mockStudentData['guardianFullName'] as String,
+        age: mockStudentData['age'] as int,
+        guardianPhone: mockStudentData['guardianPhone'] as String,
+        studentPhone: mockStudentData['studentPhone'] as String,
+        gender: mockStudentData['gender'] as String,
+        placeOfResidence: mockStudentData['placeOfResidence'] as String,
+        schoolCycle: mockStudentData['schoolCycle'] as String,
+        group: mockStudentData['group'] as String,
+        institutionalEmail: mockStudentData['institutionalEmail'] as String,
+        studentId: mockStudentData['studentId'] as String,
+      );
+
+      expect(student.fullName, 'Angel Del Carmen Gonzalez Alcocer');
+      expect(student.studentId, 'MAT603-001');
+      expect(student.age, 17);
+      expect(student.schoolCycle, '2025-B');
+    });
+
+    test('fromSnapshot creates a valid Student object from DataSnapshot', () {
+      final mockSnapshot = MockDataSnapshot('testKey', mockStudentData, MockDatabaseReference('/path/to/students/testKey'));
+      final student = Student.fromSnapshot(mockSnapshot);
+
+      expect(student.id, 'testKey');
+      expect(student.fullName, 'Angel Del Carmen Gonzalez Alcocer');
+      expect(student.studentId, 'MAT603-001');
+      expect(student.age, 17);
+      expect(student.schoolCycle, '2025-B');
+    });
+
+    test('toFirebaseMap converts Student object to correct Map', () {
+      final student = Student(
+        id: 'testKey',
+        fullName: mockStudentData['fullName'] as String,
+        guardianFullName: mockStudentData['guardianFullName'] as String,
+        age: mockStudentData['age'] as int,
+        guardianPhone: mockStudentData['guardianPhone'] as String,
+        studentPhone: mockStudentData['studentPhone'] as String,
+        gender: mockStudentData['gender'] as String,
+        placeOfResidence: mockStudentData['placeOfResidence'] as String,
+        schoolCycle: mockStudentData['schoolCycle'] as String,
+        group: mockStudentData['group'] as String,
+        institutionalEmail: mockStudentData['institutionalEmail'] as String,
+        studentId: mockStudentData['studentId'] as String,
+      );
+
+      final map = student.toFirebaseMap();
+
+      expect(map['fullName'], 'Angel Del Carmen Gonzalez Alcocer');
+      expect(map['studentId'], 'MAT603-001');
+      expect(map['age'], 17);
+      expect(map['schoolCycle'], '2025-B');
+      expect(map.containsKey('id'), false); // 'id' should not be in the map, as it's the Firebase key
+    });
+  });
+}
