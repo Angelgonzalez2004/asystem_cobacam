@@ -5,15 +5,18 @@
 ![Code Quality](https://img.shields.io/badge/Linter-0_Issues-4CAF50?style=for-the-badge&logo=dart&logoColor=white)
 ![Design](https://img.shields.io/badge/Design-Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-**Asystem-Cobacam** es la plataforma tecnológica definitiva para la gestión académica del *Colegio de Bachilleres del Estado de Campeche*. Diseñada para ofrecer una experiencia profesional, segura y altamente eficiente.
+**Asystem-Cobacam** es la plataforma tecnológica definitiva para la gestión académica del *Colegio de Bachilleres del Estado de Campeche*. Diseñada para ofrecer una experiencia profesional, segura y altamente eficiente en 2026.
 
 ---
 
 ## 🚀 Innovaciones UI/UX
 
 *   **🎨 Estética Institucional**: Interfaz inspirada en **Tailwind CSS**, con un diseño limpio, moderno y colores institucionales optimizados.
-*   **🌓 Modo Dual**: Soporte completo para **Tema Claro** y **Tema Oscuro**, adaptable a las preferencias del usuario.
-*   **📱 Responsividad Total**: Optimizado para Smartphones (Android/iOS), Tablets y Navegadores Web.
+*   **🌓 Modo Dual Inteligente**: Soporte completo para **Tema Claro** y **Tema Oscuro**, adaptable automáticamente a las preferencias del sistema del usuario.
+*   **📱 Responsividad Total (Multiplataforma)**: Optimizado para funcionar perfectamente en:
+    *   💻 Navegadores Web (Chrome, Edge, Safari).
+    *   📱 Smartphones (Android & iOS).
+    *   📟 Tabletas (iPad & Android Tablets).
 *   **✨ Animaciones Premium**: Transiciones fluidas `FadeInUp` que elevan la profesionalidad de la herramienta.
 
 ---
@@ -40,17 +43,18 @@
 
 ## 🔐 Gestión de Cuenta Avanzada (NUEVO)
 
-*   **📧 Cambio de Correo**: Funcionalidad segura para actualizar el correo institucional con re-autenticación.
-*   **🗑️ Eliminación de Cuenta**: Opción para eliminar permanentemente la cuenta y todos los datos asociados (perfil, imágenes, registros) cumpliendo normas de privacidad.
-*   **👤 Perfil Dinámico**: Visualización en tiempo real de foto, nombre y rol en el menú lateral.
+*   **📧 Cambio de Correo Seguro**: Funcionalidad para actualizar el correo institucional, protegida con re-autenticación.
+*   **🗑️ Eliminación de Cuenta (GDPR)**: Opción para eliminar permanentemente la cuenta y todos los datos asociados (perfil, imágenes, registros) cumpliendo normas de privacidad.
+*   **👤 Perfil Dinámico**: Visualización en tiempo real de foto de perfil, nombre y rol en el menú lateral.
+    *   *Soporte Web y Móvil:* Subida de fotos compatible con archivos locales y cámara.
 
 ---
 
-## 🛠️ Excelencia en el Código
+## 🛠️ Excelencia Técnica
 
 *   **💎 Cero Errores**: Verificado con `flutter analyze` reportando **0 errores, 0 advertencias y 0 sugerencias**.
 *   **🔒 Conexión Segura**: Manejo avanzado de estados asíncronos para prevenir cierres inesperados.
-*   **📡 Sincronización**: Sistema **Offline-First** que guarda datos localmente y los sincroniza al detectar internet.
+*   **📡 Sincronización Offline-First**: Sistema robusto que guarda datos localmente y los sincroniza automáticamente al detectar internet.
 
 ---
 
