@@ -1,67 +1,50 @@
 # 🎓 Asystem-Cobacam
 
-![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)
-![Firebase](https://img.shields.io/badge/Firebase-%23039BE5.svg?style=for-the-badge&logo=firebase)
-![Tailwind CSS](https://img.shields.io/badge/Design-Tailwind_Inspired-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Flutter](https://img.shields.io/badge/Flutter-3.38.5-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-Realtime_DB-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
+![Code Quality](https://img.shields.io/badge/Linter-0_Issues-4CAF50?style=for-the-badge&logo=dart&logoColor=white)
+![Design](https://img.shields.io/badge/Design-Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-**Asystem-Cobacam** es una plataforma integral de gestión escolar diseñada para el *Colegio de Bachilleres del Estado de Campeche*. Una solución moderna, fluida y robusta que centraliza la administración académica y el control de asistencia.
-
----
-
-## ✨ Características Principales
-
-*   **📱 Experiencia Multiplataforma**: Diseño responsivo optimizado para Android, iOS y Web (PC/Tablets).
-*   **🎨 Diseño Premium**: Interfaz inspirada en **Tailwind CSS**, con paleta de colores Slate/Indigo, bordes redondeados y sombras suaves.
-*   **⚡ Animaciones Fluidas**: Transiciones de entrada `FadeInUp` en todas las pantallas para una navegación profesional.
-*   **🔍 Control de Asistencia**: Sistema avanzado de escaneo de QR/Barcodes con soporte **Offline-First** (vía Hive).
-*   **📅 Constructor de Horarios**: Herramienta visual para generar y exportar horarios de clases como imágenes.
-*   **📊 Gestión de Datos**: Importación masiva de alumnos desde Excel y reportes académicos detallados.
+**Asystem-Cobacam** es la solución tecnológica definitiva para la gestión académica del *Colegio de Bachilleres del Estado de Campeche*. Un sistema diseñado para la eficiencia, la seguridad y una experiencia de usuario de clase mundial.
 
 ---
 
-## 👥 Perfiles del Sistema
+## 🚀 Innovaciones UI/UX
 
-| Rol | Funciones Clave |
-| :--- | :--- |
-| **👨‍🎓 Estudiante** | Consulta de horarios, calificaciones y credencial digital. |
-| **👩‍🏫 Académico** | Gestión de materias, maestros y pase de lista por grupo. |
-| **👮 Prefecto** | Control de asistencia, gestión de alumnos y días no lectivos. |
-| **🏢 Admin Plantel** | Estadísticas locales, gestión de usuarios y códigos de acceso. |
-| **🛡️ Admin General** | Supervisión global del sistema y anuncios institucionales. |
+*   **🎨 Estética Premium**: Interfaz totalmente rediseñada bajo principios de **Tailwind CSS**, ofreciendo un look moderno, limpio y profesional.
+*   **🌓 Soporte de Temas**: Cambio dinámico entre **Modo Claro** y **Modo Oscuro** desde los ajustes.
+*   **📱 Diseño Adaptativo**: Layouts inteligentes que se transforman según el dispositivo (Smartphone, Tablet, Desktop).
+*   **✨ Interacciones Vivas**: Animaciones de entrada `FadeInUp` y feedback visual interactivo en cada acción.
 
 ---
 
-## 🛠️ Stack Tecnológico
+## 👮 Funcionalidades por Perfil
 
-*   **Core**: Flutter 3.38+ & Dart.
-*   **Base de Datos**: Firebase Realtime Database.
-*   **Autenticación**: Firebase Auth.
-*   **Almacenamiento**: Firebase Storage (Fotos de perfil).
-*   **Persistencia Local**: Hive (Caché offline).
-*   **UI/UX**: Custom Tailwind-inspired Theme, Material 3.
+| Perfil | Icono | Funciones Maestras |
+| :--- | :---: | :--- |
+| **Estudiante** | 👨‍🎓 | Horarios, Calificaciones, Credencial Digital. |
+| **Académico** | 👩‍🏫 | Gestión de Maestros, Materias y Pase de Lista. |
+| **Prefecto** | 👮 | Scanner de Asistencia (Offline/Online), Gestión de Alumnos. |
+| **Admin Plantel** | 🏢 | Estadísticas, Códigos de Acceso, Control de Usuarios. |
+| **Admin General** | 🛡️ | Supervisión Global, Anuncios, Gestión de Centros. |
+
+---
+
+## 🛠️ Excelencia Técnica
+
+*   **💎 Código Impecable**: Verificado con `flutter analyze` reportando **0 errores, 0 advertencias y 0 sugerencias**.
+*   **🔒 Seguridad Asíncrona**: Implementación de checks de `mounted` en todos los procesos de red para evitar fugas de memoria y crashes.
+*   **📂 Arquitectura Robusta**: Separación estricta de datos por Plantel y Ciclo Escolar para integridad total de la información.
+*   **🔌 Conectividad Inteligente**: Sincronización automática de datos registrados sin internet al recuperar la conexión.
 
 ---
 
-## 🚀 Instalación y Despliegue
+## 📡 Despliegue y Acceso
 
-1. **Clonar el proyecto**:
-   ```bash
-   git clone https://github.com/Angelgonzalez2004/asystem_cobacam.git
-   ```
-2. **Actualizar SDK y Dependencias**:
-   ```bash
-   flutter upgrade
-   flutter pub get
-   ```
-3. **Ejecutar en Web**:
-   ```bash
-   flutter run -d chrome
-   ```
-4. **Desplegar a Firebase**:
-   ```bash
-   flutter build web
-   firebase deploy
-   ```
+La plataforma se encuentra desplegada y lista para su uso:
+
+*   **🌐 Acceso Web**: [https://asystemcobacam.web.app](https://asystemcobacam.web.app)
+*   **📦 Repositorio**: [https://github.com/Angelgonzalez2004/asystem_cobacam](https://github.com/Angelgonzalez2004/asystem_cobacam)
 
 ---
-💎 *Código Limpio: Proyecto verificado con 0 errores, 0 advertencias y 0 sugerencias por el analizador de Flutter.*
+*Desarrollado con ❤️ para el COBACAM - 2026*

@@ -6,6 +6,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,140 +19,102 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final User? _currentUser = FirebaseAuth.instance.currentUser;
   DatabaseReference? _userRef;
 
-  String _userName = 'Cargando...';
-  String _userEmail = 'Cargando...';
-  String _userRole = 'Cargando...';
-  String? _profileImageUrl;
+  Map<String, dynamic> _userData = {};
   bool _isLoading = true;
+  bool _isEditing = false;
   XFile? _newProfileImage;
+
+  // Controllers for editing
+  final _nameController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _phoneController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    final user = _currentUser;
-    if (user != null) {
-      _userRef = FirebaseDatabase.instance.ref('users/${user.uid}');
+    if (_currentUser != null) {
+      _userRef = FirebaseDatabase.instance.ref('users/${_currentUser.uid}');
       _loadUserData();
-    } else {
-      setState(() {
-        _isLoading = false;
-        _userName = 'Error: No se encontró usuario';
-      });
     }
   }
 
   Future<void> _loadUserData() async {
-    final userRef = _userRef;
-    if (userRef == null) return;
-
+    if (_userRef == null) return;
     try {
-      final snapshot = await userRef.get();
+      final snapshot = await _userRef!.get();
       if (snapshot.exists) {
-        final userData = Map<String, dynamic>.from(snapshot.value as Map);
         setState(() {
-          _userName = userData['fullName'] ?? 'Nombre no disponible';
-          _userEmail = _currentUser?.email ?? 'Email no disponible';
-          _userRole = userData['role'] ?? 'Rol no disponible';
-          _profileImageUrl = userData['profileImageUrl'];
+          _userData = Map<String, dynamic>.from(snapshot.value as Map);
+          _nameController.text = _userData['fullName'] ?? '';
+          _locationController.text = _userData['location'] ?? '';
+          _phoneController.text = _userData['phone'] ?? '';
           _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-          _userName = 'No se encontraron datos de perfil.';
-          _userEmail = _currentUser?.email ?? 'Email no disponible';
         });
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _userName = 'Error al cargar datos';
+      if (mounted) UiHelpers.showSnackBar(context, 'Error al cargar perfil', isError: true);
+    }
+  }
+
+  Future<void> _saveProfileChanges() async {
+    if (_userRef == null) return;
+    setState(() => _isLoading = true);
+    try {
+      await _userRef!.update({
+        'fullName': _nameController.text.trim(),
+        'location': _locationController.text.trim(),
+        'phone': _phoneController.text.trim(),
       });
+      await _loadUserData();
+      setState(() => _isEditing = false);
+      if (mounted) UiHelpers.showSnackBar(context, 'Perfil actualizado correctamente');
+    } catch (e) {
+      if (mounted) UiHelpers.showSnackBar(context, 'Error al guardar cambios', isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _pickAndUploadImage() async {
-    final user = _currentUser;
-    final userRef = _userRef;
-    if (user == null || userRef == null) return;
-
-    final ImagePicker picker = ImagePicker();
-    final XFile? image =
-        await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
-
+    if (_currentUser == null || _userRef == null) return;
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
     if (image == null) return;
 
     setState(() {
       _isLoading = true;
-      _newProfileImage = image; // Show local image immediately
+      _newProfileImage = image;
     });
 
     try {
-      final storageRef =
-          FirebaseStorage.instance.ref().child('profile_pictures/${user.uid}');
-      final uploadTask = await storageRef.putFile(File(image.path));
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
-
-      await userRef.update({'profileImageUrl': downloadUrl});
-      setState(() {
-        _profileImageUrl = downloadUrl;
-        _newProfileImage = null; // Clear local image after upload
-      });
-      if (mounted) {
-        UiHelpers.showSnackBar(context, 'Foto de perfil actualizada.');
-      }
+      final storageRef = FirebaseStorage.instance.ref().child('profile_pictures/${_currentUser.uid}');
+      await storageRef.putFile(File(image.path));
+      final downloadUrl = await storageRef.getDownloadURL();
+      await _userRef!.update({'profileImageUrl': downloadUrl});
+      await _loadUserData();
+      if (mounted) UiHelpers.showSnackBar(context, 'Foto de perfil actualizada');
     } catch (e) {
-      if (mounted) {
-        UiHelpers.showSnackBar(context, 'Error al subir la foto.',
-            isError: true);
-      }
+      if (mounted) UiHelpers.showSnackBar(context, 'Error al subir foto', isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _deleteProfilePicture() async {
-    final userRef = _userRef;
-    if (_profileImageUrl == null || userRef == null) return;
-
-    final bool confirmed = await UiHelpers.showConfirmationDialog(
-      context,
-      title: 'Eliminar Foto',
-      content: '¿Estás seguro de que quieres eliminar tu foto de perfil?',
-      confirmText: 'Eliminar',
-      isDestructive: true,
-    );
-
-    if (!confirmed) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      await FirebaseStorage.instance.refFromURL(_profileImageUrl!).delete();
-      await userRef.update({'profileImageUrl': null});
-      setState(() {
-        _profileImageUrl = null;
-        _newProfileImage = null;
-      });
-      if (mounted) UiHelpers.showSnackBar(context, 'Foto de perfil eliminada.');
-    } catch (e) {
-      if (mounted) {
-        UiHelpers.showSnackBar(context, 'Error al eliminar la foto.',
-            isError: true);
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _locationController.dispose();
+    _phoneController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final imageToShow = _newProfileImage != null
-        ? FileImage(File(_newProfileImage!.path))
-        : (_profileImageUrl != null ? NetworkImage(_profileImageUrl!) : null)
-            as ImageProvider?;
+    final String creationDate = _currentUser?.metadata.creationTime != null 
+        ? DateFormat('MMMM yyyy', 'es_MX').format(_currentUser!.metadata.creationTime!) 
+        : 'Desconocido';
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -161,45 +124,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.all(24.0),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 600),
+                  constraints: const BoxConstraints(maxWidth: 800),
                   child: FadeInUp(
                     child: Column(
                       children: [
-                        const SizedBox(height: 20),
-                        _buildProfileHeader(theme, imageToShow),
-                        const SizedBox(height: 40),
-                        Card(
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            side: isDark
-                                ? BorderSide.none
-                                : BorderSide(color: Colors.grey.shade100),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              children: [
-                                _buildInfoTile(theme, Icons.person_outline,
-                                    'Nombre Completo', _userName),
-                                _buildDivider(),
-                                _buildInfoTile(theme, Icons.email_outlined,
-                                    'Correo Electrónico', _userEmail),
-                                _buildDivider(),
-                                _buildInfoTile(
-                                    theme,
-                                    Icons.verified_user_outlined,
-                                    'Rol del Sistema',
-                                    _userRole),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        Text(
-                          '© 2026 Colegio de Bachilleres del Estado de Campeche',
-                          style: theme.textTheme.bodySmall,
-                        ),
+                        _buildHeader(theme, isDark),
+                        const SizedBox(height: 32),
+                        _buildMainStats(theme, creationDate),
+                        const SizedBox(height: 24),
+                        _buildInfoCard(theme, isDark),
                       ],
                     ),
                   ),
@@ -209,7 +142,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileHeader(ThemeData theme, ImageProvider? image) {
+  Widget _buildHeader(ThemeData theme, bool isDark) {
+    final profileUrl = _userData['profileImageUrl'];
     return Column(
       children: [
         Stack(
@@ -221,13 +155,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 border: Border.all(color: theme.colorScheme.primary, width: 3),
               ),
               child: CircleAvatar(
-                radius: 70,
-                backgroundImage: image,
+                radius: 65,
                 backgroundColor: theme.colorScheme.surface,
-                child: image == null
-                    ? Icon(Icons.person,
-                        size: 70,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.3))
+                backgroundImage: _newProfileImage != null
+                    ? FileImage(File(_newProfileImage!.path))
+                    : (profileUrl != null ? NetworkImage(profileUrl) : null) as ImageProvider?,
+                child: (profileUrl == null && _newProfileImage == null)
+                    ? Icon(Icons.person, size: 60, color: theme.colorScheme.primary.withValues(alpha: 0.3))
                     : null,
               ),
             ),
@@ -238,54 +172,138 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 backgroundColor: theme.colorScheme.primary,
                 radius: 20,
                 child: IconButton(
-                  icon: const Icon(Icons.camera_alt,
-                      size: 20, color: Colors.white),
+                  icon: const Icon(Icons.edit, size: 18, color: Colors.white),
                   onPressed: _pickAndUploadImage,
                 ),
               ),
             ),
           ],
         ),
-        if (_profileImageUrl != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: TextButton.icon(
-              onPressed: _deleteProfilePicture,
-              icon: Icon(Icons.delete_outline,
-                  size: 16, color: theme.colorScheme.error),
-              label: Text('Eliminar foto',
-                  style: TextStyle(color: theme.colorScheme.error)),
-            ),
-          ),
+        const SizedBox(height: 16),
+        Text(
+          _userData['fullName'] ?? 'Usuario Cobacam',
+          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        Text(
+          _userData['role'] ?? 'Rol no definido',
+          style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600, letterSpacing: 1),
+        ),
       ],
     );
   }
 
-  Widget _buildInfoTile(
-      ThemeData theme, IconData icon, String label, String value) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, color: theme.colorScheme.primary),
-      ),
-      title: Text(label,
-          style: theme.textTheme.bodySmall
-              ?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-      subtitle: Text(value,
-          style: theme.textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w600)),
+  Widget _buildMainStats(ThemeData theme, String creationDate) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildStatItem(theme, 'Plantel', _userData['campus'] ?? 'N/A'),
+        _buildStatDivider(),
+        _buildStatItem(theme, 'Desde', creationDate),
+      ],
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildStatItem(ThemeData theme, String label, String value) {
+    return Column(
+      children: [
+        Text(label, style: theme.textTheme.bodySmall),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+      ],
+    );
+  }
+
+  Widget _buildStatDivider() {
+    return Container(
+      height: 30,
+      width: 1,
+      color: Colors.grey.withValues(alpha: 0.3),
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+    );
+  }
+
+  Widget _buildInfoCard(ThemeData theme, bool isDark) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: isDark ? BorderSide.none : BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Información Personal', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: Icon(_isEditing ? Icons.check_circle : Icons.edit_note, color: theme.colorScheme.primary),
+                  onPressed: () {
+                    if (_isEditing) {
+                      _saveProfileChanges();
+                    } else {
+                      setState(() => _isEditing = true);
+                    }
+                  },
+                )
+              ],
+            ),
+            const Divider(),
+            const SizedBox(height: 16),
+            _buildEditableTile(Icons.person_outline, 'Nombre Completo', _nameController, _isEditing),
+            _buildEditableTile(Icons.location_on_outlined, 'Ubicación', _locationController, _isEditing),
+            _buildEditableTile(Icons.phone_outlined, 'Teléfono', _phoneController, _isEditing),
+            _buildReadOnlyTile(Icons.email_outlined, 'Correo Electrónico', _currentUser?.email ?? 'N/A'),
+            _buildReadOnlyTile(Icons.cake_outlined, 'Fecha de Nacimiento', _userData['dateOfBirth'] ?? 'No registrada'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditableTile(IconData icon, String label, TextEditingController controller, bool isEditing) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Divider(height: 1, color: Colors.grey.withValues(alpha: 0.1)),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey),
+          const SizedBox(width: 16),
+          Expanded(
+            child: isEditing
+                ? TextFormField(
+                    controller: controller,
+                    decoration: InputDecoration(labelText: label, contentPadding: EdgeInsets.zero, isDense: true),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text(controller.text.isEmpty ? 'No registrado' : controller.text, style: const TextStyle(fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReadOnlyTile(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,7 +1,10 @@
+import 'package:asystem_cobacam/providers/theme_provider.dart';
+import 'package:asystem_cobacam/screens/welcome_screen.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -29,38 +32,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _changePassword() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
+    if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null || user.email == null) {
-        if (mounted) {
-          UiHelpers.showSnackBar(
-              context, 'No se pudo encontrar el usuario actual.',
-              isError: true);
-        }
+        if (mounted) UiHelpers.showSnackBar(context, 'No se pudo encontrar el usuario actual.', isError: true);
         return;
       }
 
-      // Re-authenticate the user
-      final cred = EmailAuthProvider.credential(
-        email: user.email!,
-        password: _currentPasswordController.text,
-      );
+      final cred = EmailAuthProvider.credential(email: user.email!, password: _currentPasswordController.text);
       await user.reauthenticateWithCredential(cred);
-
       if (!mounted) return;
 
-      // If re-authentication is successful, update the password
       await user.updatePassword(_newPasswordController.text);
-
       if (mounted) {
         UiHelpers.showSnackBar(context, 'Contraseña actualizada exitosamente.');
-        // Clear fields after success
         _currentPasswordController.clear();
         _newPasswordController.clear();
         _confirmPasswordController.clear();
@@ -72,25 +60,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
         message = 'La contraseña actual es incorrecta.';
       } else if (e.code == 'weak-password') {
         message = 'La nueva contraseña es muy débil.';
-      } else {
-        message = 'Error: ${e.message}';
       }
       UiHelpers.showSnackBar(context, message, isError: true);
     } catch (e) {
-      if (mounted) {
-        UiHelpers.showSnackBar(context, 'Un error inesperado ocurrió.',
-            isError: true);
-      }
+      if (mounted) UiHelpers.showSnackBar(context, 'Error inesperado.', isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleLogout() async {
+    final confirmed = await UiHelpers.showConfirmationDialog(
+      context,
+      title: 'Cerrar Sesión',
+      content: '¿Estás seguro de que quieres salir?',
+      confirmText: 'Salir',
+      isDestructive: true,
+    );
+
+    if (confirmed && mounted) {
+      await FirebaseAuth.instance.signOut();
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+        (route) => false,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
@@ -99,107 +99,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.all(24.0),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
+            constraints: const BoxConstraints(maxWidth: 600),
             child: FadeInUp(
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 20),
-                    _buildHeader(theme),
-                    const SizedBox(height: 32),
-                    Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        side: isDark
-                            ? BorderSide.none
-                            : BorderSide(color: Colors.grey.shade100),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              'Seguridad de la Cuenta',
-                              style: theme.textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 24),
-                            _buildPasswordField(
-                              controller: _currentPasswordController,
-                              label: 'Contraseña Actual',
-                              isObscure: _isObscureCurrent,
-                              onToggle: () => setState(
-                                  () => _isObscureCurrent = !_isObscureCurrent),
-                              validator: (val) =>
-                                  val!.isEmpty ? 'Campo requerido' : null,
-                            ),
-                            const SizedBox(height: 20),
-                            _buildPasswordField(
-                              controller: _newPasswordController,
-                              label: 'Nueva Contraseña',
-                              isObscure: _isObscureNew,
-                              onToggle: () => setState(
-                                  () => _isObscureNew = !_isObscureNew),
-                              validator: (val) {
-                                if (val!.isEmpty) return 'Campo requerido';
-                                if (val.length < 6) {
-                                  return 'Mínimo 6 caracteres';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
-                            _buildPasswordField(
-                              controller: _confirmPasswordController,
-                              label: 'Confirmar Nueva Contraseña',
-                              isObscure: _isObscureConfirm,
-                              onToggle: () => setState(
-                                  () => _isObscureConfirm = !_isObscureConfirm),
-                              validator: (val) {
-                                if (val!.isEmpty) return 'Campo requerido';
-                                if (val != _newPasswordController.text) {
-                                  return 'No coinciden';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 40),
-                            _isLoading
-                                ? const Center(
-                                    child: CircularProgressIndicator())
-                                : SizedBox(
-                                    height: 56,
-                                    child: ElevatedButton(
-                                      onPressed: _changePassword,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            theme.colorScheme.primary,
-                                        foregroundColor: Colors.white,
-                                        elevation: 2,
-                                        shadowColor: theme.colorScheme.primary
-                                            .withValues(alpha: 0.3),
-                                      ),
-                                      child: const Text('Actualizar Contraseña',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                  ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    Text(
-                      'Otras configuraciones próximamente...',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildSectionTitle(theme, 'Preferencias Visuales'),
+                  const SizedBox(height: 16),
+                  _buildThemeCard(theme, themeProvider, isDark),
+                  const SizedBox(height: 32),
+                  _buildSectionTitle(theme, 'Seguridad'),
+                  const SizedBox(height: 16),
+                  _buildPasswordCard(theme, isDark),
+                  const SizedBox(height: 32),
+                  _buildSectionTitle(theme, 'Cuenta'),
+                  const SizedBox(height: 16),
+                  _buildActionCard(theme, isDark),
+                  const SizedBox(height: 48),
+                  _buildFooter(theme),
+                ],
               ),
             ),
           ),
@@ -208,57 +126,89 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildHeader(ThemeData theme) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Icon(Icons.settings_outlined,
-              color: theme.colorScheme.primary, size: 28),
+  Widget _buildSectionTitle(ThemeData theme, String title) {
+    return Text(title, style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, letterSpacing: 1));
+  }
+
+  Widget _buildThemeCard(ThemeData theme, ThemeProvider provider, bool isDark) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
+      child: ListTile(
+        leading: Icon(isDark ? Icons.dark_mode : Icons.light_mode, color: theme.colorScheme.primary),
+        title: const Text('Tema Oscuro', style: TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: const Text('Alternar entre modo claro y oscuro'),
+        trailing: Switch.adaptive(
+          value: isDark,
+          onChanged: (val) => provider.setThemeMode(val ? ThemeMode.dark : ThemeMode.light),
         ),
-        const SizedBox(width: 20),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Configuración',
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.bold)),
-            Text('Administra tus preferencias',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
-          ],
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildPasswordField({
-    required TextEditingController controller,
-    required String label,
-    required bool isObscure,
-    required VoidCallback onToggle,
-    String? Function(String?)? validator,
-  }) {
+  Widget _buildPasswordCard(ThemeData theme, bool isDark) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildPasswordField(_currentPasswordController, 'Contraseña Actual', _isObscureCurrent, () => setState(() => _isObscureCurrent = !_isObscureCurrent)),
+              const SizedBox(height: 16),
+              _buildPasswordField(_newPasswordController, 'Nueva Contraseña', _isObscureNew, () => setState(() => _isObscureNew = !_isObscureNew)),
+              const SizedBox(height: 16),
+              _buildPasswordField(_confirmPasswordController, 'Confirmar Contraseña', _isObscureConfirm, () => setState(() => _isObscureConfirm = !_isObscureConfirm)),
+              const SizedBox(height: 24),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(onPressed: _changePassword, child: const Text('Actualizar Contraseña')),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField(TextEditingController controller, String label, bool obscure, VoidCallback onToggle) {
     return TextFormField(
       controller: controller,
-      obscureText: isObscure,
-      validator: validator,
+      obscureText: obscure,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: const Icon(Icons.lock_outline, size: 20),
-        suffixIcon: IconButton(
-          icon: Icon(
-              isObscure
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined,
-              size: 20),
-          onPressed: onToggle,
-        ),
+        suffixIcon: IconButton(icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, size: 20), onPressed: onToggle),
       ),
+      validator: (val) => val!.isEmpty ? 'Campo requerido' : null,
+    );
+  }
+
+  Widget _buildActionCard(ThemeData theme, bool isDark) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
+      child: Column(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            onTap: _handleLogout,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooter(ThemeData theme) {
+    return Column(
+      children: [
+        const Text('Asystem Cobacam v1.0.0', style: TextStyle(color: Colors.grey, fontSize: 12)),
+        const SizedBox(height: 8),
+        Text('Desarrollado para COBACAM', style: theme.textTheme.bodySmall),
+      ],
     );
   }
 }

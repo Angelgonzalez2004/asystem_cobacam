@@ -47,6 +47,15 @@ class AppSettingsService {
     }
   }
 
+  Future<void> setGlobalCurrentSchoolCycle(String cycleId) async {
+    try {
+      await _appSettingsRef.update({'currentSchoolCycle': cycleId});
+    } catch (e) {
+      debugPrint('Error al establecer ciclo global: $e');
+      rethrow;
+    }
+  }
+
   // --- SchoolCycle Management ---
   Future<List<SchoolCycle>> getAllSchoolCycles() async {
     final schoolCyclesBox = _hiveService.schoolCyclesBox;

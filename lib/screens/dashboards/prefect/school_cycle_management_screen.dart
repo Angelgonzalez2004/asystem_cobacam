@@ -1,9 +1,13 @@
 import 'package:asystem_cobacam/models/school_cycle_model.dart';
+import 'package:asystem_cobacam/services/app_settings_service.dart';
+import 'package:asystem_cobacam/services/connectivity_service.dart';
+import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class SchoolCycleManagementScreen extends StatefulWidget {
   const SchoolCycleManagementScreen({super.key});
@@ -146,19 +150,35 @@ class _SchoolCycleManagementScreenState
                                       ],
                                     ),
                                   ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(Icons.edit_outlined,
-                                            color: theme.colorScheme.primary),
-                                        onPressed: () => _showSchoolCycleDialog(
-                                            cycle: cycle),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(Icons.delete_outline,
-                                            color: theme.colorScheme.error),
-                                        onPressed: () async {
+                                                                    trailing: Row(
+                                                                      mainAxisSize: MainAxisSize.min,
+                                                                      children: [
+                                                                        IconButton(
+                                                                          icon: Icon(Icons.check_circle_outline, color: theme.colorScheme.secondary),
+                                                                          tooltip: 'Establecer como Actual',
+                                                                          onPressed: () async {
+                                                                            final confirm = await UiHelpers.showConfirmationDialog(
+                                                                              context,
+                                                                              title: 'Ciclo Actual',
+                                                                              content: '¿Establecer ${cycle.id} como el ciclo activo del sistema?',
+                                                                            );
+                                                                            if (confirm) {
+                                                                              final settingsService = AppSettingsService(
+                                                                                Provider.of<HiveService>(context, listen: false),
+                                                                                Provider.of<ConnectivityService>(context, listen: false),
+                                                                              );
+                                                                              await settingsService.setGlobalCurrentSchoolCycle(cycle.id);
+                                                                              if (mounted) UiHelpers.showSnackBar(context, 'Ciclo ${cycle.id} activado.');
+                                                                            }
+                                                                          },
+                                                                        ),
+                                                                        IconButton(
+                                                                          icon: Icon(Icons.edit_outlined, color: theme.colorScheme.primary),
+                                                                          onPressed: () => _showSchoolCycleDialog(cycle: cycle),
+                                                                        ),
+                                                                        IconButton(
+                                                                          icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                                                                          onPressed: () async {
                                           final confirm = await UiHelpers
                                               .showConfirmationDialog(context,
                                                   title: 'Eliminar Ciclo',
