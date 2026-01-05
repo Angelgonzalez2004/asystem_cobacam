@@ -68,10 +68,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Recuperar Contraseña'),
+        title: const Text('Recuperación de Acceso', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -80,98 +80,88 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           builder: (context, constraints) {
             return Center(
               child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 20),
                 child: FadeInUp(
                   duration: const Duration(milliseconds: 600),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 420),
-                    child: Card(
-                      elevation: 0,
-                      color:
-                          isDark ? theme.cardTheme.color : Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const SizedBox(height: 20),
-                            Hero(
-                              tag: 'app_logo',
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: theme.colorScheme.primary
-                                          .withValues(alpha: 0.1),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
-                                ),
-                                child: Image.asset('assets/images/logo1.png',
-                                    height: 80),
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-                            Text(
-                              '¿Olvidaste tu contraseña?',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.titleLarge
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Ingresa tu correo electrónico y te enviaremos las instrucciones para restablecerla.',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.7)),
-                            ),
-                            const SizedBox(height: 32),
-                            TextField(
-                              controller: _emailController,
-                              decoration: _buildInputDecoration(
-                                  'Correo Electrónico', Icons.email_outlined),
-                              keyboardType: TextInputType.emailAddress,
-                              style:
-                                  TextStyle(color: theme.colorScheme.onSurface),
-                            ),
-                            const SizedBox(height: 32),
-                            _isLoading
-                                ? const Center(
-                                    child: CircularProgressIndicator())
-                                : SizedBox(
-                                    height: 56,
-                                    child: ElevatedButton(
-                                      onPressed: _handlePasswordReset,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            theme.colorScheme.primary,
-                                        foregroundColor: Colors.white,
-                                        elevation: 4,
-                                        shadowColor: theme.colorScheme.primary
-                                            .withValues(alpha: 0.4),
-                                      ),
-                                      child: const Text('Enviar Enlace',
-                                          style: TextStyle(fontSize: 18)),
-                                    ),
-                                  ),
-                            const SizedBox(height: 20),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: TextButton.styleFrom(
-                                foregroundColor: theme.colorScheme.secondary,
-                              ),
-                              child: const Text('‹ Volver a Inicio de Sesión'),
-                            ),
-                          ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Icono Institucional de Seguridad
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.lock_reset_rounded, size: 64, color: theme.colorScheme.primary),
                         ),
-                      ),
+                        const SizedBox(height: 40),
+                        
+                        Text(
+                          '¿Problemas para ingresar?',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: theme.colorScheme.primary),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Ingrese su correo electrónico institucional y le enviaremos las instrucciones para restablecer su contraseña.',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        
+                        Card(
+                          elevation: 0,
+                          color: isDark ? theme.cardTheme.color : Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.08)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                TextField(
+                                  controller: _emailController,
+                                  decoration: _buildInputDecoration('Correo Institucional', Icons.alternate_email),
+                                  keyboardType: TextInputType.emailAddress,
+                                  style: TextStyle(color: theme.colorScheme.onSurface),
+                                ),
+                                const SizedBox(height: 32),
+                                _isLoading
+                                    ? const Center(child: CircularProgressIndicator())
+                                    : SizedBox(
+                                        height: 56,
+                                        child: ElevatedButton(
+                                          onPressed: _handlePasswordReset,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: theme.colorScheme.primary,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                            elevation: 0,
+                                          ),
+                                          child: const Text('Enviar Instrucciones', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                        ),
+                                      ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            '‹ Cancelar y volver',
+                            style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

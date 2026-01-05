@@ -392,6 +392,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       return;
     }
 
+    // --- NUEVA LÓGICA DE BAJA ---
+    if (!student.isActive) {
+      if (mounted) {
+        UiHelpers.showSnackBar(
+            context, 'EL ALUMNO ESTÁ DADO DE BAJA. No se puede registrar.',
+            isError: true);
+      }
+      _resumeProcessingAfterDelay();
+      return;
+    }
+    // ----------------------------
+
     Map<String, dynamic> record = _todayAttendance.firstWhere(
       (rec) => rec['studentId'] == studentId && rec['date'] == _todayDate,
       orElse: () => <String, dynamic>{},
@@ -883,12 +895,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     if (scope == 'group' && groupId != null) {
       _studentsMap.forEach((studentId, student) {
-        if (student.group == groupId) {
+        if (student.group == groupId && student.isActive) {
           studentsToRegister.add(student);
         }
       });
     } else {
-      studentsToRegister.addAll(_studentsMap.values);
+      studentsToRegister.addAll(_studentsMap.values.where((s) => s.isActive));
     }
 
     if (studentsToRegister.isEmpty) {

@@ -37,6 +37,9 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
   late TextEditingController _placeOfResidenceController;
   late TextEditingController _institutionalEmailController;
   late TextEditingController _studentIdController;
+  late TextEditingController _allergiesController;
+  late TextEditingController _healthConditionsController;
+  late TextEditingController _generalHealthStatusController;
 
   String? _selectedGender;
   String? _selectedGroup; // To be populated from Firebase or a predefined list
@@ -77,6 +80,12 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         TextEditingController(text: widget.student?.institutionalEmail ?? '');
     _studentIdController =
         TextEditingController(text: widget.student?.studentId ?? '');
+    _allergiesController =
+        TextEditingController(text: widget.student?.allergies ?? '');
+    _healthConditionsController =
+        TextEditingController(text: widget.student?.healthConditions ?? '');
+    _generalHealthStatusController =
+        TextEditingController(text: widget.student?.generalHealthStatus ?? 'Sano');
 
     _selectedGender = widget.student?.gender;
     _selectedGroup = widget.student?.group;
@@ -187,6 +196,9 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         institutionalEmail: _institutionalEmailController.text,
         studentId: _studentIdController.text,
         isActive: widget.student?.isActive ?? true,
+        allergies: _allergiesController.text.trim(),
+        healthConditions: _healthConditionsController.text.trim(),
+        generalHealthStatus: _generalHealthStatusController.text.trim(),
       );
 
       await databaseRef
@@ -301,6 +313,23 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                                   'Correo Institucional',
                                   Icons.alternate_email_outlined,
                                   keyboardType: TextInputType.emailAddress),
+                              const SizedBox(height: 32),
+                              _buildSectionTitle(theme, 'INFORMACIÓN MÉDICA (OPCIONAL)'),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                  _allergiesController,
+                                  'Alergias (Medicamentos, comida, etc.)',
+                                  Icons.warning_amber_rounded),
+                              const SizedBox(height: 12),
+                              _buildTextField(
+                                  _healthConditionsController,
+                                  'Condiciones de Salud (Visión, caminar, etc.)',
+                                  Icons.health_and_safety_outlined),
+                              const SizedBox(height: 12),
+                              _buildTextField(
+                                  _generalHealthStatusController,
+                                  'Estado General (ej. Sano)',
+                                  Icons.favorite_border_rounded),
                               const SizedBox(height: 40),
                               SizedBox(
                                 height: 56,

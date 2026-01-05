@@ -138,150 +138,136 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (context, constraints) {
             return Center(
               child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 20),
                 child: FadeInUp(
                   duration: const Duration(milliseconds: 800),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: Card(
-                      elevation:
-                          0, // Flat design preferred for "modern/tailwind" unless raised
-                      color: isDark
-                          ? theme.cardTheme.color
-                          : Colors
-                              .transparent, // Transparent on light to blend with bg or white
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0), // Inner padding
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const SizedBox(height: 20),
-                            Hero(
-                              tag: 'app_logo',
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: theme.colorScheme.primary
-                                          .withValues(alpha: 0.2),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
-                                ),
-                                child: Image.asset('assets/images/logo1.png',
-                                    height: 100),
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-                            Text(
-                              'Bienvenido de nuevo',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.displayLarge?.copyWith(
-                                  fontSize: 28, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Ingresa a tu cuenta para continuar',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                            const SizedBox(height: 40),
-
-                            // Form Fields
-                            TextField(
-                              controller: _emailController,
-                              style:
-                                  TextStyle(color: theme.colorScheme.onSurface),
-                              decoration: _buildInputDecoration(
-                                  'Correo Electrónico', Icons.email_outlined),
-                              keyboardType: TextInputType.emailAddress,
-                            ),
-                            const SizedBox(height: 20),
-                            TextField(
-                              controller: _passwordController,
-                              style:
-                                  TextStyle(color: theme.colorScheme.onSurface),
-                              decoration: _buildInputDecorationWithToggle(
-                                  'Contraseña', Icons.lock_outline),
-                              obscureText: _isPasswordObscured,
-                            ),
-                            const SizedBox(height: 12),
-
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () => Navigator.push(
-                                    context,
-                                    SlideRightRoute(
-                                        page: const ForgotPasswordScreen())),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: theme.colorScheme.primary,
-                                  textStyle: const TextStyle(
-                                      fontWeight: FontWeight.w600),
-                                ),
-                                child: const Text('¿Olvidaste tu contraseña?'),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-
-                            _isLoading
-                                ? const Center(
-                                    child: CircularProgressIndicator())
-                                : SizedBox(
-                                    height: 56, // Taller button
-                                    child: ElevatedButton(
-                                      onPressed: _handleLogin,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            theme.colorScheme.primary,
-                                        foregroundColor: Colors.white,
-                                        elevation: 4,
-                                        shadowColor: theme.colorScheme.primary
-                                            .withValues(alpha: 0.4),
-                                      ),
-                                      child: const Text('Iniciar Sesión',
-                                          style: TextStyle(fontSize: 18)),
-                                    ),
-                                  ),
-                            const SizedBox(height: 32),
-
-                            // Register link
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Logo Centrado
+                        Hero(
+                          tag: 'app_logo',
+                          child: Image.asset('assets/images/logo1.png', height: 100),
+                        ),
+                        const SizedBox(height: 48),
+                        
+                        // Textos de Bienvenida
+                        Text(
+                          'Portal Institucional',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: theme.colorScheme.primary,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Inicie sesión para acceder a su panel',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        
+                        // Formulario
+                        Card(
+                          elevation: 0,
+                          color: isDark ? theme.cardTheme.color : Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.08)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Text('¿No tienes cuenta? ',
-                                    style: TextStyle(
-                                        color: theme.colorScheme.onSurface
-                                            .withValues(alpha: 0.7))),
-                                GestureDetector(
-                                  onTap: () => Navigator.push(
-                                      context,
-                                      SlideRightRoute(
-                                          page: const SignUpScreen())),
-                                  child: Text(
-                                    'Regístrate',
-                                    style: TextStyle(
-                                      color: theme.colorScheme.primary,
-                                      fontWeight: FontWeight.bold,
-                                      decoration: TextDecoration.underline,
-                                      decorationColor:
-                                          theme.colorScheme.primary,
+                                TextField(
+                                  controller: _emailController,
+                                  decoration: _buildInputDecoration('Correo Institucional', Icons.alternate_email),
+                                  keyboardType: TextInputType.emailAddress,
+                                ),
+                                const SizedBox(height: 20),
+                                TextField(
+                                  controller: _passwordController,
+                                  decoration: _buildInputDecorationWithToggle('Contraseña', Icons.lock_outline),
+                                  obscureText: _isPasswordObscured,
+                                ),
+                                const SizedBox(height: 12),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: () => Navigator.push(context, SlideRightRoute(page: const ForgotPasswordScreen())),
+                                    child: Text(
+                                      '¿Olvidó su contraseña?',
+                                      style: TextStyle(
+                                        color: theme.colorScheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
                                 ),
+                                const SizedBox(height: 24),
+                                _isLoading
+                                    ? const Center(child: CircularProgressIndicator())
+                                    : SizedBox(
+                                        height: 56,
+                                        child: ElevatedButton(
+                                          onPressed: _handleLogin,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: theme.colorScheme.primary,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                            elevation: 0,
+                                          ),
+                                          child: const Text('Entrar al Sistema', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                        ),
+                                      ),
                               ],
                             ),
-                            const SizedBox(height: 20),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 32),
+                        
+                        // Enlace de Registro
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '¿Aún no tiene una cuenta? ',
+                              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                            ),
+                            GestureDetector(
+                              onTap: () => Navigator.push(context, SlideRightRoute(page: const SignUpScreen())),
+                              child: Text(
+                                'Regístrese aquí',
+                                style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                      ),
+                        const SizedBox(height: 24),
+                        
+                        // Botón Volver
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            '‹ Volver al inicio',
+                            style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -102,24 +102,25 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
         'email_institucional',
         'matricula',
         'grupo',
+        'alergias',
+        'condiciones_salud',
+        'estado_salud',
       ];
 
       for (var table in excel.tables.keys) {
         var sheet = excel.tables[table];
         if (sheet == null || sheet.maxCols < expectedHeaders.length) continue;
 
-        final List<String> headers = sheet
-            .row(0)
-            .map((cell) =>
-                cell?.value?.toString().toLowerCase().replaceAll(' ', '_') ??
-                '')
-            .toList();
-
+        final List<String> headers = sheet.row(0).map((cell) => cell?.value?.toString().toLowerCase().replaceAll(' ', '_') ?? '').toList();
+        
         bool headersMatch = true;
         for (var h in expectedHeaders) {
           if (!headers.contains(h)) {
-            headersMatch = false;
-            break;
+            // Permitir que las médicas sean opcionales si no están en el Excel
+            if (!['alergias', 'condiciones_salud', 'estado_salud'].contains(h)) {
+              headersMatch = false;
+              break;
+            }
           }
         }
         if (!headersMatch) continue;
@@ -131,42 +132,29 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
           if (row.every((cell) => cell?.value == null)) continue;
 
           try {
-            final studentId =
-                row[headers.indexOf('matricula')]?.value?.toString() ?? '';
-            final fullName =
-                row[headers.indexOf('nombre_completo')]?.value?.toString() ??
-                    '';
+            final studentId = row[headers.indexOf('matricula')]?.value?.toString() ?? '';
+            final fullName = row[headers.indexOf('nombre_completo')]?.value?.toString() ?? '';
             if (studentId.isEmpty || fullName.isEmpty) continue;
 
             studentsToImport.add(Student(
               id: studentId,
               fullName: fullName,
-              guardianFullName:
-                  row[headers.indexOf('tutor')]?.value?.toString() ?? '',
-              age: int.tryParse(
-                      row[headers.indexOf('edad')]?.value?.toString() ?? '0') ??
-                  0,
-              guardianPhone:
-                  row[headers.indexOf('telefono_tutor')]?.value?.toString() ??
-                      '',
-              studentPhone:
-                  row[headers.indexOf('telefono_alumno')]?.value?.toString(),
-              gender:
-                  row[headers.indexOf('genero')]?.value?.toString() ?? 'Otro',
-              placeOfResidence:
-                  row[headers.indexOf('residencia')]?.value?.toString() ?? '',
+              guardianFullName: row[headers.indexOf('tutor')]?.value?.toString() ?? '',
+              age: int.tryParse(row[headers.indexOf('edad')]?.value?.toString() ?? '0') ?? 0,
+              guardianPhone: row[headers.indexOf('telefono_tutor')]?.value?.toString() ?? '',
+              studentPhone: row[headers.indexOf('telefono_alumno')]?.value?.toString(),
+              gender: row[headers.indexOf('genero')]?.value?.toString() ?? 'Otro',
+              placeOfResidence: row[headers.indexOf('residencia')]?.value?.toString() ?? '',
               schoolCycle: widget.currentSchoolCycle,
               group: table,
-              institutionalEmail: row[headers.indexOf('email_institucional')]
-                      ?.value
-                      ?.toString() ??
-                  '',
+              institutionalEmail: row[headers.indexOf('email_institucional')]?.value?.toString() ?? '',
               studentId: studentId,
               isActive: true,
+              allergies: headers.contains('alergias') ? row[headers.indexOf('alergias')]?.value?.toString() : null,
+              healthConditions: headers.contains('condiciones_salud') ? row[headers.indexOf('condiciones_salud')]?.value?.toString() : null,
+              generalHealthStatus: headers.contains('estado_salud') ? (row[headers.indexOf('estado_salud')]?.value?.toString() ?? 'Sano') : 'Sano',
             ));
-          } catch (e) {
-            continue;
-          }
+          } catch (e) { continue; }
         }
       }
       if (mounted) {

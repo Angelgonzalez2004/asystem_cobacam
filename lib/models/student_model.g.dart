@@ -31,13 +31,16 @@ class StudentAdapter extends TypeAdapter<Student> {
       studentId: fields[11] as String,
       isActive: fields[12] as bool,
       deactivationReason: fields[13] as String?,
+      allergies: fields[14] as String?,
+      healthConditions: fields[15] as String?,
+      generalHealthStatus: fields[16] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Student obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -65,7 +68,13 @@ class StudentAdapter extends TypeAdapter<Student> {
       ..writeByte(12)
       ..write(obj.isActive)
       ..writeByte(13)
-      ..write(obj.deactivationReason);
+      ..write(obj.deactivationReason)
+      ..writeByte(14)
+      ..write(obj.allergies)
+      ..writeByte(15)
+      ..write(obj.healthConditions)
+      ..writeByte(16)
+      ..write(obj.generalHealthStatus);
   }
 
   @override

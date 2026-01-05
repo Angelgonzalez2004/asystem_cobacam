@@ -33,6 +33,12 @@ class Student {
   bool isActive; // For soft delete, default to true
   @HiveField(13)
   String? deactivationReason; // New field for reason of deactivation
+  @HiveField(14)
+  String? allergies; // Medicamentos, comida, etc.
+  @HiveField(15)
+  String? healthConditions; // Visión, motricidad, etc.
+  @HiveField(16)
+  String? generalHealthStatus; // "Sano" por defecto
 
   Student({
     required this.id,
@@ -49,6 +55,9 @@ class Student {
     required this.studentId,
     this.isActive = true, // Default to true
     this.deactivationReason,
+    this.allergies,
+    this.healthConditions,
+    this.generalHealthStatus = 'Sano',
   });
 
   // Factory constructor for creating a Student from a Firebase DataSnapshot
@@ -69,6 +78,9 @@ class Student {
       studentId: data['studentId'] ?? '',
       isActive: data['isActive'] ?? true, // Default to true if not present
       deactivationReason: data['deactivationReason'],
+      allergies: data['allergies'],
+      healthConditions: data['healthConditions'],
+      generalHealthStatus: data['generalHealthStatus'] ?? 'Sano',
     );
   }
 
@@ -88,6 +100,9 @@ class Student {
       'studentId': studentId,
       'isActive': isActive,
       'deactivationReason': deactivationReason,
+      'allergies': allergies,
+      'healthConditions': healthConditions,
+      'generalHealthStatus': generalHealthStatus,
     };
   }
 }
