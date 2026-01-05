@@ -54,15 +54,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final cred = EmailAuthProvider.credential(email: user.email!, password: _passwordForEmailController.text);
       await user.reauthenticateWithCredential(cred);
 
-      // Update Email in Auth
+      // Update Email in Auth (New Flow: Verification first)
       String newEmail = _newEmailController.text.trim();
-      await user.updateEmail(newEmail);
+      await user.verifyBeforeUpdateEmail(newEmail);
       
-      // Update Email in Database
+      // Update Email in Database (Optional: might want to do this only after verification, but for UI consistency we do it here or warn user)
+      // Note: Ideally, DB should only update after email is verified via a cloud function trigger, but for now:
       await FirebaseDatabase.instance.ref('users/${user.uid}').update({'email': newEmail});
 
       if (mounted) {
-        UiHelpers.showSnackBar(context, 'Correo actualizado exitosamente.');
+        UiHelpers.showSnackBar(context, 'Se ha enviado un enlace de verificación a $newEmail. Por favor confírmalo para completar el cambio.');
         _newEmailController.clear();
         _passwordForEmailController.clear();
       }

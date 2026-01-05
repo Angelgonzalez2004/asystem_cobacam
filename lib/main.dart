@@ -33,12 +33,17 @@ void main() async {
   try {
     debugPrint("🔥 Inicializando Firebase desde Flutter...");
 
-    // Al no tener scripts en HTML, inicializamos DIRECTAMENTE
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    // Verificar si ya está inicializado para evitar "duplicate-app"
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      debugPrint("✅ Firebase inicializado manualmente con opciones.");
+    } else {
+      debugPrint("ℹ️ Firebase ya estaba inicializado (Nativo/Automático). Usando instancia existente.");
+    }
 
-    debugPrint("✅ Firebase conectado exitosamente.");
+    debugPrint("✅ Firebase listo.");
   } catch (e) {
     // Si falla aquí, es un error real de configuración (faltan credenciales, internet, etc.)
     debugPrint("🚨 ERROR CRÍTICO DE FIREBASE: $e");

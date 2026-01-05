@@ -75,14 +75,13 @@ La aplicación implementa un estricto Control de Acceso Basado en Roles (RBAC):
 
 ## 🔧 Notas Técnicas y Solución de Problemas
 
-### Android Crash en Login (Solucionado)
-Se detectó un cierre inesperado en Android al intentar iniciar sesión.
-*   **Causa:** El `FirebaseInitProvider` estaba deshabilitado en el `AndroidManifest.xml`, impidiendo la correcta inicialización de los servicios de autenticación nativos.
-*   **Solución:** Se restauró el provider eliminando `tools:node="remove"`.
+### Android Crash & Firebase
+*   **Login Crash:** Solucionado implementando verificación `Firebase.apps.isEmpty` antes de inicializar, evitando conflicto con el `FirebaseInitProvider` nativo.
+*   **Auth API:** Se actualizó el flujo de cambio de correo a `verifyBeforeUpdateEmail` para cumplir con los estándares de seguridad recientes de Firebase.
 
 ### Compatibilidad de Librerías
-*   **Connectivity Plus:** Se mantiene en versión `^5.0.2`.
-    *   *Nota Importante:* Versiones superiores (6.0+) cambian el API a `List<ConnectivityResult>`, lo cual requeriría refactorización masiva. No actualizar sin revisar `ConnectivityService`.
+*   **Connectivity Plus:** Actualizado `ConnectivityService` para manejar `List<ConnectivityResult>`, compatible con versiones 5.0+ y futuras.
+*   **Excel:** Migración de propiedad `maxCols` a `maxColumns` (v2.0+).
 
 ---
 

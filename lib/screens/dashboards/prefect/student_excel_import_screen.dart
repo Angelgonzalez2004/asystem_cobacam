@@ -109,7 +109,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
 
       for (var table in excel.tables.keys) {
         var sheet = excel.tables[table];
-        if (sheet == null || sheet.maxCols < expectedHeaders.length) continue;
+        if (sheet == null || sheet.maxColumns < expectedHeaders.length) continue;
 
         final List<String> headers = sheet.row(0).map((cell) => cell?.value?.toString().toLowerCase().replaceAll(' ', '_') ?? '').toList();
         

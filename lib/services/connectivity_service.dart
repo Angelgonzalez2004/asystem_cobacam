@@ -13,7 +13,11 @@ class ConnectivityService {
 
   ConnectivityService() {
     // Escucha los cambios de conectividad y los añade al stream
-    Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+    Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      // Tomamos el último estado de la lista como el estado actual relevante,
+      // o .none si la lista está vacía.
+      final result = results.isNotEmpty ? results.last : ConnectivityResult.none;
+      
       if (kDebugMode) {
         print('Conectividad ha cambiado: $result');
       }
@@ -23,7 +27,8 @@ class ConnectivityService {
 
   // Método para obtener el estado actual de la conectividad
   Future<ConnectivityResult> checkConnectivity() async {
-    return await Connectivity().checkConnectivity();
+    final results = await Connectivity().checkConnectivity();
+    return results.isNotEmpty ? results.last : ConnectivityResult.none;
   }
 
   // Método para cerrar el StreamController cuando ya no sea necesario
