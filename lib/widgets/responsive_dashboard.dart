@@ -44,14 +44,18 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
     if (user != null) {
       _userRef = FirebaseDatabase.instance.ref('users/${user.uid}');
       _userRef!.onValue.listen((event) {
-        if (event.snapshot.exists) {
-          final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-          if (mounted) {
-            setState(() {
-              _userName = data['fullName'] ?? 'Usuario';
-              _userRole = data['role'] ?? widget.role;
-              _userProfileUrl = data['profileImageUrl'];
-            });
+        if (event.snapshot.exists && event.snapshot.value != null) {
+          try {
+            final data = Map<Object?, Object?>.from(event.snapshot.value as Map);
+            if (mounted) {
+              setState(() {
+                _userName = data['fullName']?.toString() ?? 'Usuario';
+                _userRole = data['role']?.toString() ?? widget.role;
+                _userProfileUrl = data['profileImageUrl']?.toString();
+              });
+            }
+          } catch (e) {
+            debugPrint("Error parsing user data in dashboard: $e");
           }
         }
       });
