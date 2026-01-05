@@ -62,21 +62,28 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
 
         if (snapshot.exists && snapshot.value != null) {
-          final data = snapshot.value;
-          debugPrint("Data Type: ${data.runtimeType}");
-          debugPrint("Raw Data: $data");
-          
-          String? role;
+          try {
+            final data = snapshot.value;
+            debugPrint("Data Type: ${data.runtimeType}");
+            debugPrint("Raw Data: $data");
+            
+            String? role;
 
-          if (data is Map) {
-            final safeMap = Map<dynamic, dynamic>.from(data);
-            role = safeMap['role']?.toString().trim();
-          } else {
-             debugPrint("Warning: Data is not a Map.");
+            if (data is Map) {
+              // Safer casting
+              final safeMap = Map<Object?, Object?>.from(data);
+              role = safeMap['role']?.toString().trim();
+            } else {
+               debugPrint("Warning: Data is not a Map. It is ${data.runtimeType}");
+            }
+
+            debugPrint("Rol encontrado (procesado): '$role'");
+            _navigateToDashboard(role);
+          } catch (e, stackTrace) {
+            debugPrint("Error processing user data or navigating: $e");
+            debugPrint(stackTrace.toString());
+            UiHelpers.showSnackBar(context, 'Error al procesar datos de usuario.', isError: true);
           }
-
-          debugPrint("Rol encontrado (procesado): '$role'");
-          _navigateToDashboard(role);
         } else {
           UiHelpers.showSnackBar(context, 'No se encontraron datos de usuario.',
               isError: true);
