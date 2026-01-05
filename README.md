@@ -38,6 +38,14 @@
 
 ---
 
+## 🔐 Gestión de Cuenta Avanzada (NUEVO)
+
+*   **📧 Cambio de Correo**: Funcionalidad segura para actualizar el correo institucional con re-autenticación.
+*   **🗑️ Eliminación de Cuenta**: Opción para eliminar permanentemente la cuenta y todos los datos asociados (perfil, imágenes, registros) cumpliendo normas de privacidad.
+*   **👤 Perfil Dinámico**: Visualización en tiempo real de foto, nombre y rol en el menú lateral.
+
+---
+
 ## 🛠️ Excelencia en el Código
 
 *   **💎 Cero Errores**: Verificado con `flutter analyze` reportando **0 errores, 0 advertencias y 0 sugerencias**.

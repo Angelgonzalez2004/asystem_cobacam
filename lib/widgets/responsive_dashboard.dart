@@ -4,6 +4,7 @@ import 'package:asystem_cobacam/screens/welcome_screen.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 class ResponsiveDashboard extends StatefulWidget {
@@ -20,6 +21,12 @@ class ResponsiveDashboard extends StatefulWidget {
 class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
   int _selectedIndex = 0;
   late final List<Widget> _screens;
+  
+  // User Data State
+  String _userName = 'Cargando...';
+  String _userRole = '';
+  String? _userProfileUrl;
+  DatabaseReference? _userRef;
 
   @override
   void initState() {
@@ -29,6 +36,30 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
       const ProfileScreen(), // Index 1: Profile
       const SettingsScreen(), // Index 2: Settings
     ];
+    _initUserData();
+  }
+  
+  void _initUserData() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _userRef = FirebaseDatabase.instance.ref('users/${user.uid}');
+      _userRef!.onValue.listen((event) {
+        if (event.snapshot.exists) {
+          final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+          if (mounted) {
+            setState(() {
+              _userName = data['fullName'] ?? 'Usuario';
+              _userRole = data['role'] ?? widget.role;
+              _userProfileUrl = data['profileImageUrl'];
+            });
+          }
+        }
+      });
+    } else {
+        setState(() {
+            _userRole = widget.role;
+        });
+    }
   }
 
   Future<void> _handleLogout(BuildContext context) async {
@@ -163,10 +194,19 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
                     image: AssetImage('assets/images/logo2.jpg'),
                     fit: BoxFit.cover,
                     opacity: 0.2)),
-                                    accountName: const Text('Asystem Cobacam', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                                    accountEmail: Text(widget.role, style: const TextStyle(fontSize: 14)),            currentAccountPicture: const CircleAvatar(
+            accountName: Text(_userName,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 18)),
+            accountEmail:
+                Text(_userRole, style: const TextStyle(fontSize: 14)),
+            currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
-              child: Icon(Icons.person, size: 40, color: Colors.blueGrey),
+              backgroundImage: _userProfileUrl != null
+                  ? NetworkImage(_userProfileUrl!)
+                  : null,
+              child: _userProfileUrl == null
+                  ? const Icon(Icons.person, size: 40, color: Colors.blueGrey)
+                  : null,
             ),
           ),
           ListTile(

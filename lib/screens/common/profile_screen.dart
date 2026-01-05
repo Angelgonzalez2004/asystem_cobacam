@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:asystem_cobacam/screens/welcome_screen.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -97,6 +98,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) UiHelpers.showSnackBar(context, 'Error al subir foto', isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    final bool confirmed = await UiHelpers.showConfirmationDialog(
+      context,
+      title: 'Eliminar Cuenta',
+      content: 'Esta acción es irreversible. Se borrarán todos tus datos. ¿Estás seguro?',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+      isDestructive: true,
+    );
+
+    if (!confirmed || _currentUser == null || !mounted) return;
+
+    // Prompt for password for re-authentication
+    String? password = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        String input = '';
+        return AlertDialog(
+          title: const Text('Confirmar Contraseña'),
+          content: TextField(
+            obscureText: true,
+            onChanged: (val) => input = val,
+            decoration: const InputDecoration(labelText: 'Contraseña'),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+            ElevatedButton(onPressed: () => Navigator.pop(context, input), child: const Text('Confirmar')),
+          ],
+        );
+      },
+    );
+
+    if (password == null || password.isEmpty) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Re-authenticate
+      AuthCredential credential = EmailAuthProvider.credential(email: _currentUser.email ?? '', password: password);
+      await _currentUser.reauthenticateWithCredential(credential);
+
+      // Delete Profile Image
+      if (_userData['profileImageUrl'] != null) {
+        try {
+          await FirebaseStorage.instance.refFromURL(_userData['profileImageUrl']).delete();
+        } catch (_) {
+          // Ignore if image doesn't exist
+        }
+      }
+
+      // Delete User Data
+      await _userRef!.remove();
+
+      // Delete Auth Account
+      await _currentUser.delete();
+
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Cuenta eliminada exitosamente.');
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const WelcomeScreen()), (route) => false);
+      }
+    } catch (e) {
+      if (mounted) UiHelpers.showSnackBar(context, 'Error al eliminar cuenta: ${e.toString()}', isError: true);
+      setState(() => _isLoading = false);
     }
   }
 
@@ -256,6 +324,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildEditableTile(Icons.phone_outlined, 'Teléfono', _phoneController, _isEditing),
             _buildReadOnlyTile(Icons.email_outlined, 'Correo Electrónico', _currentUser?.email ?? 'N/A'),
             _buildReadOnlyTile(Icons.cake_outlined, 'Fecha de Nacimiento', _userData['dateOfBirth'] ?? 'No registrada'),
+            const SizedBox(height: 32),
+            Center(
+              child: TextButton.icon(
+                onPressed: _deleteAccount,
+                icon: const Icon(Icons.delete_forever, color: Colors.red),
+                label: const Text('Eliminar Cuenta', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  backgroundColor: Colors.red.withValues(alpha: 0.05),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                ),
+              ),
+            )
           ],
         ),
       ),

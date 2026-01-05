@@ -3,6 +3,7 @@ import 'package:asystem_cobacam/screens/welcome_screen.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,20 +16,68 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _emailFormKey = GlobalKey<FormState>(); // Separate key for email form
+  
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  
+  // Controllers for Email Change
+  final _newEmailController = TextEditingController();
+  final _passwordForEmailController = TextEditingController();
+
   bool _isLoading = false;
   bool _isObscureCurrent = true;
   bool _isObscureNew = true;
   bool _isObscureConfirm = true;
+  bool _isObscureEmailPass = true;
 
   @override
   void dispose() {
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
+    _newEmailController.dispose();
+    _passwordForEmailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _changeEmail() async {
+    if (!_emailFormKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null || user.email == null) return;
+
+      // Re-authenticate
+      final cred = EmailAuthProvider.credential(email: user.email!, password: _passwordForEmailController.text);
+      await user.reauthenticateWithCredential(cred);
+
+      // Update Email in Auth
+      String newEmail = _newEmailController.text.trim();
+      await user.updateEmail(newEmail);
+      
+      // Update Email in Database
+      await FirebaseDatabase.instance.ref('users/${user.uid}').update({'email': newEmail});
+
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Correo actualizado exitosamente.');
+        _newEmailController.clear();
+        _passwordForEmailController.clear();
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      String message = 'Error al actualizar correo.';
+      if (e.code == 'wrong-password') message = 'Contraseña incorrecta.';
+      if (e.code == 'email-already-in-use') message = 'Este correo ya está en uso.';
+      if (e.code == 'invalid-email') message = 'Formato de correo inválido.';
+      UiHelpers.showSnackBar(context, message, isError: true);
+    } catch (e) {
+      if (mounted) UiHelpers.showSnackBar(context, 'Error inesperado.', isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _changePassword() async {
@@ -110,6 +159,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 32),
                   _buildSectionTitle(theme, 'Seguridad'),
                   const SizedBox(height: 16),
+                  _buildEmailCard(theme, isDark), // New Email Card
+                  const SizedBox(height: 24),
                   _buildPasswordCard(theme, isDark),
                   const SizedBox(height: 32),
                   _buildSectionTitle(theme, 'Cuenta'),
@@ -141,6 +192,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
         trailing: Switch.adaptive(
           value: isDark,
           onChanged: (val) => provider.setThemeMode(val ? ThemeMode.dark : ThemeMode.light),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmailCard(ThemeData theme, bool isDark) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _emailFormKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Actualizar Correo', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _newEmailController,
+                decoration: const InputDecoration(labelText: 'Nuevo Correo', prefixIcon: Icon(Icons.email_outlined, size: 20)),
+                validator: (val) => val!.isEmpty || !val.contains('@') ? 'Correo inválido' : null,
+              ),
+              const SizedBox(height: 16),
+              _buildPasswordField(_passwordForEmailController, 'Contraseña Actual', _isObscureEmailPass, () => setState(() => _isObscureEmailPass = !_isObscureEmailPass)),
+              const SizedBox(height: 24),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(onPressed: _changeEmail, child: const Text('Guardar Nuevo Correo')),
+            ],
+          ),
         ),
       ),
     );
