@@ -7,7 +7,8 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/attendance_screen.dar
 
 void main() {
   group('PrefectDashboardScreen', () {
-    testWidgets('renders correctly and shows navigation options', (WidgetTester tester) async {
+    testWidgets('renders correctly and shows navigation options',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: PrefectDashboardScreen(),
@@ -28,7 +29,8 @@ void main() {
       expect(find.byIcon(Icons.qr_code_scanner), findsOneWidget);
     });
 
-    testWidgets('navigates to StudentManagementScreen when tapped', (WidgetTester tester) async {
+    testWidgets('navigates to StudentManagementScreen when tapped',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: PrefectDashboardScreen(),
@@ -41,7 +43,8 @@ void main() {
       expect(find.byType(StudentManagementScreen), findsOneWidget);
     });
 
-    testWidgets('navigates to GroupScheduleManagementScreen when tapped', (WidgetTester tester) async {
+    testWidgets('navigates to GroupScheduleManagementScreen when tapped',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: PrefectDashboardScreen(),
@@ -54,7 +57,8 @@ void main() {
       expect(find.byType(GroupScheduleManagementScreen), findsOneWidget);
     });
 
-    testWidgets('navigates to AttendanceScreen when tapped', (WidgetTester tester) async {
+    testWidgets('navigates to AttendanceScreen when tapped',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: PrefectDashboardScreen(),

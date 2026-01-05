@@ -5,6 +5,8 @@ import 'package:asystem_cobacam/screens/dashboards/academic/manage_groups_screen
 import 'package:asystem_cobacam/screens/dashboards/academic/manage_subjects_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/academic/manage_teachers_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/academic/schedule_builder_screen.dart';
+import 'package:asystem_cobacam/utils/animations.dart';
+import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +18,11 @@ class AssignedCourse {
   final String subjectId;
   final String groupId;
 
-  AssignedCourse({required this.subjectName, required this.groupName, required this.subjectId, required this.groupId});
+  AssignedCourse(
+      {required this.subjectName,
+      required this.groupName,
+      required this.subjectId,
+      required this.groupId});
 
   @override
   bool operator ==(Object other) =>
@@ -29,7 +35,6 @@ class AssignedCourse {
   @override
   int get hashCode => subjectId.hashCode ^ groupId.hashCode;
 }
-
 
 class AcademicHomeScreen extends StatefulWidget {
   const AcademicHomeScreen({super.key});
@@ -63,7 +68,7 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
   }
 
   Future<void> _initData() async {
-     _userSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
+    _userSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
       if (user == null) {
         _handleError('No hay usuario autenticado.');
         return;
@@ -74,15 +79,20 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
 
   Future<void> _loadDataForUser(User user) async {
     try {
-      final userProfileSnapshot = await FirebaseDatabase.instance.ref('users/${user.uid}').get();
-      if (!userProfileSnapshot.exists) throw Exception('No se encontró el perfil del usuario.');
-      
-      final userData = Map<String, dynamic>.from(userProfileSnapshot.value as Map);
+      final userProfileSnapshot =
+          await FirebaseDatabase.instance.ref('users/${user.uid}').get();
+      if (!userProfileSnapshot.exists) {
+        throw Exception('No se encontró el perfil del usuario.');
+      }
+
+      final userData =
+          Map<String, dynamic>.from(userProfileSnapshot.value as Map);
       final campus = userData['campus'];
       final userName = userData['fullName'];
-      if (campus == null) throw Exception('El usuario no tiene un plantel asignado.');
+      if (campus == null) {
+        throw Exception('El usuario no tiene un plantel asignado.');
+      }
 
-      
       final campusRef = FirebaseDatabase.instance.ref('planteles/$campus');
 
       // Fetch metadata first
@@ -92,24 +102,30 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
         campusRef.child('groups').get(),
       ]);
 
-      final teachers = _extractData(results[0], (snap) => Teacher.fromSnapshot(snap));
-      _subjects = _extractData(results[1], (snap) => Subject.fromSnapshot(snap));
+      final teachers =
+          _extractData(results[0], (snap) => Teacher.fromSnapshot(snap));
+      _subjects =
+          _extractData(results[1], (snap) => Subject.fromSnapshot(snap));
       _groups = _extractData(results[2], (snap) => Group.fromSnapshot(snap));
-      
-      // Find teacher key that corresponds to the logged-in user
-      final currentTeacher = teachers.firstWhere((t) => t.name == userName, orElse: () => Teacher(key: '', name: '', subjects: []));
-      if (currentTeacher.key.isEmpty) {
-         throw Exception('El usuario actual no está registrado como maestro en este plantel.');
-      }
-      setState(() { _teacherId = currentTeacher.key; });
 
-      // Now listen to the schedule
-      _scheduleSubscription = campusRef.child('schedule').onValue.listen((event) {
-        _processSchedule(event.snapshot);
+      // Find teacher key that corresponds to the logged-in user
+      final currentTeacher = teachers.firstWhere((t) => t.name == userName,
+          orElse: () => Teacher(key: '', name: '', subjects: []));
+      if (currentTeacher.key.isEmpty) {
+        throw Exception(
+            'El usuario actual no está registrado como maestro en este plantel.');
+      }
+      setState(() {
+        _teacherId = currentTeacher.key;
       });
 
+      // Now listen to the schedule
+      _scheduleSubscription =
+          campusRef.child('schedule').onValue.listen((event) {
+        _processSchedule(event.snapshot);
+      });
     } catch (e) {
-       _handleError(e.toString());
+      _handleError(e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -131,8 +147,12 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
             (s) => s.key == assignment.subjectId,
             orElse: () => Subject(key: '', name: 'N/A', code: ''));
         final group = _groups.firstWhere((g) => g.key == assignment.groupId,
-            orElse: () =>
-                Group(key: '', name: 'N/A', semester: 0, studentCount: 0, schoolCycleId: ''));
+            orElse: () => Group(
+                key: '',
+                name: 'N/A',
+                semester: 0,
+                studentCount: 0,
+                schoolCycleId: ''));
         courses.add(AssignedCourse(
           subjectName: subject.name,
           groupName: group.name,
@@ -145,15 +165,16 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
       setState(() => _assignedCourses = courses.toList());
     }
   }
-  
+
   void _handleError(String error) {
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $error'), backgroundColor: Colors.red));
+      UiHelpers.showSnackBar(context, 'Error: $error', isError: true);
       setState(() => _isLoading = false);
     }
   }
 
-  List<T> _extractData<T>(DataSnapshot snapshot, T Function(DataSnapshot) fromSnapshot) {
+  List<T> _extractData<T>(
+      DataSnapshot snapshot, T Function(DataSnapshot) fromSnapshot) {
     if (!snapshot.exists) return [];
     return snapshot.children.map((child) => fromSnapshot(child)).toList();
   }
@@ -161,111 +182,246 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          Card(
-            elevation: 2.0,
-            child: ExpansionTile(
-              leading: const Icon(Icons.admin_panel_settings),
-              title: Text('Administración de Horarios', style: theme.textTheme.titleLarge),
-              subtitle: const Text('Gestionar datos maestros para la generación de horarios'),
-              initiallyExpanded: true,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(24.0),
               children: [
-                ListTile(
-                  leading: const Icon(Icons.person_pin_rounded),
-                  title: const Text('Gestionar Maestros'),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ManageTeachersScreen())),
+                _buildSectionHeader(theme, 'Administración Académica'),
+                const SizedBox(height: 16),
+                FadeInUp(
+                  duration: const Duration(milliseconds: 500),
+                  child: Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                            color: isDark
+                                ? Colors.transparent
+                                : Colors.grey.shade200)),
+                    color: isDark ? theme.cardTheme.color : Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          _buildAdminTile(
+                              context,
+                              'Gestionar Maestros',
+                              Icons.person_pin_rounded,
+                              Colors.blue.shade500,
+                              () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ManageTeachersScreen()))),
+                          Divider(
+                              height: 32,
+                              color: theme.dividerColor.withValues(alpha: 0.1)),
+                          _buildAdminTile(
+                              context,
+                              'Gestionar Materias',
+                              Icons.book_outlined,
+                              Colors.orange.shade500,
+                              () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ManageSubjectsScreen()))),
+                          Divider(
+                              height: 32,
+                              color: theme.dividerColor.withValues(alpha: 0.1)),
+                          _buildAdminTile(
+                              context,
+                              'Gestionar Grupos y Aulas',
+                              Icons.class_outlined,
+                              Colors.purple.shade500,
+                              () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ManageGroupsScreen()))),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.book_outlined),
-                  title: const Text('Gestionar Materias'),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ManageSubjectsScreen())),
+                const SizedBox(height: 24),
+                FadeInUp(
+                  delay: const Duration(milliseconds: 150),
+                  child: Card(
+                    elevation: 0,
+                    color: theme.colorScheme.primaryContainer
+                        .withValues(alpha: 0.4),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle),
+                        child: const Icon(Icons.grid_view_rounded,
+                            color: Colors.white, size: 24),
+                      ),
+                      title: Text('Constructor de Horarios',
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold)),
+                      subtitle:
+                          const Text('Asignar clases, maestros y grupos.'),
+                      trailing:
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const ScheduleBuilderScreen())),
+                    ),
+                  ),
                 ),
-                 ListTile(
-                  leading: const Icon(Icons.class_outlined),
-                  title: const Text('Gestionar Grupos y Aulas'),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ManageGroupsScreen())),
-                ),
+                const SizedBox(height: 32),
+                _buildSectionHeader(theme, 'Mis Cursos Asignados'),
+                const SizedBox(height: 16),
+                _assignedCourses.isEmpty
+                    ? FadeInUp(
+                        delay: const Duration(milliseconds: 300),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(Icons.class_outlined,
+                                  size: 60, color: theme.disabledColor),
+                              const SizedBox(height: 12),
+                              Text('No tienes cursos asignados actualmente.',
+                                  style: theme.textTheme.bodyLarge
+                                      ?.copyWith(color: theme.disabledColor)),
+                            ],
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _assignedCourses.length,
+                        itemBuilder: (context, index) {
+                          final course = _assignedCourses[index];
+                          return FadeInUp(
+                            delay: Duration(milliseconds: 100 * index),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 16.0),
+                              decoration: BoxDecoration(
+                                  color: isDark
+                                      ? theme.cardTheme.color
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                      color: isDark
+                                          ? Colors.transparent
+                                          : Colors.grey.shade100),
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: Colors.black
+                                            .withValues(alpha: 0.03),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4))
+                                  ]),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(20),
+                                title: Text(
+                                  course.subjectName,
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.primary),
+                                ),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.people_outline,
+                                          size: 16,
+                                          color: theme
+                                              .textTheme.bodyMedium?.color),
+                                      const SizedBox(width: 6),
+                                      Text('Grupo: ${course.groupName}',
+                                          style: theme.textTheme.bodyMedium),
+                                    ],
+                                  ),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon:
+                                          const Icon(Icons.fact_check_outlined),
+                                      tooltip: 'Pase de Lista',
+                                      color: theme.colorScheme.secondary,
+                                      onPressed: () {},
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                          Icons.arrow_forward_ios_rounded,
+                                          size: 18),
+                                      onPressed: () {},
+                                    ),
+                                  ],
+                                ),
+                                onTap: () {
+                                  // Navigate to course details
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
               ],
             ),
-          ),
-          
-          const SizedBox(height: 16),
+    );
+  }
 
-           Card(
-            elevation: 2.0,
-            child: ListTile(
-              leading: Icon(Icons.grid_on_sharp, color: theme.colorScheme.secondary, size: 40),
-              title: Text('Constructor de Horarios', style: theme.textTheme.titleLarge),
-              subtitle: const Text('Asignar clases, maestros y grupos de forma manual.'),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ScheduleBuilderScreen())),
+  Widget _buildSectionHeader(ThemeData theme, String title) {
+    return Row(
+      children: [
+        Container(
+            width: 4,
+            height: 24,
+            color: theme.colorScheme.primary,
+            margin: const EdgeInsets.only(right: 12)),
+        Text(title,
+            style: theme.textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  Widget _buildAdminTile(BuildContext context, String title, IconData icon,
+      Color iconColor, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: iconColor),
             ),
-          ),
-
-          const Padding(
-            padding: EdgeInsets.only(top: 24.0, bottom: 8.0, left: 8.0, right: 8.0),
-            child: Divider(),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text('Mis Cursos Asignados', style: theme.textTheme.titleLarge),
-          ),
-          const SizedBox(height: 8),
-
-          _assignedCourses.isEmpty
-              ? const Center(child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text('No tienes cursos asignados en el horario actual.'),
-                ))
-              : ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _assignedCourses.length,
-                  itemBuilder: (context, index) {
-                    final course = _assignedCourses[index];
-                    return Card(
-                      elevation: 2.0,
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              course.subjectName,
-                              style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.primary),
-                            ),
-                            const SizedBox(height: 4),
-                            Text('Grupo: ${course.groupName}', style: theme.textTheme.bodyMedium),
-                            const SizedBox(height: 16),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                OutlinedButton.icon(
-                                  icon: const Icon(Icons.people_alt_outlined),
-                                  label: const Text('Ver Alumnos'),
-                                  onPressed: () {},
-                                ),
-                                const SizedBox(width: 8),
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.fact_check_outlined),
-                                  label: const Text('Pase de Lista'),
-                                  onPressed: () {},
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ],
+            const SizedBox(width: 16),
+            Expanded(
+                child: Text(title,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w500))),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }

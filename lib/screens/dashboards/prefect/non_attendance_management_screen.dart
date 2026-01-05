@@ -1,25 +1,29 @@
 import 'dart:async';
+import 'package:asystem_cobacam/utils/animations.dart';
+import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:asystem_cobacam/models/non_attendance_day_model.dart';
 import 'package:asystem_cobacam/services/app_settings_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:asystem_cobacam/services/hive_service.dart'; // ADDED: Import HiveService
-import 'package:asystem_cobacam/services/connectivity_service.dart'; // ADDED: Import ConnectivityService
-import 'package:provider/provider.dart'; // ADDED: Import Provider
+import 'package:asystem_cobacam/services/hive_service.dart';
+import 'package:asystem_cobacam/services/connectivity_service.dart';
+import 'package:provider/provider.dart';
 
 class NonAttendanceManagementScreen extends StatefulWidget {
   const NonAttendanceManagementScreen({super.key});
 
   @override
-  State<NonAttendanceManagementScreen> createState() => _NonAttendanceManagementScreenState();
+  State<NonAttendanceManagementScreen> createState() =>
+      _NonAttendanceManagementScreenState();
 }
 
-class _NonAttendanceManagementScreenState extends State<NonAttendanceManagementScreen> {
-  late final HiveService _hiveService; // ADDED: Declaration
-  late final ConnectivityService _connectivityService; // ADDED: Declaration
-  late final AppSettingsService _appSettingsService; // MODIFIED: to late final
+class _NonAttendanceManagementScreenState
+    extends State<NonAttendanceManagementScreen> {
+  late final HiveService _hiveService;
+  late final ConnectivityService _connectivityService;
+  late final AppSettingsService _appSettingsService;
   List<NonAttendanceDay> _nonAttendanceDays = [];
   bool _isLoading = true;
   String? _campusId;
@@ -27,10 +31,11 @@ class _NonAttendanceManagementScreenState extends State<NonAttendanceManagementS
   @override
   void initState() {
     super.initState();
-    // ADDED: Initialize services
     _hiveService = Provider.of<HiveService>(context, listen: false);
-    _connectivityService = Provider.of<ConnectivityService>(context, listen: false);
-    _appSettingsService = AppSettingsService(_hiveService, _connectivityService);
+    _connectivityService =
+        Provider.of<ConnectivityService>(context, listen: false);
+    _appSettingsService =
+        AppSettingsService(_hiveService, _connectivityService);
     _initData();
   }
 
@@ -39,20 +44,30 @@ class _NonAttendanceManagementScreenState extends State<NonAttendanceManagementS
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('No hay usuario autenticado.');
 
-      final userProfileSnapshot = await FirebaseDatabase.instance.ref('users/${user.uid}').get();
-      if (!userProfileSnapshot.exists) throw Exception('No se encontró el perfil del usuario.');
-      
-      final userData = Map<String, dynamic>.from(userProfileSnapshot.value as Map);
+      final userProfileSnapshot =
+          await FirebaseDatabase.instance.ref('users/${user.uid}').get();
+      if (!userProfileSnapshot.exists) {
+        throw Exception('No se encontró el perfil del usuario.');
+      }
+
+      final userData =
+          Map<String, dynamic>.from(userProfileSnapshot.value as Map);
       final campus = userData['campus'];
-      if (campus == null) throw Exception('El usuario no tiene un plantel asignado.');
+      if (campus == null) {
+        throw Exception('El usuario no tiene un plantel asignado.');
+      }
 
       if (!mounted) return;
-      setState(() { _campusId = campus; });
+      setState(() {
+        _campusId = campus;
+      });
 
       _loadNonAttendanceDays();
-
     } catch (e) {
-      _showErrorSnackBar('Error: ${e.toString()}');
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Error: ${e.toString()}',
+            isError: true);
+      }
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -61,27 +76,28 @@ class _NonAttendanceManagementScreenState extends State<NonAttendanceManagementS
     if (_campusId == null) return;
     setState(() => _isLoading = true);
     try {
-      final days = await _appSettingsService.getAllNonAttendanceDays(_campusId!);
+      final days =
+          await _appSettingsService.getAllNonAttendanceDays(_campusId!);
       if (!mounted) return;
       setState(() {
         _nonAttendanceDays = days;
         _isLoading = false;
       });
     } catch (e) {
-      _showErrorSnackBar('Error al cargar días no lectivos: ${e.toString()}');
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Error al cargar días.', isError: true);
+      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _showNonAttendanceDayFormDialog({NonAttendanceDay? day}) async {
     final formKey = GlobalKey<FormState>();
     DateTime selectedStartDate = day?.date ?? DateTime.now();
-    DateTime selectedEndDate = day?.date ?? DateTime.now(); // For range selection
+    DateTime selectedEndDate = day?.date ?? DateTime.now();
     final reasonController = TextEditingController(text: day?.reason ?? '');
-    bool isRangeSelection = false; // Flag to determine if selecting a range
+    bool isRangeSelection = false;
 
-    // If editing an existing day, assume single day selection
     if (day != null) {
       isRangeSelection = false;
       selectedStartDate = day.date;
@@ -94,69 +110,56 @@ class _NonAttendanceManagementScreenState extends State<NonAttendanceManagementS
         return StatefulBuilder(
           builder: (dialogContext, setStateInDialog) {
             return AlertDialog(
-              title: Text(day == null ? 'Añadir Día No Lectivo' : 'Editar Día No Lectivo'),
+              title: Text(day == null ? 'Añadir Suspensión' : 'Editar Día'),
               content: Form(
                 key: formKey,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (day == null) // Only show range option for new entries
+                      if (day == null)
                         SwitchListTile(
-                          title: const Text('Seleccionar Rango de Fechas'),
+                          title: const Text('Rango de Fechas',
+                              style: TextStyle(fontSize: 14)),
                           value: isRangeSelection,
                           onChanged: (bool value) {
                             setStateInDialog(() {
                               isRangeSelection = value;
-                              if (!isRangeSelection) { // Reset end date if switching to single day
+                              if (!isRangeSelection) {
                                 selectedEndDate = selectedStartDate;
                               }
                             });
                           },
                         ),
                       const SizedBox(height: 10),
-                      ListTile(
-                        title: Text('Fecha de Inicio: ${DateFormat('dd/MM/yyyy').format(selectedStartDate)}'),
-                        trailing: const Icon(Icons.calendar_today),
-                        onTap: () async {
-                          final pickedDate = await showDatePicker(
-                            context: dialogContext,
-                            initialDate: selectedStartDate,
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2100),
-                          );
-                          if (pickedDate != null) {
-                            setStateInDialog(() {
-                              selectedStartDate = pickedDate;
-                              if (!isRangeSelection) {
-                                selectedEndDate = pickedDate; // Keep end date same as start for single selection
-                              } else if (selectedEndDate.isBefore(selectedStartDate)) {
-                                selectedEndDate = selectedStartDate; // Adjust end date if it's before new start date
-                              }
-                            });
+                      _buildDateTile(dialogContext, 'Inicio', selectedStartDate,
+                          (d) {
+                        setStateInDialog(() {
+                          selectedStartDate = d;
+                          if (!isRangeSelection || selectedEndDate.isBefore(d)) {
+                            selectedEndDate = d;
                           }
-                        },
-                      ),
+                        });
+                      }),
                       if (isRangeSelection)
-                        ListTile(
-                          title: Text('Fecha de Fin: ${DateFormat('dd/MM/yyyy').format(selectedEndDate)}'),
-                          trailing: const Icon(Icons.calendar_today),
-                          onTap: () async {
-                            final pickedDate = await showDatePicker(
-                              context: dialogContext,
-                              initialDate: selectedEndDate,
-                              firstDate: selectedStartDate, // End date cannot be before start date
-                              lastDate: DateTime(2100),
-                            );
-                            if (pickedDate != null) {
-                              setStateInDialog(() => selectedEndDate = pickedDate);
-                            }
-                          },
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: _buildDateTile(
+                              dialogContext,
+                              'Fin',
+                              selectedEndDate,
+                              (d) =>
+                                  setStateInDialog(() => selectedEndDate = d),
+                              minDate: selectedStartDate),
                         ),
+                      const SizedBox(height: 16),
                       TextFormField(
                         controller: reasonController,
-                        decoration: const InputDecoration(labelText: 'Razón (ej. Feriado, Vacaciones, Lluvias Fuertes)'),
-                        validator: (value) => value!.isEmpty ? 'La razón es obligatoria' : null,
+                        decoration: const InputDecoration(
+                            labelText: 'Razón / Motivo',
+                            prefixIcon: Icon(Icons.info_outline)),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Requerido' : null,
                       ),
                     ],
                   ),
@@ -164,49 +167,46 @@ class _NonAttendanceManagementScreenState extends State<NonAttendanceManagementS
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancelar'),
-                ),
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Cancelar')),
                 ElevatedButton(
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
                     if (_campusId == null) return;
-                    if (!dialogContext.mounted) return;
 
                     try {
                       List<NonAttendanceDay> daysToSave = [];
-
-                      if (day != null) { // Editing existing single day
-                        final updatedDay = NonAttendanceDay(
-                          id: DateFormat('yyyy-MM-dd').format(selectedStartDate),
-                          campusId: _campusId!,
-                          date: selectedStartDate,
-                          reason: reasonController.text,
-                        );
-                        daysToSave.add(updatedDay);
-                      } else { // Adding new day(s)
-                        DateTime currentDate = selectedStartDate;
-                        while (currentDate.isBefore(selectedEndDate) || currentDate.isAtSameMomentAs(selectedEndDate)) {
-                          daysToSave.add(NonAttendanceDay(
-                            id: DateFormat('yyyy-MM-dd').format(currentDate),
+                      if (day != null) {
+                        daysToSave.add(NonAttendanceDay(
+                            id: DateFormat('yyyy-MM-dd')
+                                .format(selectedStartDate),
                             campusId: _campusId!,
-                            date: currentDate,
-                            reason: reasonController.text,
-                          ));
-                          currentDate = currentDate.add(const Duration(days: 1));
+                            date: selectedStartDate,
+                            reason: reasonController.text));
+                      } else {
+                        DateTime current = selectedStartDate;
+                        while (current.isBefore(selectedEndDate) ||
+                            current.isAtSameMomentAs(selectedEndDate)) {
+                          daysToSave.add(NonAttendanceDay(
+                              id: DateFormat('yyyy-MM-dd').format(current),
+                              campusId: _campusId!,
+                              date: current,
+                              reason: reasonController.text));
+                          current = current.add(const Duration(days: 1));
                         }
                       }
-                      
                       for (final d in daysToSave) {
-                        await _appSettingsService.addNonAttendanceDay(d); // add or update if id exists
+                        await _appSettingsService.addNonAttendanceDay(d);
                       }
-
-                      _showSuccessSnackBar('Día(s) no lectivo(s) guardado(s) exitosamente.');
-                      if (!dialogContext.mounted) return;
-                      Navigator.of(dialogContext).pop();
-                      _loadNonAttendanceDays(); // Refresh list
+                      if (mounted) {
+                        UiHelpers.showSnackBar(
+                            context, 'Días guardados correctamente.');
+                      }
+                      Navigator.pop(dialogContext);
+                      _loadNonAttendanceDays();
                     } catch (e) {
-                      _showErrorSnackBar('Error al guardar día(s) no lectivo(s): ${e.toString()}');
+                      UiHelpers.showSnackBar(context, 'Error al guardar.',
+                          isError: true);
                     }
                   },
                   child: Text(day == null ? 'Añadir' : 'Actualizar'),
@@ -219,105 +219,142 @@ class _NonAttendanceManagementScreenState extends State<NonAttendanceManagementS
     );
   }
 
-  Future<void> _confirmDeleteNonAttendanceDay(NonAttendanceDay day) async {
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Confirmar Eliminación'),
-          content: Text('¿Estás seguro de que quieres eliminar el día no lectivo del ${DateFormat('dd/MM/yyyy').format(day.date)}?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
+  Widget _buildDateTile(BuildContext context, String label, DateTime date,
+      Function(DateTime) onPicked,
+      {DateTime? minDate}) {
+    return InkWell(
+      onTap: () async {
+        final d = await showDatePicker(
+            context: context,
+            initialDate: date,
+            firstDate: minDate ?? DateTime(2020),
+            lastDate: DateTime(2100));
+        if (d != null) onPicked(d);
       },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(12)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('$label:',
+                style: const TextStyle(fontWeight: FontWeight.w500)),
+            Text(DateFormat('dd/MM/yyyy').format(date),
+                style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
     );
-
-    if (confirm == true) {
-      if (_campusId == null) return;
-      try {
-        await _appSettingsService.deleteNonAttendanceDay(_campusId!, day.id);
-        _showSuccessSnackBar('Día no lectivo eliminado exitosamente.');
-        _loadNonAttendanceDays(); // Refresh list
-      } catch (e) {
-        _showErrorSnackBar('Error al eliminar día no lectivo: ${e.toString()}');
-      }
-    }
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red, duration: const Duration(seconds: 3)),
-    );
-  }
-
-  void _showSuccessSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green, duration: const Duration(seconds: 3)),
-    );
-  }
-
-  @override
-  void dispose() {
-    // _schoolCyclesSubscription?.cancel(); // No subscription currently used in this screen
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text('Días No Lectivos'),
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: 0,
+        centerTitle: true,
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _campusId == null
-              ? const Center(child: Text('No se pudo determinar el plantel.'))
-              : Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
-                    child: _nonAttendanceDays.isEmpty
-                        ? Center(child: Text('No hay días no lectivos registrados. Puedes añadir uno.'))
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(16.0),
-                            itemCount: _nonAttendanceDays.length,
-                            itemBuilder: (context, index) {
-                              final day = _nonAttendanceDays[index];
-                              return Card(
+          : LayoutBuilder(builder: (context, constraints) {
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: _nonAttendanceDays.isEmpty
+                      ? Center(
+                          child: Text('No hay días no lectivos registrados.',
+                              style: TextStyle(color: Colors.grey.shade500)))
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16.0),
+                          itemCount: _nonAttendanceDays.length,
+                          itemBuilder: (context, index) {
+                            final day = _nonAttendanceDays[index];
+                            return FadeInUp(
+                              delay: Duration(milliseconds: 50 * index),
+                              child: Card(
+                                elevation: 0,
                                 margin: const EdgeInsets.symmetric(vertical: 8),
-                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: isDark
+                                      ? BorderSide.none
+                                      : BorderSide(color: Colors.grey.shade200),
+                                ),
+                                color: isDark
+                                    ? theme.cardTheme.color
+                                    : Colors.white,
                                 child: ListTile(
-                                  title: Text(DateFormat('dd/MM/yyyy').format(day.date)),
-                                  subtitle: Text(day.reason ?? 'Sin razón'),
+                                  contentPadding: const EdgeInsets.all(16),
+                                  leading: CircleAvatar(
+                                    backgroundColor: Colors.red.shade50,
+                                    child: Icon(Icons.event_busy,
+                                        color: Colors.red.shade600),
+                                  ),
+                                  title: Text(
+                                      DateFormat('EEEE d MMMM', 'es_MX')
+                                          .format(day.date),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  subtitle: Text(
+                                      day.reason ?? 'Sin razón especificada',
+                                      style: TextStyle(
+                                          color: theme
+                                              .textTheme.bodySmall?.color)),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
-                                        icon: const Icon(Icons.edit),
-                                        onPressed: () => _showNonAttendanceDayFormDialog(day: day),
-                                      ),
+                                          icon: Icon(Icons.edit_outlined,
+                                              color: theme.colorScheme.primary),
+                                          onPressed: () =>
+                                              _showNonAttendanceDayFormDialog(
+                                                  day: day)),
                                       IconButton(
-                                        icon: Icon(Icons.delete, color: theme.colorScheme.error),
-                                        onPressed: () => _confirmDeleteNonAttendanceDay(day),
+                                        icon: Icon(Icons.delete_outline,
+                                            color: theme.colorScheme.error),
+                                        onPressed: () async {
+                                          final confirm = await UiHelpers
+                                              .showConfirmationDialog(context,
+                                                  title: 'Eliminar Día',
+                                                  content: '¿Estás seguro?',
+                                                  isDestructive: true);
+                                          if (confirm && _campusId != null) {
+                                            await _appSettingsService
+                                                .deleteNonAttendanceDay(
+                                                    _campusId!, day.id);
+                                            _loadNonAttendanceDays();
+                                            if (mounted) {
+                                              UiHelpers.showSnackBar(
+                                                  context, 'Día eliminado.');
+                                            }
+                                          }
+                                        },
                                       ),
                                     ],
                                   ),
                                 ),
-                              );
-                            },
-                          ),
-                  ),
+                              ),
+                            );
+                          },
+                        ),
                 ),
+              );
+            }),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showNonAttendanceDayFormDialog(),
-        child: const Icon(Icons.add),
+        backgroundColor: theme.colorScheme.primary,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

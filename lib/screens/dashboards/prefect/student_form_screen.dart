@@ -1,3 +1,5 @@
+import 'package:asystem_cobacam/utils/animations.dart';
+import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:asystem_cobacam/models/student_model.dart';
@@ -11,7 +13,8 @@ import 'package:provider/provider.dart'; // ADDED: Import Provider
 class StudentFormScreen extends StatefulWidget {
   final Student? student; // Null if adding new student, not null if editing
   final String campusId;
-  final String currentSchoolCycle; // This is the *global current* cycle, not necessarily the student's cycle
+  final String
+      currentSchoolCycle; // This is the *global current* cycle, not necessarily the student's cycle
 
   const StudentFormScreen({
     super.key,
@@ -52,24 +55,35 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
   @override
   void initState() {
     super.initState();
-    // ADDED: Initialize services
     _hiveService = Provider.of<HiveService>(context, listen: false);
-    _connectivityService = Provider.of<ConnectivityService>(context, listen: false);
-    _appSettingsService = AppSettingsService(_hiveService, _connectivityService);
+    _connectivityService =
+        Provider.of<ConnectivityService>(context, listen: false);
+    _appSettingsService =
+        AppSettingsService(_hiveService, _connectivityService);
 
-    _fullNameController = TextEditingController(text: widget.student?.fullName ?? '');
-    _guardianFullNameController = TextEditingController(text: widget.student?.guardianFullName ?? '');
-    _ageController = TextEditingController(text: widget.student?.age.toString() ?? '');
-    _guardianPhoneController = TextEditingController(text: widget.student?.guardianPhone ?? '');
-    _studentPhoneController = TextEditingController(text: widget.student?.studentPhone ?? '');
-    _placeOfResidenceController = TextEditingController(text: widget.student?.placeOfResidence ?? '');
-    _institutionalEmailController = TextEditingController(text: widget.student?.institutionalEmail ?? '');
-    _studentIdController = TextEditingController(text: widget.student?.studentId ?? '');
+    _fullNameController =
+        TextEditingController(text: widget.student?.fullName ?? '');
+    _guardianFullNameController =
+        TextEditingController(text: widget.student?.guardianFullName ?? '');
+    _ageController =
+        TextEditingController(text: widget.student?.age.toString() ?? '');
+    _guardianPhoneController =
+        TextEditingController(text: widget.student?.guardianPhone ?? '');
+    _studentPhoneController =
+        TextEditingController(text: widget.student?.studentPhone ?? '');
+    _placeOfResidenceController =
+        TextEditingController(text: widget.student?.placeOfResidence ?? '');
+    _institutionalEmailController =
+        TextEditingController(text: widget.student?.institutionalEmail ?? '');
+    _studentIdController =
+        TextEditingController(text: widget.student?.studentId ?? '');
 
     _selectedGender = widget.student?.gender;
     _selectedGroup = widget.student?.group;
-    _selectedSchoolCycle = widget.student?.schoolCycle ?? widget.currentSchoolCycle;
-    _loadGroups(_selectedSchoolCycle); // Pass the initially selected school cycle
+    _selectedSchoolCycle =
+        widget.student?.schoolCycle ?? widget.currentSchoolCycle;
+    _loadGroups(
+        _selectedSchoolCycle); // Pass the initially selected school cycle
     _loadSchoolCycles();
   }
 
@@ -83,12 +97,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         });
       }
     } catch (e) {
-      // TODO: Handle error properly
-      if (mounted) {
-        setState(() {
-          _isLoadingCycles = false;
-        });
-      }
+      if (mounted) setState(() => _isLoadingCycles = false);
     }
   }
 
@@ -98,7 +107,8 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
       return;
     }
     try {
-      final groupsSnapshot = await FirebaseDatabase.instance.ref('planteles/${widget.campusId}/groups')
+      final groupsSnapshot = await FirebaseDatabase.instance
+          .ref('planteles/${widget.campusId}/groups')
           .orderByChild('schoolCycleId')
           .equalTo(schoolCycleId)
           .get();
@@ -111,8 +121,8 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
           setState(() {
             _groups = fetchedGroups;
             _isLoadingGroups = false;
-            // If the previously selected group is not in the new list, reset it
-            if (_selectedGroup != null && !_groups.any((group) => group.name == _selectedGroup)) {
+            if (_selectedGroup != null &&
+                !_groups.any((group) => group.name == _selectedGroup)) {
               _selectedGroup = null;
             }
           });
@@ -133,7 +143,8 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
           _groups = [];
           _selectedGroup = null;
         });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cargar grupos: ${e.toString()}'), backgroundColor: Colors.red));
+        UiHelpers.showSnackBar(context, 'Error al cargar grupos.',
+            isError: true);
       }
     }
   }
@@ -152,164 +163,255 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
   }
 
   Future<void> _saveStudent() async {
-    if (_formKey.currentState?.validate() != true) {
-      return;
-    }
+    if (_formKey.currentState?.validate() != true) return;
 
-    if (!mounted) return;
-    setState(() { _isSaving = true; });
+    setState(() => _isSaving = true);
 
     try {
-      final databaseRef = FirebaseDatabase.instance.ref('planteles/${widget.campusId}/students/${_selectedSchoolCycle!}');
+      final databaseRef = FirebaseDatabase.instance.ref(
+          'planteles/${widget.campusId}/students/${_selectedSchoolCycle!}');
 
       final studentData = Student(
-        id: _studentIdController.text, // Use studentId (matricula) as the unique ID
+        id: _studentIdController.text,
         fullName: _fullNameController.text,
         guardianFullName: _guardianFullNameController.text,
         age: int.tryParse(_ageController.text) ?? 0,
         guardianPhone: _guardianPhoneController.text,
-        studentPhone: _studentPhoneController.text.isNotEmpty ? _studentPhoneController.text : null,
+        studentPhone: _studentPhoneController.text.isNotEmpty
+            ? _studentPhoneController.text
+            : null,
         gender: _selectedGender!,
         placeOfResidence: _placeOfResidenceController.text,
         schoolCycle: _selectedSchoolCycle!,
         group: _selectedGroup!,
         institutionalEmail: _institutionalEmailController.text,
         studentId: _studentIdController.text,
-        isActive: widget.student?.isActive ?? true, // Preserve existing status or default to true
+        isActive: widget.student?.isActive ?? true,
       );
 
-      // Using studentId as the key for the student in Firebase
-      await databaseRef.child(studentData.studentId).set(studentData.toFirebaseMap());
-      
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Alumno registrado exitosamente!'), backgroundColor: Colors.green));
-      if (!mounted) return;
-      Navigator.pop(context, true); // Pop with true to indicate success
+      await databaseRef
+          .child(studentData.studentId)
+          .set(studentData.toFirebaseMap());
+
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Alumno guardado correctamente.');
+        Navigator.pop(context, true);
+      }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar alumno: ${e.toString()}'), backgroundColor: Colors.red));
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Error: ${e.toString()}',
+            isError: true);
+      }
     } finally {
-      if (mounted) setState(() { _isSaving = false; });
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(widget.student == null ? 'Nuevo Alumno' : 'Editar Alumno'),
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: 0,
+        centerTitle: true,
+      ),
       body: _isLoadingGroups || _isLoadingCycles || _isSaving
           ? const Center(child: CircularProgressIndicator())
-          : Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600), // Max width for content
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextFormField(
-                          controller: _fullNameController,
-                          decoration: const InputDecoration(labelText: 'Nombre Completo del Alumno'),
-                          validator: (value) => value!.isEmpty ? 'El nombre completo es obligatorio' : null,
-                        ),
-                        TextFormField(
-                          controller: _studentIdController,
-                          decoration: const InputDecoration(labelText: 'Matrícula del Alumno'),
-                          validator: (value) => value!.isEmpty ? 'La matrícula es obligatoria' : null,
-                          enabled: widget.student == null, // Matricula is immutable after creation
-                        ),
-                        TextFormField(
-                          controller: _guardianFullNameController,
-                          decoration: const InputDecoration(labelText: 'Nombre Completo del Tutor'),
-                          validator: (value) => value!.isEmpty ? 'El nombre del tutor es obligatorio' : null,
-                        ),
-                        TextFormField(
-                          controller: _ageController,
-                          decoration: const InputDecoration(labelText: 'Edad del Alumno'),
-                          keyboardType: TextInputType.number,
-                          validator: (value) => value!.isEmpty ? 'La edad es obligatoria' : null,
-                        ),
-                        TextFormField(
-                          controller: _guardianPhoneController,
-                          decoration: const InputDecoration(labelText: 'Teléfono del Tutor'),
-                          keyboardType: TextInputType.phone,
-                          validator: (value) => value!.isEmpty ? 'El teléfono del tutor es obligatorio' : null,
-                        ),
-                        TextFormField(
-                          controller: _studentPhoneController,
-                          decoration: const InputDecoration(labelText: 'Teléfono del Alumno (Opcional)'),
-                          keyboardType: TextInputType.phone,
-                        ),
-                        TextFormField(
-                          controller: _placeOfResidenceController,
-                          decoration: const InputDecoration(labelText: 'Lugar de Residencia'),
-                          validator: (value) => value!.isEmpty ? 'El lugar de residencia es obligatorio' : null,
-                        ),
-                        TextFormField(
-                          controller: _institutionalEmailController,
-                          decoration: const InputDecoration(labelText: 'Correo Institucional'),
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) => value!.isEmpty ? 'El correo institucional es obligatorio' : null,
-                        ),
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedGender,
-                          decoration: const InputDecoration(labelText: 'Género'),
-                          items: const [
-                            DropdownMenuItem(value: 'Masculino', child: Text('Masculino')),
-                            DropdownMenuItem(value: 'Femenino', child: Text('Femenino')),
-                          ],
-                          onChanged: (value) {
-                            setState(() { _selectedGender = value; });
-                          },
-                          validator: (value) => value == null ? 'El género es obligatorio' : null,
-                        ),
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedSchoolCycle,
-                          decoration: const InputDecoration(labelText: 'Ciclo Escolar'),
-                          items: _availableSchoolCycles.map((cycle) => DropdownMenuItem(
-                            value: cycle.id,
-                            child: Text(cycle.id),
-                          )).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedSchoolCycle = value;
-                              _loadGroups(value); // Reload groups for the new cycle
-                            });
-                          },
-                          validator: (value) => value == null ? 'El ciclo escolar es obligatorio' : null,
-                        ),
-                        const SizedBox(height: 20),
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedGroup,
-                          decoration: InputDecoration(
-                            labelText: 'Grupo',
-                            helperText: _selectedSchoolCycle == null 
-                                ? 'Seleccione un ciclo escolar primero' 
-                                : (_groups.isEmpty ? 'No hay grupos disponibles para este ciclo' : null),
+          : FadeInUp(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 700),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        side: isDark
+                            ? BorderSide.none
+                            : BorderSide(color: Colors.grey.shade200),
+                      ),
+                      color: isDark ? theme.cardTheme.color : Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildSectionTitle(theme, 'Datos del Alumno'),
+                              const SizedBox(height: 16),
+                              _buildTextField(_fullNameController,
+                                  'Nombre Completo', Icons.person_outline),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                      flex: 2,
+                                      child: _buildTextField(
+                                          _studentIdController,
+                                          'Matrícula',
+                                          Icons.badge_outlined,
+                                          enabled: widget.student == null)),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                      flex: 1,
+                                      child: _buildTextField(_ageController,
+                                          'Edad', Icons.cake_outlined,
+                                          keyboardType: TextInputType.number)),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              _buildGenderDropdown(theme),
+                              const SizedBox(height: 32),
+                              _buildSectionTitle(theme, 'Académico'),
+                              const SizedBox(height: 16),
+                              _buildCycleDropdown(theme),
+                              const SizedBox(height: 12),
+                              _buildGroupDropdown(theme),
+                              const SizedBox(height: 32),
+                              _buildSectionTitle(theme, 'Contacto y Tutor'),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                  _guardianFullNameController,
+                                  'Nombre del Tutor',
+                                  Icons.family_restroom_outlined),
+                              const SizedBox(height: 12),
+                              _buildTextField(_guardianPhoneController,
+                                  'Teléfono Tutor', Icons.phone_outlined,
+                                  keyboardType: TextInputType.phone),
+                              const SizedBox(height: 12),
+                              _buildTextField(
+                                  _studentPhoneController,
+                                  'Teléfono Alumno (Opcional)',
+                                  Icons.phone_android_outlined,
+                                  keyboardType: TextInputType.phone),
+                              const SizedBox(height: 12),
+                              _buildTextField(_placeOfResidenceController,
+                                  'Lugar de Residencia', Icons.home_outlined),
+                              const SizedBox(height: 12),
+                              _buildTextField(
+                                  _institutionalEmailController,
+                                  'Correo Institucional',
+                                  Icons.alternate_email_outlined,
+                                  keyboardType: TextInputType.emailAddress),
+                              const SizedBox(height: 40),
+                              SizedBox(
+                                height: 56,
+                                child: ElevatedButton(
+                                  onPressed: _saveStudent,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: theme.colorScheme.primary,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                  ),
+                                  child: Text(
+                                      widget.student == null
+                                          ? 'Registrar Alumno'
+                                          : 'Guardar Cambios',
+                                      style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            ],
                           ),
-                          items: _groups.map((group) => DropdownMenuItem(
-                            value: group.key, // Use group.key as the value
-                            child: Text(group.name),
-                          )).toList(),
-                          onChanged: _selectedSchoolCycle == null || _groups.isEmpty
-                              ? null // Disable if no cycle selected or no groups
-                              : (value) {
-                                  setState(() { _selectedGroup = value; });
-                                },
-                          validator: (value) => value == null ? 'El grupo es obligatorio' : null,
                         ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: _isSaving ? null : _saveStudent,
-                          child: Text(widget.student == null ? 'Registrar Alumno' : 'Actualizar Alumno'),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildSectionTitle(ThemeData theme, String title) {
+    return Text(title,
+        style: theme.textTheme.titleSmall?.copyWith(
+            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1));
+  }
+
+  Widget _buildTextField(
+      TextEditingController controller, String label, IconData icon,
+      {bool enabled = true, TextInputType? keyboardType}) {
+    return TextFormField(
+      controller: controller,
+      enabled: enabled,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 20),
+        filled: !enabled,
+      ),
+      validator: (val) => val!.isEmpty && label != 'Teléfono Alumno (Opcional)'
+          ? 'Campo requerido'
+          : null,
+    );
+  }
+
+  Widget _buildGenderDropdown(ThemeData theme) {
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedGender,
+      decoration: const InputDecoration(
+          labelText: 'Género', prefixIcon: Icon(Icons.wc_outlined, size: 20)),
+      items: const [
+        DropdownMenuItem(value: 'Masculino', child: Text('Masculino')),
+        DropdownMenuItem(value: 'Femenino', child: Text('Femenino')),
+      ],
+      onChanged: (val) => setState(() => _selectedGender = val),
+      validator: (val) => val == null ? 'Selecciona género' : null,
+    );
+  }
+
+  Widget _buildCycleDropdown(ThemeData theme) {
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedSchoolCycle,
+      decoration: const InputDecoration(
+          labelText: 'Ciclo Escolar',
+          prefixIcon: Icon(Icons.calendar_today_outlined, size: 20)),
+      items: _availableSchoolCycles
+          .map((cycle) =>
+              DropdownMenuItem(value: cycle.id, child: Text(cycle.id)))
+          .toList(),
+      onChanged: (val) {
+        setState(() {
+          _selectedSchoolCycle = val;
+          _loadGroups(val);
+        });
+      },
+      validator: (val) => val == null ? 'Selecciona ciclo' : null,
+    );
+  }
+
+  Widget _buildGroupDropdown(ThemeData theme) {
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedGroup,
+      decoration: InputDecoration(
+        labelText: 'Grupo',
+        prefixIcon: const Icon(Icons.groups_outlined, size: 20),
+        helperText: _selectedSchoolCycle == null
+            ? 'Selecciona un ciclo primero'
+            : (_groups.isEmpty ? 'No hay grupos' : null),
+      ),
+      items: _groups
+          .map((group) =>
+              DropdownMenuItem(value: group.key, child: Text(group.name)))
+          .toList(),
+      onChanged: _selectedSchoolCycle == null || _groups.isEmpty
+          ? null
+          : (val) => setState(() => _selectedGroup = val),
+      validator: (val) => val == null ? 'Selecciona grupo' : null,
     );
   }
 }

@@ -45,7 +45,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      final snapshot = await FirebaseDatabase.instance.ref('users/${user.uid}').get();
+      final snapshot =
+          await FirebaseDatabase.instance.ref('users/${user.uid}').get();
       if (snapshot.exists && snapshot.value != null) {
         final userData = Map<String, dynamic>.from(snapshot.value as Map);
         if (mounted) {
@@ -64,7 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           });
         }
       } else {
-         if (mounted) setState(() => _isLoading = false);
+        if (mounted) setState(() => _isLoading = false);
       }
     } catch (e) {
       if (mounted) {
@@ -76,7 +77,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
@@ -84,10 +86,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-    Future<void> _selectDate() async {
+  Future<void> _selectDate() async {
     DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _dobController.text.isNotEmpty ? DateFormat('yyyy-MM-dd').parse(_dobController.text) : DateTime.now(),
+      initialDate: _dobController.text.isNotEmpty
+          ? DateFormat('yyyy-MM-dd').parse(_dobController.text)
+          : DateTime.now(),
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
     );
@@ -100,7 +104,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<String> _uploadImageToStorage(File imageFile) async {
     final user = FirebaseAuth.instance.currentUser;
-    final storageRef = FirebaseStorage.instance.ref().child('profile_pictures/${user!.uid}');
+    final storageRef =
+        FirebaseStorage.instance.ref().child('profile_pictures/${user!.uid}');
     final uploadTask = storageRef.putFile(imageFile);
     final snapshot = await uploadTask.whenComplete(() => null);
     return await snapshot.ref.getDownloadURL();
@@ -109,7 +114,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final confirmed = await _showConfirmationDialog('Guardar Cambios', '¿Estás seguro de que quieres guardar los cambios?');
+    final confirmed = await _showConfirmationDialog(
+        'Guardar Cambios', '¿Estás seguro de que quieres guardar los cambios?');
     if (confirmed != true) return;
 
     setState(() => _isLoading = true);
@@ -123,9 +129,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         if (user.email != _emailController.text) {
           await user.verifyBeforeUpdateEmail(_emailController.text);
-           if (mounted) {
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Se ha enviado un correo de verificación a ${_emailController.text}. Por favor, verifica tu nuevo correo para completar el cambio.'),
+              content: Text(
+                  'Se ha enviado un correo de verificación a ${_emailController.text}. Por favor, verifica tu nuevo correo para completar el cambio.'),
               duration: const Duration(seconds: 5),
             ));
           }
@@ -141,28 +148,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'profileImageUrl': photoUrl,
         });
 
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Perfil actualizado con éxito')));
-        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Perfil actualizado con éxito')));
+        }
+
         setState(() {
           _isEditing = false;
           _userPhotoUrl = photoUrl;
         });
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al actualizar el perfil: ${e.toString()}')));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Error al actualizar el perfil: ${e.toString()}')));
+        }
       } finally {
-        if(mounted) setState(() => _isLoading = false);
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
 
   Future<void> _deactivateAccount() async {
-    final confirmed = await _showConfirmationDialog('Desactivar Cuenta', 'Esta acción es irreversible. ¿Estás seguro de que quieres desactivar tu cuenta?', isDestructive: true);
+    final confirmed = await _showConfirmationDialog('Desactivar Cuenta',
+        'Esta acción es irreversible. ¿Estás seguro de que quieres desactivar tu cuenta?',
+        isDestructive: true);
     if (confirmed == true) {
       await FirebaseAuth.instance.signOut();
     }
   }
 
-  Future<bool?> _showConfirmationDialog(String title, String content, {bool isDestructive = false}) {
+  Future<bool?> _showConfirmationDialog(String title, String content,
+      {bool isDestructive = false}) {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -175,7 +191,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: isDestructive ? TextButton.styleFrom(foregroundColor: Colors.red) : null,
+            style: isDestructive
+                ? TextButton.styleFrom(foregroundColor: Colors.red)
+                : null,
             child: Text(isDestructive ? 'Desactivar' : 'Aceptar'),
           ),
         ],
@@ -184,7 +202,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _deleteProfileImage() async {
-    final confirmed = await _showConfirmationDialog('Eliminar Foto', '¿Estás seguro de que quieres eliminar tu foto de perfil?', isDestructive: true);
+    final confirmed = await _showConfirmationDialog('Eliminar Foto',
+        '¿Estás seguro de que quieres eliminar tu foto de perfil?',
+        isDestructive: true);
     if (confirmed != true) return;
 
     setState(() => _isLoading = true);
@@ -200,20 +220,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'profileImageUrl': null,
         });
 
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Foto de perfil eliminada con éxito')));
-        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Foto de perfil eliminada con éxito')));
+        }
+
         setState(() {
           _userPhotoUrl = null;
           _imageFile = null;
           _isEditing = true; // Stay in editing mode after deletion
         });
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al eliminar la foto: ${e.toString()}')));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Error al eliminar la foto: ${e.toString()}')));
+        }
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
     } else {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No hay foto de perfil para eliminar.')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('No hay foto de perfil para eliminar.')));
+      }
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -265,7 +294,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Card(
                       elevation: 2.0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0)),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
@@ -274,8 +304,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               children: [
                                 GestureDetector(
                                   onTap: () {
-                                    if (_userPhotoUrl != null || _imageFile != null) {
-                                      _viewFullScreenImage(context, _imageFile?.path ?? _userPhotoUrl!);
+                                    if (_userPhotoUrl != null ||
+                                        _imageFile != null) {
+                                      _viewFullScreenImage(context,
+                                          _imageFile?.path ?? _userPhotoUrl!);
                                     } else if (_isEditing) {
                                       _pickImage();
                                     }
@@ -284,11 +316,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     radius: 50,
                                     backgroundImage: _imageFile != null
                                         ? FileImage(_imageFile!)
-                                        : (_userPhotoUrl != null ? NetworkImage(_userPhotoUrl!) : null) as ImageProvider?,
-                                    child: _imageFile == null && _userPhotoUrl == null ? const Icon(Icons.person, size: 50) : null,
+                                        : (_userPhotoUrl != null
+                                            ? NetworkImage(_userPhotoUrl!)
+                                            : null) as ImageProvider?,
+                                    child: _imageFile == null &&
+                                            _userPhotoUrl == null
+                                        ? const Icon(Icons.person, size: 50)
+                                        : null,
                                   ),
                                 ),
-                                if (_isEditing && (_userPhotoUrl != null || _imageFile != null))
+                                if (_isEditing &&
+                                    (_userPhotoUrl != null ||
+                                        _imageFile != null))
                                   Positioned(
                                     bottom: 0,
                                     right: 0,
@@ -296,20 +335,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       backgroundColor: Colors.red,
                                       radius: 18,
                                       child: IconButton(
-                                        icon: const Icon(Icons.delete, color: Colors.white, size: 20),
+                                        icon: const Icon(Icons.delete,
+                                            color: Colors.white, size: 20),
                                         onPressed: _deleteProfileImage,
                                       ),
                                     ),
                                   ),
-                                if (_isEditing && _userPhotoUrl == null && _imageFile == null)
+                                if (_isEditing &&
+                                    _userPhotoUrl == null &&
+                                    _imageFile == null)
                                   Positioned(
                                     bottom: 0,
                                     right: 0,
                                     child: CircleAvatar(
-                                      backgroundColor: Theme.of(context).colorScheme.primary,
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.primary,
                                       radius: 18,
                                       child: IconButton(
-                                        icon: const Icon(Icons.add_a_photo, color: Colors.white, size: 20),
+                                        icon: const Icon(Icons.add_a_photo,
+                                            color: Colors.white, size: 20),
                                         onPressed: _pickImage,
                                       ),
                                     ),
@@ -317,19 +361,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ],
                             ),
                             const SizedBox(height: 20),
-                            TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Nombre'), enabled: _isEditing, validator: (v) => v!.isEmpty ? 'Requerido' : null),
+                            TextFormField(
+                                controller: _nameController,
+                                decoration:
+                                    const InputDecoration(labelText: 'Nombre'),
+                                enabled: _isEditing,
+                                validator: (v) =>
+                                    v!.isEmpty ? 'Requerido' : null),
                             const SizedBox(height: 20),
-                            TextFormField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email'), enabled: _isEditing, validator: (v) => v!.isEmpty || !v.contains('@') ? 'Email inválido' : null),
+                            TextFormField(
+                                controller: _emailController,
+                                decoration:
+                                    const InputDecoration(labelText: 'Email'),
+                                enabled: _isEditing,
+                                validator: (v) => v!.isEmpty || !v.contains('@')
+                                    ? 'Email inválido'
+                                    : null),
                             const SizedBox(height: 20),
-                             TextFormField(controller: _dobController, decoration: const InputDecoration(labelText: 'Fecha de Nacimiento'), enabled: _isEditing, readOnly: true, onTap: _isEditing ? _selectDate : null),
+                            TextFormField(
+                                controller: _dobController,
+                                decoration: const InputDecoration(
+                                    labelText: 'Fecha de Nacimiento'),
+                                enabled: _isEditing,
+                                readOnly: true,
+                                onTap: _isEditing ? _selectDate : null),
                             const SizedBox(height: 20),
-                            TextFormField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Teléfono'), enabled: _isEditing),
+                            TextFormField(
+                                controller: _phoneController,
+                                decoration: const InputDecoration(
+                                    labelText: 'Teléfono'),
+                                enabled: _isEditing),
                             const SizedBox(height: 20),
-                            TextFormField(controller: _officeController, decoration: const InputDecoration(labelText: 'Oficina'), enabled: _isEditing),
-                             const SizedBox(height: 20),
-                            TextFormField(controller: _locationController, decoration: const InputDecoration(labelText: 'Ubicación'), enabled: _isEditing),
+                            TextFormField(
+                                controller: _officeController,
+                                decoration:
+                                    const InputDecoration(labelText: 'Oficina'),
+                                enabled: _isEditing),
                             const SizedBox(height: 20),
-                            TextFormField(controller: _bioController, decoration: const InputDecoration(labelText: 'Biografía'), enabled: _isEditing, maxLines: 3),
+                            TextFormField(
+                                controller: _locationController,
+                                decoration: const InputDecoration(
+                                    labelText: 'Ubicación'),
+                                enabled: _isEditing),
+                            const SizedBox(height: 20),
+                            TextFormField(
+                                controller: _bioController,
+                                decoration: const InputDecoration(
+                                    labelText: 'Biografía'),
+                                enabled: _isEditing,
+                                maxLines: 3),
                           ],
                         ),
                       ),
@@ -337,11 +417,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 20),
                     Card(
                       elevation: 2.0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0)),
                       child: Column(
                         children: [
-                          ListTile(leading: const Icon(Icons.work), title: const Text('Rol'), subtitle: Text(_userRole)),
-                          ListTile(leading: const Icon(Icons.school), title: const Text('Plantel'), subtitle: Text(_userCampus)),
+                          ListTile(
+                              leading: const Icon(Icons.work),
+                              title: const Text('Rol'),
+                              subtitle: Text(_userRole)),
+                          ListTile(
+                              leading: const Icon(Icons.school),
+                              title: const Text('Plantel'),
+                              subtitle: Text(_userCampus)),
                         ],
                       ),
                     ),
@@ -349,11 +436,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (_isEditing)
                       Card(
                         elevation: 2.0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0)),
                         color: Colors.red[50],
                         child: ListTile(
-                          leading: const Icon(Icons.delete_forever, color: Colors.red),
-                          title: const Text('Desactivar Cuenta', style: TextStyle(color: Colors.red)),
+                          leading: const Icon(Icons.delete_forever,
+                              color: Colors.red),
+                          title: const Text('Desactivar Cuenta',
+                              style: TextStyle(color: Colors.red)),
                           onTap: _deactivateAccount,
                         ),
                       ),

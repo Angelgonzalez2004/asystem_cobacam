@@ -1,4 +1,6 @@
 import 'package:asystem_cobacam/models/school_cycle_model.dart';
+import 'package:asystem_cobacam/utils/animations.dart';
+import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -17,6 +19,7 @@ class _SchoolCycleManagementScreenState
       FirebaseDatabase.instance.ref('school_cycles');
 
   List<SchoolCycle> _schoolCycles = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -31,46 +34,159 @@ class _SchoolCycleManagementScreenState
         for (final child in event.snapshot.children) {
           cycles.add(SchoolCycle.fromSnapshot(child));
         }
-        setState(() {
-          _schoolCycles = cycles;
-        });
+        if (mounted) {
+          setState(() {
+            _schoolCycles = cycles;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _schoolCycles = [];
+            _isLoading = false;
+          });
+        }
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text('Ciclos Escolares'),
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : LayoutBuilder(builder: (context, constraints) {
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: _schoolCycles.isEmpty
+                      ? Center(
+                          child: Text('No hay ciclos registrados.',
+                              style: TextStyle(color: Colors.grey.shade500)))
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _schoolCycles.length,
+                          itemBuilder: (context, index) {
+                            final cycle = _schoolCycles[index];
+                            return FadeInUp(
+                              delay: Duration(milliseconds: 50 * index),
+                              child: Card(
+                                elevation: 0,
+                                margin: const EdgeInsets.only(bottom: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: isDark
+                                      ? BorderSide.none
+                                      : BorderSide(color: Colors.grey.shade200),
+                                ),
+                                color: isDark
+                                    ? theme.cardTheme.color
+                                    : Colors.white,
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.all(16),
+                                  leading: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                        color: theme.colorScheme.primary
+                                            .withValues(alpha: 0.1),
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                    child: Icon(Icons.calendar_month_outlined,
+                                        color: theme.colorScheme.primary),
+                                  ),
+                                  title: Text(cycle.id,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18)),
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.date_range,
+                                                size: 14, color: Colors.grey),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${DateFormat('dd/MM/yyyy').format(cycle.startDate)} - ${DateFormat('dd/MM/yyyy').format(cycle.endDate)}',
+                                              style: TextStyle(
+                                                  color: theme.textTheme
+                                                      .bodySmall?.color),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                              color: Colors.teal.shade50,
+                                              borderRadius:
+                                                  BorderRadius.circular(6)),
+                                          child: Text('TIPO ${cycle.type}',
+                                              style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.teal.shade700,
+                                                  fontWeight: FontWeight.bold)),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(Icons.edit_outlined,
+                                            color: theme.colorScheme.primary),
+                                        onPressed: () => _showSchoolCycleDialog(
+                                            cycle: cycle),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(Icons.delete_outline,
+                                            color: theme.colorScheme.error),
+                                        onPressed: () async {
+                                          final confirm = await UiHelpers
+                                              .showConfirmationDialog(context,
+                                                  title: 'Eliminar Ciclo',
+                                                  content: '¿Estás seguro?',
+                                                  isDestructive: true);
+                                          if (confirm) {
+                                            _deleteSchoolCycle(cycle.id);
+                                            if (mounted) {
+                                              UiHelpers.showSnackBar(
+                                                  context, 'Ciclo eliminado.');
+                                            }
+                                          }
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              );
+            }),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showSchoolCycleDialog(),
-        child: const Icon(Icons.add),
-      ),
-      body: ListView.builder(
-        itemCount: _schoolCycles.length,
-        itemBuilder: (context, index) {
-          final cycle = _schoolCycles[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ListTile(
-              title: Text('${cycle.id} (Tipo: ${cycle.type})'),
-              subtitle: Text(
-                  '${DateFormat('dd/MM/yyyy').format(cycle.startDate)} - ${DateFormat('dd/MM/yyyy').format(cycle.endDate)}'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () => _showSchoolCycleDialog(cycle: cycle),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => _deleteSchoolCycle(cycle.id),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+        backgroundColor: theme.colorScheme.primary,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -84,7 +200,7 @@ class _SchoolCycleManagementScreenState
     showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder( // Use StatefulBuilder to update dialog state
+        return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
               title: Text(cycle == null ? 'Nuevo Ciclo' : 'Editar Ciclo'),
@@ -94,87 +210,55 @@ class _SchoolCycleManagementScreenState
                   children: [
                     TextField(
                       controller: idController,
-                      decoration: const InputDecoration(labelText: 'ID (ej. 2025-A)'),
+                      decoration: const InputDecoration(
+                          labelText: 'ID (ej. 2025-A)',
+                          prefixIcon: Icon(Icons.tag)),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       initialValue: selectedType,
-                      decoration: const InputDecoration(labelText: 'Tipo de Ciclo'),
+                      decoration: const InputDecoration(
+                          labelText: 'Tipo de Ciclo',
+                          prefixIcon: Icon(Icons.category_outlined)),
                       items: ['A', 'B', 'Propedéutico']
-                          .map((label) => DropdownMenuItem(
-                                value: label,
-                                child: Text(label),
-                              ))
+                          .map(
+                              (l) => DropdownMenuItem(value: l, child: Text(l)))
                           .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                           selectedType = value;
-                        });
-                      },
-                      validator: (value) => value == null ? 'Campo requerido' : null,
+                      onChanged: (v) => setState(() => selectedType = v),
                     ),
                     const SizedBox(height: 20),
-                    Text('Fecha de Inicio: ${DateFormat('dd/MM/yyyy').format(startDate)}'),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: startDate,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2030),
-                        );
-                        if (pickedDate != null) {
-                          setState(() {
-                            startDate = pickedDate;
-                          });
-                        }
-                      },
-                      child: const Text('Seleccionar Fecha'),
-                    ),
-                    const SizedBox(height: 20),
-                    Text('Fecha de Fin: ${DateFormat('dd/MM/yyyy').format(endDate)}'),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: endDate,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2030),
-                        );
-                        if (pickedDate != null) {
-                          setState(() {
-                            endDate = pickedDate;
-                          });
-                        }
-                      },
-                      child: const Text('Seleccionar Fecha'),
-                    ),
+                    _buildDatePickerTile('Inicio', startDate,
+                        (d) => setState(() => startDate = d)),
+                    const SizedBox(height: 12),
+                    _buildDatePickerTile(
+                        'Fin', endDate, (d) => setState(() => endDate = d)),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancelar'),
-                ),
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancelar')),
                 ElevatedButton(
                   onPressed: () {
-                    final id = idController.text;
-                    if (id.isNotEmpty && selectedType != null) {
+                    if (idController.text.isNotEmpty && selectedType != null) {
                       final newCycle = SchoolCycle(
-                        id: id,
-                        type: selectedType!,
-                        startDate: startDate,
-                        endDate: endDate,
-                      );
+                          id: idController.text,
+                          type: selectedType!,
+                          startDate: startDate,
+                          endDate: endDate);
                       if (cycle == null) {
                         _createSchoolCycle(newCycle);
                       } else {
                         _updateSchoolCycle(newCycle);
                       }
-                      Navigator.of(context).pop();
+                      Navigator.pop(context);
+                      UiHelpers.showSnackBar(
+                          context, 'Guardado correctamente.');
                     } else {
-                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, complete todos los campos.'), backgroundColor: Colors.orange,));
+                      UiHelpers.showSnackBar(
+                          context, 'Completa todos los campos.',
+                          isError: true);
                     }
                   },
                   child: const Text('Guardar'),
@@ -187,15 +271,40 @@ class _SchoolCycleManagementScreenState
     );
   }
 
-  void _createSchoolCycle(SchoolCycle cycle) {
-    _schoolCyclesRef.child(cycle.id).set(cycle.toFirebaseMap());
+  Widget _buildDatePickerTile(
+      String label, DateTime date, Function(DateTime) onPicked) {
+    return InkWell(
+      onTap: () async {
+        final d = await showDatePicker(
+            context: context,
+            initialDate: date,
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2035));
+        if (d != null) onPicked(d);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(12)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Fecha $label:',
+                style: const TextStyle(fontWeight: FontWeight.w500)),
+            Text(DateFormat('dd/MM/yyyy').format(date),
+                style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
   }
 
-  void _updateSchoolCycle(SchoolCycle cycle) {
-    _schoolCyclesRef.child(cycle.id).update(cycle.toFirebaseMap());
-  }
-
-  void _deleteSchoolCycle(String id) {
-    _schoolCyclesRef.child(id).remove();
-  }
+  void _createSchoolCycle(SchoolCycle cycle) =>
+      _schoolCyclesRef.child(cycle.id).set(cycle.toFirebaseMap());
+  void _updateSchoolCycle(SchoolCycle cycle) =>
+      _schoolCyclesRef.child(cycle.id).update(cycle.toFirebaseMap());
+  void _deleteSchoolCycle(String id) => _schoolCyclesRef.child(id).remove();
 }

@@ -1,25 +1,29 @@
 import 'dart:async';
+import 'package:asystem_cobacam/utils/animations.dart';
+import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:asystem_cobacam/models/group_model.dart';
 import 'package:asystem_cobacam/models/group_schedule_model.dart';
 import 'package:asystem_cobacam/services/app_settings_service.dart';
-import 'package:asystem_cobacam/services/hive_service.dart'; // ADDED: Import HiveService
-import 'package:asystem_cobacam/services/connectivity_service.dart'; // ADDED: Import ConnectivityService
-import 'package:provider/provider.dart'; // ADDED: Import Provider
+import 'package:asystem_cobacam/services/hive_service.dart';
+import 'package:asystem_cobacam/services/connectivity_service.dart';
+import 'package:provider/provider.dart';
 
 class GroupScheduleManagementScreen extends StatefulWidget {
   const GroupScheduleManagementScreen({super.key});
 
   @override
-  State<GroupScheduleManagementScreen> createState() => _GroupScheduleManagementScreenState();
+  State<GroupScheduleManagementScreen> createState() =>
+      _GroupScheduleManagementScreenState();
 }
 
-class _GroupScheduleManagementScreenState extends State<GroupScheduleManagementScreen> {
-  late final HiveService _hiveService; // ADDED: Declaration
-  late final ConnectivityService _connectivityService; // ADDED: Declaration
-  late final AppSettingsService _appSettingsService; // MODIFIED: to late final
+class _GroupScheduleManagementScreenState
+    extends State<GroupScheduleManagementScreen> {
+  late final HiveService _hiveService;
+  late final ConnectivityService _connectivityService;
+  late final AppSettingsService _appSettingsService;
 
   DatabaseReference? _groupsRef;
   DatabaseReference? _groupSchedulesRef;
@@ -28,22 +32,28 @@ class _GroupScheduleManagementScreenState extends State<GroupScheduleManagementS
   StreamSubscription<DatabaseEvent>? _groupSchedulesSubscription;
 
   List<Group> _groups = [];
-  Map<String, List<GroupSchedule>> _groupSchedules = {}; // groupId -> List<GroupSchedule>
+  Map<String, List<GroupSchedule>> _groupSchedules = {};
 
   bool _isLoading = true;
   String? _campus;
   String _currentSchoolCycle = '';
 
-  // Weekdays for display and scheduling
-  final List<String> _weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+  final List<String> _weekdays = [
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes'
+  ];
 
   @override
   void initState() {
     super.initState();
-    // ADDED: Initialize services
     _hiveService = Provider.of<HiveService>(context, listen: false);
-    _connectivityService = Provider.of<ConnectivityService>(context, listen: false);
-    _appSettingsService = AppSettingsService(_hiveService, _connectivityService);
+    _connectivityService =
+        Provider.of<ConnectivityService>(context, listen: false);
+    _appSettingsService =
+        AppSettingsService(_hiveService, _connectivityService);
     _initData();
   }
 
@@ -52,23 +62,31 @@ class _GroupScheduleManagementScreenState extends State<GroupScheduleManagementS
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('No hay usuario autenticado.');
 
-      final userProfileSnapshot = await FirebaseDatabase.instance.ref('users/${user.uid}').get();
-      if (!userProfileSnapshot.exists) throw Exception('No se encontró el perfil del usuario.');
-      
-      final userData = Map<String, dynamic>.from(userProfileSnapshot.value as Map);
-      final campus = userData['campus'];
-      if (campus == null) throw Exception('El usuario no tiene un plantel asignado.');
+      final userProfileSnapshot =
+          await FirebaseDatabase.instance.ref('users/${user.uid}').get();
+      if (!userProfileSnapshot.exists) {
+        throw Exception('No se encontró el perfil del usuario.');
+      }
 
-      final dynamicSchoolCycle = await _appSettingsService.getCurrentSchoolCycleId();
+      final userData =
+          Map<String, dynamic>.from(userProfileSnapshot.value as Map);
+      final campus = userData['campus'];
+      if (campus == null) {
+        throw Exception('El usuario no tiene un plantel asignado.');
+      }
+
+      final dynamicSchoolCycle =
+          await _appSettingsService.getCurrentSchoolCycleId();
 
       if (!mounted) return;
-      setState(() { 
+      setState(() {
         _campus = campus;
         _currentSchoolCycle = dynamicSchoolCycle;
       });
-      
+
       _groupsRef = FirebaseDatabase.instance.ref('planteles/$_campus/groups');
-      _groupSchedulesRef = FirebaseDatabase.instance.ref('planteles/$_campus/groupSchedules/$dynamicSchoolCycle');
+      _groupSchedulesRef = FirebaseDatabase.instance
+          .ref('planteles/$_campus/groupSchedules/$dynamicSchoolCycle');
 
       _groupsSubscription = _groupsRef!.onValue.listen((event) {
         final newGroups = <Group>[];
@@ -79,7 +97,11 @@ class _GroupScheduleManagementScreenState extends State<GroupScheduleManagementS
         }
         if (mounted) setState(() => _groups = newGroups);
       }, onError: (error) {
-        _showErrorSnackBar('Error al cargar grupos: ${error.toString()}');
+        if (mounted) {
+          UiHelpers.showSnackBar(
+              context, 'Error al cargar grupos: ${error.toString()}',
+              isError: true);
+        }
       });
 
       _groupSchedulesSubscription = _groupSchedulesRef!.onValue.listen((event) {
@@ -90,7 +112,7 @@ class _GroupScheduleManagementScreenState extends State<GroupScheduleManagementS
             final List<GroupSchedule> schedulesForGroup = [];
             for (final dayChild in groupChild.children) {
               schedulesForGroup.add(GroupSchedule(
-                id: dayChild.key!, // Using day name as ID for simplicity
+                id: dayChild.key!,
                 groupId: groupId,
                 schoolCycle: _currentSchoolCycle,
                 dayOfWeek: dayChild.key!,
@@ -103,11 +125,17 @@ class _GroupScheduleManagementScreenState extends State<GroupScheduleManagementS
         }
         if (mounted) setState(() => _groupSchedules = newGroupSchedules);
       }, onError: (error) {
-        _showErrorSnackBar('Error al cargar horarios de grupo: ${error.toString()}');
+        if (mounted) {
+          UiHelpers.showSnackBar(
+              context, 'Error al cargar horarios: ${error.toString()}',
+              isError: true);
+        }
       });
-
     } catch (e) {
-      _showErrorSnackBar('Error: ${e.toString()}');
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Error: ${e.toString()}',
+            isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -120,95 +148,91 @@ class _GroupScheduleManagementScreenState extends State<GroupScheduleManagementS
     super.dispose();
   }
 
-  void _showErrorSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red, duration: const Duration(seconds: 3)),
-    );
-  }
-
-  Future<void> _editGroupSchedule(Group group, GroupSchedule? existingSchedule) async {
-    // Determine the day of week for the schedule we're editing or creating
+  Future<void> _editGroupSchedule(
+      Group group, GroupSchedule? existingSchedule) async {
     String initialDayOfWeek = existingSchedule?.dayOfWeek ?? _weekdays.first;
     TimeOfDay? entryTime = existingSchedule?.entryTime.isNotEmpty == true
-        ? _parseTimeOfDay(existingSchedule!.entryTime) : null;
+        ? _parseTimeOfDay(existingSchedule!.entryTime)
+        : null;
     TimeOfDay? exitTime = existingSchedule?.exitTime.isNotEmpty == true
-        ? _parseTimeOfDay(existingSchedule!.exitTime) : null;
+        ? _parseTimeOfDay(existingSchedule!.exitTime)
+        : null;
 
     await showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
-          builder: (BuildContext dialogContext, StateSetter setStateInDialog) { // Use dialogContext and setStateInDialog
+          builder: (BuildContext dialogContext, StateSetter setStateInDialog) {
             return AlertDialog(
-              title: Text('Editar Horario para ${group.name}'),
+              title: Text('Editar Horario - ${group.name}'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
                     initialValue: initialDayOfWeek,
-                    decoration: const InputDecoration(labelText: 'Día de la Semana'),
-                    items: _weekdays.map((day) => DropdownMenuItem(value: day, child: Text(day))).toList(),
+                    decoration: const InputDecoration(
+                        labelText: 'Día de la Semana',
+                        border: OutlineInputBorder()),
+                    items: _weekdays
+                        .map((day) =>
+                            DropdownMenuItem(value: day, child: Text(day)))
+                        .toList(),
                     onChanged: (value) {
-                      setStateInDialog(() => initialDayOfWeek = value!); // Update dialog state
+                      setStateInDialog(() => initialDayOfWeek = value!);
                     },
                   ),
-                  ListTile(
-                    title: Text('Entrada: ${entryTime?.format(dialogContext) ?? 'Seleccionar'}'), // Use dialogContext
-                    trailing: const Icon(Icons.access_time),
-                    onTap: () async {
-                      final TimeOfDay? picked = await showTimePicker(
-                        context: dialogContext, // Use dialogContext
-                        initialTime: entryTime ?? TimeOfDay.now(),
-                      );
-                      if (picked != null && picked != entryTime) {
-                        setStateInDialog(() => entryTime = picked); // Update dialog state
-                      }
-                    },
+                  const SizedBox(height: 16),
+                  _buildTimePickerTile(
+                    context: dialogContext,
+                    label: 'Hora de Entrada',
+                    time: entryTime,
+                    onTimePicked: (picked) =>
+                        setStateInDialog(() => entryTime = picked),
                   ),
-                  ListTile(
-                    title: Text('Salida: ${exitTime?.format(dialogContext) ?? 'Seleccionar'}'), // Use dialogContext
-                    trailing: const Icon(Icons.access_time),
-                    onTap: () async {
-                      final TimeOfDay? picked = await showTimePicker(
-                        context: dialogContext, // Use dialogContext
-                        initialTime: exitTime ?? TimeOfDay.now(),
-                      );
-                      if (picked != null && picked != exitTime) {
-                        setStateInDialog(() => exitTime = picked); // Update dialog state
-                      }
-                    },
+                  const SizedBox(height: 12),
+                  _buildTimePickerTile(
+                    context: dialogContext,
+                    label: 'Hora de Salida',
+                    time: exitTime,
+                    onTimePicked: (picked) =>
+                        setStateInDialog(() => exitTime = picked),
                   ),
                 ],
               ),
               actions: <Widget>[
                 TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(), // Use dialogContext
+                  onPressed: () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
                   onPressed: () async {
                     if (entryTime == null || exitTime == null) {
-                      _showErrorSnackBar('Por favor, selecciona las horas de entrada y salida.');
+                      UiHelpers.showSnackBar(context, 'Selecciona ambas horas.',
+                          isError: true);
                       return;
                     }
-                    if (!dialogContext.mounted) return; // Check dialogContext
-                    
+                    if (!dialogContext.mounted) return;
+
                     try {
                       final scheduleData = GroupSchedule(
-                        id: initialDayOfWeek, // Day name as ID
+                        id: initialDayOfWeek,
                         groupId: group.key,
                         schoolCycle: _currentSchoolCycle,
                         dayOfWeek: initialDayOfWeek,
-                        entryTime: entryTime!.format(dialogContext), // Use dialogContext
-                        exitTime: exitTime!.format(dialogContext), // Use dialogContext
+                        entryTime: entryTime!.format(dialogContext),
+                        exitTime: exitTime!.format(dialogContext),
                       );
-                      await _groupSchedulesRef!.child(group.key).child(initialDayOfWeek).set(scheduleData.toFirebaseMap());
-                      if (!dialogContext.mounted) return; // Check dialogContext
-                      Navigator.of(dialogContext).pop(); // Close dialog
-                      _showSuccessSnackBar('Horario de ${group.name} para $initialDayOfWeek guardado.');
+                      await _groupSchedulesRef!
+                          .child(group.key)
+                          .child(initialDayOfWeek)
+                          .set(scheduleData.toFirebaseMap());
+                      if (!dialogContext.mounted) return;
+                      Navigator.of(dialogContext).pop();
+                      UiHelpers.showSnackBar(context, 'Horario actualizado.');
                     } catch (e) {
-                      _showErrorSnackBar('Error al guardar horario: ${e.toString()}');
+                      UiHelpers.showSnackBar(
+                          context, 'Error al guardar: ${e.toString()}',
+                          isError: true);
                     }
                   },
                   child: const Text('Guardar'),
@@ -221,88 +245,178 @@ class _GroupScheduleManagementScreenState extends State<GroupScheduleManagementS
     );
   }
 
+  Widget _buildTimePickerTile({
+    required BuildContext context,
+    required String label,
+    required TimeOfDay? time,
+    required Function(TimeOfDay) onTimePicked,
+  }) {
+    return InkWell(
+      onTap: () async {
+        final TimeOfDay? picked = await showTimePicker(
+          context: context,
+          initialTime: time ?? TimeOfDay.now(),
+        );
+        if (picked != null) {
+          onTimePicked(picked);
+        }
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+            Text(time?.format(context) ?? 'Seleccionar',
+                style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
   TimeOfDay _parseTimeOfDay(String time) {
     final parts = time.split(':');
     return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
 
-  void _showSuccessSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green, duration: const Duration(seconds: 3)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600), // Max width for content
+                constraints: const BoxConstraints(maxWidth: 800),
                 child: _groups.isEmpty
-                    ? Center(child: Text('No hay grupos registrados para el plantel o ciclo escolar $_currentSchoolCycle.'))
+                    ? Center(
+                        child: Text('No hay grupos registrados.',
+                            style: TextStyle(color: Colors.grey.shade500)))
                     : ListView.builder(
+                        padding: const EdgeInsets.all(16),
                         itemCount: _groups.length,
                         itemBuilder: (context, index) {
                           final group = _groups[index];
-                          final schedulesForGroup = _groupSchedules[group.key] ?? [];
+                          final schedulesForGroup =
+                              _groupSchedules[group.key] ?? [];
 
-                          return Card(
-                            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                            child: ExpansionTile(
-                              title: Text('Grupo: ${group.name}'),
-                              subtitle: Text('Semestre: ${group.semester}, Alumnos: ${group.studentCount}'),
-                              children: _weekdays.map((day) {
-                                final schedule = schedulesForGroup.firstWhere(
-                                  (s) => s.dayOfWeek == day,
-                                  orElse: () => GroupSchedule(id: '', groupId: group.key, schoolCycle: _currentSchoolCycle, dayOfWeek: day, entryTime: '', exitTime: ''),
-                                );
-                                final hasSchedule = schedule.entryTime.isNotEmpty && schedule.exitTime.isNotEmpty;
+                          return FadeInUp(
+                            delay: Duration(milliseconds: 50 * index),
+                            child: Card(
+                              elevation: 0,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                side: isDark
+                                    ? BorderSide.none
+                                    : BorderSide(color: Colors.grey.shade200),
+                              ),
+                              color:
+                                  isDark ? theme.cardTheme.color : Colors.white,
+                              child: ExpansionTile(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16)),
+                                title: Text(group.name,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
+                                subtitle: Text(
+                                    'Semestre: ${group.semester}, Alumnos: ${group.studentCount}'),
+                                leading: CircleAvatar(
+                                  backgroundColor: Colors.indigo.shade50,
+                                  child: Icon(Icons.schedule,
+                                      color: Colors.indigo.shade600),
+                                ),
+                                childrenPadding:
+                                    const EdgeInsets.only(bottom: 12),
+                                children: _weekdays.map((day) {
+                                  final schedule = schedulesForGroup.firstWhere(
+                                    (s) => s.dayOfWeek == day,
+                                    orElse: () => GroupSchedule(
+                                        id: '',
+                                        groupId: group.key,
+                                        schoolCycle: _currentSchoolCycle,
+                                        dayOfWeek: day,
+                                        entryTime: '',
+                                        exitTime: ''),
+                                  );
+                                  final hasSchedule =
+                                      schedule.entryTime.isNotEmpty &&
+                                          schedule.exitTime.isNotEmpty;
 
-                                return ListTile(
-                                  title: Text(day),
-                                  subtitle: hasSchedule
-                                      ? Text('Entrada: ${schedule.entryTime} | Salida: ${schedule.exitTime}')
-                                      : const Text('Horario no definido'),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit),
-                                        onPressed: () => _editGroupSchedule(group, hasSchedule ? schedule : null),
-                                      ),
-                                      if (hasSchedule)
+                                  return ListTile(
+                                    title: Text(day,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w500)),
+                                    subtitle: hasSchedule
+                                        ? Text(
+                                            '${schedule.entryTime} - ${schedule.exitTime}',
+                                            style: TextStyle(
+                                                color: theme.primaryColor))
+                                        : const Text('Sin asignar',
+                                            style:
+                                                TextStyle(color: Colors.grey)),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
                                         IconButton(
-                                          icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-                                          onPressed: () async {
-                                            if (_groupSchedulesRef == null) return;
-                                            final bool? confirm = await showDialog<bool>(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: const Text('Confirmar Eliminación'),
-                                                content: Text('¿Eliminar horario de ${group.name} para $day?'),
-                                                actions: [
-                                                  TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-                                                  TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
-                                                ],
-                                              ),
-                                            );
-                                            if (confirm == true) {
-                                              try {
-                                                await _groupSchedulesRef!.child(group.key).child(day).remove();
-                                                _showSuccessSnackBar('Horario eliminado.');
-                                              } catch (e) {
-                                                _showErrorSnackBar('Error al eliminar horario: ${e.toString()}');
-                                              }
-                                            }
-                                          },
+                                          icon: const Icon(Icons.edit_outlined),
+                                          onPressed: () => _editGroupSchedule(
+                                              group,
+                                              hasSchedule ? schedule : null),
                                         ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
+                                        if (hasSchedule)
+                                          IconButton(
+                                            icon: Icon(Icons.delete_outline,
+                                                color: theme.colorScheme.error),
+                                            onPressed: () async {
+                                              if (_groupSchedulesRef == null) {
+                                                return;
+                                              }
+                                              final confirmed = await UiHelpers
+                                                  .showConfirmationDialog(
+                                                      context,
+                                                      title: 'Borrar Horario',
+                                                      content:
+                                                          '¿Eliminar horario del $day para ${group.name}?',
+                                                      isDestructive: true);
+                                              if (confirmed) {
+                                                try {
+                                                  await _groupSchedulesRef!
+                                                      .child(group.key)
+                                                      .child(day)
+                                                      .remove();
+                                                  if (mounted) {
+                                                    UiHelpers.showSnackBar(
+                                                        context,
+                                                        'Horario eliminado.');
+                                                  }
+                                                } catch (e) {
+                                                  if (mounted) {
+                                                    UiHelpers.showSnackBar(
+                                                        context,
+                                                        'Error: ${e.toString()}',
+                                                        isError: true);
+                                                  }
+                                                }
+                                              }
+                                            },
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
                             ),
                           );
                         },

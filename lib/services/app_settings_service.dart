@@ -4,11 +4,14 @@ import 'package:asystem_cobacam/models/non_attendance_day_model.dart'; // Import
 import 'package:asystem_cobacam/services/hive_service.dart'; // Import HiveService
 import 'package:asystem_cobacam/services/connectivity_service.dart'; // Import ConnectivityService
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 
 class AppSettingsService {
-  final DatabaseReference _appSettingsRef = FirebaseDatabase.instance.ref('appSettings');
-  final DatabaseReference _schoolCyclesRef = FirebaseDatabase.instance.ref('appSettings/schoolCycles');
-  
+  final DatabaseReference _appSettingsRef =
+      FirebaseDatabase.instance.ref('appSettings');
+  final DatabaseReference _schoolCyclesRef =
+      FirebaseDatabase.instance.ref('appSettings/schoolCycles');
+
   final HiveService _hiveService;
   final ConnectivityService _connectivityService;
 
@@ -18,8 +21,10 @@ class AppSettingsService {
     // Esto es un dato pequeño y crítico, siempre intentamos Firebase primero,
     // pero si falla, podríamos tener un valor cacheado o un default.
     try {
-      if (await _connectivityService.checkConnectivity() != ConnectivityResult.none) {
-        final snapshot = await _appSettingsRef.child('currentSchoolCycle').get();
+      if (await _connectivityService.checkConnectivity() !=
+          ConnectivityResult.none) {
+        final snapshot =
+            await _appSettingsRef.child('currentSchoolCycle').get();
         if (snapshot.exists && snapshot.value != null) {
           final cycleId = snapshot.value.toString();
           // Podríamos cachear esto en SharedPreferences para acceso rápido
@@ -28,7 +33,7 @@ class AppSettingsService {
       }
     } catch (e) {
       // Manejar el error, quizás loggearlo
-      print('Error al obtener currentSchoolCycle de Firebase: $e');
+      debugPrint('Error al obtener currentSchoolCycle de Firebase: $e');
     }
     // Fallback a un valor por defecto o cacheado (si se implementa)
     return '2025-B'; // Default o fallback
@@ -47,13 +52,16 @@ class AppSettingsService {
     final schoolCyclesBox = _hiveService.schoolCyclesBox;
     // Primero, intentar cargar desde la caché local
     final cachedCycles = schoolCyclesBox.values.toList();
-    if (cachedCycles.isNotEmpty && await _connectivityService.checkConnectivity() == ConnectivityResult.none) {
+    if (cachedCycles.isNotEmpty &&
+        await _connectivityService.checkConnectivity() ==
+            ConnectivityResult.none) {
       return cachedCycles; // Devolver caché si no hay conexión
     }
 
     // Si hay conexión o la caché está vacía, intentar Firebase
     try {
-      if (await _connectivityService.checkConnectivity() != ConnectivityResult.none) {
+      if (await _connectivityService.checkConnectivity() !=
+          ConnectivityResult.none) {
         final snapshot = await _schoolCyclesRef.get();
         final List<SchoolCycle> firebaseCycles = [];
         if (snapshot.exists && snapshot.value != null) {
@@ -69,7 +77,7 @@ class AppSettingsService {
         return firebaseCycles;
       }
     } catch (e) {
-      print('Error al obtener SchoolCycles de Firebase: $e');
+      debugPrint('Error al obtener SchoolCycles de Firebase: $e');
       // Si falla Firebase y teníamos caché, la devolvemos
       if (cachedCycles.isNotEmpty) return cachedCycles;
     }
@@ -79,7 +87,8 @@ class AppSettingsService {
   Future<void> addSchoolCycle(SchoolCycle cycle) async {
     try {
       await _schoolCyclesRef.child(cycle.id).set(cycle.toFirebaseMap());
-      await _hiveService.schoolCyclesBox.put(cycle.id, cycle); // Actualizar caché
+      await _hiveService.schoolCyclesBox
+          .put(cycle.id, cycle); // Actualizar caché
     } catch (e) {
       rethrow;
     }
@@ -88,7 +97,8 @@ class AppSettingsService {
   Future<void> updateSchoolCycle(SchoolCycle cycle) async {
     try {
       await _schoolCyclesRef.child(cycle.id).update(cycle.toFirebaseMap());
-      await _hiveService.schoolCyclesBox.put(cycle.id, cycle); // Actualizar caché
+      await _hiveService.schoolCyclesBox
+          .put(cycle.id, cycle); // Actualizar caché
     } catch (e) {
       rethrow;
     }
@@ -105,20 +115,27 @@ class AppSettingsService {
 
   // --- NonAttendanceDay Management ---
   DatabaseReference _getNonAttendanceDaysRef(String campusId) {
-    return FirebaseDatabase.instance.ref('planteles/$campusId/nonAttendanceDays');
+    return FirebaseDatabase.instance
+        .ref('planteles/$campusId/nonAttendanceDays');
   }
 
-  Future<List<NonAttendanceDay>> getAllNonAttendanceDays(String campusId) async {
+  Future<List<NonAttendanceDay>> getAllNonAttendanceDays(
+      String campusId) async {
     final nonAttendanceBox = _hiveService.nonAttendanceDaysBox;
     // Primero, intentar cargar desde la caché local
-    final cachedDays = nonAttendanceBox.values.where((day) => day.campusId == campusId).toList();
-    if (cachedDays.isNotEmpty && await _connectivityService.checkConnectivity() == ConnectivityResult.none) {
+    final cachedDays = nonAttendanceBox.values
+        .where((day) => day.campusId == campusId)
+        .toList();
+    if (cachedDays.isNotEmpty &&
+        await _connectivityService.checkConnectivity() ==
+            ConnectivityResult.none) {
       return cachedDays; // Devolver caché si no hay conexión
     }
 
     // Si hay conexión o la caché está vacía, intentar Firebase
     try {
-      if (await _connectivityService.checkConnectivity() != ConnectivityResult.none) {
+      if (await _connectivityService.checkConnectivity() !=
+          ConnectivityResult.none) {
         final snapshot = await _getNonAttendanceDaysRef(campusId).get();
         final List<NonAttendanceDay> firebaseDays = [];
         if (snapshot.exists && snapshot.value != null) {
@@ -138,7 +155,7 @@ class AppSettingsService {
         return firebaseDays;
       }
     } catch (e) {
-      print('Error al obtener NonAttendanceDays de Firebase: $e');
+      debugPrint('Error al obtener NonAttendanceDays de Firebase: $e');
       if (cachedDays.isNotEmpty) return cachedDays;
     }
     return [];
@@ -146,8 +163,11 @@ class AppSettingsService {
 
   Future<void> addNonAttendanceDay(NonAttendanceDay day) async {
     try {
-      await _getNonAttendanceDaysRef(day.campusId).child(day.id).set(day.toFirebaseMap());
-      await _hiveService.nonAttendanceDaysBox.put(day.id, day); // Actualizar caché
+      await _getNonAttendanceDaysRef(day.campusId)
+          .child(day.id)
+          .set(day.toFirebaseMap());
+      await _hiveService.nonAttendanceDaysBox
+          .put(day.id, day); // Actualizar caché
     } catch (e) {
       rethrow;
     }
@@ -155,8 +175,11 @@ class AppSettingsService {
 
   Future<void> updateNonAttendanceDay(NonAttendanceDay day) async {
     try {
-      await _getNonAttendanceDaysRef(day.campusId).child(day.id).update(day.toFirebaseMap());
-      await _hiveService.nonAttendanceDaysBox.put(day.id, day); // Actualizar caché
+      await _getNonAttendanceDaysRef(day.campusId)
+          .child(day.id)
+          .update(day.toFirebaseMap());
+      await _hiveService.nonAttendanceDaysBox
+          .put(day.id, day); // Actualizar caché
     } catch (e) {
       rethrow;
     }

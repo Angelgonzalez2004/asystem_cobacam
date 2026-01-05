@@ -7,7 +7,8 @@ class TimeSlot {
   final String end;
   final bool isRecess;
 
-  const TimeSlot({required this.start, required this.end, this.isRecess = false});
+  const TimeSlot(
+      {required this.start, required this.end, this.isRecess = false});
 
   @override
   String toString() {
@@ -27,7 +28,13 @@ const List<TimeSlot> HORARIOS = [
   TimeSlot(start: '13:10', end: '14:00'),
 ];
 
-const List<String> DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+const List<String> DIAS_SEMANA = [
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes'
+];
 
 class ClassAssignment {
   String key;
@@ -54,7 +61,7 @@ class ClassAssignment {
     this.classroomName,
   });
 
-   factory ClassAssignment.fromSnapshot(DataSnapshot snapshot) {
+  factory ClassAssignment.fromSnapshot(DataSnapshot snapshot) {
     final data = Map<String, dynamic>.from(snapshot.value as Map);
     return ClassAssignment(
       key: snapshot.key!,

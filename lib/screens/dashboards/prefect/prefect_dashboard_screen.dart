@@ -244,7 +244,8 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
               onTap: () => _onItemTapped(6),
             ),
             ListTile(
-              leading: Icon(Icons.qr_code_scanner, color: theme.colorScheme.primary),
+              leading:
+                  Icon(Icons.qr_code_scanner, color: theme.colorScheme.primary),
               title: const Text('Registro de Asistencia'),
               selected: _selectedIndex == 7,
               onTap: () => _onItemTapped(7),
@@ -270,7 +271,8 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
                   context: context,
                   builder: (context) => AlertDialog(
                     title: const Text('Cerrar sesión'),
-                    content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+                    content: const Text(
+                        '¿Estás seguro de que quieres cerrar sesión?'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(false),
@@ -287,7 +289,8 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
                   await FirebaseAuth.instance.signOut();
                   if (!mounted) return; // Check async gap
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const LoginScreen()),
                     (Route<dynamic> route) => false,
                   );
                 }

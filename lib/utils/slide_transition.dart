@@ -17,11 +17,11 @@ class SlideRightRoute extends PageRouteBuilder {
             Widget child,
           ) =>
               SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(-1, 0),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
-              ),
+            position: Tween<Offset>(
+              begin: const Offset(-1, 0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
         );
 }

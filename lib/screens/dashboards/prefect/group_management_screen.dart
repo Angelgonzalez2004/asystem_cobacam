@@ -1,6 +1,8 @@
-import 'dart:async'; // Necesario para StreamSubscription
+import 'dart:async';
 import 'package:asystem_cobacam/models/group_model.dart';
 import 'package:asystem_cobacam/models/school_cycle_model.dart';
+import 'package:asystem_cobacam/utils/animations.dart';
+import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
@@ -12,18 +14,17 @@ class GroupManagementScreen extends StatefulWidget {
 }
 
 class _GroupManagementScreenState extends State<GroupManagementScreen> {
-  final DatabaseReference _groupsRef =
-      FirebaseDatabase.instance.ref('groups');
+  final DatabaseReference _groupsRef = FirebaseDatabase.instance.ref('groups');
   final DatabaseReference _schoolCyclesRef =
       FirebaseDatabase.instance.ref('school_cycles');
 
-  // CORRECCIÓN 1: Variables para controlar las suscripciones
   StreamSubscription<DatabaseEvent>? _schoolCyclesSubscription;
   StreamSubscription<DatabaseEvent>? _groupsSubscription;
 
   List<Group> _groups = [];
   List<SchoolCycle> _schoolCycles = [];
   SchoolCycle? _selectedSchoolCycle;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -31,7 +32,6 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
     _loadSchoolCycles();
   }
 
-  // CORRECCIÓN 2: Limpiar suscripciones al salir
   @override
   void dispose() {
     _schoolCyclesSubscription?.cancel();
@@ -40,130 +40,189 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
   }
 
   void _loadSchoolCycles() {
-    // Cancelamos suscripción anterior si existe
     _schoolCyclesSubscription?.cancel();
-
     _schoolCyclesSubscription = _schoolCyclesRef.onValue.listen((event) {
-      // CORRECCIÓN 3: Verificar si el widget sigue vivo (mounted)
       if (!mounted) return;
-
       if (event.snapshot.exists) {
         final cycles = <SchoolCycle>[];
         for (final child in event.snapshot.children) {
           cycles.add(SchoolCycle.fromSnapshot(child));
         }
-        
         setState(() {
           _schoolCycles = cycles;
-          // Solo seleccionamos el primero si no hay uno ya seleccionado
           if (_schoolCycles.isNotEmpty && _selectedSchoolCycle == null) {
             _selectedSchoolCycle = _schoolCycles.first;
             _loadGroups();
           }
+          _isLoading = false;
         });
+      } else {
+        setState(() => _isLoading = false);
       }
     });
   }
 
   void _loadGroups() {
     if (_selectedSchoolCycle == null) return;
-
-    // Cancelamos la escucha anterior para no tener múltiples listeners activos
     _groupsSubscription?.cancel();
-
     _groupsSubscription = _groupsRef
         .orderByChild('schoolCycleId')
         .equalTo(_selectedSchoolCycle!.id)
         .onValue
         .listen((event) {
-      
-      // CORRECCIÓN 3: Verificar si el widget sigue vivo
       if (!mounted) return;
-
       if (event.snapshot.exists) {
         final groups = <Group>[];
         for (final child in event.snapshot.children) {
           groups.add(Group.fromSnapshot(child));
         }
-        setState(() {
-          _groups = groups;
-        });
+        setState(() => _groups = groups);
       } else {
-        setState(() {
-          _groups = [];
-        });
+        setState(() => _groups = []);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showGroupDialog(),
-        child: const Icon(Icons.add),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text('Gestión de Grupos'),
+        elevation: 0,
+        centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: DropdownButton<SchoolCycle>(
-              value: _selectedSchoolCycle,
-              hint: const Text("Selecciona un ciclo"),
-              isExpanded: true, // Para evitar errores de desbordamiento
-              onChanged: (SchoolCycle? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedSchoolCycle = newValue;
-                    _loadGroups();
-                  });
-                }
-              },
-              items: _schoolCycles
-                  .map<DropdownMenuItem<SchoolCycle>>((SchoolCycle cycle) {
-                return DropdownMenuItem<SchoolCycle>(
-                  value: cycle,
-                  child: Text(cycle.id),
-                );
-              }).toList(),
-            ),
-          ),
-          Expanded(
-            child: _groups.isEmpty
-                ? const Center(child: Text("No hay grupos para este ciclo"))
-                : ListView.builder(
-                    itemCount: _groups.length,
-                    itemBuilder: (context, index) {
-                      final group = _groups[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        child: ListTile(
-                          title: Text(group.name),
-                          subtitle: Text(
-                              'Semestre: ${group.semester} - Alumnos: ${group.studentCount}'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () =>
-                                    _showGroupDialog(group: group),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : LayoutBuilder(builder: (context, constraints) {
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(
+                                  color: Colors.grey.withValues(alpha: 0.1))),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<SchoolCycle>(
+                                value: _selectedSchoolCycle,
+                                hint: const Text("Selecciona un ciclo"),
+                                isExpanded: true,
+                                onChanged: (newValue) {
+                                  if (newValue != null) {
+                                    setState(() {
+                                      _selectedSchoolCycle = newValue;
+                                      _loadGroups();
+                                    });
+                                  }
+                                },
+                                items: _schoolCycles
+                                    .map((cycle) => DropdownMenuItem(
+                                        value: cycle,
+                                        child: Text('Ciclo: ${cycle.id}')))
+                                    .toList(),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () => _deleteGroup(group.key),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                      );
-                    },
+                      ),
+                      Expanded(
+                        child: _groups.isEmpty
+                            ? Center(
+                                child: Text("No hay grupos para este ciclo",
+                                    style:
+                                        TextStyle(color: Colors.grey.shade500)))
+                            : ListView.builder(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                itemCount: _groups.length,
+                                itemBuilder: (context, index) {
+                                  final group = _groups[index];
+                                  return FadeInUp(
+                                    delay: Duration(milliseconds: 50 * index),
+                                    child: Card(
+                                      elevation: 0,
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          side: BorderSide(
+                                              color: isDark
+                                                  ? Colors.transparent
+                                                  : Colors.grey.shade200)),
+                                      color: isDark
+                                          ? theme.cardTheme.color
+                                          : Colors.white,
+                                      child: ListTile(
+                                        contentPadding:
+                                            const EdgeInsets.all(16),
+                                        leading: CircleAvatar(
+                                            backgroundColor: theme
+                                                .colorScheme.secondary
+                                                .withValues(alpha: 0.1),
+                                            child: Icon(Icons.groups_outlined,
+                                                color: theme
+                                                    .colorScheme.secondary)),
+                                        title: Text(group.name,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold)),
+                                        subtitle: Text(
+                                            'Semestre: ${group.semester} • ${group.studentCount} Alumnos'),
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                                icon: const Icon(
+                                                    Icons.edit_outlined),
+                                                onPressed: () =>
+                                                    _showGroupDialog(
+                                                        group: group)),
+                                            IconButton(
+                                                icon: Icon(Icons.delete_outline,
+                                                    color: theme
+                                                        .colorScheme.error),
+                                                onPressed: () =>
+                                                    _confirmDelete(group)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
                   ),
-          ),
-        ],
+                ),
+              );
+            }),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showGroupDialog(),
+        backgroundColor: theme.colorScheme.primary,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(Group group) async {
+    final confirm = await UiHelpers.showConfirmationDialog(context,
+        title: 'Eliminar Grupo',
+        content: '¿Estás seguro?',
+        isDestructive: true);
+    if (confirm) {
+      _groupsRef.child(group.key).remove();
+      if (mounted) UiHelpers.showSnackBar(context, 'Grupo eliminado.');
+    }
   }
 
   void _showGroupDialog({Group? group}) {
@@ -180,77 +239,37 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Nombre'),
-              ),
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Nombre')),
+              const SizedBox(height: 12),
               TextField(
-                controller: semesterController,
-                decoration: const InputDecoration(labelText: 'Semestre'),
-                keyboardType: TextInputType.number,
-              ),
+                  controller: semesterController,
+                  decoration: const InputDecoration(labelText: 'Semestre'),
+                  keyboardType: TextInputType.number),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
-            ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar')),
             ElevatedButton(
               onPressed: () {
                 final name = nameController.text;
                 final semester = int.tryParse(semesterController.text) ?? 0;
-
-                if (name.isEmpty || semester <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text(
-                          'Por favor, complete todos los campos correctamente.'),
-                      backgroundColor: Colors.orange));
+                if (name.isEmpty ||
+                    semester <= 0 ||
+                    _selectedSchoolCycle == null) {
+                  UiHelpers.showSnackBar(context, 'Datos inválidos.',
+                      isError: true);
                   return;
                 }
-
-                if (_selectedSchoolCycle == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Por favor, seleccione un ciclo escolar.'),
-                      backgroundColor: Colors.orange));
-                  return;
-                }
-
-                // --- VALIDATION LOGIC ---
-                final String cycleType = _selectedSchoolCycle!.type;
-                final bool isSemesterEven = semester % 2 == 0;
-                final bool isSemesterOdd = !isSemesterEven;
-
-                if (cycleType == 'A' && isSemesterOdd) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text(
-                          'Error: En el ciclo A solo se pueden crear semestres pares (2, 4, 6).'),
-                      backgroundColor: Colors.red));
-                  return;
-                }
-
-                if (cycleType == 'B' && isSemesterEven) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text(
-                          'Error: En el ciclo B solo se pueden crear semestres impares (1, 3, 5).'),
-                      backgroundColor: Colors.red));
-                  return;
-                }
-
-                if (cycleType == 'Propedéutico' && semester != 1) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text(
-                          'Error: En el ciclo Propedéutico solo se pueden crear grupos de primer semestre.'),
-                      backgroundColor: Colors.red));
-                  return;
-                }
-                // --- END VALIDATION ---
-
                 if (group == null) {
                   _createGroup(name, semester);
                 } else {
                   _updateGroup(group.key, name, semester);
                 }
-                Navigator.of(context).pop();
+                Navigator.pop(context);
+                UiHelpers.showSnackBar(context, 'Guardado correctamente.');
               },
               child: const Text('Guardar'),
             ),
@@ -260,23 +279,12 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
     );
   }
 
-  void _createGroup(String name, int semester) {
-    _groupsRef.push().set({
-      'name': name,
-      'semester': semester,
-      'studentCount': 0,
-      'schoolCycleId': _selectedSchoolCycle!.id,
-    });
-  }
-
-  void _updateGroup(String key, String name, int semester) {
-    _groupsRef.child(key).update({
-      'name': name,
-      'semester': semester,
-    });
-  }
-
-  void _deleteGroup(String key) {
-    _groupsRef.child(key).remove();
-  }
+  void _createGroup(String name, int semester) => _groupsRef.push().set({
+        'name': name,
+        'semester': semester,
+        'studentCount': 0,
+        'schoolCycleId': _selectedSchoolCycle!.id
+      });
+  void _updateGroup(String key, String name, int semester) =>
+      _groupsRef.child(key).update({'name': name, 'semester': semester});
 }

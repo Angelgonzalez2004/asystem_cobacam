@@ -6,34 +6,34 @@ part 'attendance_record_model.g.dart';
 class AttendanceRecord {
   @HiveField(0)
   String studentId;
-  
+
   @HiveField(1)
   String studentFullName;
-  
+
   @HiveField(2)
   String group;
-  
+
   @HiveField(3)
   String date; // Format 'yyyy-MM-dd'
-  
+
   @HiveField(4)
   String? entryTime; // Format 'HH:mm' (Puede ser nulo si no ha checado entrada)
-  
+
   @HiveField(5)
   String? exitTime; // Format 'HH:mm' (Puede ser nulo si no ha salido)
-  
+
   @HiveField(6)
   String? status; // e.g., 'presente', 'tarde', 'ausente', 'presente_masivo'
-  
+
   @HiveField(7)
   String? reasonTardy;
-  
+
   @HiveField(8)
   String? reasonEarlyExit;
 
   // For offline queue management
   @HiveField(9)
-  bool isSynced; 
+  bool isSynced;
 
   @HiveField(10) // New field
   String campusId;
@@ -67,28 +67,28 @@ class AttendanceRecord {
       'studentFullName': studentFullName,
       'group': group,
       'date': date,
-      'campusId': campusId, 
+      'campusId': campusId,
       'schoolCycle': schoolCycle,
       // 'isSynced': isSynced, // No se guarda en Firebase, es control local
     };
-    
+
     // CORRECCIÓN 2: Usar el operador '!' para forzar el valor ya que validamos que no es null en el if
     if (entryTime != null) map['entryTime'] = entryTime!;
     if (exitTime != null) map['exitTime'] = exitTime!;
     if (status != null) map['status'] = status!;
     if (reasonTardy != null) map['reasonTardy'] = reasonTardy!;
     if (reasonEarlyExit != null) map['reasonEarlyExit'] = reasonEarlyExit!;
-    
+
     return map;
   }
 
   // Factory from Firebase map for loading records
   factory AttendanceRecord.fromFirebaseMap(
-    String studentId, 
-    String date, 
+    String studentId,
+    String date,
     Map<String, dynamic> data, {
-    required String campusId, 
-    required String schoolCycle, 
+    required String campusId,
+    required String schoolCycle,
   }) {
     // Extracción segura de datos: Si el campo no existe o es null, la variable será null
     final String? entryTimeValue = data['entryTime'] as String?;
@@ -100,15 +100,17 @@ class AttendanceRecord {
     return AttendanceRecord(
       studentId: studentId,
       // Usamos '??' para proveer un valor por defecto si el nombre o grupo vienen nulos de la BD
-      studentFullName: (data['studentFullName'] as String?) ?? 'NOMBRE_DESCONOCIDO',
+      studentFullName:
+          (data['studentFullName'] as String?) ?? 'NOMBRE_DESCONOCIDO',
       group: (data['group'] as String?) ?? 'GRUPO_DESCONOCIDO',
       date: date,
-      entryTime: entryTimeValue,     // Puede ser null y es correcto
-      exitTime: exitTimeValue,       // Puede ser null y es correcto
-      status: statusValue,           // Puede ser null y es correcto
+      entryTime: entryTimeValue, // Puede ser null y es correcto
+      exitTime: exitTimeValue, // Puede ser null y es correcto
+      status: statusValue, // Puede ser null y es correcto
       reasonTardy: reasonTardyValue, // Puede ser null y es correcto
       reasonEarlyExit: reasonEarlyExitValue, // Puede ser null y es correcto
-      isSynced: true, // Si viene de Firebase, significa que ya está sincronizado
+      isSynced:
+          true, // Si viene de Firebase, significa que ya está sincronizado
       campusId: campusId,
       schoolCycle: schoolCycle,
     );

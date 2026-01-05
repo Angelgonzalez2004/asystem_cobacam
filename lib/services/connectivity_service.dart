@@ -8,7 +8,8 @@ class ConnectivityService {
       StreamController<ConnectivityResult>.broadcast();
 
   // Expone el stream para que otros componentes puedan escucharlo
-  Stream<ConnectivityResult> get connectivityStream => _connectivityController.stream;
+  Stream<ConnectivityResult> get connectivityStream =>
+      _connectivityController.stream;
 
   ConnectivityService() {
     // Escucha los cambios de conectividad y los añade al stream

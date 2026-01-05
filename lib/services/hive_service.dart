@@ -16,11 +16,13 @@ class HiveService {
   static const String _groupSchedulesBox = 'groupSchedulesBox';
   static const String _nonAttendanceDaysBox = 'nonAttendanceDaysBox';
   static const String _schoolCyclesBox = 'schoolCyclesBox';
-  static const String _attendanceRecordsBox = 'attendanceRecordsBox'; // For offline queue
+  static const String _attendanceRecordsBox =
+      'attendanceRecordsBox'; // For offline queue
 
   Future<void> initHive() async {
     // Inicializar Hive en la ruta correcta del dispositivo
-    if (!kIsWeb) { // Hive for Flutter doesn't require path_provider on web
+    if (!kIsWeb) {
+      // Hive for Flutter doesn't require path_provider on web
       final appDocumentDirectory = await getApplicationDocumentsDirectory();
       Hive.init(appDocumentDirectory.path);
     } else {
@@ -38,19 +40,25 @@ class HiveService {
     // Abrir las cajas (boxes) que se van a utilizar
     await Hive.openBox<Student>(_studentsBox);
     await Hive.openBox<Group>(_groupsBox);
-    await Hive.openBox<List<GroupSchedule>>(_groupSchedulesBox); // Group schedules might be list per group
+    await Hive.openBox<List<GroupSchedule>>(
+        _groupSchedulesBox); // Group schedules might be list per group
     await Hive.openBox<NonAttendanceDay>(_nonAttendanceDaysBox);
     await Hive.openBox<SchoolCycle>(_schoolCyclesBox);
-    await Hive.openBox<AttendanceRecord>(_attendanceRecordsBox); // For offline records
+    await Hive.openBox<AttendanceRecord>(
+        _attendanceRecordsBox); // For offline records
   }
 
   // Métodos de utilidad para acceder a las cajas
   Box<Student> get studentsBox => Hive.box<Student>(_studentsBox);
   Box<Group> get groupsBox => Hive.box<Group>(_groupsBox);
-  Box<List<GroupSchedule>> get groupSchedulesBox => Hive.box<List<GroupSchedule>>(_groupSchedulesBox);
-  Box<NonAttendanceDay> get nonAttendanceDaysBox => Hive.box<NonAttendanceDay>(_nonAttendanceDaysBox);
-  Box<SchoolCycle> get schoolCyclesBox => Hive.box<SchoolCycle>(_schoolCyclesBox);
-  Box<AttendanceRecord> get attendanceRecordsBox => Hive.box<AttendanceRecord>(_attendanceRecordsBox);
+  Box<List<GroupSchedule>> get groupSchedulesBox =>
+      Hive.box<List<GroupSchedule>>(_groupSchedulesBox);
+  Box<NonAttendanceDay> get nonAttendanceDaysBox =>
+      Hive.box<NonAttendanceDay>(_nonAttendanceDaysBox);
+  Box<SchoolCycle> get schoolCyclesBox =>
+      Hive.box<SchoolCycle>(_schoolCyclesBox);
+  Box<AttendanceRecord> get attendanceRecordsBox =>
+      Hive.box<AttendanceRecord>(_attendanceRecordsBox);
 
   // Limpiar todas las cajas (útil para cerrar sesión o resetear)
   Future<void> clearAllBoxes() async {

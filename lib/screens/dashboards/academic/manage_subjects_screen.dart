@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:asystem_cobacam/utils/animations.dart';
+import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -21,9 +23,9 @@ class Subject {
   }
 
   Map<String, dynamic> toJson() => {
-    'name': name,
-    'code': code,
-  };
+        'name': name,
+        'code': code,
+      };
 }
 
 class ManageSubjectsScreen extends StatefulWidget {
@@ -50,14 +52,21 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('No hay usuario autenticado.');
 
-      final userProfileSnapshot = await FirebaseDatabase.instance.ref('users/${user.uid}').get();
-      if (!userProfileSnapshot.exists) throw Exception('No se encontró el perfil del usuario.');
-      
-      final userData = Map<String, dynamic>.from(userProfileSnapshot.value as Map);
-      final campus = userData['campus'];
-      if (campus == null) throw Exception('El usuario no tiene un plantel asignado.');
+      final userProfileSnapshot =
+          await FirebaseDatabase.instance.ref('users/${user.uid}').get();
+      if (!userProfileSnapshot.exists) {
+        throw Exception('No se encontró el perfil del usuario.');
+      }
 
-      _subjectsRef = FirebaseDatabase.instance.ref('planteles/$campus/subjects');
+      final userData =
+          Map<String, dynamic>.from(userProfileSnapshot.value as Map);
+      final campus = userData['campus'];
+      if (campus == null) {
+        throw Exception('El usuario no tiene un plantel asignado.');
+      }
+
+      _subjectsRef =
+          FirebaseDatabase.instance.ref('planteles/$campus/subjects');
 
       _streamSubscription = _subjectsRef!.onValue.listen((event) {
         if (!event.snapshot.exists) {
@@ -77,10 +86,12 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
         });
       });
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      _showErrorSnackBar(e.toString());
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        UiHelpers.showSnackBar(context, e.toString(), isError: true);
+      }
     }
   }
 
@@ -97,18 +108,29 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Nombre de la Materia')),
-              TextField(controller: codeController, decoration: const InputDecoration(labelText: 'Código de la Materia')),
+              TextField(
+                  controller: nameController,
+                  decoration:
+                      const InputDecoration(labelText: 'Nombre de la Materia')),
+              const SizedBox(height: 12),
+              TextField(
+                  controller: codeController,
+                  decoration:
+                      const InputDecoration(labelText: 'Código de la Materia')),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar')),
             ElevatedButton(
               onPressed: () async {
                 final name = nameController.text;
                 final code = codeController.text;
-                
-                if (name.isNotEmpty && code.isNotEmpty && _subjectsRef != null) {
+
+                if (name.isNotEmpty &&
+                    code.isNotEmpty &&
+                    _subjectsRef != null) {
                   final subjectData = {'name': name, 'code': code};
                   try {
                     if (isEditing) {
@@ -116,10 +138,15 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
                     } else {
                       await _subjectsRef!.push().set(subjectData);
                     }
-                    if (!context.mounted) return;
+                    if (!mounted) return;
                     Navigator.pop(context);
+                    if (mounted) {
+                      UiHelpers.showSnackBar(context, isEditing ? 'Materia actualizada.' : 'Materia añadida.');
+                    }
                   } catch (e) {
-                    _showErrorSnackBar('Error al guardar: ${e.toString()}');
+                    if (mounted) {
+                      UiHelpers.showSnackBar(context, 'Error al guardar: ${e.toString()}', isError: true);
+                    }
                   }
                 }
               },
@@ -131,11 +158,6 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
     );
   }
 
-  void _showErrorSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
-  }
-  
   @override
   void dispose() {
     _streamSubscription?.cancel();
@@ -144,22 +166,37 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Gestión de Materias'),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        elevation: 1,
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: 0,
+        centerTitle: true,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _subjectsRef == null
-              ? const Center(child: Text('No se pudo cargar la información del plantel.'))
-              : _buildSubjectList(),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _subjectsRef == null
+                      ? const Center(
+                          child: Text(
+                              'No se pudo cargar la información del plantel.'))
+                      : _buildSubjectList(),
+            ),
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _subjectsRef != null ? () => _showSubjectDialog() : null,
-        backgroundColor: _subjectsRef != null ? Theme.of(context).colorScheme.primary : Colors.grey,
-        child: const Icon(Icons.add),
+        backgroundColor: theme.colorScheme.primary,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -168,24 +205,90 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
     if (_subjects.isEmpty) {
       return const Center(child: Text('No hay materias registradas.'));
     }
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return ListView.builder(
+      padding: const EdgeInsets.all(16),
       itemCount: _subjects.length,
       itemBuilder: (context, index) {
         final subject = _subjects[index];
-        return ListTile(
-          title: Text(subject.name),
-          subtitle: Text('Código: ${subject.code}'),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(icon: const Icon(Icons.edit), onPressed: () => _showSubjectDialog(subject: subject)),
-              IconButton(
-                icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-                onPressed: () {
-                  _subjectsRef!.child(subject.key).remove();
-                },
+        return FadeInUp(
+          delay: Duration(milliseconds: 50 * index),
+          child: Card(
+            elevation: 0,
+            color: isDark ? theme.cardTheme.color : Colors.white,
+            margin: const EdgeInsets.only(bottom: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: isDark
+                  ? BorderSide.none
+                  : BorderSide(color: Colors.grey.shade200),
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(16),
+              leading: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.book, color: Colors.orange.shade600),
               ),
-            ],
+              title: Text(subject.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 6.0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        subject.code,
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.edit_outlined,
+                        color: theme.colorScheme.primary),
+                    onPressed: () => _showSubjectDialog(subject: subject),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete_outline,
+                        color: theme.colorScheme.error),
+                    onPressed: () async {
+                      final confirm = await UiHelpers.showConfirmationDialog(
+                          context,
+                          title: 'Eliminar Materia',
+                          content:
+                              '¿Estás seguro de que deseas eliminar esta materia?',
+                          isDestructive: true);
+                      if (confirm) {
+                        _subjectsRef!.child(subject.key).remove();
+                        if (mounted) {
+                          UiHelpers.showSnackBar(context, 'Materia eliminada.');
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },

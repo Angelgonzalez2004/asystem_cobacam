@@ -14,7 +14,8 @@ class SpinningLogo extends StatefulWidget {
   State<SpinningLogo> createState() => _SpinningLogoState();
 }
 
-class _SpinningLogoState extends State<SpinningLogo> with SingleTickerProviderStateMixin {
+class _SpinningLogoState extends State<SpinningLogo>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 

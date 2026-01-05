@@ -178,7 +178,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
                   if (confirmed == true) {
                     // Aquí iría la lógica real de limpieza
-                    if (!mounted) return; 
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Caché limpiada con éxito.'),

@@ -1,3 +1,5 @@
+import 'package:asystem_cobacam/utils/animations.dart';
+import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -20,24 +22,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Future<void> _handlePasswordReset() async {
     if (_emailController.text.trim().isEmpty) {
-      _showErrorSnackBar('Por favor, ingresa tu correo electrónico.');
+      UiHelpers.showSnackBar(
+          context, 'Por favor, ingresa tu correo electrónico.',
+          isError: true);
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: _emailController.text.trim());
-      _showSuccessSnackBar('Enlace de recuperación enviado. Revisa tu correo.');
-      if (mounted) Navigator.pop(context);
+      await FirebaseAuth.instance
+          .sendPasswordResetEmail(email: _emailController.text.trim());
+      if (mounted) {
+        UiHelpers.showSnackBar(
+            context, 'Enlace de recuperación enviado. Revisa tu correo.');
+        await Future.delayed(const Duration(seconds: 2));
+        if (!mounted) return;
+        Navigator.pop(context);
+      }
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       String message = 'Ocurrió un error.';
       if (e.code == 'user-not-found') {
         message = 'No se encontró un usuario con ese correo.';
       }
-      _showErrorSnackBar(message);
+      UiHelpers.showSnackBar(context, message, isError: true);
     } catch (e) {
-      _showErrorSnackBar('Ocurrió un error inesperado.');
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Ocurrió un error inesperado.',
+            isError: true);
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -45,90 +59,136 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
   }
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red, duration: const Duration(seconds: 3)),
-    );
-  }
-
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green, duration: const Duration(seconds: 3)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.blue.shade800, Colors.blue.shade900],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.pop(context),
         ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(32.0),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Hero(
-                    tag: 'app_logo',
-                    child: Image.asset('assets/images/logo1.png', height: 60),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text('Recuperar Contraseña', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  const Text('Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16)),
-                  const SizedBox(height: 30),
-                  TextField(
-                    controller: _emailController,
-                    decoration: _buildInputDecoration('Correo Electrónico', Icons.email),
-                    keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  const SizedBox(height: 30),
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ElevatedButton(
-                          onPressed: _handlePasswordReset,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.blue.shade900,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          child: const Text('Enviar Enlace'),
+        title: const Text('Recuperar Contraseña'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Center(
+              child: SingleChildScrollView(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+                child: FadeInUp(
+                  duration: const Duration(milliseconds: 600),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Card(
+                      elevation: 0,
+                      color:
+                          isDark ? theme.cardTheme.color : Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 20),
+                            Hero(
+                              tag: 'app_logo',
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.colorScheme.primary
+                                          .withValues(alpha: 0.1),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
+                                    ),
+                                  ],
+                                ),
+                                child: Image.asset('assets/images/logo1.png',
+                                    height: 80),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            Text(
+                              '¿Olvidaste tu contraseña?',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Ingresa tu correo electrónico y te enviaremos las instrucciones para restablecerla.',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.7)),
+                            ),
+                            const SizedBox(height: 32),
+                            TextField(
+                              controller: _emailController,
+                              decoration: _buildInputDecoration(
+                                  'Correo Electrónico', Icons.email_outlined),
+                              keyboardType: TextInputType.emailAddress,
+                              style:
+                                  TextStyle(color: theme.colorScheme.onSurface),
+                            ),
+                            const SizedBox(height: 32),
+                            _isLoading
+                                ? const Center(
+                                    child: CircularProgressIndicator())
+                                : SizedBox(
+                                    height: 56,
+                                    child: ElevatedButton(
+                                      onPressed: _handlePasswordReset,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            theme.colorScheme.primary,
+                                        foregroundColor: Colors.white,
+                                        elevation: 4,
+                                        shadowColor: theme.colorScheme.primary
+                                            .withValues(alpha: 0.4),
+                                      ),
+                                      child: const Text('Enviar Enlace',
+                                          style: TextStyle(fontSize: 18)),
+                                    ),
+                                  ),
+                            const SizedBox(height: 20),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: TextButton.styleFrom(
+                                foregroundColor: theme.colorScheme.secondary,
+                              ),
+                              child: const Text('‹ Volver a Inicio de Sesión'),
+                            ),
+                          ],
                         ),
-                  const SizedBox(height: 10),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('‹ Volver a Inicio de Sesión', style: TextStyle(color: Colors.white70)),
+                      ),
+                    ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
   InputDecoration _buildInputDecoration(String label, IconData icon) {
+    final theme = Theme.of(context);
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.white70),
-      prefixIcon: Icon(icon, color: Colors.white70),
-      filled: true,
-      fillColor: Colors.black.withAlpha(26),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Colors.white)),
+      prefixIcon:
+          Icon(icon, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
     );
   }
 }
