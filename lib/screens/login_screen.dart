@@ -63,14 +63,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (snapshot.exists && snapshot.value != null) {
           final data = snapshot.value;
+          debugPrint("Data Type: ${data.runtimeType}");
+          debugPrint("Raw Data: $data");
+          
           String? role;
 
           if (data is Map) {
             final safeMap = Map<dynamic, dynamic>.from(data);
-            role = safeMap['role']?.toString();
+            role = safeMap['role']?.toString().trim();
+          } else {
+             debugPrint("Warning: Data is not a Map.");
           }
 
-          debugPrint("Rol encontrado: $role");
+          debugPrint("Rol encontrado (procesado): '$role'");
           _navigateToDashboard(role);
         } else {
           UiHelpers.showSnackBar(context, 'No se encontraron datos de usuario.',

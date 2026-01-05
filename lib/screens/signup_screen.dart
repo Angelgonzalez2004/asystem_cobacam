@@ -6,6 +6,7 @@ import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -148,11 +149,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
           final storageRef = FirebaseStorage.instance
               .ref()
               .child('profile_pictures/${user.uid}');
-          final uploadTask =
-              await storageRef.putFile(File(_profileImage!.path));
+          
+          if (kIsWeb) {
+            final bytes = await _profileImage!.readAsBytes();
+            await storageRef.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+          } else {
+            await storageRef.putFile(File(_profileImage!.path));
+          }
 
           if (!mounted) return;
-          profileImageUrl = await uploadTask.ref.getDownloadURL();
+          profileImageUrl = await storageRef.getDownloadURL();
           if (!mounted) return;
         }
 
@@ -241,7 +247,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   child: CircleAvatar(
                                     radius: 50,
                                     backgroundColor: isDark ? theme.cardTheme.color : Colors.white,
-                                    backgroundImage: _profileImage != null ? FileImage(File(_profileImage!.path)) : null,
+                                    backgroundImage: _profileImage != null
+                                        ? (kIsWeb
+                                            ? NetworkImage(_profileImage!.path)
+                                            : FileImage(File(_profileImage!.path))) as ImageProvider
+                                        : null,
                                     child: _profileImage == null
                                         ? Icon(Icons.add_a_photo_outlined, size: 32, color: theme.colorScheme.primary)
                                         : null,

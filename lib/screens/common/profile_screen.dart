@@ -5,6 +5,7 @@ import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -89,7 +90,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       final storageRef = FirebaseStorage.instance.ref().child('profile_pictures/${_currentUser.uid}');
-      await storageRef.putFile(File(image.path));
+      
+      if (kIsWeb) {
+        final bytes = await image.readAsBytes();
+        await storageRef.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+      } else {
+        await storageRef.putFile(File(image.path));
+      }
+
       final downloadUrl = await storageRef.getDownloadURL();
       await _userRef!.update({'profileImageUrl': downloadUrl});
       await _loadUserData();
@@ -226,8 +234,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 radius: 65,
                 backgroundColor: theme.colorScheme.surface,
                 backgroundImage: _newProfileImage != null
-                    ? FileImage(File(_newProfileImage!.path))
-                    : (profileUrl != null ? NetworkImage(profileUrl) : null) as ImageProvider?,
+                    ? (kIsWeb 
+                        ? NetworkImage(_newProfileImage!.path) 
+                        : FileImage(File(_newProfileImage!.path))) as ImageProvider
+                    : (profileUrl != null ? NetworkImage(profileUrl) : null),
                 child: (profileUrl == null && _newProfileImage == null)
                     ? Icon(Icons.person, size: 60, color: theme.colorScheme.primary.withValues(alpha: 0.3))
                     : null,
