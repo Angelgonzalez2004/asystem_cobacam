@@ -72,4 +72,32 @@ La aplicación implementa un estricto Control de Acceso Basado en Roles (RBAC):
 *   **📦 Código Fuente**: [GitHub - asystem_cobacam](https://github.com/Angelgonzalez2004/asystem_cobacam)
 
 ---
+
+## 🔧 Notas Técnicas y Solución de Problemas
+
+### Android Crash en Login (Solucionado)
+Se detectó un cierre inesperado en Android al intentar iniciar sesión.
+*   **Causa:** El `FirebaseInitProvider` estaba deshabilitado en el `AndroidManifest.xml`, impidiendo la correcta inicialización de los servicios de autenticación nativos.
+*   **Solución:** Se restauró el provider eliminando `tools:node="remove"`.
+
+### Compatibilidad de Librerías
+*   **Connectivity Plus:** Se mantiene en versión `^5.0.2`.
+    *   *Nota Importante:* Versiones superiores (6.0+) cambian el API a `List<ConnectivityResult>`, lo cual requeriría refactorización masiva. No actualizar sin revisar `ConnectivityService`.
+
+---
+
+## 🚀 Despliegue Web
+
+Para generar y desplegar la versión web en producción:
+
+1.  **Compilar:**
+    ```bash
+    flutter build web --release --web-renderer canvaskit
+    ```
+2.  **Desplegar a Firebase:**
+    ```bash
+    firebase deploy --only hosting
+    ```
+
+---
 *Desarrollado con excelencia e innovación para el COBACAM - 2026*
