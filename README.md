@@ -73,6 +73,17 @@ La aplicación implementa un estricto Control de Acceso Basado en Roles (RBAC):
 
 ---
 
+## 📢 Sistema de Comunicación y Avisos (NUEVO)
+
+*   **📰 Muro de Noticias Unificado**: Sistema de "News Feed" integrado en todos los roles (Alumnos, Académicos, Administrativos).
+*   **🔔 Gestión de Comunicados**:
+    *   **Administradores de Plantel**: Pueden publicar avisos visibles para todo su plantel (Alumnos, Docentes, Prefectos).
+    *   **Administración General**: Publicación de avisos globales visibles en todos los planteles.
+    *   Soporte para **títulos, mensajes detallados e imágenes adjuntas**.
+*   **📱 Navegación Moderna (App Drawer)**: Implementación de un menú lateral tipo "Hamburguesa" responsivo en todos los roles, unificando la experiencia de usuario y limpiando la interfaz principal.
+
+---
+
 ## 🔧 Notas Técnicas y Solución de Problemas
 
 ### Android Crash & Firebase
@@ -88,7 +99,8 @@ La aplicación implementa un estricto Control de Acceso Basado en Roles (RBAC):
 *   **Resolution Strategy:** Forzada la versión `1.9.3` de `androidx.activity` para prevenir conflictos de dependencias transitivas.
 
 ### Correcciones UI/UX
-*   **Focus Bouncing:** Se refactorizaron las animaciones `FadeIn` y `FadeInUp` a `StatefulWidget`. Esto evita que el árbol de widgets se reconstruya desde cero al abrir el teclado en móviles, solucionando el error donde los campos de texto perdían el foco inmediatamente.
+*   **Focus Bouncing:** Se refactorizaron las animaciones `FadeIn` y `FadeInUp` a `StatefulWidget` para evitar reconstrucciones innecesarias al abrir el teclado.
+*   **Layout Overflow:** Se ajustaron los Aspect Ratios en los Grids de Prefectura y Administración para evitar errores de desbordamiento en pantallas pequeñas.
 
 ---
 
@@ -107,4 +119,4 @@ Para generar y desplegar la versión web en producción:
 
 ---
 *Desarrollado con excelencia e innovación para el COBACAM - 2026*
-*Última actualización: 6 de Enero de 2026 (v1.0.2 - Hotfix UI)*
+*Última actualización: 6 de Enero de 2026 (v1.1.0 - Communication Update)*
