@@ -83,6 +83,10 @@ La aplicación implementa un estricto Control de Acceso Basado en Roles (RBAC):
 *   **Connectivity Plus:** Actualizado `ConnectivityService` para manejar `List<ConnectivityResult>`, compatible con versiones 5.0+ y futuras.
 *   **Excel:** Migración de propiedad `maxCols` a `maxColumns` (v2.0+).
 
+### Configuración de Compilación Android
+*   **AGP & Gradle:** Ajustado a AGP `8.6.0` y Gradle `8.7` para garantizar compatibilidad con plugins de cámara y escáner.
+*   **Resolution Strategy:** Forzada la versión `1.9.3` de `androidx.activity` para prevenir conflictos de dependencias transitivas.
+
 ---
 
 ## 🚀 Despliegue Web
@@ -100,4 +104,4 @@ Para generar y desplegar la versión web en producción:
 
 ---
 *Desarrollado con excelencia e innovación para el COBACAM - 2026*
-*Última actualización: 6 de Enero de 2026*
+*Última actualización: 6 de Enero de 2026 (v1.0.1)*
