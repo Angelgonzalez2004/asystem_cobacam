@@ -73,6 +73,20 @@ La aplicación implementa un estricto Control de Acceso Basado en Roles (RBAC):
 
 ---
 
+## 📱 Navegación y UX Unificada (v1.2.0)
+
+*   **🍔 App Drawer Estandarizado**: Menú lateral consistente en todos los roles, mostrando foto de perfil, nombre y rol.
+*   **👤 Perfil Avanzado**:
+    *   Gestión de foto de perfil (subida/edición).
+    *   Edición de datos personales (nombre, ubicación, teléfono).
+    *   Eliminación de cuenta segura (con re-autenticación).
+*   **⚙️ Ajustes Completos**:
+    *   Cambio de tema (Claro/Oscuro).
+    *   Cambio de contraseña y correo electrónico (con verificación).
+*   **🛡️ Navegación Robusta**: Eliminación de rutas de retroceso inseguras y unificación de títulos de pantalla.
+
+---
+
 ## 📢 Sistema de Comunicación y Avisos (NUEVO)
 
 *   **📰 Muro de Noticias Unificado**: Sistema de "News Feed" integrado en todos los roles (Alumnos, Académicos, Administrativos).
@@ -80,7 +94,6 @@ La aplicación implementa un estricto Control de Acceso Basado en Roles (RBAC):
     *   **Administradores de Plantel**: Pueden publicar avisos visibles para todo su plantel (Alumnos, Docentes, Prefectos).
     *   **Administración General**: Publicación de avisos globales visibles en todos los planteles.
     *   Soporte para **títulos, mensajes detallados e imágenes adjuntas**.
-*   **📱 Navegación Moderna (App Drawer)**: Implementación de un menú lateral tipo "Hamburguesa" responsivo en todos los roles, unificando la experiencia de usuario y limpiando la interfaz principal.
 
 ---
 
@@ -119,4 +132,4 @@ Para generar y desplegar la versión web en producción:
 
 ---
 *Desarrollado con excelencia e innovación para el COBACAM - 2026*
-*Última actualización: 6 de Enero de 2026 (v1.1.0 - Communication Update)*
+*Última actualización: 6 de Enero de 2026 (v1.2.0 - Standardized UX)*
