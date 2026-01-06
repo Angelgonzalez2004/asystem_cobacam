@@ -1,5 +1,3 @@
-import 'package:firebase_database/firebase_database.dart';
-
 class AnnouncementModel {
   final String id;
   final String title;

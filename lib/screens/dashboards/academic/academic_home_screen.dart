@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:asystem_cobacam/models/announcement_model.dart';
 import 'package:asystem_cobacam/services/announcement_service.dart';
 import 'package:asystem_cobacam/widgets/announcement_widgets.dart';
@@ -417,3 +418,47 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
     );
   }
 
+  Widget _buildSectionHeader(ThemeData theme, String title) {
+    return Row(
+      children: [
+        Container(
+            width: 4,
+            height: 24,
+            color: theme.colorScheme.primary,
+            margin: const EdgeInsets.only(right: 12)),
+        Text(title,
+            style: theme.textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  Widget _buildAdminTile(BuildContext context, String title, IconData icon,
+      Color iconColor, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: iconColor),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+                child: Text(title,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w500))),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+}

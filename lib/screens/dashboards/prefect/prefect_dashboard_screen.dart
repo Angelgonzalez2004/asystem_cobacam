@@ -163,7 +163,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         centerTitle: true,
       ),
       drawer: AppDrawer(
-        role: 'Prefecta',
+        role: _userRole,
         userName: _userName,
         userEmail: _userEmail,
         profileImageUrl: _userPhotoUrl,

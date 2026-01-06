@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:asystem_cobacam/models/announcement_model.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:uuid/uuid.dart';
 
 class AnnouncementService {
   final DatabaseReference _dbRef = FirebaseDatabase.instance.ref().child('announcements');
@@ -19,7 +18,8 @@ class AnnouncementService {
     File? imageFile,
   }) async {
     String? imageUrl;
-    String id = const Uuid().v4();
+    // Simple ID generation without external package
+    String id = '${DateTime.now().millisecondsSinceEpoch}_${authorId.substring(0, 5)}';
 
     if (imageFile != null) {
       final storageRef = _storage.ref().child('announcements/$id.jpg');
