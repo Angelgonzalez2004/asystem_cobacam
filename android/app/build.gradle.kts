@@ -19,7 +19,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "17" // Sintaxis simplificada y segura para KTS
     }
 
     defaultConfig {
@@ -31,7 +31,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        multiDexEnabled = true
+        
+        // Importante para Firebase
+        multiDexEnabled = true 
     }
 
     buildTypes {
@@ -39,6 +41,14 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+
+    // 🔥 ESTO ES VITAL: Evita el error de "requires Android Gradle plugin 8.9.1"
+    configurations.all {
+        resolutionStrategy {
+            force("androidx.activity:activity:1.9.3")
+            force("androidx.activity:activity-ktx:1.9.3")
         }
     }
 }
