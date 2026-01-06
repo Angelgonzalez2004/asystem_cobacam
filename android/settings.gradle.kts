@@ -20,14 +20,15 @@ pluginManagement {
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
 
-    // 🔴 CAMBIO: Versión 8.6.0 (Cumple el requisito mínimo de la cámara)
+    // Versión del plugin de Android (AGP). 8.6.0 es correcta y reciente.
     id("com.android.application") version "8.6.0" apply false
 
-    // Servicios de Google
+    // Servicios de Google (Firebase, etc.). 4.4.2 es correcta.
     id("com.google.gms.google-services") version "4.4.2" apply false
 
-    // 🔴 Mantenemos Kotlin 2.0.21 para mobile_scanner
-    id("org.jetbrains.kotlin.android") version "2.0.21" apply false
+    // 🟢 CORREGIDO: Actualizado a 2.1.0 para eliminar el Warning de Flutter.
+    // Esto debería seguir funcionando con mobile_scanner.
+    id("org.jetbrains.kotlin.android") version "2.1.0" apply false
 }
 
 include(":app")
