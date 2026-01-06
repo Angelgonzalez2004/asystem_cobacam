@@ -35,7 +35,7 @@ class PrefectHomeScreen extends StatelessWidget {
                 crossAxisCount: crossAxisCount,
                 crossAxisSpacing: 20.0,
                 mainAxisSpacing: 20.0,
-                childAspectRatio: 0.95,
+                childAspectRatio: 0.85,
                 children: [
                   _buildFeatureCard(
                     context,
