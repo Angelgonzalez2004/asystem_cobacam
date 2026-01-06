@@ -149,10 +149,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
           final storageRef = FirebaseStorage.instance
               .ref()
               .child('profile_pictures/${user.uid}');
-          
+
           if (kIsWeb) {
             final bytes = await _profileImage!.readAsBytes();
-            await storageRef.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+            await storageRef.putData(
+                bytes, SettableMetadata(contentType: 'image/jpeg'));
           } else {
             await storageRef.putFile(File(_profileImage!.path));
           }
@@ -216,20 +217,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Registro de Usuario', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text('Crear Nueva Cuenta',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 700;
+
             return Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
                 child: FadeInUp(
                   duration: const Duration(milliseconds: 600),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
+                    constraints: const BoxConstraints(maxWidth: 800),
                     child: Column(
                       children: [
                         // Avatar Section
@@ -242,128 +246,222 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2), width: 2),
+                                    color: theme.cardTheme.color,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.1),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      )
+                                    ],
                                   ),
                                   child: CircleAvatar(
-                                    radius: 50,
-                                    backgroundColor: isDark ? theme.cardTheme.color : Colors.white,
+                                    radius: 56,
+                                    backgroundColor: isDark
+                                        ? Colors.grey.shade800
+                                        : Colors.grey.shade100,
                                     backgroundImage: _profileImage != null
                                         ? (kIsWeb
                                             ? NetworkImage(_profileImage!.path)
-                                            : FileImage(File(_profileImage!.path))) as ImageProvider
+                                            : FileImage(
+                                                File(_profileImage!.path))) as ImageProvider
                                         : null,
                                     child: _profileImage == null
-                                        ? Icon(Icons.add_a_photo_outlined, size: 32, color: theme.colorScheme.primary)
+                                        ? Icon(Icons.person_outline_rounded,
+                                            size: 40,
+                                            color: theme.colorScheme.primary
+                                                .withValues(alpha: 0.5))
                                         : null,
                                   ),
                                 ),
                               ),
                               Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: theme.scaffoldBackgroundColor, width: 2),
-                                  ),
-                                  child: const Icon(Icons.edit, color: Colors.white, size: 14),
-                                )
-                              )
+                                  bottom: 0,
+                                  right: 4,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: theme.scaffoldBackgroundColor,
+                                          width: 3),
+                                      boxShadow: [
+                                        BoxShadow(
+                                            color: theme.colorScheme.primary
+                                                .withValues(alpha: 0.3),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2))
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                        Icons.camera_alt_rounded,
+                                        color: Colors.white,
+                                        size: 16),
+                                  ))
                             ],
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Foto de Perfil",
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.6),
+                          ),
+                        ),
                         const SizedBox(height: 40),
-                        
+
                         // Form Card
                         Card(
                           elevation: 0,
                           color: isDark ? theme.cardTheme.color : Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),
-                            side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.08)),
+                            side: BorderSide(
+                                color: theme.colorScheme.primary
+                                    .withValues(alpha: 0.08)),
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.all(24.0),
+                            padding: EdgeInsets.all(isWide ? 40.0 : 24.0),
                             child: Form(
                               key: _formKey,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  _buildSectionTitle(theme, 'INFORMACIÓN PERSONAL'),
+                                  // Section 1: Personal Info
+                                  _buildSectionHeader(theme, "Información Personal", Icons.badge_outlined),
+                                  const SizedBox(height: 24),
+                                  _buildTextFormField(
+                                      _nameController,
+                                      'Nombre Completo',
+                                      Icons.person_outline_rounded),
                                   const SizedBox(height: 20),
-                                  _buildTextFormField(_nameController, 'Nombre Completo', Icons.person_outline),
-                                  const SizedBox(height: 16),
-                                  Row(
+                                  
+                                  ResponsiveRow(
+                                    isWide: isWide,
+                                    gap: 20,
                                     children: [
-                                      Expanded(
-                                        child: TextFormField(
-                                          controller: _dobController,
-                                          decoration: _buildInputDecoration('Fecha de Nacimiento', Icons.calendar_today_outlined),
-                                          readOnly: true,
-                                          onTap: _selectDate,
-                                          validator: (val) => val!.isEmpty ? 'Campo requerido' : null,
-                                          style: TextStyle(color: theme.colorScheme.onSurface),
-                                        ),
+                                      TextFormField(
+                                        controller: _dobController,
+                                        decoration: _buildInputDecoration(
+                                            'Fecha de Nacimiento',
+                                            Icons.calendar_today_rounded),
+                                        readOnly: true,
+                                        onTap: _selectDate,
+                                        validator: (val) => val!.isEmpty
+                                            ? 'Campo requerido'
+                                            : null,
+                                        style: TextStyle(
+                                            color:
+                                                theme.colorScheme.onSurface),
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(child: _buildTextFormField(_locationController, 'Lugar Actual', Icons.location_city_outlined)),
+                                      _buildTextFormField(
+                                          _locationController,
+                                          'Lugar de Residencia',
+                                          Icons.location_city_rounded),
                                     ],
                                   ),
-                                  
-                                  const SizedBox(height: 32),
-                                  _buildSectionTitle(theme, 'INSTITUCIONAL'),
-                                  const SizedBox(height: 20),
-                                  _buildDropdown(_roles, 'Selecciona un Rol', Icons.work_outline, (val) {
-                                    setState(() {
-                                      _selectedRole = val;
-                                      _selectedCampus = null;
-                                    });
-                                  }),
-                                  
-                                  AnimatedSize(
-                                    duration: const Duration(milliseconds: 300),
-                                    child: (_selectedRole != null && !isGeneralAdmin)
-                                        ? Padding(
-                                            padding: const EdgeInsets.only(top: 16),
-                                            child: _buildDropdown(cobacamCampuses, 'Selecciona un Plantel', Icons.school_outlined, (val) => setState(() => _selectedCampus = val)),
-                                          )
-                                        : const SizedBox.shrink(),
+
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 32),
+                                    child: Divider(height: 1),
                                   ),
 
-                                  const SizedBox(height: 32),
-                                  _buildSectionTitle(theme, 'ACCESO Y SEGURIDAD'),
-                                  const SizedBox(height: 20),
-                                  _buildTextFormField(_emailController, 'Correo Institucional', Icons.alternate_email, keyboardType: TextInputType.emailAddress),
-                                  const SizedBox(height: 16),
-                                  _buildTextFormField(_passwordController, 'Contraseña', Icons.lock_outline, isPassword: true),
+                                  // Section 2: Institutional Info
+                                  _buildSectionHeader(theme, "Datos Institucionales", Icons.apartment_rounded),
+                                  const SizedBox(height: 24),
                                   
-                                  AnimatedSize(
-                                    duration: const Duration(milliseconds: 300),
-                                    child: (isGeneralAdmin || (_selectedRole != null && _selectedCampus != null))
-                                        ? Padding(
-                                            padding: const EdgeInsets.only(top: 16),
-                                            child: _buildTextFormField(_accessCodeController, 'Código de Validación', Icons.vpn_key_outlined),
-                                          )
-                                        : const SizedBox.shrink(),
+                                  ResponsiveRow(
+                                    isWide: isWide,
+                                    gap: 20,
+                                    children: [
+                                      _buildDropdown(
+                                          _roles,
+                                          'Selecciona un Rol',
+                                          Icons.work_outline_rounded, (val) {
+                                        setState(() {
+                                          _selectedRole = val;
+                                          _selectedCampus = null;
+                                        });
+                                      }),
+                                      
+                                      if (_selectedRole != null && !isGeneralAdmin)
+                                        _buildDropdown(
+                                            cobacamCampuses,
+                                            'Selecciona un Plantel',
+                                            Icons.school_outlined,
+                                            (val) => setState(
+                                                () => _selectedCampus = val))
+                                      else
+                                         const SizedBox.shrink(), // Placeholder for grid alignment if needed
+                                    ],
                                   ),
+
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 32),
+                                    child: Divider(height: 1),
+                                  ),
+
+                                  // Section 3: Access & Security
+                                  _buildSectionHeader(theme, "Seguridad de Acceso", Icons.lock_person_outlined),
+                                  const SizedBox(height: 24),
                                   
+                                  _buildTextFormField(
+                                      _emailController,
+                                      'Correo Institucional',
+                                      Icons.alternate_email_rounded,
+                                      keyboardType:
+                                          TextInputType.emailAddress),
+                                  const SizedBox(height: 20),
+                                  
+                                  ResponsiveRow(
+                                    isWide: isWide,
+                                    gap: 20,
+                                    children: [
+                                      _buildTextFormField(
+                                          _passwordController,
+                                          'Contraseña',
+                                          Icons.lock_outline_rounded,
+                                          isPassword: true),
+                                          
+                                      if (isGeneralAdmin ||
+                                          (_selectedRole != null &&
+                                              _selectedCampus != null))
+                                        _buildTextFormField(
+                                            _accessCodeController,
+                                            'Código de Validación',
+                                            Icons.vpn_key_rounded)
+                                      else
+                                         const SizedBox.shrink(),
+                                    ],
+                                  ),
+
                                   const SizedBox(height: 40),
-                                  
+
                                   _isLoading
-                                      ? const Center(child: CircularProgressIndicator())
+                                      ? const Center(
+                                          child: CircularProgressIndicator())
                                       : SizedBox(
                                           height: 56,
                                           child: ElevatedButton(
                                             onPressed: _handleSignUp,
                                             style: ElevatedButton.styleFrom(
-                                                backgroundColor: theme.colorScheme.primary,
-                                                foregroundColor: Colors.white,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                                elevation: 0,
+                                              backgroundColor:
+                                                  theme.colorScheme.primary,
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          14)),
+                                              elevation: 0,
                                             ),
-                                            child: const Text('Completar Registro', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                            child: const Text(
+                                                'Crear Cuenta Oficial',
+                                                style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
                                           ),
                                         ),
                                 ],
@@ -375,8 +473,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         TextButton(
                           onPressed: () => Navigator.pop(context),
                           child: Text(
-                            '‹ Ya tengo una cuenta. Iniciar Sesión',
-                            style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                            '‹ Cancelar Registro',
+                            style: TextStyle(
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.5)),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -392,14 +492,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildSectionTitle(ThemeData theme, String title) {
-    return Text(
-      title,
-      style: theme.textTheme.titleSmall?.copyWith(
-        color: theme.colorScheme.primary,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1.2,
-      ),
+  Widget _buildSectionHeader(ThemeData theme, String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        const SizedBox(width: 12),
+        Text(
+          title.toUpperCase(),
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.0,
+          ),
+        ),
+      ],
     );
   }
 
@@ -428,10 +534,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   style: TextStyle(color: theme.colorScheme.onSurface),
                   overflow: TextOverflow.ellipsis)))
           .toList(),
+      selectedItemBuilder: (BuildContext context) {
+        return items.map<Widget>((String item) {
+          return Text(
+            item,
+            style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
+             overflow: TextOverflow.ellipsis
+          );
+        }).toList();
+      },
       onChanged: onChanged,
       decoration: _buildInputDecoration(label, icon),
       dropdownColor: theme.cardTheme.color,
       validator: (val) => val == null ? 'Campo requerido' : null,
+      icon: Icon(Icons.keyboard_arrow_down_rounded, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
     );
   }
 
@@ -440,6 +556,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final theme = Theme.of(context);
     return InputDecoration(
       labelText: label,
+      alignLabelWithHint: true,
+      floatingLabelBehavior: FloatingLabelBehavior.auto,
       prefixIcon:
           Icon(icon, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
       suffixIcon: isPassword
@@ -460,3 +578,44 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 }
+
+class ResponsiveRow extends StatelessWidget {
+  final bool isWide;
+  final List<Widget> children;
+  final double gap;
+
+  const ResponsiveRow(
+      {super.key,
+      required this.isWide,
+      required this.children,
+      this.gap = 16.0});
+
+  @override
+  Widget build(BuildContext context) {
+    // Filter out SizedBox.shrink or nulls if any logic put them there
+    final visibleChildren = children.where((c) {
+        if (c is SizedBox && (c.width == 0.0 || c.height == 0.0)) return false;
+        return true;
+    }).toList();
+
+    if (visibleChildren.isEmpty) return const SizedBox.shrink();
+
+    if (!isWide) {
+      return Column(
+        children: visibleChildren
+            .expand((element) => [element, SizedBox(height: gap)])
+            .take(visibleChildren.length * 2 - 1)
+            .toList(),
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: visibleChildren
+          .expand((element) => [Expanded(child: element), SizedBox(width: gap)])
+          .take(visibleChildren.length * 2 - 1)
+          .toList(),
+    );
+  }
+}
+
