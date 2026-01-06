@@ -2,6 +2,7 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/group_management_scre
 import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_home_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/profile_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/settings_screen.dart';
+import 'package:asystem_cobacam/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -11,7 +12,6 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/attendance_screen.dar
 import 'package:asystem_cobacam/screens/dashboards/prefect/school_cycle_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/non_attendance_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/attendance_query_screen.dart';
-import 'package:asystem_cobacam/screens/login_screen.dart';
 
 class PrefectDashboardScreen extends StatefulWidget {
   const PrefectDashboardScreen({super.key});
@@ -23,52 +23,70 @@ class PrefectDashboardScreen extends StatefulWidget {
 class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
   String _userName = 'Cargando...';
   String _userRole = 'Cargando...';
+  String _userEmail = '';
   String? _userPhotoUrl;
+  String? _userCampus;
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const PrefectHomeScreen(),
-    const ProfileScreen(),
-    const SettingsScreen(),
-    const GroupManagementScreen(),
-    const SchoolCycleManagementScreen(),
-    const StudentManagementScreen(),
-    const GroupScheduleManagementScreen(),
-    const AttendanceScreen(),
-    const NonAttendanceManagementScreen(),
-    const AttendanceQueryScreen(),
-  ];
+  // Screen List - Indexes must match _onNavigate logic
+  // 0: Home
+  // 1: Profile
+  // 2: Settings
+  // 3: GroupManagement
+  // 4: SchoolCycleManagement
+  // 5: StudentManagement
+  // 6: GroupScheduleManagement
+  // 7: AttendanceScreen (Pase de Lista)
+  // 8: NonAttendanceManagement
+  // 9: AttendanceQueryScreen
+  // 10: QR Scanner (Placeholder for now)
+  // 11: Report Incident (Placeholder)
 
-  final List<String> _screenTitles = [
-    'Inicio',
-    'Perfil',
-    'Ajustes',
-    'Gestión de Grupos',
-    'Gestión de Ciclos Escolares',
-    'Gestión de Alumnos',
-    'Gestión de Horarios de Grupo',
-    'Registro de Asistencia',
-    'Gestión de Días No Lectivos',
-    'Consulta de Asistencia',
-  ];
+  late List<Widget> _screens;
+  late List<String> _screenTitles;
 
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
+    _initScreens();
+  }
+
+  void _initScreens() {
+    _screens = [
+      PrefectHomeScreen(campus: _userCampus), // Pass campus to Home
+      const ProfileScreen(),
+      const SettingsScreen(),
+      const GroupManagementScreen(),
+      const SchoolCycleManagementScreen(),
+      const StudentManagementScreen(),
+      const GroupScheduleManagementScreen(),
+      const AttendanceScreen(),
+      const NonAttendanceManagementScreen(),
+      const AttendanceQueryScreen(),
+      const Center(child: Text("Scanner QR (Próximamente)")),
+      const Center(child: Text("Reporte de Incidencias (Próximamente)")),
+    ];
+
+    _screenTitles = [
+      'Avisos y Comunicados', // Changed Title
+      'Perfil',
+      'Ajustes',
+      'Gestión de Grupos',
+      'Gestión de Ciclos Escolares',
+      'Gestión de Alumnos',
+      'Gestión de Horarios',
+      'Pase de Lista',
+      'Días No Lectivos',
+      'Consulta de Asistencia',
+      'Scanner QR',
+      'Reportar Incidencia',
+    ];
   }
 
   Future<void> _loadUserProfile() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      if (mounted) {
-        setState(() {
-          _userName = 'Usuario no autenticado';
-          _userRole = 'N/A';
-        });
-      }
-      return;
-    }
+    if (user == null) return;
 
     try {
       final snapshot =
@@ -77,229 +95,81 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         final userData = Map<String, dynamic>.from(snapshot.value as Map);
         if (mounted) {
           setState(() {
-            _userName = userData['fullName'] ?? 'Nombre no disponible';
-            _userRole = userData['role'] ?? 'Rol no disponible';
+            _userName = userData['fullName'] ?? 'Usuario';
+            _userRole = userData['role'] ?? 'Prefecta';
+            _userEmail = userData['email'] ?? user.email ?? '';
             _userPhotoUrl = userData['profileImageUrl'];
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _userName = 'Datos no encontrados';
-            _userRole = 'N/A';
+            _userCampus = userData['campus'];
+            
+            // Re-init screens to pass the fetched campus
+            _initScreens();
           });
         }
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _userName = 'Error de carga';
-          _userRole = 'N/A';
-        });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Error al cargar perfil: ${e.toString()}'),
-            backgroundColor: Colors.red));
-      }
+      debugPrint("Error loading profile: $e");
     }
   }
 
-  void _onItemTapped(int index) {
+  void _onNavigate(String route) {
+    int index = 0;
+    switch (route) {
+      case 'qr':
+        index = 10;
+        break;
+      case 'incidencia':
+        index = 11;
+        break;
+      case 'lista':
+        index = 7;
+        break;
+      case 'alumnos':
+        index = 5;
+        break;
+      case 'horarios':
+        index = 6;
+        break;
+      case 'ciclos':
+        index = 4;
+        break;
+      case 'no_lectivos':
+        index = 8;
+        break;
+      default:
+        index = 0;
+    }
+    
     setState(() {
       _selectedIndex = index;
     });
-    Navigator.of(context).pop(); // Cerrar el drawer
-  }
-
-  void _viewFullScreenImage(BuildContext context, String imageUrl) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.black,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-            Expanded(
-              child: Image.network(imageUrl, fit: BoxFit.contain),
-            ),
-          ],
-        ),
-      ),
-    );
+    Navigator.pop(context); // Close drawer
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    // Ensure safe index
+    final safeIndex = (_selectedIndex >= 0 && _selectedIndex < _screens.length) 
+        ? _selectedIndex 
+        : 0;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(_screenTitles[_selectedIndex]),
+        title: Text(_screenTitles[safeIndex]),
         backgroundColor: theme.colorScheme.surface,
         foregroundColor: theme.colorScheme.onSurface,
-        elevation: 1,
+        elevation: 0,
+        centerTitle: true,
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: const AssetImage('assets/images/logo2.jpg'),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Colors.black.withValues(alpha: 0.7),
-                    BlendMode.darken,
-                  ),
-                ),
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: _userPhotoUrl != null
-                          ? () => _viewFullScreenImage(context, _userPhotoUrl!)
-                          : null,
-                      child: CircleAvatar(
-                        radius: 30,
-                        backgroundColor: Colors.grey.shade200,
-                        backgroundImage: _userPhotoUrl != null
-                            ? NetworkImage(_userPhotoUrl!)
-                            : null,
-                        child: _userPhotoUrl == null
-                            ? const Icon(Icons.person, size: 30)
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    // Uso de variables previamente "unused" para mostrar info
-                    Text(
-                      _userName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      _userRole.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Inicio'),
-              selected: _selectedIndex == 0,
-              onTap: () => _onItemTapped(0),
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Perfil'),
-              selected: _selectedIndex == 1,
-              onTap: () => _onItemTapped(1),
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Ajustes'),
-              selected: _selectedIndex == 2,
-              onTap: () => _onItemTapped(2),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.group),
-              title: const Text('Gestión de Grupos'),
-              selected: _selectedIndex == 3,
-              onTap: () => _onItemTapped(3),
-            ),
-            ListTile(
-              leading: const Icon(Icons.calendar_today),
-              title: const Text('Gestión de Ciclos Escolares'),
-              selected: _selectedIndex == 4,
-              onTap: () => _onItemTapped(4),
-            ),
-            ListTile(
-              leading: Icon(Icons.people, color: theme.colorScheme.primary),
-              title: const Text('Gestión de Alumnos'),
-              selected: _selectedIndex == 5,
-              onTap: () => _onItemTapped(5),
-            ),
-            ListTile(
-              leading: Icon(Icons.schedule, color: theme.colorScheme.primary),
-              title: const Text('Gestión de Horarios de Grupo'),
-              selected: _selectedIndex == 6,
-              onTap: () => _onItemTapped(6),
-            ),
-            ListTile(
-              leading:
-                  Icon(Icons.qr_code_scanner, color: theme.colorScheme.primary),
-              title: const Text('Registro de Asistencia'),
-              selected: _selectedIndex == 7,
-              onTap: () => _onItemTapped(7),
-            ),
-            ListTile(
-              leading: Icon(Icons.event_busy, color: theme.colorScheme.primary),
-              title: const Text('Gestión de Días No Lectivos'),
-              selected: _selectedIndex == 8,
-              onTap: () => _onItemTapped(8),
-            ),
-            ListTile(
-              leading: Icon(Icons.search, color: theme.colorScheme.primary),
-              title: const Text('Consulta de Asistencia'),
-              selected: _selectedIndex == 9,
-              onTap: () => _onItemTapped(9),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Cerrar sesión'),
-              onTap: () async {
-                final bool? confirmed = await showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Cerrar sesión'),
-                    content: const Text(
-                        '¿Estás seguro de que quieres cerrar sesión?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('Cancelar'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text('Aceptar'),
-                      ),
-                    ],
-                  ),
-                );
-                if (confirmed == true) {
-                  await FirebaseAuth.instance.signOut();
-                  if (!mounted) return; // Check async gap
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                        builder: (context) => const LoginScreen()),
-                    (Route<dynamic> route) => false,
-                  );
-                }
-              },
-            ),
-          ],
-        ),
+      drawer: AppDrawer(
+        role: 'Prefecta',
+        userName: _userName,
+        userEmail: _userEmail,
+        profileImageUrl: _userPhotoUrl,
+        onNavigate: _onNavigate,
       ),
-      body: _screens[_selectedIndex],
+      body: _screens[safeIndex],
     );
   }
 }

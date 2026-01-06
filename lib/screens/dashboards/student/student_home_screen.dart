@@ -1,8 +1,39 @@
+import 'package:asystem_cobacam/models/announcement_model.dart';
+import 'package:asystem_cobacam/services/announcement_service.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
+import 'package:asystem_cobacam/widgets/announcement_widgets.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
-class StudentHomeScreen extends StatelessWidget {
+class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
+
+  @override
+  State<StudentHomeScreen> createState() => _StudentHomeScreenState();
+}
+
+class _StudentHomeScreenState extends State<StudentHomeScreen> {
+  final AnnouncementService _announcementService = AnnouncementService();
+  String? _campus;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCampus();
+  }
+
+  Future<void> _loadCampus() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final snapshot = await FirebaseDatabase.instance.ref('users/${user.uid}/campus').get();
+      if (mounted && snapshot.exists) {
+        setState(() {
+          _campus = snapshot.value as String?;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +103,51 @@ class StudentHomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
+
+              const SizedBox(height: 32),
+              
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.feed_outlined, color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Avisos Institucionales',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+
+              StreamBuilder<List<AnnouncementModel>>(
+                stream: _announcementService.getAnnouncementsStream(_campus, false),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Text("No hay avisos por el momento."),
+                    ));
+                  }
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: snapshot.data!.length,
+                    itemBuilder: (context, index) {
+                      return AnnouncementCard(announcement: snapshot.data![index]);
+                    },
+                  );
+                },
+              ),
+              
+              const SizedBox(height: 40),
             ],
           ),
         );

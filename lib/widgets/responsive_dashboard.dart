@@ -1,8 +1,10 @@
 import 'package:asystem_cobacam/screens/common/profile_screen.dart';
 import 'package:asystem_cobacam/screens/common/settings_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_announcements_screen.dart';
 import 'package:asystem_cobacam/screens/welcome_screen.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
+import 'package:asystem_cobacam/widgets/app_drawer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -20,17 +22,20 @@ class ResponsiveDashboard extends StatefulWidget {
 
 class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
   int _selectedIndex = 0;
-  late final List<Widget> _screens;
+  late List<Widget> _screens;
   
   // User Data State
   String _userName = 'Cargando...';
   String _userRole = '';
+  String _userEmail = '';
   String? _userProfileUrl;
+  String? _userCampus;
   DatabaseReference? _userRef;
 
   @override
   void initState() {
     super.initState();
+    // Initial basic screens
     _screens = [
       widget.body, // Index 0: Home
       const ProfileScreen(), // Index 1: Profile
@@ -42,6 +47,7 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
   void _initUserData() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
+      _userEmail = user.email ?? '';
       _userRef = FirebaseDatabase.instance.ref('users/${user.uid}');
       _userRef!.onValue.listen((event) {
         if (event.snapshot.exists && event.snapshot.value != null) {
@@ -52,6 +58,9 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
                 _userName = data['fullName']?.toString() ?? 'Usuario';
                 _userRole = data['role']?.toString() ?? widget.role;
                 _userProfileUrl = data['profileImageUrl']?.toString();
+                _userCampus = data['campus']?.toString();
+                
+                _updateScreensBasedOnRole();
               });
             }
           } catch (e) {
@@ -64,6 +73,27 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
             _userRole = widget.role;
         });
     }
+  }
+
+  void _updateScreensBasedOnRole() {
+    // Reset base screens
+    final baseScreens = [
+      widget.body,
+      const ProfileScreen(),
+      const SettingsScreen(),
+    ];
+
+    if (_userRole.contains('Administrativo')) {
+      // Add Management Screen at Index 3
+      baseScreens.add(
+        ManageAnnouncementsScreen(
+          campus: _userCampus,
+          isGeneralAdmin: _userRole.contains('General'),
+        )
+      );
+    }
+
+    _screens = baseScreens;
   }
 
   Future<void> _handleLogout(BuildContext context) async {
@@ -85,16 +115,23 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
     }
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  void _onNavigate(String route) {
+    if (route == 'manage_announcements') {
+      setState(() {
+        _selectedIndex = 3; // Index of ManageAnnouncementsScreen
+      });
+    } else {
+        // Handle other routes if necessary
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    
+    // Ensure index is valid
+    if (_selectedIndex >= _screens.length) _selectedIndex = 0;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -103,20 +140,22 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
           return Scaffold(
             appBar: AppBar(
               title: Text(
-                _selectedIndex == 0
-                    ? 'Dashboard: ${widget.role}'
-                    : (_selectedIndex == 1 ? 'Mi Perfil' : 'Configuración'),
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                _getTitleForIndex(_selectedIndex),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
-              centerTitle: false,
+              centerTitle: true,
               backgroundColor: isDark ? null : Colors.white,
-              foregroundColor:
-                  isDark ? Colors.white : theme.colorScheme.onSurface,
+              foregroundColor: isDark ? Colors.white : theme.colorScheme.onSurface,
               elevation: 0,
               iconTheme: IconThemeData(color: theme.colorScheme.primary),
             ),
-            drawer: _buildDrawer(context),
+            drawer: AppDrawer(
+              role: _userRole,
+              userName: _userName,
+              userEmail: _userEmail,
+              profileImageUrl: _userProfileUrl,
+              onNavigate: _onNavigate,
+            ),
             body: AnimatedSwitcher(
               duration: const Duration(milliseconds: 400),
               transitionBuilder: (child, animation) =>
@@ -145,11 +184,7 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              _selectedIndex == 0
-                                  ? 'Dashboard ${widget.role}'
-                                  : (_selectedIndex == 1
-                                      ? 'Mi Perfil'
-                                      : 'Configuración'),
+                              _getTitleForIndex(_selectedIndex),
                               style: theme.textTheme.headlineSmall
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
@@ -185,115 +220,48 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    final theme = Theme.of(context);
-    return Drawer(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      child: Column(
-        children: [
-          UserAccountsDrawerHeader(
-            decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                image: const DecorationImage(
-                    image: AssetImage('assets/images/logo2.jpg'),
-                    fit: BoxFit.cover,
-                    opacity: 0.2)),
-            accountName: Text(_userName,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 18)),
-            accountEmail:
-                Text(_userRole, style: const TextStyle(fontSize: 14)),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
-              backgroundImage: _userProfileUrl != null
-                  ? NetworkImage(_userProfileUrl!)
-                  : null,
-              child: _userProfileUrl == null
-                  ? const Icon(Icons.person, size: 40, color: Colors.blueGrey)
-                  : null,
-            ),
-          ),
-          ListTile(
-            leading: Icon(Icons.dashboard_outlined,
-                color: _selectedIndex == 0 ? theme.colorScheme.primary : null),
-            title: Text('Inicio',
-                style: TextStyle(
-                    fontWeight: _selectedIndex == 0
-                        ? FontWeight.bold
-                        : FontWeight.normal)),
-            selected: _selectedIndex == 0,
-            selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-            shape: const RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.horizontal(right: Radius.circular(30))),
-            onTap: () {
-              _onItemTapped(0);
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.person_outline,
-                color: _selectedIndex == 1 ? theme.colorScheme.primary : null),
-            title: Text('Perfil',
-                style: TextStyle(
-                    fontWeight: _selectedIndex == 1
-                        ? FontWeight.bold
-                        : FontWeight.normal)),
-            selected: _selectedIndex == 1,
-            selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-            shape: const RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.horizontal(right: Radius.circular(30))),
-            onTap: () {
-              _onItemTapped(1);
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.settings_outlined,
-                color: _selectedIndex == 2 ? theme.colorScheme.primary : null),
-            title: Text('Configuración',
-                style: TextStyle(
-                    fontWeight: _selectedIndex == 2
-                        ? FontWeight.bold
-                        : FontWeight.normal)),
-            selected: _selectedIndex == 2,
-            selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-            shape: const RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.horizontal(right: Radius.circular(30))),
-            onTap: () {
-              _onItemTapped(2);
-              Navigator.pop(context);
-            },
-          ),
-          const Spacer(),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20.0),
-            child: ListTile(
-              leading:
-                  Icon(Icons.logout_rounded, color: theme.colorScheme.error),
-              title: Text('Cerrar Sesión',
-                  style: TextStyle(
-                      color: theme.colorScheme.error,
-                      fontWeight: FontWeight.bold)),
-              onTap: () async {
-                Navigator.pop(context);
-                await _handleLogout(context);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
+  String _getTitleForIndex(int index) {
+    if (index == 0) return 'Panel de Control';
+    if (index == 1) return 'Mi Perfil';
+    if (index == 2) return 'Configuración';
+    if (index == 3) return 'Gestión de Avisos';
+    return 'Dashboard';
   }
 
   Widget _buildNavigationRail(ThemeData theme) {
+    final destinations = <NavigationRailDestination>[
+        const NavigationRailDestination(
+          icon: Icon(Icons.dashboard_outlined),
+          selectedIcon: Icon(Icons.dashboard),
+          label: Text('Inicio'),
+        ),
+        const NavigationRailDestination(
+          icon: Icon(Icons.person_outline),
+          selectedIcon: Icon(Icons.person),
+          label: Text('Perfil'),
+        ),
+        const NavigationRailDestination(
+          icon: Icon(Icons.settings_outlined),
+          selectedIcon: Icon(Icons.settings),
+          label: Text('Configuración'),
+        ),
+    ];
+
+    // Add Admin destinations dynamically for Desktop Rail
+    if (_userRole.contains('Administrativo')) {
+       destinations.add(const NavigationRailDestination(
+          icon: Icon(Icons.campaign_outlined),
+          selectedIcon: Icon(Icons.campaign),
+          label: Text('Avisos'),
+       ));
+    }
+
     return NavigationRail(
       selectedIndex: _selectedIndex,
       onDestinationSelected: (index) {
-        _onItemTapped(index);
+        setState(() {
+          _selectedIndex = index;
+        });
       },
       extended: true,
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -302,23 +270,7 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
       unselectedLabelTextStyle:
           TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
       selectedIconTheme: IconThemeData(color: theme.colorScheme.primary),
-      destinations: const [
-        NavigationRailDestination(
-          icon: Icon(Icons.dashboard_outlined),
-          selectedIcon: Icon(Icons.dashboard),
-          label: Text('Inicio'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.person_outline),
-          selectedIcon: Icon(Icons.person),
-          label: Text('Perfil'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.settings_outlined),
-          selectedIcon: Icon(Icons.settings),
-          label: Text('Configuración'),
-        ),
-      ],
+      destinations: destinations,
       leading: Padding(
         padding: const EdgeInsets.symmetric(vertical: 30.0),
         child: Image.asset('assets/images/logo1.png', height: 60),

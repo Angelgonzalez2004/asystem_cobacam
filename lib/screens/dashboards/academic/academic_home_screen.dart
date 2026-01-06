@@ -1,4 +1,6 @@
-import 'dart:async';
+import 'package:asystem_cobacam/models/announcement_model.dart';
+import 'package:asystem_cobacam/services/announcement_service.dart';
+import 'package:asystem_cobacam/widgets/announcement_widgets.dart';
 import 'package:asystem_cobacam/models/group_model.dart';
 import 'package:asystem_cobacam/models/schedule_models.dart';
 import 'package:asystem_cobacam/screens/dashboards/academic/manage_groups_screen.dart';
@@ -44,8 +46,10 @@ class AcademicHomeScreen extends StatefulWidget {
 }
 
 class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
+  final AnnouncementService _announcementService = AnnouncementService();
   bool _isLoading = true;
   String? _teacherId;
+  String? _campus;
   List<AssignedCourse> _assignedCourses = [];
 
   StreamSubscription? _scheduleSubscription;
@@ -92,6 +96,10 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
       if (campus == null) {
         throw Exception('El usuario no tiene un plantel asignado.');
       }
+      
+      setState(() {
+        _campus = campus;
+      });
 
       final campusRef = FirebaseDatabase.instance.ref('planteles/$campus');
 
@@ -285,6 +293,33 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
+                
+                // Announcements Section
+                _buildSectionHeader(theme, 'Avisos'),
+                const SizedBox(height: 16),
+                StreamBuilder<List<AnnouncementModel>>(
+                  stream: _announcementService.getAnnouncementsStream(_campus, false),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text("No hay avisos recientes."));
+                    }
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        return AnnouncementCard(announcement: snapshot.data![index]);
+                      },
+                    );
+                  },
+                ),
+                
+                const SizedBox(height: 32),
+
                 _buildSectionHeader(theme, 'Mis Cursos Asignados'),
                 const SizedBox(height: 16),
                 _assignedCourses.isEmpty
@@ -382,47 +417,3 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
     );
   }
 
-  Widget _buildSectionHeader(ThemeData theme, String title) {
-    return Row(
-      children: [
-        Container(
-            width: 4,
-            height: 24,
-            color: theme.colorScheme.primary,
-            margin: const EdgeInsets.only(right: 12)),
-        Text(title,
-            style: theme.textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _buildAdminTile(BuildContext context, String title, IconData icon,
-      Color iconColor, VoidCallback onTap) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12)),
-              child: Icon(icon, color: iconColor),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-                child: Text(title,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w500))),
-            const Icon(Icons.chevron_right, color: Colors.grey),
-          ],
-        ),
-      ),
-    );
-  }
-}
