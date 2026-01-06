@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
-class FadeInUp extends StatelessWidget {
+class FadeInUp extends StatefulWidget {
   final Widget child;
   final Duration duration;
   final Duration delay;
@@ -15,36 +16,60 @@ class FadeInUp extends StatelessWidget {
   });
 
   @override
+  State<FadeInUp> createState() => _FadeInUpState();
+}
+
+class _FadeInUpState extends State<FadeInUp> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacity;
+  late Animation<double> _translate;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration);
+
+    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
+    _translate = Tween<double>(begin: widget.offset, end: 0.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+
+    if (widget.delay == Duration.zero) {
+      _controller.forward();
+    } else {
+      Timer(widget.delay, () {
+        if (mounted) _controller.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: Future.delayed(delay),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const SizedBox
-              .shrink(); // Hide until delay is over (or use Opacity 0)
-        }
-        return TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.0, end: 1.0),
-          duration: duration,
-          curve: Curves.easeOutCubic,
-          builder: (context, value, child) {
-            return Opacity(
-              opacity: value,
-              child: Transform.translate(
-                offset: Offset(0, offset * (1 - value)),
-                child: child,
-              ),
-            );
-          },
-          child: child,
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _opacity.value,
+          child: Transform.translate(
+            offset: Offset(0, _translate.value),
+            child: widget.child,
+          ),
         );
       },
     );
   }
 }
 
-// Simple FadeIn wrapper
-class FadeIn extends StatelessWidget {
+class FadeIn extends StatefulWidget {
   final Widget child;
   final Duration duration;
   final Duration delay;
@@ -57,26 +82,42 @@ class FadeIn extends StatelessWidget {
   });
 
   @override
+  State<FadeIn> createState() => _FadeInState();
+}
+
+class _FadeInState extends State<FadeIn> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration);
+
+    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+
+    if (widget.delay == Duration.zero) {
+      _controller.forward();
+    } else {
+      Timer(widget.delay, () {
+        if (mounted) _controller.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: Future.delayed(delay),
-      builder: (context, snapshot) {
-        // This simple delay logic might flash.
-        // Better to use an AnimationController, but for a quick "without packages"
-        // solution, TweenAnimationBuilder starting immediately is better,
-        // but managing delay requires a StatefulWidget or a timer.
-        // Let's stick to TweenAnimationBuilder with a standard curve,
-        // but maybe just start it immediately.
-        return TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.0, end: 1.0),
-          duration: duration,
-          curve: Curves.easeIn,
-          builder: (context, value, child) {
-            return Opacity(opacity: value, child: child);
-          },
-          child: child,
-        );
-      },
+    return FadeTransition(
+      opacity: _opacity,
+      child: widget.child,
     );
   }
 }

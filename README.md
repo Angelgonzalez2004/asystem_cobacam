@@ -87,6 +87,9 @@ La aplicación implementa un estricto Control de Acceso Basado en Roles (RBAC):
 *   **AGP & Gradle:** Ajustado a AGP `8.6.0` y Gradle `8.7` para garantizar compatibilidad con plugins de cámara y escáner.
 *   **Resolution Strategy:** Forzada la versión `1.9.3` de `androidx.activity` para prevenir conflictos de dependencias transitivas.
 
+### Correcciones UI/UX
+*   **Focus Bouncing:** Se refactorizaron las animaciones `FadeIn` y `FadeInUp` a `StatefulWidget`. Esto evita que el árbol de widgets se reconstruya desde cero al abrir el teclado en móviles, solucionando el error donde los campos de texto perdían el foco inmediatamente.
+
 ---
 
 ## 🚀 Despliegue Web
@@ -104,4 +107,4 @@ Para generar y desplegar la versión web en producción:
 
 ---
 *Desarrollado con excelencia e innovación para el COBACAM - 2026*
-*Última actualización: 6 de Enero de 2026 (v1.0.1)*
+*Última actualización: 6 de Enero de 2026 (v1.0.2 - Hotfix UI)*
