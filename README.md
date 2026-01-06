@@ -1,41 +1,36 @@
-# Asystem Cobacam - Plataforma Integral de Gestión Académica
+# Asystem Cobacam - Suite de Gestión Académica
 
-**Asystem Cobacam** es una aplicación multiplataforma (Android, iOS y Web) diseñada para modernizar y optimizar la gestión escolar de los planteles COBACAM. Enfocada en la seguridad, la eficiencia operativa y una experiencia de usuario de primer nivel.
+**Asystem Cobacam** es una solución integral diseñada para el sistema COBACAM, ofreciendo una experiencia moderna, segura y eficiente para alumnos, docentes y personal administrativo.
 
-## 🚀 Características Principales
+## ✨ Novedades de la Versión 1.0.0
 
-### 🎨 Diseño y UX
-- **Interfaz Futurista:** Diseño limpio con Material 3, gradientes institucionales y animaciones suaves.
-- **Responsividad Total:** Se adapta perfectamente a teléfonos móviles, tablets y navegadores web de escritorio.
-- **Modo Oscuro/Claro:** Soporte nativo para ambos temas, respetando las preferencias del sistema.
-- **Landing Page Informativa:** Pantalla de bienvenida profesional con información detallada por rol.
+### 🛡️ Seguridad Avanzada (Nivel Bancario)
+- **Gestión de Sesiones Activas:** Visualiza en tiempo real qué dispositivos tienen acceso a tu cuenta, incluyendo su ubicación (Ciudad, Estado) e IP pública.
+- **Revocación Remota (Kill Switch):** Cierra sesiones en otros dispositivos desde tu teléfono. El intruso será expulsado de inmediato gracias al `SessionGuard`.
+- **Protección Anti-Fuerza Bruta:** Bloqueo progresivo ante intentos fallidos (10s, 1m, 5m) para prevenir accesos no autorizados.
+- **Geolocalización por IP:** Rastreo inteligente de accesos para auditoría de privacidad.
 
-### 🔐 Seguridad y Privacidad (Core)
-- **Anti-Fuerza Bruta:** Sistema de bloqueo inteligente ante múltiples intentos fallidos (10s, 1m, 5m).
-- **Gestión de Sesiones:** Auditoría en tiempo real de dispositivos conectados con geolocalización IP.
-- **Kill Switch:** Posibilidad de revocar el acceso a dispositivos sospechosos de forma remota.
-- **Session Guard:** Expulsión inmediata en tiempo real si la sesión es eliminada desde otro dispositivo.
+### 🎨 Experiencia de Usuario (UX/UI)
+- **Diseño Futurista:** Interfaz responsiva con Material 3, degradados dinámicos y animaciones `FadeInUp`.
+- **Header Dinámico:** Saludo personalizado basado en la hora del día (¡Buen día!, ¡Buenas tardes!, ¡Buenas noches!).
+- **Multiplataforma:** Optimizado para Android (14+), iOS y Web (HTTPS seguro).
 
-### 📋 Módulos por Rol
-- **Estudiantes:** Consulta de calificaciones, horarios, credencial digital y muro de avisos.
-- **Prefectura:** Scanner de asistencia QR, pase de lista digital y reporte de incidencias.
-- **Docentes:** Gestión de grupos, materias, maestros y constructor de horarios.
-- **Administración:** Estadísticas globales de asistencia y rendimiento, gestión de planteles y comunicados oficiales.
+### 🚀 Funcionalidades por Rol
+- **Estudiantes:** Credencial digital, horarios y seguimiento de avisos.
+- **Prefectura:** Scanner QR de asistencia y reporte de incidencias en tiempo real.
+- **Académico:** Gestión de maestros, materias y constructor de horarios automatizado.
 
-## 🛠️ Tecnologías
-- **Framework:** Flutter 3.4+
-- **Backend:** Firebase (Auth, Realtime Database, Storage)
-- **Base de Datos Local:** Hive (Soporte Offline)
-- **Geolocalización:** ipapi.co (HTTPS)
-- **Hardware:** Integración con cámara (Scanner QR) y Device Info.
+## 🛠️ Requisitos Técnicos
+- Flutter SDK >= 3.4.0
+- Firebase Core & Auth
+- Hive para almacenamiento Offline
+- Device Info Plus & Http para auditoría de seguridad
 
-## 📦 Instalación
-
-1. Clona el repositorio.
-2. Asegúrate de tener Flutter instalado (`flutter doctor`).
-3. Ejecuta `flutter pub get`.
-4. Configura tus archivos `google-services.json` (Android) e `GoogleService-Info.plist` (iOS) desde Firebase Console.
-5. Ejecuta la app con `flutter run`.
+## 📥 Despliegue
+Para compilar la versión web:
+```bash
+flutter build web --release
+```
 
 ---
-© 2026 COBACAM - Desarrollado para la excelencia académica.
+© 2026 COBACAM - Desarrollado para la excelencia académica y seguridad institucional.

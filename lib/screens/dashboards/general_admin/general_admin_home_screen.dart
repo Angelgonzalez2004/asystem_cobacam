@@ -2,7 +2,6 @@ import 'package:asystem_cobacam/models/announcement_model.dart';
 import 'package:asystem_cobacam/services/announcement_service.dart';
 import 'package:asystem_cobacam/widgets/announcement_widgets.dart';
 import 'package:asystem_cobacam/widgets/welcome_header.dart';
-import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
