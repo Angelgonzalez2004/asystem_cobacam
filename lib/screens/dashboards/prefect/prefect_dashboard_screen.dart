@@ -1,7 +1,7 @@
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_home_screen.dart';
-import 'package:asystem_cobacam/screens/dashboards/prefect/profile_screen.dart';
-import 'package:asystem_cobacam/screens/dashboards/prefect/settings_screen.dart';
+import 'package:asystem_cobacam/screens/common/profile_screen.dart'; // Correct Import
+import 'package:asystem_cobacam/screens/common/settings_screen.dart'; // Correct Import
 import 'package:asystem_cobacam/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -27,36 +27,24 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
   String? _userPhotoUrl;
   String? _userCampus;
   int _selectedIndex = 0;
+  DatabaseReference? _userRef;
 
   // Screen List - Indexes must match _onNavigate logic
-  // 0: Home
-  // 1: Profile
-  // 2: Settings
-  // 3: GroupManagement
-  // 4: SchoolCycleManagement
-  // 5: StudentManagement
-  // 6: GroupScheduleManagement
-  // 7: AttendanceScreen (Pase de Lista)
-  // 8: NonAttendanceManagement
-  // 9: AttendanceQueryScreen
-  // 10: QR Scanner (Placeholder for now)
-  // 11: Report Incident (Placeholder)
-
   late List<Widget> _screens;
   late List<String> _screenTitles;
 
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    _initUserData();
     _initScreens();
   }
 
   void _initScreens() {
     _screens = [
-      PrefectHomeScreen(campus: _userCampus), // Pass campus to Home
-      const ProfileScreen(),
-      const SettingsScreen(),
+      PrefectHomeScreen(campus: _userCampus),
+      const ProfileScreen(), // Uses Common Screen
+      const SettingsScreen(), // Uses Common Screen
       const GroupManagementScreen(),
       const SchoolCycleManagementScreen(),
       const StudentManagementScreen(),
@@ -69,7 +57,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
     ];
 
     _screenTitles = [
-      'Avisos y Comunicados', // Changed Title
+      'Avisos y Comunicados',
       'Perfil',
       'Ajustes',
       'Gestión de Grupos',
@@ -84,30 +72,31 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
     ];
   }
 
-  Future<void> _loadUserProfile() async {
+  Future<void> _initUserData() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    try {
-      final snapshot =
-          await FirebaseDatabase.instance.ref('users/${user.uid}').get();
-      if (snapshot.exists && snapshot.value != null) {
-        final userData = Map<String, dynamic>.from(snapshot.value as Map);
-        if (mounted) {
-          setState(() {
-            _userName = userData['fullName'] ?? 'Usuario';
-            _userRole = userData['role'] ?? 'Prefecta';
-            _userEmail = userData['email'] ?? user.email ?? '';
-            _userPhotoUrl = userData['profileImageUrl'];
-            _userCampus = userData['campus'];
-            
-            // Re-init screens to pass the fetched campus
-            _initScreens();
-          });
+    if (user != null) {
+      _userEmail = user.email ?? '';
+      _userRef = FirebaseDatabase.instance.ref('users/${user.uid}');
+      _userRef!.onValue.listen((event) {
+        if (event.snapshot.exists && event.snapshot.value != null) {
+          try {
+            final userData = Map<String, dynamic>.from(event.snapshot.value as Map);
+            if (mounted) {
+              setState(() {
+                _userName = userData['fullName'] ?? 'Usuario';
+                _userRole = userData['role'] ?? 'Prefecta';
+                _userPhotoUrl = userData['profileImageUrl'];
+                _userCampus = userData['campus'];
+                
+                // Re-init screens to pass the updated campus
+                _initScreens();
+              });
+            }
+          } catch (e) {
+            debugPrint("Error loading profile: $e");
+          }
         }
-      }
-    } catch (e) {
-      debugPrint("Error loading profile: $e");
+      });
     }
   }
 
