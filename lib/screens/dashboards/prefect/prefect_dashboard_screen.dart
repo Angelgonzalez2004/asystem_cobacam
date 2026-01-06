@@ -103,6 +103,9 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
   void _onNavigate(String route) {
     int index = 0;
     switch (route) {
+      case 'home':
+        index = 0;
+        break;
       case 'qr':
         index = 10;
         break;

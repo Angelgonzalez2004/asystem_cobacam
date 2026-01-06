@@ -1,135 +1,41 @@
-# 🎓 Asystem-Cobacam
+# Asystem Cobacam - Plataforma Integral de Gestión Académica
 
-![Flutter](https://img.shields.io/badge/Flutter-3.38.5-02569B?style=for-the-badge&logo=flutter&logoColor=white)
-![Firebase](https://img.shields.io/badge/Firebase-Realtime_DB-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
-![Code Quality](https://img.shields.io/badge/Linter-0_Issues-4CAF50?style=for-the-badge&logo=dart&logoColor=white)
-![Design](https://img.shields.io/badge/Design-Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![Security](https://img.shields.io/badge/Security-RBAC-red?style=for-the-badge&logo=security&logoColor=white)
+**Asystem Cobacam** es una aplicación multiplataforma (Android, iOS y Web) diseñada para modernizar y optimizar la gestión escolar de los planteles COBACAM. Enfocada en la seguridad, la eficiencia operativa y una experiencia de usuario de primer nivel.
 
-**Asystem-Cobacam** es la plataforma tecnológica definitiva para la gestión académica del *Colegio de Bachilleres del Estado de Campeche*. Diseñada para ofrecer una experiencia profesional, segura y altamente eficiente en 2026.
+## 🚀 Características Principales
 
----
+### 🎨 Diseño y UX
+- **Interfaz Futurista:** Diseño limpio con Material 3, gradientes institucionales y animaciones suaves.
+- **Responsividad Total:** Se adapta perfectamente a teléfonos móviles, tablets y navegadores web de escritorio.
+- **Modo Oscuro/Claro:** Soporte nativo para ambos temas, respetando las preferencias del sistema.
+- **Landing Page Informativa:** Pantalla de bienvenida profesional con información detallada por rol.
 
-## 🚀 Innovaciones UI/UX
+### 🔐 Seguridad y Privacidad (Core)
+- **Anti-Fuerza Bruta:** Sistema de bloqueo inteligente ante múltiples intentos fallidos (10s, 1m, 5m).
+- **Gestión de Sesiones:** Auditoría en tiempo real de dispositivos conectados con geolocalización IP.
+- **Kill Switch:** Posibilidad de revocar el acceso a dispositivos sospechosos de forma remota.
+- **Session Guard:** Expulsión inmediata en tiempo real si la sesión es eliminada desde otro dispositivo.
 
-*   **🎨 Estética Institucional**: Interfaz inspirada en **Tailwind CSS**, con un diseño limpio, moderno y colores institucionales optimizados para la legibilidad.
-*   **🌓 Modo Dual Inteligente**: Soporte completo para **Tema Claro** y **Tema Oscuro**, adaptable automáticamente a las preferencias del sistema del usuario o configurable manualmente.
-*   **📱 Responsividad Total (Multiplataforma)**: Arquitectura adaptativa (`LayoutBuilder`) que transforma la experiencia según el dispositivo:
-    *   **Escritorio/Web:** Barra de navegación lateral expandible y paneles de datos amplios.
-    *   **Móvil/Tableta:** Menú lateral deslizante (Drawer) y listas optimizadas para el tacto.
-*   **✨ Animaciones Premium**: Transiciones fluidas `FadeInUp` y navegación `SlideRight` que elevan la profesionalidad de la herramienta.
+### 📋 Módulos por Rol
+- **Estudiantes:** Consulta de calificaciones, horarios, credencial digital y muro de avisos.
+- **Prefectura:** Scanner de asistencia QR, pase de lista digital y reporte de incidencias.
+- **Docentes:** Gestión de grupos, materias, maestros y constructor de horarios.
+- **Administración:** Estadísticas globales de asistencia y rendimiento, gestión de planteles y comunicados oficiales.
 
----
+## 🛠️ Tecnologías
+- **Framework:** Flutter 3.4+
+- **Backend:** Firebase (Auth, Realtime Database, Storage)
+- **Base de Datos Local:** Hive (Soporte Offline)
+- **Geolocalización:** ipapi.co (HTTPS)
+- **Hardware:** Integración con cámara (Scanner QR) y Device Info.
 
-## 🛡️ Funcionalidades Avanzadas por Perfil (RBAC)
+## 📦 Instalación
 
-La aplicación implementa un estricto Control de Acceso Basado en Roles (RBAC):
-
-| Perfil | Icono | Funcionalidades Maestras |
-| :--- | :---: | :--- |
-| **Estudiante** | 👨‍🎓 | Historial de calificaciones, horarios dinámicos en tiempo real y credencial digital con código QR. |
-| **Académico** | 👩‍🏫 | Gestión de maestros, catálogo de materias, asignación de cargas horarias y pase de lista grupal. |
-| **Prefectura** | 👮 | **Scanner de Asistencia (Online/Offline)**, gestión de alumnos, reportes de incidencias y control de días no lectivos. |
-| **Administración** | 🏢 | Supervisión global de planteles, generación de códigos de acceso seguros y estadísticas de rendimiento. |
-
----
-
-## 🏥 Gestión Médica y de Bajas (NUEVO)
-
-*   **🩺 Módulo de Salud**: Expediente clínico digital que registra **alergias**, condiciones de salud específicas (visión, motricidad) y estado general para emergencias.
-*   **📂 Control de Bajas Lógicas**: Sistema que preserva el historial académico y asistencias pasadas de alumnos dados de baja, permitiendo auditorías futuras.
-*   **♻️ Reactivación Instantánea**: Capacidad de reincorporar alumnos con un solo clic, recuperando todo su historial previo sin recaptura de datos.
-*   **🚻 Identidad Visual**: Iconografía y paletas de colores adaptativas para identificación rápida de género en listas masivas.
+1. Clona el repositorio.
+2. Asegúrate de tener Flutter instalado (`flutter doctor`).
+3. Ejecuta `flutter pub get`.
+4. Configura tus archivos `google-services.json` (Android) e `GoogleService-Info.plist` (iOS) desde Firebase Console.
+5. Ejecuta la app con `flutter run`.
 
 ---
-
-## 🔐 Seguridad y Gestión de Cuenta (Enterprise)
-
-*   **📧 Cambio de Correo Seguro**: Protocolo de actualización de credenciales con **re-autenticación obligatoria** para prevenir robos de identidad.
-*   **🗑️ Eliminación de Cuenta (Cumplimiento GDPR)**:
-    *   Borrado seguro y permanente de datos de autenticación.
-    *   Limpieza automática de registros en Realtime Database.
-    *   Eliminación de activos multimedia (fotos) en Cloud Storage.
-*   **👤 Perfil Dinámico Sincronizado**:
-    *   Visualización en tiempo real de cambios en todos los dispositivos.
-    *   **Subida de Fotos Híbrida**: Algoritmo inteligente que detecta la plataforma (Web vs. Móvil) para gestionar la compresión y subida de imágenes (`putData` vs `putFile`) sin errores.
-
----
-
-## 🛠️ Arquitectura y Excelencia Técnica
-
-*   **💎 Calidad de Código**: Verificado con `flutter analyze` reportando **0 errores, 0 advertencias y 0 sugerencias**.
-*   **📡 Tecnología Offline-First**:
-    *   Uso de bases de datos locales (`Hive`) para funcionamiento sin internet.
-    *   Sincronización automática silenciosa con Firebase al recuperar conexión.
-*   **🛡️ Manejo de Errores Robusto**: Implementación de "safety nets" (bloques try-catch y casteo seguro de tipos) para prevenir cierres inesperados en Android debido a inconsistencias de datos.
-
----
-
-## 📡 Acceso Directo
-
-*   **🌐 Plataforma Web**: [https://asystemcobacam.web.app](https://asystemcobacam.web.app)
-*   **📦 Código Fuente**: [GitHub - asystem_cobacam](https://github.com/Angelgonzalez2004/asystem_cobacam)
-
----
-
-## 📱 Navegación y UX Unificada (v1.2.0)
-
-*   **🍔 App Drawer Estandarizado**: Menú lateral consistente en todos los roles, mostrando foto de perfil, nombre y rol.
-*   **👤 Perfil Avanzado**:
-    *   Gestión de foto de perfil (subida/edición).
-    *   Edición de datos personales (nombre, ubicación, teléfono).
-    *   Eliminación de cuenta segura (con re-autenticación).
-*   **⚙️ Ajustes Completos**:
-    *   Cambio de tema (Claro/Oscuro).
-    *   Cambio de contraseña y correo electrónico (con verificación).
-*   **🛡️ Navegación Robusta**: Eliminación de rutas de retroceso inseguras y unificación de títulos de pantalla.
-
----
-
-## 📢 Sistema de Comunicación y Avisos (NUEVO)
-
-*   **📰 Muro de Noticias Unificado**: Sistema de "News Feed" integrado en todos los roles (Alumnos, Académicos, Administrativos).
-*   **🔔 Gestión de Comunicados**:
-    *   **Administradores de Plantel**: Pueden publicar avisos visibles para todo su plantel (Alumnos, Docentes, Prefectos).
-    *   **Administración General**: Publicación de avisos globales visibles en todos los planteles.
-    *   Soporte para **títulos, mensajes detallados e imágenes adjuntas**.
-
----
-
-## 🔧 Notas Técnicas y Solución de Problemas
-
-### Android Crash & Firebase
-*   **Login Crash:** Solucionado implementando verificación `Firebase.apps.isEmpty` antes de inicializar, evitando conflicto con el `FirebaseInitProvider` nativo.
-*   **Auth API:** Se actualizó el flujo de cambio de correo a `verifyBeforeUpdateEmail` para cumplir con los estándares de seguridad recientes de Firebase.
-
-### Compatibilidad de Librerías
-*   **Connectivity Plus:** Actualizado `ConnectivityService` para manejar `List<ConnectivityResult>`, compatible con versiones 5.0+ y futuras.
-*   **Excel:** Migración de propiedad `maxCols` a `maxColumns` (v2.0+).
-
-### Configuración de Compilación Android
-*   **AGP & Gradle:** Ajustado a AGP `8.6.0` y Gradle `8.7` para garantizar compatibilidad con plugins de cámara y escáner.
-*   **Resolution Strategy:** Forzada la versión `1.9.3` de `androidx.activity` para prevenir conflictos de dependencias transitivas.
-
-### Correcciones UI/UX
-*   **Focus Bouncing:** Se refactorizaron las animaciones `FadeIn` y `FadeInUp` a `StatefulWidget` para evitar reconstrucciones innecesarias al abrir el teclado.
-*   **Layout Overflow:** Se ajustaron los Aspect Ratios en los Grids de Prefectura y Administración para evitar errores de desbordamiento en pantallas pequeñas.
-
----
-
-## 🚀 Despliegue Web
-
-Para generar y desplegar la versión web en producción:
-
-1.  **Compilar:**
-    ```bash
-    flutter build web --release --web-renderer canvaskit
-    ```
-2.  **Desplegar a Firebase:**
-    ```bash
-    firebase deploy --only hosting
-    ```
-
----
-*Desarrollado con excelencia e innovación para el COBACAM - 2026*
-*Última actualización: 6 de Enero de 2026 (v1.2.0 - Standardized UX)*
+© 2026 COBACAM - Desarrollado para la excelencia académica.

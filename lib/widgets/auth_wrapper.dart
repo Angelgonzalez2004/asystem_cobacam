@@ -5,9 +5,12 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_dashboard_scr
 import 'package:asystem_cobacam/screens/dashboards/student/student_dashboard_screen.dart';
 import 'package:asystem_cobacam/screens/welcome_screen.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
+import 'package:asystem_cobacam/services/session_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+
+import 'package:asystem_cobacam/widgets/session_guard.dart'; // Importar SessionGuard
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -37,6 +40,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
         _goToWelcome();
         return;
       }
+
+      // --- REGISTRAR SESIÓN (BACKGROUND) ---
+      SessionService().registerCurrentSession().catchError((e) => debugPrint("Session error: $e"));
+      // -------------------------------------
 
       final snapshot =
           await FirebaseDatabase.instance.ref('users/${user.uid}').get();
@@ -86,9 +93,16 @@ class _AuthWrapperState extends State<AuthWrapper> {
       default:
         dashboard = const WelcomeScreen();
     }
+    
+    // Envolver el dashboard seleccionado con el Guardián de Sesión
+    if (role != null) {
+      dashboard = SessionGuard(child: dashboard);
+    }
+
     Navigator.of(context)
         .pushReplacement(MaterialPageRoute(builder: (context) => dashboard));
   }
+
 
   @override
   Widget build(BuildContext context) {

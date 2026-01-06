@@ -1,11 +1,12 @@
 import 'package:asystem_cobacam/providers/theme_provider.dart';
-import 'package:asystem_cobacam/screens/welcome_screen.dart';
-import 'package:asystem_cobacam/utils/animations.dart';
+import 'package:asystem_cobacam/services/session_service.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:intl/intl.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,125 +16,172 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailFormKey = GlobalKey<FormState>(); // Separate key for email form
-  
-  final _currentPasswordController = TextEditingController();
-  final _newPasswordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  
-  // Controllers for Email Change
-  final _newEmailController = TextEditingController();
-  final _passwordForEmailController = TextEditingController();
-
-  bool _isLoading = false;
-  bool _isObscureCurrent = true;
-  bool _isObscureNew = true;
-  bool _isObscureConfirm = true;
-  bool _isObscureEmailPass = true;
+  String _appVersion = '';
+  List<Map<String, dynamic>> _activeSessions = [];
+  String? _currentDeviceId;
+  bool _isLoadingSessions = true;
 
   @override
-  void dispose() {
-    _currentPasswordController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
-    _newEmailController.dispose();
-    _passwordForEmailController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadAppVersion();
+    _loadSessions();
   }
 
-  Future<void> _changeEmail() async {
-    if (!_emailFormKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = '${packageInfo.version} (${packageInfo.buildNumber})';
+    });
+  }
+
+  Future<void> _loadSessions() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null || user.email == null) return;
-
-      // Re-authenticate
-      final cred = EmailAuthProvider.credential(email: user.email!, password: _passwordForEmailController.text);
-      await user.reauthenticateWithCredential(cred);
-
-      // Update Email in Auth (New Flow: Verification first)
-      String newEmail = _newEmailController.text.trim();
-      await user.verifyBeforeUpdateEmail(newEmail);
+      _currentDeviceId = await SessionService().getCurrentDeviceId();
       
-      // Update Email in Database (Optional: might want to do this only after verification, but for UI consistency we do it here or warn user)
-      // Note: Ideally, DB should only update after email is verified via a cloud function trigger, but for now:
-      await FirebaseDatabase.instance.ref('users/${user.uid}').update({'email': newEmail});
+      // Escuchar cambios en tiempo real en las sesiones
+      FirebaseDatabase.instance
+          .ref('users/${user.uid}/sessions')
+          .onValue
+          .listen((event) {
+        if (!mounted) return;
+        final data = event.snapshot.value;
+        final List<Map<String, dynamic>> sessions = [];
+        
+        if (data != null && data is Map) {
+           data.forEach((key, value) {
+             final session = Map<String, dynamic>.from(value as Map);
+             session['key'] = key;
+             sessions.add(session);
+           });
+        }
+        
+        // Ordenar: Actual primero, luego por fecha reciente
+        sessions.sort((a, b) {
+           if (a['deviceId'] == _currentDeviceId) return -1;
+           if (b['deviceId'] == _currentDeviceId) return 1;
+           return (b['lastActive'] ?? 0).compareTo(a['lastActive'] ?? 0);
+        });
 
-      if (mounted) {
-        UiHelpers.showSnackBar(context, 'Se ha enviado un enlace de verificación a $newEmail. Por favor confírmalo para completar el cambio.');
-        _newEmailController.clear();
-        _passwordForEmailController.clear();
-      }
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      String message = 'Error al actualizar correo.';
-      if (e.code == 'wrong-password') message = 'Contraseña incorrecta.';
-      if (e.code == 'email-already-in-use') message = 'Este correo ya está en uso.';
-      if (e.code == 'invalid-email') message = 'Formato de correo inválido.';
-      UiHelpers.showSnackBar(context, message, isError: true);
+        setState(() {
+          _activeSessions = sessions;
+          _isLoadingSessions = false;
+        });
+      });
     } catch (e) {
-      if (mounted) UiHelpers.showSnackBar(context, 'Error inesperado.', isError: true);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      debugPrint("Error loading sessions: $e");
+      if (mounted) setState(() => _isLoadingSessions = false);
     }
   }
 
-  Future<void> _changePassword() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
-
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null || user.email == null) {
-        if (mounted) UiHelpers.showSnackBar(context, 'No se pudo encontrar el usuario actual.', isError: true);
-        return;
-      }
-
-      final cred = EmailAuthProvider.credential(email: user.email!, password: _currentPasswordController.text);
-      await user.reauthenticateWithCredential(cred);
-      if (!mounted) return;
-
-      await user.updatePassword(_newPasswordController.text);
-      if (mounted) {
-        UiHelpers.showSnackBar(context, 'Contraseña actualizada exitosamente.');
-        _currentPasswordController.clear();
-        _newPasswordController.clear();
-        _confirmPasswordController.clear();
-      }
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      String message = 'Ocurrió un error.';
-      if (e.code == 'wrong-password') {
-        message = 'La contraseña actual es incorrecta.';
-      } else if (e.code == 'weak-password') {
-        message = 'La nueva contraseña es muy débil.';
-      }
-      UiHelpers.showSnackBar(context, message, isError: true);
-    } catch (e) {
-      if (mounted) UiHelpers.showSnackBar(context, 'Error inesperado.', isError: true);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _handleLogout() async {
-    final confirmed = await UiHelpers.showConfirmationDialog(
-      context,
-      title: 'Cerrar Sesión',
-      content: '¿Estás seguro de que quieres salir?',
-      confirmText: 'Salir',
-      isDestructive: true,
+  Future<void> _revokeSession(String deviceKey, String modelName) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Cerrar sesión en este dispositivo?'),
+        content: Text('Se desconectará la cuenta en "$modelName". Si no reconoces este dispositivo, cambia tu contraseña inmediatamente.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true), 
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Desconectar'),
+          ),
+        ],
+      ),
     );
 
-    if (confirmed && mounted) {
-      await FirebaseAuth.instance.signOut();
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-        (route) => false,
-      );
+    if (confirm == true) {
+      try {
+        await SessionService().revokeSession(deviceKey);
+        if (mounted) UiHelpers.showSnackBar(context, 'Dispositivo desconectado.');
+      } catch (e) {
+        if (mounted) UiHelpers.showSnackBar(context, 'Error al desconectar: $e', isError: true);
+      }
+    }
+  }
+
+  Future<void> _showChangePasswordDialog() async {
+    final emailController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Restablecer Contraseña'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Se enviará un enlace a tu correo para cambiar la contraseña de forma segura.'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Confirma tu correo',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.email),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (emailController.text.trim().isEmpty) return;
+                try {
+                  await FirebaseAuth.instance.sendPasswordResetEmail(email: emailController.text.trim());
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    UiHelpers.showSnackBar(context, 'Correo enviado. Revisa tu bandeja de entrada.');
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    UiHelpers.showSnackBar(context, 'Error: $e', isError: true);
+                  }
+                }
+              },
+              child: const Text('Enviar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _handleDeleteAccount() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Eliminar Cuenta?'),
+        content: const Text(
+          'Esta acción es irreversible. Se perderán todos tus datos locales y acceso. '
+          'Si eres alumno, tu historial académico permanecerá en la base de datos de la escuela.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Eliminar Definitivamente'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      if (mounted) {
+          UiHelpers.showSnackBar(context, 'Por seguridad, contacta al administrador para eliminar tu cuenta.', isError: true);
+      }
     }
   }
 
@@ -141,157 +189,219 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: FadeInUp(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildSectionTitle(theme, 'Preferencias Visuales'),
-                  const SizedBox(height: 16),
-                  _buildThemeCard(theme, themeProvider, isDark),
-                  const SizedBox(height: 32),
-                  _buildSectionTitle(theme, 'Seguridad'),
-                  const SizedBox(height: 16),
-                  _buildEmailCard(theme, isDark), // New Email Card
-                  const SizedBox(height: 24),
-                  _buildPasswordCard(theme, isDark),
-                  const SizedBox(height: 32),
-                  _buildSectionTitle(theme, 'Cuenta'),
-                  const SizedBox(height: 16),
-                  _buildActionCard(theme, isDark),
-                  const SizedBox(height: 48),
-                  _buildFooter(theme),
-                ],
-              ),
+      appBar: AppBar(
+        title: const Text('Ajustes del Sistema', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          _buildSectionHeader(theme, 'Seguridad de la Cuenta'),
+          
+          // --- ACTIVE SESSIONS LIST ---
+          if (_isLoadingSessions)
+             const Center(child: Padding(padding: EdgeInsets.all(20.0), child: CircularProgressIndicator()))
+          else if (_activeSessions.isEmpty)
+             _buildSettingsTile(context, icon: Icons.error_outline, title: 'No se pudo cargar la información')
+          else 
+            ..._activeSessions.map((session) {
+              final isCurrent = session['deviceId'] == _currentDeviceId;
+              final lastActive = session['lastActive'] != null 
+                  ? DateTime.fromMillisecondsSinceEpoch(session['lastActive']) 
+                  : DateTime.now();
+              final formattedDate = DateFormat('dd/MM HH:mm').format(lastActive);
+              
+              IconData deviceIcon = Icons.devices_other;
+              if (session['platform'].toString().contains('Android')) deviceIcon = Icons.phone_android;
+              if (session['platform'].toString().contains('iOS')) deviceIcon = Icons.phone_iphone;
+              if (session['platform'].toString().contains('Web')) deviceIcon = Icons.web;
+              if (session['platform'].toString().contains('Windows') || session['platform'].toString().contains('Mac')) deviceIcon = Icons.computer;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: isCurrent ? theme.colorScheme.primary.withOpacity(0.05) : theme.cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: isCurrent ? Border.all(color: theme.colorScheme.primary.withOpacity(0.3)) : null,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                  ],
+                ),
+                child: ListTile(
+                  leading: Stack(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isCurrent ? theme.colorScheme.primary : Colors.grey.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(deviceIcon, color: isCurrent ? Colors.white : Colors.grey),
+                      ),
+                      if (isCurrent)
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            width: 12, height: 12,
+                            decoration: BoxDecoration(
+                              color: Colors.greenAccent,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: theme.cardColor, width: 2),
+                            ),
+                          ),
+                        )
+                    ],
+                  ),
+                  title: Text(session['model'] ?? 'Dispositivo', style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isCurrent ? 'Este dispositivo • Activo ahora' : 'Última vez: $formattedDate • ${session['platform']}',
+                        style: TextStyle(fontSize: 12, color: isCurrent ? theme.colorScheme.primary : Colors.grey),
+                      ),
+                      if (session['location'] != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Row(
+                            children: [
+                              Icon(Icons.location_on, size: 12, color: Colors.grey[600]),
+                              const SizedBox(width: 4),
+                              Text(
+                                session['location'],
+                                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  trailing: isCurrent 
+                      ? null 
+                      : IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                          onPressed: () => _revokeSession(session['key'], session['model']),
+                          tooltip: 'Desconectar dispositivo',
+                        ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+              );
+            }),
+          
+          const SizedBox(height: 20),
+          _buildSettingsTile(
+            context,
+            icon: Icons.lock_reset_rounded,
+            title: 'Cambiar Contraseña',
+            subtitle: 'Recibir enlace de recuperación',
+            onTap: _showChangePasswordDialog,
+          ),
+
+          const SizedBox(height: 30),
+          _buildSectionHeader(theme, 'Apariencia'),
+          _buildSettingsTile(
+            context,
+            icon: Icons.dark_mode_outlined,
+            title: 'Modo Oscuro',
+            subtitle: 'Alternar entre tema claro y oscuro',
+            trailing: Switch(
+              value: themeProvider.themeMode == ThemeMode.dark,
+              onChanged: (val) {
+                themeProvider.setThemeMode(val ? ThemeMode.dark : ThemeMode.light);
+              },
+              activeColor: theme.colorScheme.primary,
             ),
           ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildSectionTitle(ThemeData theme, String title) {
-    return Text(title, style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, letterSpacing: 1));
-  }
-
-  Widget _buildThemeCard(ThemeData theme, ThemeProvider provider, bool isDark) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
-      child: ListTile(
-        leading: Icon(isDark ? Icons.dark_mode : Icons.light_mode, color: theme.colorScheme.primary),
-        title: const Text('Tema Oscuro', style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: const Text('Alternar entre modo claro y oscuro'),
-        trailing: Switch.adaptive(
-          value: isDark,
-          onChanged: (val) => provider.setThemeMode(val ? ThemeMode.dark : ThemeMode.light),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmailCard(ThemeData theme, bool isDark) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _emailFormKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Actualizar Correo', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _newEmailController,
-                decoration: const InputDecoration(labelText: 'Nuevo Correo', prefixIcon: Icon(Icons.email_outlined, size: 20)),
-                validator: (val) => val!.isEmpty || !val.contains('@') ? 'Correo inválido' : null,
-              ),
-              const SizedBox(height: 16),
-              _buildPasswordField(_passwordForEmailController, 'Contraseña Actual', _isObscureEmailPass, () => setState(() => _isObscureEmailPass = !_isObscureEmailPass)),
-              const SizedBox(height: 24),
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(onPressed: _changeEmail, child: const Text('Guardar Nuevo Correo')),
-            ],
+          const SizedBox(height: 30),
+          _buildSectionHeader(theme, 'Información'),
+          _buildSettingsTile(
+            context,
+            icon: Icons.info_outline_rounded,
+            title: 'Versión de la App',
+            subtitle: _appVersion.isEmpty ? 'Cargando...' : _appVersion,
           ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildPasswordCard(ThemeData theme, bool isDark) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildPasswordField(_currentPasswordController, 'Contraseña Actual', _isObscureCurrent, () => setState(() => _isObscureCurrent = !_isObscureCurrent)),
-              const SizedBox(height: 16),
-              _buildPasswordField(_newPasswordController, 'Nueva Contraseña', _isObscureNew, () => setState(() => _isObscureNew = !_isObscureNew)),
-              const SizedBox(height: 16),
-              _buildPasswordField(_confirmPasswordController, 'Confirmar Contraseña', _isObscureConfirm, () => setState(() => _isObscureConfirm = !_isObscureConfirm)),
-              const SizedBox(height: 24),
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(onPressed: _changePassword, child: const Text('Actualizar Contraseña')),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPasswordField(TextEditingController controller, String label, bool obscure, VoidCallback onToggle) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscure,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: const Icon(Icons.lock_outline, size: 20),
-        suffixIcon: IconButton(icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, size: 20), onPressed: onToggle),
-      ),
-      validator: (val) => val!.isEmpty ? 'Campo requerido' : null,
-    );
-  }
-
-  Widget _buildActionCard(ThemeData theme, bool isDark) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
-      child: Column(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-            onTap: _handleLogout,
+          const SizedBox(height: 40),
+          OutlinedButton.icon(
+             onPressed: _handleDeleteAccount,
+             icon: const Icon(Icons.delete_forever_rounded),
+             label: const Text('Solicitar Eliminación de Cuenta'),
+             style: OutlinedButton.styleFrom(
+               foregroundColor: Colors.red,
+               side: const BorderSide(color: Colors.red),
+               padding: const EdgeInsets.symmetric(vertical: 16),
+             ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFooter(ThemeData theme) {
-    return Column(
-      children: [
-        const Text('Asystem Cobacam v1.0.0', style: TextStyle(color: Colors.grey, fontSize: 12)),
-        const SizedBox(height: 8),
-        Text('Desarrollado para COBACAM', style: theme.textTheme.bodySmall),
-      ],
+  Widget _buildSectionHeader(ThemeData theme, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, left: 4),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: theme.colorScheme.primary),
+        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: subtitle != null
+            ? Text(subtitle, style: TextStyle(color: theme.textTheme.bodySmall?.color?.withOpacity(0.7)))
+            : null,
+        trailing: trailing ?? (onTap != null ? const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey) : null),
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
     );
   }
 }

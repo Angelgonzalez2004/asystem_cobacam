@@ -73,7 +73,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-                  surface: Theme.of(context).cardTheme.color,
+                  surface: Theme.of(context).cardColor,
                 ),
           ),
           child: child!,
@@ -217,7 +217,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Crear Nueva Cuenta',
+        title: const Text('Registro de Usuario',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -225,262 +225,100 @@ class _SignUpScreenState extends State<SignUpScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth > 700;
+            final isWide = constraints.maxWidth > 800;
 
             return Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+                padding: const EdgeInsets.all(24.0),
                 child: FadeInUp(
                   duration: const Duration(milliseconds: 600),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 800),
-                    child: Column(
-                      children: [
-                        // Avatar Section
-                        Center(
-                          child: Stack(
+                    constraints: const BoxConstraints(maxWidth: 900),
+                    child: Card(
+                      elevation: 0,
+                      color: isDark ? theme.cardColor : Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(32),
+                        side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(isWide ? 40.0 : 24.0),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              GestureDetector(
-                                onTap: _pickImage,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: theme.cardTheme.color,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      )
-                                    ],
-                                  ),
-                                  child: CircleAvatar(
-                                    radius: 56,
-                                    backgroundColor: isDark
-                                        ? Colors.grey.shade800
-                                        : Colors.grey.shade100,
-                                    backgroundImage: _profileImage != null
-                                        ? (kIsWeb
-                                            ? NetworkImage(_profileImage!.path)
-                                            : FileImage(
-                                                File(_profileImage!.path))) as ImageProvider
-                                        : null,
-                                    child: _profileImage == null
-                                        ? Icon(Icons.person_outline_rounded,
-                                            size: 40,
-                                            color: theme.colorScheme.primary
-                                                .withValues(alpha: 0.5))
-                                        : null,
-                                  ),
+                              // Cabecera: Foto
+                              Center(
+                                child: Stack(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: _pickImage,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: theme.primaryColor.withOpacity(0.2),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: CircleAvatar(
+                                          radius: 60,
+                                          backgroundColor: theme.scaffoldBackgroundColor,
+                                          backgroundImage: _profileImage != null
+                                              ? (kIsWeb
+                                                  ? NetworkImage(_profileImage!.path)
+                                                  : FileImage(File(_profileImage!.path))) as ImageProvider
+                                              : null,
+                                          child: _profileImage == null
+                                              ? Icon(Icons.person_add_alt_1_rounded, size: 40, color: theme.primaryColor.withOpacity(0.5))
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: theme.primaryColor,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: Colors.white, width: 2),
+                                        ),
+                                        child: const Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              Positioned(
-                                  bottom: 0,
-                                  right: 4,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.primary,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                          color: theme.scaffoldBackgroundColor,
-                                          width: 3),
-                                      boxShadow: [
-                                        BoxShadow(
-                                            color: theme.colorScheme.primary
-                                                .withValues(alpha: 0.3),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2))
-                                      ],
+                              const SizedBox(height: 32),
+
+                              // Formulario Grid
+                              _buildFormGrid(isWide, isGeneralAdmin, theme),
+
+                              const SizedBox(height: 40),
+
+                              _isLoading
+                                  ? const Center(child: CircularProgressIndicator())
+                                  : SizedBox(
+                                      height: 56,
+                                      child: ElevatedButton(
+                                        onPressed: _handleSignUp,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: theme.colorScheme.primary,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                          elevation: 2,
+                                        ),
+                                        child: const Text('CREAR CUENTA', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+                                      ),
                                     ),
-                                    child: const Icon(
-                                        Icons.camera_alt_rounded,
-                                        color: Colors.white,
-                                        size: 16),
-                                  ))
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          "Foto de Perfil",
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.6),
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-
-                        // Form Card
-                        Card(
-                          elevation: 0,
-                          color: isDark ? theme.cardTheme.color : Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            side: BorderSide(
-                                color: theme.colorScheme.primary
-                                    .withValues(alpha: 0.08)),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.all(isWide ? 40.0 : 24.0),
-                            child: Form(
-                              key: _formKey,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  // Section 1: Personal Info
-                                  _buildSectionHeader(theme, "Información Personal", Icons.badge_outlined),
-                                  const SizedBox(height: 24),
-                                  _buildTextFormField(
-                                      _nameController,
-                                      'Nombre Completo',
-                                      Icons.person_outline_rounded),
-                                  const SizedBox(height: 20),
-                                  
-                                  ResponsiveRow(
-                                    isWide: isWide,
-                                    gap: 20,
-                                    children: [
-                                      TextFormField(
-                                        controller: _dobController,
-                                        decoration: _buildInputDecoration(
-                                            'Fecha de Nacimiento',
-                                            Icons.calendar_today_rounded),
-                                        readOnly: true,
-                                        onTap: _selectDate,
-                                        validator: (val) => val!.isEmpty
-                                            ? 'Campo requerido'
-                                            : null,
-                                        style: TextStyle(
-                                            color:
-                                                theme.colorScheme.onSurface),
-                                      ),
-                                      _buildTextFormField(
-                                          _locationController,
-                                          'Lugar de Residencia',
-                                          Icons.location_city_rounded),
-                                    ],
-                                  ),
-
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 32),
-                                    child: Divider(height: 1),
-                                  ),
-
-                                  // Section 2: Institutional Info
-                                  _buildSectionHeader(theme, "Datos Institucionales", Icons.apartment_rounded),
-                                  const SizedBox(height: 24),
-                                  
-                                  ResponsiveRow(
-                                    isWide: isWide,
-                                    gap: 20,
-                                    children: [
-                                      _buildDropdown(
-                                          _roles,
-                                          'Selecciona un Rol',
-                                          Icons.work_outline_rounded, (val) {
-                                        setState(() {
-                                          _selectedRole = val;
-                                          _selectedCampus = null;
-                                        });
-                                      }),
-                                      
-                                      if (_selectedRole != null && !isGeneralAdmin)
-                                        _buildDropdown(
-                                            cobacamCampuses,
-                                            'Selecciona un Plantel',
-                                            Icons.school_outlined,
-                                            (val) => setState(
-                                                () => _selectedCampus = val))
-                                      else
-                                         const SizedBox.shrink(), // Placeholder for grid alignment if needed
-                                    ],
-                                  ),
-
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 32),
-                                    child: Divider(height: 1),
-                                  ),
-
-                                  // Section 3: Access & Security
-                                  _buildSectionHeader(theme, "Seguridad de Acceso", Icons.lock_person_outlined),
-                                  const SizedBox(height: 24),
-                                  
-                                  _buildTextFormField(
-                                      _emailController,
-                                      'Correo Institucional',
-                                      Icons.alternate_email_rounded,
-                                      keyboardType:
-                                          TextInputType.emailAddress),
-                                  const SizedBox(height: 20),
-                                  
-                                  ResponsiveRow(
-                                    isWide: isWide,
-                                    gap: 20,
-                                    children: [
-                                      _buildTextFormField(
-                                          _passwordController,
-                                          'Contraseña',
-                                          Icons.lock_outline_rounded,
-                                          isPassword: true),
-                                          
-                                      if (isGeneralAdmin ||
-                                          (_selectedRole != null &&
-                                              _selectedCampus != null))
-                                        _buildTextFormField(
-                                            _accessCodeController,
-                                            'Código de Validación',
-                                            Icons.vpn_key_rounded)
-                                      else
-                                         const SizedBox.shrink(),
-                                    ],
-                                  ),
-
-                                  const SizedBox(height: 40),
-
-                                  _isLoading
-                                      ? const Center(
-                                          child: CircularProgressIndicator())
-                                      : SizedBox(
-                                          height: 56,
-                                          child: ElevatedButton(
-                                            onPressed: _handleSignUp,
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  theme.colorScheme.primary,
-                                              foregroundColor: Colors.white,
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          14)),
-                                              elevation: 0,
-                                            ),
-                                            child: const Text(
-                                                'Crear Cuenta Oficial',
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                          ),
-                                        ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            '‹ Cancelar Registro',
-                            style: TextStyle(
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.5)),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -492,130 +330,224 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildSectionHeader(ThemeData theme, String title, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: theme.colorScheme.primary),
-        const SizedBox(width: 12),
-        Text(
-          title.toUpperCase(),
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.0,
-          ),
+  Widget _buildFormGrid(bool isWide, bool isGeneralAdmin, ThemeData theme) {
+    List<Widget> children = [
+      // Info Personal
+      _buildSectionTitle(theme, 'Información Personal', Icons.person_outline),
+      _buildStyledField(controller: _nameController, label: 'Nombre Completo', icon: Icons.badge_outlined),
+      
+      if (isWide)
+        Row(
+          children: [
+            Expanded(child: _buildDateSelector()),
+            const SizedBox(width: 16),
+            Expanded(child: _buildStyledField(controller: _locationController, label: 'Lugar de Residencia', icon: Icons.location_on_outlined)),
+          ],
+        )
+      else ...[
+        _buildDateSelector(),
+        const SizedBox(height: 16),
+        _buildStyledField(controller: _locationController, label: 'Lugar de Residencia', icon: Icons.location_on_outlined),
+      ],
+
+      const SizedBox(height: 24),
+      _buildSectionTitle(theme, 'Datos Institucionales', Icons.school_outlined),
+      
+      _buildStyledDropdown(
+        items: _roles,
+        label: 'Rol Institucional',
+        icon: Icons.work_outline,
+        onChanged: (val) {
+          setState(() {
+            _selectedRole = val;
+            _selectedCampus = null;
+          });
+        },
+      ),
+
+      if (_selectedRole != null && !isGeneralAdmin) ...[
+        const SizedBox(height: 16),
+        _buildStyledDropdown(
+          items: cobacamCampuses,
+          label: 'Selecciona tu Plantel',
+          icon: Icons.apartment_rounded,
+          onChanged: (val) => setState(() => _selectedCampus = val),
         ),
       ],
+
+      const SizedBox(height: 24),
+      _buildSectionTitle(theme, 'Seguridad', Icons.lock_outline),
+
+      _buildStyledField(
+        controller: _emailController,
+        label: 'Correo Institucional',
+        icon: Icons.email_outlined,
+        keyboardType: TextInputType.emailAddress,
+      ),
+      const SizedBox(height: 16),
+      
+      if (isWide)
+        Row(
+          children: [
+            Expanded(child: _buildStyledField(controller: _passwordController, label: 'Contraseña', icon: Icons.vpn_key_outlined, isPassword: true)),
+            
+            if (isGeneralAdmin || (_selectedRole != null && _selectedCampus != null)) ...[
+              const SizedBox(width: 16),
+              Expanded(child: _buildStyledField(controller: _accessCodeController, label: 'Código de Validación', icon: Icons.security_rounded)),
+            ]
+          ],
+        )
+      else ...[
+        _buildStyledField(controller: _passwordController, label: 'Contraseña', icon: Icons.vpn_key_outlined, isPassword: true),
+        if (isGeneralAdmin || (_selectedRole != null && _selectedCampus != null)) ...[
+          const SizedBox(height: 16),
+          _buildStyledField(controller: _accessCodeController, label: 'Código de Validación', icon: Icons.security_rounded),
+        ]
+      ]
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: children.expand((element) => [element, if (element is! SizedBox && element is! Row) const SizedBox(height: 16)]).toList(),
     );
   }
 
-  Widget _buildTextFormField(
-      TextEditingController controller, String label, IconData icon,
-      {bool isPassword = false, TextInputType? keyboardType}) {
-    return TextFormField(
-      controller: controller,
-      decoration: _buildInputDecoration(label, icon, isPassword: isPassword),
-      obscureText: isPassword ? _isPasswordObscured : false,
-      keyboardType: keyboardType,
-      validator: (val) => val!.isEmpty ? 'Campo requerido' : null,
-      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+  Widget _buildSectionTitle(ThemeData theme, String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0, top: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            title.toUpperCase(),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Divider(color: theme.dividerColor.withOpacity(0.5))),
+        ],
+      ),
     );
   }
 
-  Widget _buildDropdown(List<String> items, String label, IconData icon,
-      void Function(String?) onChanged) {
+  Widget _buildStyledField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isPassword = false,
+    TextInputType? keyboardType,
+  }) {
     final theme = Theme.of(context);
-    return DropdownButtonFormField<String>(
-      isExpanded: true,
-      items: items
-          .map((String value) => DropdownMenuItem<String>(
-              value: value,
-              child: Text(value,
-                  style: TextStyle(color: theme.colorScheme.onSurface),
-                  overflow: TextOverflow.ellipsis)))
-          .toList(),
-      selectedItemBuilder: (BuildContext context) {
-        return items.map<Widget>((String item) {
-          return Text(
-            item,
-            style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
-             overflow: TextOverflow.ellipsis
-          );
-        }).toList();
-      },
-      onChanged: onChanged,
-      decoration: _buildInputDecoration(label, icon),
-      dropdownColor: theme.cardTheme.color,
-      validator: (val) => val == null ? 'Campo requerido' : null,
-      icon: Icon(Icons.keyboard_arrow_down_rounded, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextFormField(
+        controller: controller,
+        obscureText: isPassword ? _isPasswordObscured : false,
+        keyboardType: keyboardType,
+        style: TextStyle(color: theme.colorScheme.onSurface),
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    _isPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                  onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
+                )
+              : null,
+        ),
+        validator: (val) => val!.isEmpty ? 'Requerido' : null,
+      ),
     );
   }
 
-  InputDecoration _buildInputDecoration(String label, IconData icon,
-      {bool isPassword = false}) {
+  Widget _buildDateSelector() {
     final theme = Theme.of(context);
-    return InputDecoration(
-      labelText: label,
-      alignLabelWithHint: true,
-      floatingLabelBehavior: FloatingLabelBehavior.auto,
-      prefixIcon:
-          Icon(icon, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-      suffixIcon: isPassword
-          ? IconButton(
-              icon: Icon(
-                _isPasswordObscured
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+    return GestureDetector(
+      onTap: _selectDate,
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today_outlined, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _dobController.text.isEmpty ? 'Fecha de Nacimiento' : _dobController.text,
+                style: TextStyle(
+                  color: _dobController.text.isEmpty
+                      ? theme.colorScheme.onSurface.withOpacity(0.6)
+                      : theme.colorScheme.onSurface,
+                  fontSize: 16,
+                ),
               ),
-              onPressed: () {
-                setState(() {
-                  _isPasswordObscured = !_isPasswordObscured;
-                });
-              },
-            )
-          : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStyledDropdown({
+    required List<String> items,
+    required String label,
+    required IconData icon,
+    required Function(String?) onChanged,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: DropdownButtonFormField<String>(
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        ),
+        items: items.map((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(
+              value,
+              style: TextStyle(color: theme.colorScheme.onSurface),
+              overflow: TextOverflow.ellipsis,
+            ),
+          );
+        }).toList(),
+        selectedItemBuilder: (BuildContext context) {
+          return items.map<Widget>((String item) {
+            return Text(
+              item,
+              style: TextStyle(color: theme.colorScheme.onSurface),
+              overflow: TextOverflow.ellipsis,
+            );
+          }).toList();
+        },
+        onChanged: onChanged,
+        dropdownColor: theme.cardColor,
+        icon: Icon(Icons.arrow_drop_down_circle_outlined, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+      ),
     );
   }
 }
-
-class ResponsiveRow extends StatelessWidget {
-  final bool isWide;
-  final List<Widget> children;
-  final double gap;
-
-  const ResponsiveRow(
-      {super.key,
-      required this.isWide,
-      required this.children,
-      this.gap = 16.0});
-
-  @override
-  Widget build(BuildContext context) {
-    // Filter out SizedBox.shrink or nulls if any logic put them there
-    final visibleChildren = children.where((c) {
-        if (c is SizedBox && (c.width == 0.0 || c.height == 0.0)) return false;
-        return true;
-    }).toList();
-
-    if (visibleChildren.isEmpty) return const SizedBox.shrink();
-
-    if (!isWide) {
-      return Column(
-        children: visibleChildren
-            .expand((element) => [element, SizedBox(height: gap)])
-            .take(visibleChildren.length * 2 - 1)
-            .toList(),
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: visibleChildren
-          .expand((element) => [Expanded(child: element), SizedBox(width: gap)])
-          .take(visibleChildren.length * 2 - 1)
-          .toList(),
-    );
-  }
-}
-

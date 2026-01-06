@@ -70,7 +70,7 @@ class AppDrawer extends StatelessWidget {
                   title: 'Inicio',
                   onTap: () {
                     Navigator.pop(context); // Close drawer
-                    // Already on home, essentially
+                    onNavigate?.call('home'); // Reset to home index
                   },
                 ),
                 

@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'package:asystem_cobacam/screens/welcome_screen.dart';
-import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -8,7 +6,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -19,379 +16,463 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final User? _currentUser = FirebaseAuth.instance.currentUser;
-  DatabaseReference? _userRef;
-
-  Map<String, dynamic> _userData = {};
+  final DatabaseReference _userRef = FirebaseDatabase.instance.ref('users');
+  
   bool _isLoading = true;
+  bool _isSaving = false;
   bool _isEditing = false;
+
+  // Data Containers
+  Map<String, dynamic> _userData = {};
   XFile? _newProfileImage;
 
-  // Controllers for editing
+  // Controllers
   final _nameController = TextEditingController();
-  final _locationController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _locationController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    if (_currentUser != null) {
-      _userRef = FirebaseDatabase.instance.ref('users/${_currentUser.uid}');
-      _loadUserData();
-    }
-  }
-
-  Future<void> _loadUserData() async {
-    if (_userRef == null) return;
-    try {
-      final snapshot = await _userRef!.get();
-      if (snapshot.exists) {
-        setState(() {
-          _userData = Map<String, dynamic>.from(snapshot.value as Map);
-          _nameController.text = _userData['fullName'] ?? '';
-          _locationController.text = _userData['location'] ?? '';
-          _phoneController.text = _userData['phone'] ?? '';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) UiHelpers.showSnackBar(context, 'Error al cargar perfil', isError: true);
-    }
-  }
-
-  Future<void> _saveProfileChanges() async {
-    if (_userRef == null) return;
-    setState(() => _isLoading = true);
-    try {
-      await _userRef!.update({
-        'fullName': _nameController.text.trim(),
-        'location': _locationController.text.trim(),
-        'phone': _phoneController.text.trim(),
-      });
-      await _loadUserData();
-      setState(() => _isEditing = false);
-      if (mounted) UiHelpers.showSnackBar(context, 'Perfil actualizado correctamente');
-    } catch (e) {
-      if (mounted) UiHelpers.showSnackBar(context, 'Error al guardar cambios', isError: true);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _pickAndUploadImage() async {
-    if (_currentUser == null || _userRef == null) return;
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
-    if (image == null) return;
-
-    setState(() {
-      _isLoading = true;
-      _newProfileImage = image;
-    });
-
-    try {
-      final storageRef = FirebaseStorage.instance.ref().child('profile_pictures/${_currentUser.uid}');
-      
-      if (kIsWeb) {
-        final bytes = await image.readAsBytes();
-        await storageRef.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
-      } else {
-        await storageRef.putFile(File(image.path));
-      }
-
-      final downloadUrl = await storageRef.getDownloadURL();
-      await _userRef!.update({'profileImageUrl': downloadUrl});
-      await _loadUserData();
-      if (mounted) UiHelpers.showSnackBar(context, 'Foto de perfil actualizada');
-    } catch (e) {
-      if (mounted) UiHelpers.showSnackBar(context, 'Error al subir foto', isError: true);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _deleteAccount() async {
-    final bool confirmed = await UiHelpers.showConfirmationDialog(
-      context,
-      title: 'Eliminar Cuenta',
-      content: 'Esta acción es irreversible. Se borrarán todos tus datos. ¿Estás seguro?',
-      confirmText: 'Sí, eliminar',
-      cancelText: 'Cancelar',
-      isDestructive: true,
-    );
-
-    if (!confirmed || _currentUser == null || !mounted) return;
-
-    // Prompt for password for re-authentication
-    String? password = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        String input = '';
-        return AlertDialog(
-          title: const Text('Confirmar Contraseña'),
-          content: TextField(
-            obscureText: true,
-            onChanged: (val) => input = val,
-            decoration: const InputDecoration(labelText: 'Contraseña'),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-            ElevatedButton(onPressed: () => Navigator.pop(context, input), child: const Text('Confirmar')),
-          ],
-        );
-      },
-    );
-
-    if (password == null || password.isEmpty) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      // Re-authenticate
-      AuthCredential credential = EmailAuthProvider.credential(email: _currentUser.email ?? '', password: password);
-      await _currentUser.reauthenticateWithCredential(credential);
-
-      // Delete Profile Image
-      if (_userData['profileImageUrl'] != null) {
-        try {
-          await FirebaseStorage.instance.refFromURL(_userData['profileImageUrl']).delete();
-        } catch (_) {
-          // Ignore if image doesn't exist
-        }
-      }
-
-      // Delete User Data
-      await _userRef!.remove();
-
-      // Delete Auth Account
-      await _currentUser.delete();
-
-      if (mounted) {
-        UiHelpers.showSnackBar(context, 'Cuenta eliminada exitosamente.');
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const WelcomeScreen()), (route) => false);
-      }
-    } catch (e) {
-      if (mounted) UiHelpers.showSnackBar(context, 'Error al eliminar cuenta: ${e.toString()}', isError: true);
-      setState(() => _isLoading = false);
-    }
+    _fetchUserData();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _locationController.dispose();
     _phoneController.dispose();
+    _locationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchUserData() async {
+    if (_currentUser == null) return;
+    try {
+      final snapshot = await _userRef.child(_currentUser.uid).get();
+      if (snapshot.exists) {
+        final data = Map<String, dynamic>.from(snapshot.value as Map);
+        setState(() {
+          _userData = data;
+          _nameController.text = data['fullName'] ?? '';
+          _phoneController.text = data['phone'] ?? ''; // Assuming phone field exists or adding it
+          _locationController.text = data['location'] ?? '';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching profile: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _newProfileImage = image;
+      });
+      // Optionally save immediately or wait for "Save" button. 
+      // For UX, let's wait for explicit save to avoid accidental uploads, 
+      // but showing preview is key.
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (_currentUser == null) return;
+    setState(() => _isSaving = true);
+
+    try {
+      String? imageUrl = _userData['profileImageUrl'];
+
+      // 1. Upload new image if selected
+      if (_newProfileImage != null) {
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('profile_pictures/${_currentUser.uid}');
+        
+        if (kIsWeb) {
+            final bytes = await _newProfileImage!.readAsBytes();
+            await storageRef.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+        } else {
+            await storageRef.putFile(File(_newProfileImage!.path));
+        }
+        imageUrl = await storageRef.getDownloadURL();
+      }
+
+      // 2. Update Database
+      await _userRef.child(_currentUser.uid).update({
+        'fullName': _nameController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'location': _locationController.text.trim(),
+        'profileImageUrl': imageUrl,
+      });
+
+      // 3. Update Local State
+      setState(() {
+        _userData['fullName'] = _nameController.text.trim();
+        _userData['phone'] = _phoneController.text.trim();
+        _userData['location'] = _locationController.text.trim();
+        _userData['profileImageUrl'] = imageUrl;
+        _isEditing = false;
+        _newProfileImage = null;
+      });
+
+      if (mounted) UiHelpers.showSnackBar(context, 'Perfil actualizado correctamente.');
+
+    } catch (e) {
+      if (mounted) UiHelpers.showSnackBar(context, 'Error al actualizar: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final String creationDate = _currentUser?.metadata.creationTime != null 
-        ? DateFormat('MMMM yyyy', 'es_MX').format(_currentUser!.metadata.creationTime!) 
-        : 'Desconocido';
+
+    if (_isLoading) {
+      return Scaffold(body: Center(child: CircularProgressIndicator(color: theme.colorScheme.primary)));
+    }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 800),
-                  child: FadeInUp(
+      body: CustomScrollView(
+        slivers: [
+          // Header Expansible
+          SliverAppBar(
+            expandedHeight: 280.0,
+            floating: false,
+            pinned: true,
+            backgroundColor: theme.colorScheme.primary,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+            actions: [
+              if (!_isEditing)
+                IconButton(
+                  icon: const Icon(Icons.edit_rounded, color: Colors.white),
+                  onPressed: () => setState(() => _isEditing = true),
+                  tooltip: 'Editar Perfil',
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  onPressed: () {
+                    setState(() {
+                      _isEditing = false;
+                      _newProfileImage = null;
+                      // Reset fields
+                      _nameController.text = _userData['fullName'] ?? '';
+                      _phoneController.text = _userData['phone'] ?? '';
+                      _locationController.text = _userData['location'] ?? '';
+                    });
+                  },
+                ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Fondo decorativo
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.secondary,
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Imagen y Nombre
+                  Center(
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildHeader(theme, isDark),
-                        const SizedBox(height: 32),
-                        _buildMainStats(theme, creationDate),
-                        const SizedBox(height: 24),
-                        _buildInfoCard(theme, isDark),
+                        const SizedBox(height: 40),
+                        Stack(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(0.2),
+                              ),
+                              child: CircleAvatar(
+                                radius: 60,
+                                backgroundColor: Colors.grey[200],
+                                backgroundImage: _getProfileImage(),
+                                child: _getProfileImage() == null
+                                    ? Icon(Icons.person, size: 60, color: Colors.grey[400])
+                                    : null,
+                              ),
+                            ),
+                            if (_isEditing)
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: _pickImage,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.secondary,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2),
+                                    ),
+                                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _userData['fullName'] ?? 'Usuario',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        Text(
+                          _userData['role'] ?? 'Rol Desconocido',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 14,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ),
+                ],
               ),
             ),
-    );
-  }
+          ),
 
-  Widget _buildHeader(ThemeData theme, bool isDark) {
-    final profileUrl = _userData['profileImageUrl'];
-    return Column(
-      children: [
-        Stack(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(4),
+          // Contenido del Formulario
+          SliverToBoxAdapter(
+            child: Container(
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: theme.colorScheme.primary, width: 3),
+                color: theme.scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
               ),
-              child: CircleAvatar(
-                radius: 65,
-                backgroundColor: theme.colorScheme.surface,
-                backgroundImage: _newProfileImage != null
-                    ? (kIsWeb 
-                        ? NetworkImage(_newProfileImage!.path) 
-                        : FileImage(File(_newProfileImage!.path))) as ImageProvider
-                    : (profileUrl != null ? NetworkImage(profileUrl) : null),
-                child: (profileUrl == null && _newProfileImage == null)
-                    ? Icon(Icons.person, size: 60, color: theme.colorScheme.primary.withValues(alpha: 0.3))
-                    : null,
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: CircleAvatar(
-                backgroundColor: theme.colorScheme.primary,
-                radius: 20,
-                child: IconButton(
-                  icon: const Icon(Icons.edit, size: 18, color: Colors.white),
-                  onPressed: _pickAndUploadImage,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          _userData['fullName'] ?? 'Usuario Cobacam',
-          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        Text(
-          _userData['role'] ?? 'Rol no definido',
-          style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600, letterSpacing: 1),
-        ),
-      ],
-    );
-  }
+              transform: Matrix4.translationValues(0, -20, 0), // Solape negativo
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionHeader(theme, 'Información Personal'),
+                  const SizedBox(height: 16),
+                  _buildProfileField(
+                    label: 'Nombre Completo',
+                    controller: _nameController,
+                    icon: Icons.person_outline,
+                    enabled: _isEditing,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildProfileField(
+                    label: 'Teléfono de Contacto',
+                    controller: _phoneController,
+                    icon: Icons.phone_outlined,
+                    enabled: _isEditing,
+                    inputType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildProfileField(
+                    label: 'Lugar de Residencia',
+                    controller: _locationController,
+                    icon: Icons.location_on_outlined,
+                    enabled: _isEditing,
+                  ),
 
-  Widget _buildMainStats(ThemeData theme, String creationDate) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildStatItem(theme, 'Plantel', _userData['campus'] ?? 'N/A'),
-        _buildStatDivider(),
-        _buildStatItem(theme, 'Desde', creationDate),
-      ],
-    );
-  }
-
-  Widget _buildStatItem(ThemeData theme, String label, String value) {
-    return Column(
-      children: [
-        Text(label, style: theme.textTheme.bodySmall),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-      ],
-    );
-  }
-
-  Widget _buildStatDivider() {
-    return Container(
-      height: 30,
-      width: 1,
-      color: Colors.grey.withValues(alpha: 0.3),
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-    );
-  }
-
-  Widget _buildInfoCard(ThemeData theme, bool isDark) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: isDark ? BorderSide.none : BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Información Personal', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                IconButton(
-                  icon: Icon(_isEditing ? Icons.check_circle : Icons.edit_note, color: theme.colorScheme.primary),
-                  onPressed: () {
-                    if (_isEditing) {
-                      _saveProfileChanges();
-                    } else {
-                      setState(() => _isEditing = true);
-                    }
-                  },
-                )
-              ],
-            ),
-            const Divider(),
-            const SizedBox(height: 16),
-            _buildEditableTile(Icons.person_outline, 'Nombre Completo', _nameController, _isEditing),
-            _buildEditableTile(Icons.location_on_outlined, 'Ubicación', _locationController, _isEditing),
-            _buildEditableTile(Icons.phone_outlined, 'Teléfono', _phoneController, _isEditing),
-            _buildReadOnlyTile(Icons.email_outlined, 'Correo Electrónico', _currentUser?.email ?? 'N/A'),
-            _buildReadOnlyTile(Icons.cake_outlined, 'Fecha de Nacimiento', _userData['dateOfBirth'] ?? 'No registrada'),
-            const SizedBox(height: 32),
-            Center(
-              child: TextButton.icon(
-                onPressed: _deleteAccount,
-                icon: const Icon(Icons.delete_forever, color: Colors.red),
-                label: const Text('Eliminar Cuenta', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  backgroundColor: Colors.red.withValues(alpha: 0.05),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                ),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEditableTile(IconData icon, String label, TextEditingController controller, bool isEditing) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.grey),
-          const SizedBox(width: 16),
-          Expanded(
-            child: isEditing
-                ? TextFormField(
-                    controller: controller,
-                    decoration: InputDecoration(labelText: label, contentPadding: EdgeInsets.zero, isDense: true),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 32),
+                  _buildSectionHeader(theme, 'Datos Institucionales'),
+                  const SizedBox(height: 16),
+                  
+                  // Read-only fields
+                  _buildReadOnlyField(
+                    label: 'Correo Institucional',
+                    value: _userData['email'] ?? '',
+                    icon: Icons.email_outlined,
+                    theme: theme,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
                     children: [
-                      Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                      Text(controller.text.isEmpty ? 'No registrado' : controller.text, style: const TextStyle(fontWeight: FontWeight.w500)),
+                      Expanded(
+                        child: _buildReadOnlyField(
+                          label: 'Rol',
+                          value: _userData['role'] ?? '',
+                          icon: Icons.badge_outlined,
+                          theme: theme,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildReadOnlyField(
+                          label: 'Plantel',
+                          value: _userData['campus'] ?? 'N/A',
+                          icon: Icons.school_outlined,
+                          theme: theme,
+                        ),
+                      ),
                     ],
                   ),
+
+                  // Espacio extra si es alumno para datos como matrícula
+                  if (_userData['role'] == 'Alumno') ...[
+                    const SizedBox(height: 16),
+                    _buildReadOnlyField(
+                        label: 'Fecha de Nacimiento',
+                        value: _userData['dateOfBirth'] ?? 'N/A',
+                        icon: Icons.cake_outlined,
+                        theme: theme,
+                    ),
+                  ],
+
+                  const SizedBox(height: 40),
+
+                  if (_isEditing)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _isSaving ? null : _saveProfile,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 4,
+                        ),
+                        child: _isSaving
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text('GUARDAR CAMBIOS', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+                      ),
+                    ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildReadOnlyTile(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
+  ImageProvider? _getProfileImage() {
+    if (_newProfileImage != null) {
+      if (kIsWeb) {
+        return NetworkImage(_newProfileImage!.path);
+      }
+      return FileImage(File(_newProfileImage!.path));
+    }
+    if (_userData['profileImageUrl'] != null && _userData['profileImageUrl'].isNotEmpty) {
+      return NetworkImage(_userData['profileImageUrl']);
+    }
+    return null;
+  }
+
+  Widget _buildSectionHeader(ThemeData theme, String title) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title.toUpperCase(),
+          style: TextStyle(
+            color: theme.colorScheme.primary,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
+        Divider(color: theme.colorScheme.primary.withOpacity(0.2), thickness: 1),
+      ],
+    );
+  }
+
+  Widget _buildProfileField({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+    bool enabled = false,
+    TextInputType inputType = TextInputType.text,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: enabled 
+          ? theme.colorScheme.surfaceContainerHighest.withOpacity(0.3) 
+          : theme.scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: enabled 
+          ? Border.all(color: theme.colorScheme.primary.withOpacity(0.5)) 
+          : Border.all(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: TextField(
+        controller: controller,
+        enabled: enabled,
+        keyboardType: inputType,
+        style: TextStyle(
+          color: theme.colorScheme.onSurface, 
+          fontWeight: FontWeight.w500
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+          prefixIcon: Icon(icon, color: enabled ? theme.colorScheme.primary : Colors.grey),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReadOnlyField({
+    required String label,
+    required String value,
+    required IconData icon,
+    required ThemeData theme,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Colors.grey),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+              Icon(icon, size: 16, color: theme.colorScheme.primary.withOpacity(0.7)),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                ),
+              ),
             ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value.isEmpty ? 'N/A' : value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

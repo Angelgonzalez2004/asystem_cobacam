@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:asystem_cobacam/screens/dashboards/academic/academic_dashboard_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/campus_admin/campus_admin_dashboard_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/general_admin/general_admin_dashboard_screen.dart';
@@ -5,6 +6,7 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_dashboard_scr
 import 'package:asystem_cobacam/screens/dashboards/student/student_dashboard_screen.dart';
 import 'package:asystem_cobacam/screens/forgot_password_screen.dart';
 import 'package:asystem_cobacam/screens/signup_screen.dart';
+import 'package:asystem_cobacam/services/session_service.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/slide_transition.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
@@ -22,17 +24,64 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  
   bool _isLoading = false;
   bool _isPasswordObscured = true;
+
+  // --- ANTI-BRUTE FORCE STATE ---
+  int _failedAttempts = 0;
+  DateTime? _lockoutTime;
+  Timer? _lockoutTimer;
+  String _lockoutMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLockoutStatus();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _lockoutTimer?.cancel();
     super.dispose();
   }
 
+  void _checkLockoutStatus() {
+    if (_lockoutTime != null) {
+      if (DateTime.now().isAfter(_lockoutTime!)) {
+        // Lockout expired
+        setState(() {
+          _lockoutTime = null;
+          _lockoutMessage = '';
+          _failedAttempts = 0; // Reset after successful wait
+        });
+      } else {
+        // Still locked, update timer
+        final remaining = _lockoutTime!.difference(DateTime.now());
+        setState(() {
+          _lockoutMessage = 'Espera ${remaining.inSeconds}s para intentar de nuevo';
+        });
+        _lockoutTimer = Timer(const Duration(seconds: 1), _checkLockoutStatus);
+      }
+    }
+  }
+
+  void _triggerLockout(int seconds) {
+    setState(() {
+      _lockoutTime = DateTime.now().add(Duration(seconds: seconds));
+    });
+    _checkLockoutStatus();
+  }
+
   Future<void> _handleLogin() async {
+    // 1. Check Lockout
+    if (_lockoutTime != null && DateTime.now().isBefore(_lockoutTime!)) {
+       UiHelpers.showSnackBar(context, 'Sistema bloqueado temporalmente por seguridad.', isError: true);
+       return;
+    }
+
     if (_emailController.text.trim().isEmpty ||
         _passwordController.text.trim().isEmpty) {
       UiHelpers.showSnackBar(context, 'Por favor, ingresa correo y contraseña.',
@@ -49,6 +98,9 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text.trim(),
       );
 
+      // --- LOGIN SUCCESS ---
+      _failedAttempts = 0; // Reset attempts
+
       if (!mounted) return;
 
       User? user = userCredential.user;
@@ -64,24 +116,24 @@ class _LoginScreenState extends State<LoginScreen> {
         if (snapshot.exists && snapshot.value != null) {
           try {
             final data = snapshot.value;
-            debugPrint("Data Type: ${data.runtimeType}");
-            debugPrint("Raw Data: $data");
-            
             String? role;
-
             if (data is Map) {
-              // Safer casting
               final safeMap = Map<Object?, Object?>.from(data);
               role = safeMap['role']?.toString().trim();
-            } else {
-               debugPrint("Warning: Data is not a Map. It is ${data.runtimeType}");
             }
 
-            debugPrint("Rol encontrado (procesado): '$role'");
+            debugPrint("Rol encontrado: '$role'");
+
+            // Registrar sesión
+            try {
+              SessionService().registerCurrentSession(); 
+            } catch (e) {
+              debugPrint("Error registrando sesión: $e");
+            }
+
             _navigateToDashboard(role);
-          } catch (e, stackTrace) {
-            debugPrint("Error processing user data or navigating: $e");
-            debugPrint(stackTrace.toString());
+          } catch (e) {
+            debugPrint("Error processing user data: $e");
             UiHelpers.showSnackBar(context, 'Error al procesar datos de usuario.', isError: true);
           }
         } else {
@@ -92,15 +144,38 @@ class _LoginScreenState extends State<LoginScreen> {
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       debugPrint("Error de Auth: ${e.code}");
-      String message = 'Credenciales incorrectas. Inténtalo de nuevo.';
-      if (e.code == 'user-not-found') message = 'Usuario no encontrado.';
-      if (e.code == 'wrong-password') message = 'Contraseña incorrecta.';
+      
+      String message = 'Credenciales incorrectas.';
+      
+      // --- LOGIC: FAILED ATTEMPTS ---
+      _failedAttempts++;
+      
+      if (e.code == 'too-many-requests') {
+        // Firebase native protection triggered
+        message = 'Demasiados intentos. Cuenta bloqueada temporalmente.';
+        _triggerLockout(300); // 5 minutes (Local UI lock to match server)
+      } else {
+        // Local throttling
+        if (_failedAttempts >= 5) {
+          _triggerLockout(60); // 1 minute lockout
+          message = 'Demasiados intentos fallidos. Espera 1 minuto.';
+        } else if (_failedAttempts >= 3) {
+           _triggerLockout(10); // 10 seconds warning lockout
+           message = 'Credenciales incorrectas. Espera 10 segundos.';
+        } else {
+           // Normal error
+           if (e.code == 'user-not-found') message = 'Usuario no encontrado.';
+           if (e.code == 'wrong-password') message = 'Contraseña incorrecta.';
+           if (e.code == 'invalid-credential') message = 'Correo o contraseña inválidos.';
+        }
+      }
+      
       UiHelpers.showSnackBar(context, message, isError: true);
+
     } catch (e) {
       if (!mounted) return;
       debugPrint("Error inesperado en Login: $e");
-      UiHelpers.showSnackBar(context, 'Ocurrió un error inesperado: $e',
-          isError: true);
+      UiHelpers.showSnackBar(context, 'Error de conexión: $e', isError: true);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -134,7 +209,6 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
     }
 
-    // Animate transition
     Navigator.pushReplacement(context, SlideRightRoute(page: dashboard));
   }
 
@@ -142,183 +216,228 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isLocked = _lockoutTime != null && DateTime.now().isBefore(_lockoutTime!);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Center(
+      body: Stack(
+        children: [
+          // Fondo
+          Positioned(
+            top: -100,
+            left: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.primary.withOpacity(0.05),
+              ),
+            ),
+          ),
+          
+          SafeArea(
+            child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 20),
+                padding: const EdgeInsets.all(24.0),
                 child: FadeInUp(
-                  duration: const Duration(milliseconds: 800),
+                  duration: const Duration(milliseconds: 600),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 400),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Logo Centrado
-                        Hero(
-                          tag: 'app_logo',
-                          child: Image.asset('assets/images/logo1.png', height: 100),
+                    constraints: const BoxConstraints(maxWidth: 450),
+                    child: Card(
+                      elevation: 8,
+                      shadowColor: Colors.black.withOpacity(0.1),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(32),
+                        side: BorderSide(
+                          color: isLocked 
+                              ? theme.colorScheme.error.withOpacity(0.5) 
+                              : theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                         ),
-                        const SizedBox(height: 48),
-                        
-                        // Textos de Bienvenida
-                        Text(
-                          'Portal Institucional',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: theme.colorScheme.primary,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Inicie sesión para acceder a su panel',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        
-                        // Formulario
-                        Card(
-                          elevation: 0,
-                          color: isDark ? theme.cardTheme.color : Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.08)),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                TextField(
-                                  controller: _emailController,
-                                  decoration: _buildInputDecoration('Correo Institucional', Icons.alternate_email),
-                                  keyboardType: TextInputType.emailAddress,
-                                ),
-                                const SizedBox(height: 20),
-                                TextField(
-                                  controller: _passwordController,
-                                  decoration: _buildInputDecorationWithToggle('Contraseña', Icons.lock_outline),
-                                  obscureText: _isPasswordObscured,
-                                ),
-                                const SizedBox(height: 12),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: () => Navigator.push(context, SlideRightRoute(page: const ForgotPasswordScreen())),
-                                    child: Text(
-                                      '¿Olvidó su contraseña?',
-                                      style: TextStyle(
-                                        color: theme.colorScheme.primary,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                _isLoading
-                                    ? const Center(child: CircularProgressIndicator())
-                                    : SizedBox(
-                                        height: 56,
-                                        child: ElevatedButton(
-                                          onPressed: _handleLogin,
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: theme.colorScheme.primary,
-                                            foregroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                            elevation: 0,
-                                          ),
-                                          child: const Text('Entrar al Sistema', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                        ),
-                                      ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 32),
-                        
-                        // Enlace de Registro
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                      ),
+                      color: isDark ? theme.cardColor : Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(
-                              '¿Aún no tiene una cuenta? ',
-                              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                            // Header
+                            Center(
+                              child: Hero(
+                                tag: 'app_logo',
+                                child: Image.asset('assets/images/logo1.png', height: 80),
+                              ),
                             ),
-                            GestureDetector(
-                              onTap: () => Navigator.push(context, SlideRightRoute(page: const SignUpScreen())),
-                              child: Text(
-                                'Regístrese aquí',
-                                style: TextStyle(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
+                            const SizedBox(height: 24),
+                            Text(
+                              isLocked ? 'Acceso Bloqueado' : 'Bienvenido',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: isLocked ? theme.colorScheme.error : theme.colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              isLocked 
+                                  ? 'Se han detectado múltiples intentos fallidos.' 
+                                  : 'Inicia sesión para continuar',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: isLocked ? theme.colorScheme.error : theme.colorScheme.onSurface.withOpacity(0.6),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Inputs (Deshabilitados si está bloqueado)
+                            _buildTextField(
+                              controller: _emailController,
+                              label: 'Correo Institucional',
+                              icon: Icons.alternate_email_rounded,
+                              keyboardType: TextInputType.emailAddress,
+                              enabled: !isLocked,
+                            ),
+                            const SizedBox(height: 20),
+                            _buildTextField(
+                              controller: _passwordController,
+                              label: 'Contraseña',
+                              icon: Icons.lock_outline_rounded,
+                              isPassword: true,
+                              enabled: !isLocked,
+                            ),
+                            
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: isLocked ? null : () => Navigator.push(context, SlideRightRoute(page: const ForgotPasswordScreen())),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                                ),
+                                child: Text(
+                                  '¿Olvidaste tu contraseña?',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: isLocked ? Colors.grey : theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
+
+                            const SizedBox(height: 24),
+
+                            // Botón Login
+                            _isLoading
+                                ? const Center(child: CircularProgressIndicator())
+                                : SizedBox(
+                                    height: 52,
+                                    child: ElevatedButton(
+                                      onPressed: isLocked ? null : _handleLogin,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isLocked ? Colors.grey : theme.colorScheme.primary,
+                                        foregroundColor: Colors.white,
+                                        elevation: 2,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        isLocked ? _lockoutMessage : 'INGRESAR',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          letterSpacing: 1.0,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                            const SizedBox(height: 32),
+                            
+                            // Footer
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '¿No tienes cuenta? ',
+                                  style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                                ),
+                                GestureDetector(
+                                  onTap: isLocked ? null : () => Navigator.push(context, SlideRightRoute(page: const SignUpScreen())),
+                                  child: Text(
+                                    'Regístrate',
+                                    style: TextStyle(
+                                      color: isLocked ? Colors.grey : theme.colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                        
-                        // Botón Volver
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            '‹ Volver al inicio',
-                            style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          ),
+          
+          Positioned(
+            top: 50,
+            left: 20,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  InputDecoration _buildInputDecoration(String label, IconData icon) {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isPassword = false,
+    TextInputType? keyboardType,
+    bool enabled = true,
+  }) {
     final theme = Theme.of(context);
-    return InputDecoration(
-      labelText: label,
-      prefixIcon:
-          Icon(icon, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-      floatingLabelBehavior: FloatingLabelBehavior.auto,
-    );
-  }
-
-  InputDecoration _buildInputDecorationWithToggle(String label, IconData icon) {
-    final theme = Theme.of(context);
-    return InputDecoration(
-      labelText: label,
-      prefixIcon:
-          Icon(icon, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-      suffixIcon: IconButton(
-        icon: Icon(
-          _isPasswordObscured
-              ? Icons.visibility_off_outlined
-              : Icons.visibility_outlined,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: enabled 
+            ? (theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceContainerHighest.withOpacity(0.3))
+            : Colors.grey.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: isPassword ? _isPasswordObscured : false,
+        keyboardType: keyboardType,
+        enabled: enabled,
+        style: TextStyle(color: theme.colorScheme.onSurface),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+          prefixIcon: Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    _isPasswordObscured ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                  onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          floatingLabelBehavior: FloatingLabelBehavior.auto,
         ),
-        onPressed: () {
-          setState(() {
-            _isPasswordObscured = !_isPasswordObscured;
-          });
-        },
       ),
     );
   }

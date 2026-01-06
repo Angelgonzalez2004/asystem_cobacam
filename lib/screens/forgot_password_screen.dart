@@ -62,7 +62,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -71,114 +70,101 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Recuperación de Acceso', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        elevation: 0,
         backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 20),
-                child: FadeInUp(
-                  duration: const Duration(milliseconds: 600),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Icono Institucional de Seguridad
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.lock_reset_rounded, size: 64, color: theme.colorScheme.primary),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: FadeInUp(
+              duration: const Duration(milliseconds: 600),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: theme.primaryColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.mark_email_read_outlined,
+                        size: 60,
+                        color: theme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      'Recuperar Contraseña',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Ingresa tu correo institucional y te enviaremos un enlace para restablecer tu acceso.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: TextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                        decoration: InputDecoration(
+                          labelText: 'Correo Electrónico',
+                          prefixIcon: Icon(Icons.email_outlined, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         ),
-                        const SizedBox(height: 40),
-                        
-                        Text(
-                          '¿Problemas para ingresar?',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: theme.colorScheme.primary),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Ingrese su correo electrónico institucional y le enviaremos las instrucciones para restablecer su contraseña.',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        
-                        Card(
-                          elevation: 0,
-                          color: isDark ? theme.cardTheme.color : Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.08)),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                TextField(
-                                  controller: _emailController,
-                                  decoration: _buildInputDecoration('Correo Institucional', Icons.alternate_email),
-                                  keyboardType: TextInputType.emailAddress,
-                                  style: TextStyle(color: theme.colorScheme.onSurface),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : SizedBox(
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: _handlePasswordReset,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.primaryColor,
+                                foregroundColor: Colors.white,
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
-                                const SizedBox(height: 32),
-                                _isLoading
-                                    ? const Center(child: CircularProgressIndicator())
-                                    : SizedBox(
-                                        height: 56,
-                                        child: ElevatedButton(
-                                          onPressed: _handlePasswordReset,
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: theme.colorScheme.primary,
-                                            foregroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                            elevation: 0,
-                                          ),
-                                          child: const Text('Enviar Instrucciones', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                        ),
-                                      ),
-                              ],
+                              ),
+                              child: const Text(
+                                'ENVIAR ENLACE',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 32),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            '‹ Cancelar y volver',
-                            style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  ],
                 ),
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
-    );
-  }
-
-  InputDecoration _buildInputDecoration(String label, IconData icon) {
-    final theme = Theme.of(context);
-    return InputDecoration(
-      labelText: label,
-      prefixIcon:
-          Icon(icon, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
     );
   }
 }
