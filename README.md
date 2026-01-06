@@ -100,3 +100,4 @@ Para generar y desplegar la versión web en producción:
 
 ---
 *Desarrollado con excelencia e innovación para el COBACAM - 2026*
+*Última actualización: 6 de Enero de 2026*
