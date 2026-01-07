@@ -1,5 +1,6 @@
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
+import 'package:asystem_cobacam/screens/dashboards/prefect/group_management_screen.dart'; // Importa la pantalla de gestión de grupos
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:asystem_cobacam/models/student_model.dart';
@@ -118,12 +119,15 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
       return;
     }
     
-    // Limpiar grupos anteriores al cambiar de ciclo
     if (mounted) {
         setState(() {
             _isLoadingGroups = true;
             _groups = [];
-            if (_selectedGroup != null) _selectedGroup = null;
+            // Si el grupo seleccionado no pertenece al nuevo ciclo, limpiarlo.
+            // Pero si estamos editando y es el mismo ciclo, mantenerlo.
+            if (_selectedGroup != null) {
+               // Logic handled inside callback
+            }
         });
     }
 
@@ -143,16 +147,30 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
           setState(() {
             _groups = fetchedGroups;
             _isLoadingGroups = false;
-            // Si estamos editando y el grupo existe en este ciclo, mantenerlo seleccionado
-            if (widget.student != null && widget.student!.group == widget.student!.group) { // This condition seems redundant, should check if widget.student!.group exists in fetchedGroups
-                 if (_groups.any((g) => g.key == widget.student!.group)) { // Fix: compare Keys ideally
-                     // Actually student.group stores the Group NAME in current model?
-                     // Let's assume it stores Key or Name. The dropdown uses Key as value.
-                     // Let's check Group model. Key is Firebase key. Name is '201-A'.
-                     // Student model usually stores Name for display if NoSQL, or Key.
-                     // The Dropdown logic below uses `group.key` as value.
-                     // Let's ensure consistency.
-                 }
+            
+            // Validar si el grupo seleccionado previamente existe en la nueva lista
+            if (_selectedGroup != null) {
+               // Aquí _selectedGroup almacena el KEY del grupo.
+               bool exists = _groups.any((g) => g.key == _selectedGroup);
+               
+               // Caso especial: Si venimos de "Editar", widget.student.group tiene el NOMBRE (ej. "201-A").
+               // Pero el dropdown usa KEY. Debemos mapear si es necesario.
+               // En la versión anterior guardamos el nombre. 
+               // Vamos a intentar hacer match por Nombre O Key.
+               if (!exists && widget.student != null) {
+                   // Intento de recuperación por nombre
+                   final matchByName = _groups.firstWhere(
+                       (g) => g.name == widget.student!.group, 
+                       orElse: () => Group(key: '', name: '', semester: 0, studentCount: 0, schoolCycleId: '')
+                   );
+                   if (matchByName.key.isNotEmpty) {
+                       _selectedGroup = matchByName.key;
+                   } else {
+                       _selectedGroup = null;
+                   }
+               } else if (!exists) {
+                   _selectedGroup = null;
+               }
             }
           });
         }
@@ -172,8 +190,8 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
           _groups = [];
           _selectedGroup = null;
         });
-        UiHelpers.showSnackBar(context, 'Error al cargar grupos.',
-            isError: true);
+        // Error silencioso, o log
+        debugPrint('Error loading groups: $e');
       }
     }
   }
@@ -201,22 +219,15 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
     setState(() => _isSaving = true);
 
     try {
-      // Guardar bajo el nodo del ciclo escolar seleccionado
       final databaseRef = FirebaseDatabase.instance.ref(
           'planteles/${widget.campusId}/students/${_selectedSchoolCycle!}');
 
-      // Buscar el nombre del grupo seleccionado para guardarlo (opcional, si se requiere el nombre)
-      // Pero el modelo Student guarda 'group' que es el ID/Key o el Nombre?
-      // Revisando StudentExcelImport, guarda el nombre de la hoja como grupo.
-      // Aquí el dropdown usa `group.key`. Deberíamos guardar el NOMBRE para consistencia visual
-      // o el KEY para referencias.
-      // El modelo Student tiene `String group`.
-      // Voy a buscar el objeto grupo para obtener su nombre real.
-      final selectedGroupObj = _groups.firstWhere((g) => g.key == _selectedGroup, orElse: () => _groups.first); // Consider edge case if _groups is empty or _selectedGroup is not found
-      final groupName = selectedGroupObj.name; // Guardamos el nombre "201-A"
+      // Obtener el nombre del grupo para guardarlo
+      final selectedGroupObj = _groups.firstWhere((g) => g.key == _selectedGroup, orElse: () => _groups.first);
+      final groupName = selectedGroupObj.name;
 
       final studentData = Student(
-        id: _studentIdController.text, // Key manual? O generada? Si es manual (matricula)
+        id: _studentIdController.text,
         fullName: _fullNameController.text,
         guardianFullName: _guardianFullNameController.text,
         age: int.tryParse(_ageController.text) ?? 0,
@@ -227,7 +238,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         gender: _selectedGender!,
         placeOfResidence: _placeOfResidenceController.text,
         schoolCycle: _selectedSchoolCycle!,
-        group: groupName, // Guardamos el NOMBRE del grupo
+        group: groupName, // Guardamos el Nombre para display fácil
         institutionalEmail: _institutionalEmailController.text,
         studentId: _studentIdController.text,
         isActive: widget.student?.isActive ?? true,
@@ -236,13 +247,12 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         generalHealthStatus: _generalHealthStatusController.text.trim(),
       );
 
-      // Usar matricula como KEY en Firebase para evitar duplicados fáciles
       await databaseRef
           .child(studentData.studentId)
           .set(studentData.toFirebaseMap());
 
       if (mounted) {
-        UiHelpers.showSnackBar(context, 'Alumno guardado correctamente en el ciclo $_selectedSchoolCycle.');
+        UiHelpers.showSnackBar(context, 'Alumno guardado correctamente.');
         Navigator.pop(context, true);
       }
     } catch (e) {
@@ -321,10 +331,9 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                               const SizedBox(height: 32),
                               _buildSectionTitle(theme, 'Asignación Académica'),
                               const SizedBox(height: 16),
-                              // CICLO ESCOLAR DROPDOWN
                               _buildCycleDropdown(theme),
                               const SizedBox(height: 12),
-                              // GRUPO DROPDOWN
+                              
                               _isLoadingGroups 
                                 ? const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()))
                                 : _buildGroupDropdown(theme),
@@ -333,7 +342,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8.0),
                                   child: Text(
-                                    "⚠️ No hay grupos registrados para el ciclo $_selectedSchoolCycle.\nPrimero debes crear los grupos en 'Gestión de Grupos'.",
+                                    "⚠️ No hay grupos registrados para el ciclo $_selectedSchoolCycle.",
                                     style: TextStyle(color: Colors.orange.shade800, fontSize: 12),
                                     textAlign: TextAlign.center,
                                   ),
@@ -479,24 +488,48 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
   }
 
   Widget _buildGroupDropdown(ThemeData theme) {
-    return DropdownButtonFormField<String>(
-      key: ValueKey(_selectedSchoolCycle), // Force rebuild when cycle changes
-      value: _groups.any((g) => g.key == _selectedGroup) ? _selectedGroup : null,
-      decoration: InputDecoration(
-        labelText: 'Grupo Asignado',
-        prefixIcon: const Icon(Icons.groups_outlined, size: 20),
-        helperText: _selectedSchoolCycle == null
-            ? 'Primero selecciona un ciclo'
-            : (_groups.isEmpty ? 'No existen grupos en este ciclo' : null),
-      ),
-      items: _groups
-          .map((group) =>
-              DropdownMenuItem(value: group.key, child: Text(group.name)))
-          .toList(),
-      onChanged: _selectedSchoolCycle == null || _groups.isEmpty
-          ? null
-          : (val) => setState(() => _selectedGroup = val),
-      validator: (val) => val == null ? 'Selecciona grupo' : null,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<String>(
+            key: ValueKey(_selectedSchoolCycle),
+            value: _groups.any((g) => g.key == _selectedGroup) ? _selectedGroup : null,
+            decoration: InputDecoration(
+              labelText: 'Grupo Asignado',
+              prefixIcon: const Icon(Icons.groups_outlined, size: 20),
+              helperText: _selectedSchoolCycle == null
+                  ? 'Primero selecciona un ciclo'
+                  : (_groups.isEmpty ? 'No existen grupos. ¡Créalos ahora!' : null),
+              helperStyle: _groups.isEmpty ? TextStyle(color: Colors.orange.shade800, fontWeight: FontWeight.bold) : null,
+            ),
+            items: _groups
+                .map((group) =>
+                    DropdownMenuItem(value: group.key, child: Text(group.name)))
+                .toList(),
+            onChanged: _selectedSchoolCycle == null || _groups.isEmpty
+                ? null
+                : (val) => setState(() => _selectedGroup = val),
+            validator: (val) => val == null ? 'Selecciona grupo' : null,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Padding(
+          padding: const EdgeInsets.only(top: 4.0),
+          child: IconButton.filledTonal(
+            onPressed: () async {
+               await Navigator.push(
+                 context, 
+                 MaterialPageRoute(builder: (context) => const GroupManagementScreen())
+               );
+               // Al volver, recargar grupos
+               if (_selectedSchoolCycle != null) _loadGroups(_selectedSchoolCycle);
+            }, 
+            icon: const Icon(Icons.add_business_rounded),
+            tooltip: 'Crear/Gestionar Grupos',
+          ),
+        )
+      ],
     );
   }
 }
