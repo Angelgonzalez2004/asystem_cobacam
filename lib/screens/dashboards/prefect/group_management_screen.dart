@@ -103,33 +103,21 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Column(
-          children: [
-            const Text('Gestión de Grupos'),
-            if (_campusId != null) Text('Plantel: $_campusId', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
-          ],
-        ),
-        elevation: 0,
-        centerTitle: true,
-      ),
-
+      // AppBar eliminado para evitar duplicación con el Dashboard
       body: _isLoading 
-
         ? const Center(child: CircularProgressIndicator())
-
         : LayoutBuilder(builder: (context, constraints) {
-
             return Center(
-
               child: ConstrainedBox(
-
                 constraints: const BoxConstraints(maxWidth: 800),
-
                 child: Column(
-
                   children: [
-
+                    if (_campusId != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Text('Plantel: $_campusId', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                      ),
+                    
                     Padding(
 
                       padding: const EdgeInsets.all(16.0),

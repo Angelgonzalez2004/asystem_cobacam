@@ -111,21 +111,6 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Gestión de Alumnos'),
-        elevation: 0,
-        centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: theme.colorScheme.primary,
-          labelColor: theme.colorScheme.primary,
-          unselectedLabelColor: Colors.grey,
-          tabs: [
-            Tab(text: 'Activos (${activeStudents.length})'),
-            Tab(text: 'Bajas (${inactiveStudents.length})'),
-          ],
-        ),
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddStudentDialog,
         backgroundColor: theme.colorScheme.primary,
@@ -140,6 +125,28 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                   ? const Center(child: CircularProgressIndicator())
                   : Column(
                       children: [
+                        // Tabs Container
+                        Container(
+                          margin: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isDark ? theme.cardTheme.color : Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+                          ),
+                          child: TabBar(
+                            controller: _tabController,
+                            indicatorColor: theme.colorScheme.primary,
+                            labelColor: theme.colorScheme.primary,
+                            unselectedLabelColor: Colors.grey,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            indicatorSize: TabBarIndicatorSize.label,
+                            tabs: [
+                              Tab(text: 'Activos (${activeStudents.length})'),
+                              Tab(text: 'Bajas (${inactiveStudents.length})'),
+                            ],
+                          ),
+                        ),
+                        
                         _buildFilterHeader(theme, isDark),
                         Expanded(
                           child: TabBarView(
