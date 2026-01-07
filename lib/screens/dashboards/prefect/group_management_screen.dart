@@ -279,135 +279,96 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
 
 
   void _showGroupDialog({Group? group}) {
-
-    final nameController = TextEditingController(text: group?.name ?? '');
-
-    final semesterController = TextEditingController(text: group?.semester.toString() ?? '');
-
-
+    // El "nombre" del grupo es el identificador (ej. 101, 302)
+    final groupIdentifierController = TextEditingController(text: group?.name ?? '');
 
     showDialog(
-
       context: context,
-
       builder: (context) {
-
         return AlertDialog(
-
           title: Text(group == null ? 'Nuevo Grupo' : 'Editar Grupo'),
-
           content: Column(
-
             mainAxisSize: MainAxisSize.min,
-
             children: [
-
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Nombre (ej. 201-A, 105-B)')),
-
-              const SizedBox(height: 12),
-
-              TextField(controller: semesterController, decoration: const InputDecoration(labelText: 'Semestre (1 al 6)'), keyboardType: TextInputType.number),
-
+              TextField(
+                controller: groupIdentifierController,
+                decoration: const InputDecoration(
+                  labelText: 'Identificador de Grupo (ej. 101, 302, 501)',
+                  helperText: 'El primer dígito indica el semestre.',
+                  prefixIcon: Icon(Icons.numbers)
+                ),
+                keyboardType: TextInputType.number,
+              ),
             ],
-
           ),
-
           actions: [
-
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-
             ElevatedButton(
-
               onPressed: () {
-
-                final name = nameController.text;
-
-                final semester = int.tryParse(semesterController.text) ?? 0;
-
+                final groupInput = groupIdentifierController.text.trim();
                 
-
-                if (name.isEmpty || semester <= 0 || _selectedSchoolCycle == null) {
-
-                  UiHelpers.showSnackBar(context, 'Datos inválidos.', isError: true);
-
+                if (groupInput.isEmpty || groupInput.length < 3) {
+                  UiHelpers.showSnackBar(context, 'Formato inválido. Usa 3 dígitos (ej. 101).', isError: true);
                   return;
-
+                }
+                
+                if (_selectedSchoolCycle == null) {
+                   UiHelpers.showSnackBar(context, 'Error: No hay ciclo seleccionado.', isError: true);
+                   return;
                 }
 
+                // Extraer semestre del primer dígito
+                final int semester = int.tryParse(groupInput.substring(0, 1)) ?? 0;
 
+                if (semester == 0) {
+                   UiHelpers.showSnackBar(context, 'No se pudo determinar el semestre.', isError: true);
+                   return;
+                }
 
                 // --- LÓGICA DE VALIDACIÓN COBACAM ---
-
                 final String cycleType = _selectedSchoolCycle!.type;
-
                 bool isValid = false;
-
                 String errorMsg = '';
 
-
-
                 if (cycleType == 'A') {
-
                   if (semester % 2 == 0) {
                     isValid = true;
                   } else {
                     errorMsg = 'Ciclo A solo permite semestres PARES (2, 4, 6).';
                   }
-
                 } else if (cycleType == 'B') {
-
                   if (semester % 2 != 0) {
                     isValid = true;
                   } else {
                     errorMsg = 'Ciclo B solo permite semestres IMPARES (1, 3, 5).';
                   }
-
                 } else if (cycleType == 'Propedéutico') {
-
-                  if (semester == 1) {
-                    isValid = true;
-                  } else {
-                    errorMsg = 'Cursos Propedéuticos solo permiten 1er semestre.';
-                  }
-
+                  // Propedéutico suele ser para ingreso (0 o 1)
+                  // Asumiremos que es para nuevos, así que '0' o '1'.
+                  // Si escriben 101 es válido.
+                  isValid = true; 
                 }
-
-
 
                 if (!isValid) {
-
                   UiHelpers.showSnackBar(context, errorMsg, isError: true);
-
                   return;
-
                 }
 
-
-
                 if (group == null) {
-                  _createGroup(name, semester);
+                  _createGroup(groupInput, semester);
                 } else {
-                  _updateGroup(group.key, name, semester);
+                  _updateGroup(group.key, groupInput, semester);
                 }
 
                 Navigator.pop(context);
-
-                UiHelpers.showSnackBar(context, 'Guardado correctamente.');
-
+                UiHelpers.showSnackBar(context, 'Grupo $groupInput guardado.');
               },
-
               child: const Text('Guardar'),
-
             ),
-
           ],
-
         );
-
       },
-
     );
-
   }
 
 

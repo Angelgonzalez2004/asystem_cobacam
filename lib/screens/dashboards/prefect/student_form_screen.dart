@@ -51,6 +51,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
   bool _isLoadingGroups = true;
   bool _isLoadingCycles = true;
   bool _isSaving = false;
+  bool _isReadOnly = false;
 
   late final HiveService _hiveService;
   late final ConnectivityService _connectivityService;
@@ -95,8 +96,27 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
     _selectedSchoolCycle = widget.student?.schoolCycle ?? widget.currentSchoolCycle;
     
     _loadSchoolCycles().then((_) {
+      _checkCycleStatus(_selectedSchoolCycle); // Check status immediately
       _loadGroups(_selectedSchoolCycle);
     });
+  }
+
+  void _checkCycleStatus(String? cycleId) {
+    if (cycleId == null || _availableSchoolCycles.isEmpty) return;
+    
+    try {
+      final cycle = _availableSchoolCycles.firstWhere((c) => c.id == cycleId);
+      final now = DateTime.now();
+      // Si la fecha de fin ya pasó, es histórico/cerrado.
+      // Agregamos un margen de 1 día para seguridad.
+      if (now.isAfter(cycle.endDate.add(const Duration(days: 1)))) {
+        setState(() => _isReadOnly = true);
+      } else {
+        setState(() => _isReadOnly = false);
+      }
+    } catch (e) {
+      setState(() => _isReadOnly = false);
+    }
   }
 
   Future<void> _loadSchoolCycles() async {
@@ -123,11 +143,6 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         setState(() {
             _isLoadingGroups = true;
             _groups = [];
-            // Si el grupo seleccionado no pertenece al nuevo ciclo, limpiarlo.
-            // Pero si estamos editando y es el mismo ciclo, mantenerlo.
-            if (_selectedGroup != null) {
-               // Logic handled inside callback
-            }
         });
     }
 
@@ -150,15 +165,10 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
             
             // Validar si el grupo seleccionado previamente existe en la nueva lista
             if (_selectedGroup != null) {
-               // Aquí _selectedGroup almacena el KEY del grupo.
                bool exists = _groups.any((g) => g.key == _selectedGroup);
                
-               // Caso especial: Si venimos de "Editar", widget.student.group tiene el NOMBRE (ej. "201-A").
-               // Pero el dropdown usa KEY. Debemos mapear si es necesario.
-               // En la versión anterior guardamos el nombre. 
-               // Vamos a intentar hacer match por Nombre O Key.
                if (!exists && widget.student != null) {
-                   // Intento de recuperación por nombre
+                   // Intento de recuperación por nombre si venimos de editar
                    final matchByName = _groups.firstWhere(
                        (g) => g.name == widget.student!.group, 
                        orElse: () => Group(key: '', name: '', semester: 0, studentCount: 0, schoolCycleId: '')
@@ -190,7 +200,6 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
           _groups = [];
           _selectedGroup = null;
         });
-        // Error silencioso, o log
         debugPrint('Error loading groups: $e');
       }
     }
@@ -238,7 +247,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         gender: _selectedGender!,
         placeOfResidence: _placeOfResidenceController.text,
         schoolCycle: _selectedSchoolCycle!,
-        group: groupName, // Guardamos el Nombre para display fácil
+        group: groupName,
         institutionalEmail: _institutionalEmailController.text,
         studentId: _studentIdController.text,
         isActive: widget.student?.isActive ?? true,
@@ -287,135 +296,157 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                   constraints: const BoxConstraints(maxWidth: 700),
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24.0),
-                    child: Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        side: isDark
-                            ? BorderSide.none
-                            : BorderSide(color: Colors.grey.shade200),
-                      ),
-                      color: isDark ? theme.cardTheme.color : Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _buildSectionTitle(theme, 'Datos del Alumno'),
-                              const SizedBox(height: 16),
-                              _buildTextField(_fullNameController,
-                                  'Nombre Completo', Icons.person_outline),
-                              const SizedBox(height: 12),
-                              Row(
+                    child: Column(
+                      children: [
+                        if (_isReadOnly)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            padding: const EdgeInsets.all(12),
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.red.withOpacity(0.5)),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.lock_outline, color: Colors.red),
+                                SizedBox(width: 12),
+                                Expanded(child: Text("🔒 Ciclo Histórico Cerrado - Solo Lectura", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))),
+                              ],
+                            ),
+                          ),
+                        Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            side: isDark
+                                ? BorderSide.none
+                                : BorderSide(color: Colors.grey.shade200),
+                          ),
+                          color: isDark ? theme.cardTheme.color : Colors.white,
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  Expanded(
-                                      flex: 2,
-                                      child: _buildTextField(
-                                          _studentIdController,
-                                          'Matrícula',
-                                          Icons.badge_outlined,
-                                          enabled: widget.student == null)),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                      flex: 1,
-                                      child: _buildTextField(_ageController,
-                                          'Edad', Icons.cake_outlined,
-                                          keyboardType: TextInputType.number)),
+                                  _buildSectionTitle(theme, 'Datos del Alumno'),
+                                  const SizedBox(height: 16),
+                                  _buildTextField(_fullNameController,
+                                      'Nombre Completo', Icons.person_outline),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                          flex: 2,
+                                          child: _buildTextField(
+                                              _studentIdController,
+                                              'Matrícula',
+                                              Icons.badge_outlined,
+                                              enabled: widget.student == null)),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                          flex: 1,
+                                          child: _buildTextField(_ageController,
+                                              'Edad', Icons.cake_outlined,
+                                              keyboardType: TextInputType.number)),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _buildGenderDropdown(theme),
+                                  
+                                  const SizedBox(height: 32),
+                                  _buildSectionTitle(theme, 'Asignación Académica'),
+                                  const SizedBox(height: 16),
+                                  _buildCycleDropdown(theme),
+                                  const SizedBox(height: 12),
+                                  
+                                  _isLoadingGroups 
+                                    ? const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()))
+                                    : _buildGroupDropdown(theme),
+                                  
+                                  if (_groups.isEmpty && !_isLoadingGroups && _selectedSchoolCycle != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Text(
+                                        "⚠️ No hay grupos registrados para el ciclo $_selectedSchoolCycle.",
+                                        style: TextStyle(color: Colors.orange.shade800, fontSize: 12),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+
+                                  const SizedBox(height: 32),
+                                  _buildSectionTitle(theme, 'Contacto y Tutor'),
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                      _guardianFullNameController,
+                                      'Nombre del Tutor',
+                                      Icons.family_restroom_outlined),
+                                  const SizedBox(height: 12),
+                                  _buildTextField(_guardianPhoneController,
+                                      'Teléfono Tutor', Icons.phone_outlined,
+                                      keyboardType: TextInputType.phone),
+                                  const SizedBox(height: 12),
+                                  _buildTextField(
+                                      _studentPhoneController,
+                                      'Teléfono Alumno (Opcional)',
+                                      Icons.phone_android_outlined,
+                                      keyboardType: TextInputType.phone),
+                                  const SizedBox(height: 12),
+                                  _buildTextField(_placeOfResidenceController,
+                                      'Lugar de Residencia', Icons.home_outlined),
+                                  const SizedBox(height: 12),
+                                  _buildTextField(
+                                      _institutionalEmailController,
+                                      'Correo Institucional',
+                                      Icons.alternate_email_outlined,
+                                      keyboardType: TextInputType.emailAddress),
+                                  const SizedBox(height: 32),
+                                  _buildSectionTitle(theme, 'INFORMACIÓN MÉDICA (OPCIONAL)'),
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                      _allergiesController,
+                                      'Alergias (Medicamentos, comida, etc.)',
+                                      Icons.warning_amber_rounded),
+                                  const SizedBox(height: 12),
+                                  _buildTextField(
+                                      _healthConditionsController,
+                                      'Condiciones de Salud (Visión, caminar, etc.)',
+                                      Icons.health_and_safety_outlined),
+                                  const SizedBox(height: 12),
+                                  _buildTextField(
+                                      _generalHealthStatusController,
+                                      'Estado General (ej. Sano)',
+                                      Icons.favorite_border_rounded),
+                                  const SizedBox(height: 40),
+                                  SizedBox(
+                                    height: 56,
+                                    child: ElevatedButton(
+                                      onPressed: _isReadOnly ? null : _saveStudent,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: theme.colorScheme.primary,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12)),
+                                      ),
+                                      child: Text(
+                                          widget.student == null
+                                              ? 'Registrar Alumno'
+                                              : 'Guardar Cambios',
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
-                              _buildGenderDropdown(theme),
-                              
-                              const SizedBox(height: 32),
-                              _buildSectionTitle(theme, 'Asignación Académica'),
-                              const SizedBox(height: 16),
-                              _buildCycleDropdown(theme),
-                              const SizedBox(height: 12),
-                              
-                              _isLoadingGroups 
-                                ? const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()))
-                                : _buildGroupDropdown(theme),
-                              
-                              if (_groups.isEmpty && !_isLoadingGroups && _selectedSchoolCycle != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: Text(
-                                    "⚠️ No hay grupos registrados para el ciclo $_selectedSchoolCycle.",
-                                    style: TextStyle(color: Colors.orange.shade800, fontSize: 12),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-
-                              const SizedBox(height: 32),
-                              _buildSectionTitle(theme, 'Contacto y Tutor'),
-                              const SizedBox(height: 16),
-                              _buildTextField(
-                                  _guardianFullNameController,
-                                  'Nombre del Tutor',
-                                  Icons.family_restroom_outlined),
-                              const SizedBox(height: 12),
-                              _buildTextField(_guardianPhoneController,
-                                  'Teléfono Tutor', Icons.phone_outlined,
-                                  keyboardType: TextInputType.phone),
-                              const SizedBox(height: 12),
-                              _buildTextField(
-                                  _studentPhoneController,
-                                  'Teléfono Alumno (Opcional)',
-                                  Icons.phone_android_outlined,
-                                  keyboardType: TextInputType.phone),
-                              const SizedBox(height: 12),
-                              _buildTextField(_placeOfResidenceController,
-                                  'Lugar de Residencia', Icons.home_outlined),
-                              const SizedBox(height: 12),
-                              _buildTextField(
-                                  _institutionalEmailController,
-                                  'Correo Institucional',
-                                  Icons.alternate_email_outlined,
-                                  keyboardType: TextInputType.emailAddress),
-                              const SizedBox(height: 32),
-                              _buildSectionTitle(theme, 'INFORMACIÓN MÉDICA (OPCIONAL)'),
-                              const SizedBox(height: 16),
-                              _buildTextField(
-                                  _allergiesController,
-                                  'Alergias (Medicamentos, comida, etc.)',
-                                  Icons.warning_amber_rounded),
-                              const SizedBox(height: 12),
-                              _buildTextField(
-                                  _healthConditionsController,
-                                  'Condiciones de Salud (Visión, caminar, etc.)',
-                                  Icons.health_and_safety_outlined),
-                              const SizedBox(height: 12),
-                              _buildTextField(
-                                  _generalHealthStatusController,
-                                  'Estado General (ej. Sano)',
-                                  Icons.favorite_border_rounded),
-                              const SizedBox(height: 40),
-                              SizedBox(
-                                height: 56,
-                                child: ElevatedButton(
-                                  onPressed: _saveStudent,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: theme.colorScheme.primary,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
-                                  ),
-                                  child: Text(
-                                      widget.student == null
-                                          ? 'Registrar Alumno'
-                                          : 'Guardar Cambios',
-                                      style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
@@ -481,6 +512,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
               _selectedSchoolCycle = val;
               _loadGroups(val);
             });
+            _checkCycleStatus(val);
         }
       },
       validator: (val) => val == null ? 'Selecciona ciclo' : null,
@@ -500,7 +532,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
               prefixIcon: const Icon(Icons.groups_outlined, size: 20),
               helperText: _selectedSchoolCycle == null
                   ? 'Primero selecciona un ciclo'
-                  : (_groups.isEmpty ? 'No existen grupos. ¡Créalos ahora!' : null),
+                  : (_groups.isEmpty ? 'No existen grupos en este ciclo' : null),
               helperStyle: _groups.isEmpty ? TextStyle(color: Colors.orange.shade800, fontWeight: FontWeight.bold) : null,
             ),
             items: _groups
@@ -517,12 +549,13 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: IconButton.filledTonal(
-            onPressed: () async {
+            onPressed: _isReadOnly 
+              ? null // No permitir crear grupos en ciclos cerrados
+              : () async {
                await Navigator.push(
                  context, 
                  MaterialPageRoute(builder: (context) => const GroupManagementScreen())
                );
-               // Al volver, recargar grupos
                if (_selectedSchoolCycle != null) _loadGroups(_selectedSchoolCycle);
             }, 
             icon: const Icon(Icons.add_business_rounded),
