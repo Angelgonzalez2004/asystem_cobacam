@@ -152,8 +152,8 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                           child: TabBarView(
                             controller: _tabController,
                             children: [
-                              _buildStudentList(activeStudents, true),
-                              _buildStudentList(inactiveStudents, false),
+                              _buildGroupedStudentList(activeStudents, true, theme, isDark),
+                              _buildGroupedStudentList(inactiveStudents, false, theme, isDark),
                             ],
                           ),
                         ),
@@ -169,7 +169,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
   Widget _buildFilterHeader(ThemeData theme, bool isDark) {
     return FadeInUp(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Card(
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -208,7 +208,8 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
     );
   }
 
-  Widget _buildStudentList(List<Student> students, bool isActiveList) {
+  // NUEVA IMPLEMENTACIÓN: Lista agrupada por Grupos
+  Widget _buildGroupedStudentList(List<Student> students, bool isActiveList, ThemeData theme, bool isDark) {
     if (students.isEmpty) {
       return Center(
         child: FadeInUp(
@@ -224,88 +225,107 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
       );
     }
 
+    // 1. Agrupar alumnos por nombre de grupo
+    final Map<String, List<Student>> groupedStudents = {};
+    for (var student in students) {
+      if (!groupedStudents.containsKey(student.group)) {
+        groupedStudents[student.group] = [];
+      }
+      groupedStudents[student.group]!.add(student);
+    }
+
+    // 2. Ordenar claves de grupos alfabéticamente
+    final sortedGroupKeys = groupedStudents.keys.toList()..sort();
+
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: students.length,
+      padding: const EdgeInsets.all(16),
+      itemCount: sortedGroupKeys.length,
       itemBuilder: (context, index) {
-        final student = students[index];
+        final groupName = sortedGroupKeys[index];
+        final groupList = groupedStudents[groupName]!;
+        
+        // Ordenar alumnos por nombre dentro del grupo
+        groupList.sort((a, b) => a.fullName.compareTo(b.fullName));
+
         return FadeInUp(
-          delay: Duration(milliseconds: 30 * index),
-          child: _buildStudentCard(student, isActiveList),
+          delay: Duration(milliseconds: 50 * index),
+          child: Card(
+            elevation: 0,
+            margin: const EdgeInsets.only(bottom: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1)),
+            ),
+            color: isDark ? theme.cardTheme.color : Colors.white,
+            child: Theme(
+              // Quitar bordes de ExpansionTile
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                leading: CircleAvatar(
+                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  child: Text(groupName.substring(0, min(2, groupName.length)), 
+                      style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                ),
+                title: Text(
+                  'Grupo $groupName',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                subtitle: Text(
+                  '${groupList.length} Alumnos',
+                  style: TextStyle(color: theme.textTheme.bodySmall?.color),
+                ),
+                children: groupList.map((student) => _buildStudentTile(student, isActiveList, theme)).toList(),
+              ),
+            ),
+          ),
         );
       },
     );
   }
 
-  Widget _buildStudentCard(Student student, bool isActiveList) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+  int min(int a, int b) => a < b ? a : b;
+
+  Widget _buildStudentTile(Student student, bool isActiveList, ThemeData theme) {
     final isFemale = student.gender.toLowerCase() == 'femenino';
-
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: isActiveList ? Colors.grey.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1)),
+    
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      leading: Icon(
+        isFemale ? Icons.woman_rounded : Icons.man_rounded, 
+        color: isFemale ? Colors.pink : Colors.blue, 
+        size: 24
       ),
-      color: isDark ? theme.cardTheme.color : Colors.white,
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: Stack(
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: isFemale ? Colors.pink.withValues(alpha: 0.1) : Colors.blue.withValues(alpha: 0.1),
-              child: Icon(isFemale ? Icons.woman_rounded : Icons.man_rounded, color: isFemale ? Colors.pink : Colors.blue, size: 32),
-            ),
-            if (!isActiveList)
-              const Positioned(
-                bottom: 0,
-                right: 0,
-                child: CircleAvatar(radius: 10, backgroundColor: Colors.red, child: Icon(Icons.close, size: 12, color: Colors.white)),
-              ),
-          ],
-        ),
-        title: Text(student.fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                _buildInfoChip(student.group, Colors.indigo, theme),
-                const SizedBox(width: 8),
-                Text('ID: ${student.studentId}', style: const TextStyle(fontSize: 12)),
-              ],
-            ),
-            if (!isActiveList && student.deactivationReason != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text('Motivo: ${student.deactivationReason}', style: const TextStyle(color: Colors.red, fontSize: 12, fontStyle: FontStyle.italic)),
-              ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isActiveList)
-              IconButton(icon: const Icon(Icons.edit_outlined), onPressed: () => _openEditForm(student)),
+      title: Text(student.fullName, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('ID: ${student.studentId}', style: const TextStyle(fontSize: 12)),
+          if (!isActiveList && student.deactivationReason != null)
+            Text('Baja: ${student.deactivationReason}', style: const TextStyle(color: Colors.red, fontSize: 11, fontStyle: FontStyle.italic)),
+        ],
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.edit, size: 20),
+            onPressed: () => _openEditForm(student),
+            tooltip: 'Editar',
+          ),
+          if (isActiveList)
             IconButton(
-              icon: Icon(isActiveList ? Icons.person_remove_outlined : Icons.person_add_alt_1_outlined, color: isActiveList ? theme.colorScheme.error : theme.colorScheme.secondary),
-              onPressed: () => isActiveList ? _confirmAndDeleteStudent(student) : _reactivateStudent(student),
+              icon: Icon(Icons.person_remove_outlined, color: theme.colorScheme.error, size: 20),
+              onPressed: () => _confirmAndDeleteStudent(student),
+              tooltip: 'Dar de Baja',
+            )
+          else
+            IconButton(
+              icon: Icon(Icons.person_add_alt_1_outlined, color: theme.colorScheme.secondary, size: 20),
+              onPressed: () => _reactivateStudent(student),
+              tooltip: 'Reactivar',
             ),
-          ],
-        ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildInfoChip(String label, Color color, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.bold)),
     );
   }
 

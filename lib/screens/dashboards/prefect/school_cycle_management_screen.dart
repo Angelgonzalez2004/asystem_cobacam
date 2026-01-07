@@ -24,6 +24,7 @@ class _SchoolCycleManagementScreenState
 
   List<SchoolCycle> _schoolCycles = [];
   bool _isLoading = true;
+  String _activeSystemCycleId = '';
 
   @override
   void initState() {
@@ -31,16 +32,27 @@ class _SchoolCycleManagementScreenState
     _loadSchoolCycles();
   }
 
-  void _loadSchoolCycles() {
+  Future<void> _loadSchoolCycles() async {
+    // Cargar ciclo activo global
+    final settingsService = AppSettingsService(
+      Provider.of<HiveService>(context, listen: false),
+      Provider.of<ConnectivityService>(context, listen: false),
+    );
+    final activeId = await settingsService.getCurrentSchoolCycleId();
+
     _schoolCyclesRef.onValue.listen((event) {
       if (event.snapshot.exists) {
         final cycles = <SchoolCycle>[];
         for (final child in event.snapshot.children) {
           cycles.add(SchoolCycle.fromSnapshot(child));
         }
+        // Ordenar por fecha de inicio descendente (más reciente primero)
+        cycles.sort((a, b) => b.startDate.compareTo(a.startDate));
+        
         if (mounted) {
           setState(() {
             _schoolCycles = cycles;
+            _activeSystemCycleId = activeId;
             _isLoading = false;
           });
         }
@@ -48,11 +60,35 @@ class _SchoolCycleManagementScreenState
         if (mounted) {
           setState(() {
             _schoolCycles = [];
+            _activeSystemCycleId = activeId;
             _isLoading = false;
           });
         }
       }
     });
+  }
+
+  Color _getStatusColor(DateTime start, DateTime end) {
+    final now = DateTime.now();
+    // Normalizar fechas para comparar solo días
+    final today = DateTime(now.year, now.month, now.day);
+    final startDate = DateTime(start.year, start.month, start.day);
+    final endDate = DateTime(end.year, end.month, end.day);
+
+    if (today.isAfter(endDate)) return Colors.red; // Finalizado
+    if (today.isBefore(startDate)) return Colors.orange; // Próximo
+    return Colors.green; // En curso
+  }
+
+  String _getStatusText(DateTime start, DateTime end) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final startDate = DateTime(start.year, start.month, start.day);
+    final endDate = DateTime(end.year, end.month, end.day);
+
+    if (today.isAfter(endDate)) return 'FINALIZADO';
+    if (today.isBefore(startDate)) return 'PRÓXIMO';
+    return 'EN CURSO';
   }
 
   @override
@@ -78,6 +114,10 @@ class _SchoolCycleManagementScreenState
                           itemCount: _schoolCycles.length,
                           itemBuilder: (context, index) {
                             final cycle = _schoolCycles[index];
+                            final isActiveSystem = cycle.id == _activeSystemCycleId;
+                            final statusColor = _getStatusColor(cycle.startDate, cycle.endDate);
+                            final statusText = _getStatusText(cycle.startDate, cycle.endDate);
+
                             return FadeInUp(
                               delay: Duration(milliseconds: 50 * index),
                               child: Card(
@@ -85,94 +125,89 @@ class _SchoolCycleManagementScreenState
                                 margin: const EdgeInsets.only(bottom: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  side: isDark
-                                      ? BorderSide.none
-                                      : BorderSide(color: Colors.grey.shade200),
+                                  side: isActiveSystem
+                                      ? BorderSide(color: theme.colorScheme.primary, width: 2)
+                                      : (isDark ? BorderSide.none : BorderSide(color: Colors.grey.shade200)),
                                 ),
-                                color: isDark
-                                    ? theme.cardTheme.color
-                                    : Colors.white,
+                                color: isActiveSystem 
+                                    ? theme.colorScheme.primary.withValues(alpha: 0.05)
+                                    : (isDark ? theme.cardTheme.color : Colors.white),
                                 child: ListTile(
                                   contentPadding: const EdgeInsets.all(16),
                                   leading: Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                        color: theme.colorScheme.primary
-                                            .withValues(alpha: 0.1),
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
+                                        color: isActiveSystem ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(12)),
                                     child: Icon(Icons.calendar_month_outlined,
-                                        color: theme.colorScheme.primary),
+                                        color: isActiveSystem ? Colors.white : theme.colorScheme.primary),
                                   ),
-                                  title: Text(cycle.id,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18)),
+                                  title: Row(
+                                    children: [
+                                      Text(cycle.id, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                                      if (isActiveSystem) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: theme.colorScheme.primary,
+                                            borderRadius: BorderRadius.circular(4)
+                                          ),
+                                          child: const Text('ACTUAL', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                                        )
+                                      ]
+                                    ],
+                                  ),
                                   subtitle: Padding(
                                     padding: const EdgeInsets.only(top: 8.0),
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
-                                            const Icon(Icons.date_range,
-                                                size: 14, color: Colors.grey),
+                                            const Icon(Icons.date_range, size: 14, color: Colors.grey),
                                             const SizedBox(width: 4),
                                             Text(
                                               '${DateFormat('dd/MM/yyyy').format(cycle.startDate)} - ${DateFormat('dd/MM/yyyy').format(cycle.endDate)}',
-                                              style: TextStyle(
-                                                  color: theme.textTheme
-                                                      .bodySmall?.color),
+                                              style: TextStyle(color: theme.textTheme.bodySmall?.color),
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 4),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 2),
-                                          decoration: BoxDecoration(
-                                              color: Colors.teal.shade50,
-                                              borderRadius:
-                                                  BorderRadius.circular(6)),
-                                          child: Text('TIPO ${cycle.type}',
-                                              style: TextStyle(
-                                                  fontSize: 10,
-                                                  color: Colors.teal.shade700,
-                                                  fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                  color: Colors.teal.shade50,
+                                                  borderRadius: BorderRadius.circular(6)),
+                                              child: Text('TIPO ${cycle.type}',
+                                                  style: TextStyle(fontSize: 10, color: Colors.teal.shade700, fontWeight: FontWeight.bold)),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                  color: statusColor.withValues(alpha: 0.1),
+                                                  borderRadius: BorderRadius.circular(6)),
+                                              child: Text(statusText,
+                                                  style: TextStyle(fontSize: 10, color: statusColor, fontWeight: FontWeight.bold)),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
                                   ),
-                                                                    trailing: Row(
-                                                                      mainAxisSize: MainAxisSize.min,
-                                                                      children: [
-                                                                        IconButton(
-                                                                          icon: Icon(Icons.check_circle_outline, color: theme.colorScheme.secondary),
-                                                                          tooltip: 'Establecer como Actual',
-                                                                          onPressed: () async {
-                                                                            final confirm = await UiHelpers.showConfirmationDialog(
-                                                                              context,
-                                                                              title: 'Ciclo Actual',
-                                                                              content: '¿Establecer ${cycle.id} como el ciclo activo del sistema?',
-                                                                            );
-                                                                            if (confirm) {
-                                                                              final settingsService = AppSettingsService(
-                                                                                Provider.of<HiveService>(context, listen: false),
-                                                                                Provider.of<ConnectivityService>(context, listen: false),
-                                                                              );
-                                                                              await settingsService.setGlobalCurrentSchoolCycle(cycle.id);
-                                                                              if (mounted) UiHelpers.showSnackBar(context, 'Ciclo ${cycle.id} activado.');
-                                                                            }
-                                                                          },
-                                                                        ),
-                                                                        IconButton(
-                                                                          icon: Icon(Icons.edit_outlined, color: theme.colorScheme.primary),
-                                                                          onPressed: () => _showSchoolCycleDialog(cycle: cycle),
-                                                                        ),
-                                                                        IconButton(
-                                                                          icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
-                                                                          onPressed: () async {
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(Icons.edit_outlined, color: theme.colorScheme.primary),
+                                        onPressed: () => _showSchoolCycleDialog(cycle: cycle),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                                        onPressed: () async {
                                           final confirm = await UiHelpers
                                               .showConfirmationDialog(context,
                                                   title: 'Eliminar Ciclo',

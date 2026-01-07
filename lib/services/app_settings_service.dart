@@ -7,10 +7,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 
 class AppSettingsService {
-  final DatabaseReference _appSettingsRef =
-      FirebaseDatabase.instance.ref('appSettings');
   final DatabaseReference _schoolCyclesRef =
-      FirebaseDatabase.instance.ref('appSettings/schoolCycles');
+      FirebaseDatabase.instance.ref('school_cycles'); // CORREGIDO: Root
 
   final HiveService _hiveService;
   final ConnectivityService _connectivityService;
@@ -18,41 +16,54 @@ class AppSettingsService {
   AppSettingsService(this._hiveService, this._connectivityService);
 
   Future<String> getCurrentSchoolCycleId() async {
-    // Esto es un dato pequeño y crítico, siempre intentamos Firebase primero,
-    // pero si falla, podríamos tener un valor cacheado o un default.
     try {
-      if (await _connectivityService.checkConnectivity() !=
-          ConnectivityResult.none) {
-        final snapshot =
-            await _appSettingsRef.child('currentSchoolCycle').get();
-        if (snapshot.exists && snapshot.value != null) {
-          final cycleId = snapshot.value.toString();
-          // Podríamos cachear esto en SharedPreferences para acceso rápido
-          return cycleId;
-        }
+      final cycles = await getAllSchoolCycles();
+      if (cycles.isEmpty) return '2025-A';
+
+      final now = DateTime.now();
+      // Normalizar 'now' para comparar solo fechas (sin hora)
+      final today = DateTime(now.year, now.month, now.day);
+
+      // 1. Buscar ciclo ACTIVO (hoy dentro del rango)
+      try {
+        final activeCycle = cycles.firstWhere((c) {
+          final start = DateTime(c.startDate.year, c.startDate.month, c.startDate.day);
+          final end = DateTime(c.endDate.year, c.endDate.month, c.endDate.day);
+          return (today.isAfter(start) || today.isAtSameMomentAs(start)) && 
+                 (today.isBefore(end) || today.isAtSameMomentAs(end));
+        });
+        return activeCycle.id;
+      } catch (e) {
+        // No hay ciclo activo hoy (vacaciones/receso)
       }
-    } catch (e) {
-      // Manejar el error, quizás loggearlo
-      debugPrint('Error al obtener currentSchoolCycle de Firebase: $e');
-    }
-    // Fallback a un valor por defecto o cacheado (si se implementa)
-    return '2025-B'; // Default o fallback
-  }
 
-  Future<void> setCurrentSchoolCycleId(String cycleId) async {
-    try {
-      await _appSettingsRef.child('currentSchoolCycle').set(cycleId);
-    } catch (e) {
-      rethrow;
-    }
-  }
+      // 2. Buscar ciclo PRÓXIMO más cercano
+      final upcomingCycles = cycles.where((c) {
+        final start = DateTime(c.startDate.year, c.startDate.month, c.startDate.day);
+        return start.isAfter(today);
+      }).toList();
+      
+      if (upcomingCycles.isNotEmpty) {
+        upcomingCycles.sort((a, b) => a.startDate.compareTo(b.startDate));
+        return upcomingCycles.first.id;
+      }
 
-  Future<void> setGlobalCurrentSchoolCycle(String cycleId) async {
-    try {
-      await _appSettingsRef.update({'currentSchoolCycle': cycleId});
+      // 3. Buscar el ciclo PASADO más reciente
+      final pastCycles = cycles.where((c) {
+        final end = DateTime(c.endDate.year, c.endDate.month, c.endDate.day);
+        return end.isBefore(today);
+      }).toList();
+
+      if (pastCycles.isNotEmpty) {
+        pastCycles.sort((a, b) => b.endDate.compareTo(a.endDate)); // Descendente
+        return pastCycles.first.id;
+      }
+
+      // Default si algo falla
+      return cycles.first.id;
     } catch (e) {
-      debugPrint('Error al establecer ciclo global: $e');
-      rethrow;
+      debugPrint('Error calculando ciclo escolar: $e');
+      return '2025-A';
     }
   }
 

@@ -7,6 +7,11 @@ import 'package:excel/excel.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:asystem_cobacam/models/student_model.dart';
 import 'package:asystem_cobacam/models/group_model.dart';
+import 'package:asystem_cobacam/services/app_settings_service.dart';
+import 'package:asystem_cobacam/models/school_cycle_model.dart';
+import 'package:asystem_cobacam/services/hive_service.dart';
+import 'package:asystem_cobacam/services/connectivity_service.dart';
+import 'package:provider/provider.dart';
 
 class StudentExcelImportScreen extends StatefulWidget {
   final String campusId;
@@ -29,24 +34,57 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
   bool _isLoading = false;
   bool _isImporting = false;
   List<Group> _availableGroups = [];
+  
+  // Cycle Management
+  List<SchoolCycle> _availableSchoolCycles = [];
+  String? _targetSchoolCycle;
+  bool _isLoadingCycles = true;
+
+  late final AppSettingsService _appSettingsService;
 
   @override
   void initState() {
     super.initState();
-    _loadAvailableGroups();
+    _appSettingsService = AppSettingsService(
+      Provider.of<HiveService>(context, listen: false),
+      Provider.of<ConnectivityService>(context, listen: false),
+    );
+    _targetSchoolCycle = widget.currentSchoolCycle;
+    _loadData();
   }
 
-  Future<void> _loadAvailableGroups() async {
+  Future<void> _loadData() async {
+    try {
+        final cycles = await _appSettingsService.getAllSchoolCycles();
+        if (mounted) {
+            setState(() {
+                _availableSchoolCycles = cycles;
+                _isLoadingCycles = false;
+            });
+            // Cargar grupos del ciclo por defecto
+            _loadAvailableGroups(_targetSchoolCycle!);
+        }
+    } catch (e) {
+        if (mounted) setState(() => _isLoadingCycles = false);
+    }
+  }
+
+  Future<void> _loadAvailableGroups(String cycleId) async {
     try {
       final groupsSnapshot = await FirebaseDatabase.instance
           .ref('planteles/${widget.campusId}/groups')
+          .orderByChild('schoolCycleId') // Filtrar por ciclo
+          .equalTo(cycleId)
           .get();
+          
       if (groupsSnapshot.exists) {
         final List<Group> fetchedGroups = [];
         for (final child in groupsSnapshot.children) {
           fetchedGroups.add(Group.fromSnapshot(child));
         }
         if (mounted) setState(() => _availableGroups = fetchedGroups);
+      } else {
+        if (mounted) setState(() => _availableGroups = []);
       }
     } catch (e) {
       if (mounted) {
@@ -57,6 +95,23 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
   }
 
   Future<void> _pickExcelFile() async {
+    if (_targetSchoolCycle == null) return;
+    
+    // Validación crítica: Deben existir grupos para este ciclo
+    if (_availableGroups.isEmpty) {
+        await showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+                title: const Text('Sin Grupos Registrados'),
+                content: Text('No existen grupos registrados para el ciclo escolar $_targetSchoolCycle.\n\nPor favor, ve a "Gestión de Grupos" y crea los grupos (ej. 101, 102) antes de importar alumnos.'),
+                actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Entendido'))
+                ],
+            )
+        );
+        return;
+    }
+
     setState(() {
       _isLoading = true;
       _parsedStudents = [];
@@ -101,7 +156,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
         'residencia',
         'email_institucional',
         'matricula',
-        'grupo',
+        'grupo', // Esto podría ser redundante si el nombre de la hoja es el grupo, pero sirve para validar
         'alergias',
         'condiciones_salud',
         'estado_salud',
@@ -111,21 +166,30 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
         var sheet = excel.tables[table];
         if (sheet == null || sheet.maxColumns < expectedHeaders.length) continue;
 
+        // Validar si el nombre de la hoja corresponde a un grupo existente
+        // Opcional: Si el Excel tiene columna 'grupo', usaremos esa.
+        // Pero la instrucción dice: "cada hoja de excel es un grupo".
+        
+        final groupNameFromSheet = table.trim();
+        // Verificar si este grupo existe en el ciclo seleccionado
+        if (!_availableGroups.any((g) => g.name == groupNameFromSheet)) {
+            debugPrint("Grupo $groupNameFromSheet no encontrado en ciclo $_targetSchoolCycle. Saltando hoja.");
+            continue;
+        }
+
         final List<String> headers = sheet.row(0).map((cell) => cell?.value?.toString().toLowerCase().replaceAll(' ', '_') ?? '').toList();
         
         bool headersMatch = true;
         for (var h in expectedHeaders) {
           if (!headers.contains(h)) {
-            // Permitir que las médicas sean opcionales si no están en el Excel
-            if (!['alergias', 'condiciones_salud', 'estado_salud'].contains(h)) {
+            // Permitir que las médicas sean opcionales
+            if (!['alergias', 'condiciones_salud', 'estado_salud', 'grupo'].contains(h)) {
               headersMatch = false;
               break;
             }
           }
         }
         if (!headersMatch) continue;
-
-        if (!_availableGroups.any((g) => g.name == table)) continue;
 
         for (int i = 1; i < sheet.maxRows; i++) {
           var row = sheet.row(i);
@@ -145,8 +209,8 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
               studentPhone: row[headers.indexOf('telefono_alumno')]?.value?.toString(),
               gender: row[headers.indexOf('genero')]?.value?.toString() ?? 'Otro',
               placeOfResidence: row[headers.indexOf('residencia')]?.value?.toString() ?? '',
-              schoolCycle: widget.currentSchoolCycle,
-              group: table,
+              schoolCycle: _targetSchoolCycle!, // USAR EL CICLO SELECCIONADO
+              group: groupNameFromSheet, // USAR NOMBRE DE LA HOJA
               institutionalEmail: row[headers.indexOf('email_institucional')]?.value?.toString() ?? '',
               studentId: studentId,
               isActive: true,
@@ -157,13 +221,18 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
           } catch (e) { continue; }
         }
       }
-      if (mounted) {
-        setState(() => _parsedStudents = studentsToImport);
-        UiHelpers.showSnackBar(context, 'Excel procesado con éxito.');
+      
+      if (studentsToImport.isEmpty) {
+          if (mounted) UiHelpers.showSnackBar(context, 'No se encontraron alumnos válidos o los grupos del Excel no existen en este ciclo.', isError: true);
+      } else {
+          if (mounted) {
+            setState(() => _parsedStudents = studentsToImport);
+            UiHelpers.showSnackBar(context, 'Excel procesado: ${studentsToImport.length} alumnos listos.');
+          }
       }
     } catch (e) {
       if (mounted) {
-        UiHelpers.showSnackBar(context, 'Error al procesar Excel.',
+        UiHelpers.showSnackBar(context, 'Error al procesar Excel: $e',
             isError: true);
       }
     }
@@ -175,7 +244,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
     final confirmed = await UiHelpers.showConfirmationDialog(
       context,
       title: 'Importación Masiva',
-      content: '¿Importar ${_parsedStudents.length} alumnos?',
+      content: '¿Importar ${_parsedStudents.length} alumnos al ciclo $_targetSchoolCycle?',
     );
 
     if (!confirmed) return;
@@ -183,13 +252,15 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
     setState(() => _isImporting = true);
 
     try {
+      // Guardar en el nodo del ciclo seleccionado
       final dbRef = FirebaseDatabase.instance.ref(
-          'planteles/${widget.campusId}/students/${widget.currentSchoolCycle}');
+          'planteles/${widget.campusId}/students/$_targetSchoolCycle');
+          
       for (final student in _parsedStudents) {
         await dbRef.child(student.studentId).set(student.toFirebaseMap());
       }
       if (mounted) {
-        UiHelpers.showSnackBar(context, 'Importación completada.');
+        UiHelpers.showSnackBar(context, 'Importación completada exitosamente.');
         Navigator.pop(context);
       }
     } catch (e) {
@@ -212,7 +283,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
           title: const Text('Importar Alumnos'),
           elevation: 0,
           centerTitle: true),
-      body: _isLoading || _isImporting
+      body: _isLoading || _isImporting || _isLoadingCycles
           ? const Center(child: CircularProgressIndicator())
           : LayoutBuilder(
               builder: (context, constraints) {
@@ -223,7 +294,40 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
                         children: [
+                          // SELECTOR DE CICLO ESCOLAR
                           FadeInUp(
+                            child: Card(
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
+                                child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                    child: DropdownButtonFormField<String>(
+                                        value: _targetSchoolCycle,
+                                        decoration: const InputDecoration(
+                                            labelText: 'Ciclo Escolar de Destino',
+                                            border: InputBorder.none,
+                                            prefixIcon: Icon(Icons.calendar_month),
+                                        ),
+                                        items: _availableSchoolCycles.map((c) => DropdownMenuItem(value: c.id, child: Text(c.id))).toList(),
+                                        onChanged: (val) {
+                                            if (val != null) {
+                                                setState(() {
+                                                    _targetSchoolCycle = val;
+                                                    _parsedStudents = []; // Limpiar previos si cambia el ciclo
+                                                    _filePath = null;
+                                                });
+                                                _loadAvailableGroups(val);
+                                            }
+                                        },
+                                    ),
+                                ),
+                            ),
+                          ),
+                          
+                          const SizedBox(height: 24),
+                          
+                          FadeInUp(
+                            delay: const Duration(milliseconds: 100),
                             child: Card(
                               elevation: 0,
                               shape: RoundedRectangleBorder(
@@ -246,13 +350,14 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
                                           size: 64,
                                           color: theme.colorScheme.primary),
                                       const SizedBox(height: 16),
-                                      Text('Subir Archivo Excel',
+                                      Text('Seleccionar Excel',
                                           style: theme.textTheme.titleLarge
                                               ?.copyWith(
                                                   fontWeight: FontWeight.bold)),
                                       const SizedBox(height: 8),
                                       Text(
-                                          'Selecciona un archivo .xlsx para procesar',
+                                          'Asegúrate de que los nombres de las hojas\ncoincidan con los grupos creados (ej. "101", "302")',
+                                          textAlign: TextAlign.center,
                                           style: TextStyle(
                                               color: theme.colorScheme.onSurface
                                                   .withValues(alpha: 0.6))),
@@ -262,7 +367,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
                                               const EdgeInsets.only(top: 16.0),
                                           child: Chip(
                                               label: Text(
-                                                  _filePath!.split('\\').last)),
+                                                  _filePath!.split(Platform.pathSeparator).last)),
                                         ),
                                     ],
                                   ),
@@ -303,8 +408,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
                                                     fontWeight:
                                                         FontWeight.w600)),
                                             subtitle: Text(
-                                                'ID: ${s.studentId} • Grupo: ${s.group}'),
-                                          ),
+                                                'ID: ${s.studentId} • Grupo: ${s.group}')),
                                         );
                                       },
                                     ),
@@ -317,7 +421,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
                                       onPressed: _importStudentsToFirebase,
                                       icon:
                                           const Icon(Icons.cloud_done_outlined),
-                                      label: const Text('Iniciar Importación'),
+                                      label: const Text('Importar al Sistema'),
                                     ),
                                   ),
                                 ],
