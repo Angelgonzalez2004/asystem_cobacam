@@ -6,12 +6,14 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 final HiveService _hiveService = HiveService();
 final ConnectivityService _connectivityService = ConnectivityService();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('es_MX', null);
 
   // ---------------------------------------------------------
   // 1. INICIAR HIVE

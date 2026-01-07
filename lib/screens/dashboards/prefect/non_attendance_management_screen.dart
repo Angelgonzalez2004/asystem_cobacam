@@ -25,7 +25,6 @@ class _NonAttendanceManagementScreenState
   late final ConnectivityService _connectivityService;
   late final AppSettingsService _appSettingsService;
   
-  List<NonAttendanceDay> _allDays = [];
   List<_SuspensionGroup> _groupedDays = [];
   
   bool _isLoading = true;
@@ -121,7 +120,6 @@ class _NonAttendanceManagementScreenState
       }
 
       setState(() {
-        _allDays = days;
         _groupedDays = groups;
         _isLoading = false;
       });
