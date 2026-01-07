@@ -9,7 +9,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:intl/intl.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final bool isEmbedded;
+  const SettingsScreen({super.key, this.isEmbedded = false});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -205,16 +206,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ajustes del Sistema', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: widget.isEmbedded 
+          ? null 
+          : AppBar(
+              title: const Text('Ajustes del Sistema', style: TextStyle(fontWeight: FontWeight.bold)),
+              centerTitle: true,
+              elevation: 0,
+              backgroundColor: theme.scaffoldBackgroundColor,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

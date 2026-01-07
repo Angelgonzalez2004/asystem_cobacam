@@ -44,7 +44,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
     _screens = [
       PrefectHomeScreen(campus: _userCampus),
       const ProfileScreen(isEmbedded: true), // Uses Common Screen
-      const SettingsScreen(), // Uses Common Screen
+      const SettingsScreen(isEmbedded: true), // Uses Common Screen
       const GroupManagementScreen(),
       const SchoolCycleManagementScreen(),
       const StudentManagementScreen(),

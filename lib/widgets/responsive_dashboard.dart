@@ -70,10 +70,10 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
         _activeSubScreen = null;
         _currentTitle = 'Dashboard $_userRole';
       } else if (route == 'profile') {
-        _activeSubScreen = const ProfileScreen();
+        _activeSubScreen = const ProfileScreen(isEmbedded: true);
         _currentTitle = 'Mi Perfil';
       } else if (route == 'settings') {
-        _activeSubScreen = const SettingsScreen();
+        _activeSubScreen = const SettingsScreen(isEmbedded: true);
         _currentTitle = 'Ajustes';
       } else if (route == 'manage_announcements') {
         Navigator.push(context, SlideRightRoute(

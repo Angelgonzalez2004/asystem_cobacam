@@ -241,15 +241,20 @@ class NewsFeed extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       itemCount: announcements.length,
       itemBuilder: (context, index) {
-        return FadeInUp(
-          delay: Duration(milliseconds: 50 * index),
-          child: AnnouncementCard(
-            announcement: announcements[index],
-            currentUserId: currentUserId,
-            currentUserRole: currentUserRole,
-            currentUserCampus: currentUserCampus,
-            onDelete: () => onDelete?.call(announcements[index]),
-            onEdit: () => onEdit?.call(announcements[index]),
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 750),
+            child: FadeInUp(
+              delay: Duration(milliseconds: 50 * index),
+              child: AnnouncementCard(
+                announcement: announcements[index],
+                currentUserId: currentUserId,
+                currentUserRole: currentUserRole,
+                currentUserCampus: currentUserCampus,
+                onDelete: () => onDelete?.call(announcements[index]),
+                onEdit: () => onEdit?.call(announcements[index]),
+              ),
+            ),
           ),
         );
       },
