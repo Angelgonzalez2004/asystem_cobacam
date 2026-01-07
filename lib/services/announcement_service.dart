@@ -10,7 +10,7 @@ class AnnouncementService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Obtener stream de avisos filtrados
-  Stream<List<AnnouncementModel>> getAnnouncementsStream(String? campusId, bool isGeneralAdmin) {
+  Stream<List<AnnouncementModel>> getAnnouncementsStream(String? campusId, bool isGeneralAdmin, {bool isManagementMode = false}) {
     return _dbRef.onValue.map((event) {
       final List<AnnouncementModel> announcements = [];
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
@@ -27,10 +27,19 @@ class AnnouncementService {
               announcements.add(announcement);
             }
           } 
-          // 2. Si es usuario de Plantel (Alumno o Admin), ve Generales + Su Plantel
+          // 2. Si es usuario de Plantel (Alumno o Admin)
           else {
-            if (announcement.type == 'General' || (campusId != null && announcement.campus == campusId)) {
-              announcements.add(announcement);
+            if (isManagementMode) {
+              // MODO GESTIÓN (Admin Plantel): Solo ve lo de SU plantel para editar/borrar
+              // No debe ver lo General aquí para no confundirse
+              if (campusId != null && announcement.campus == campusId) {
+                announcements.add(announcement);
+              }
+            } else {
+              // MODO VISUALIZACIÓN (Home): Ve Generales + Su Plantel
+              if (announcement.type == 'General' || (campusId != null && announcement.campus == campusId)) {
+                announcements.add(announcement);
+              }
             }
           }
         });

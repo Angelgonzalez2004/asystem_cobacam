@@ -232,7 +232,11 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
           // Lista de Avisos
           Expanded(
             child: StreamBuilder<List<AnnouncementModel>>(
-              stream: _announcementService.getAnnouncementsStream(widget.campus, widget.isGeneralAdmin),
+              stream: _announcementService.getAnnouncementsStream(
+                widget.campus, 
+                widget.isGeneralAdmin,
+                isManagementMode: true, // FILTRADO ESTRICTO PARA GESTIÓN
+              ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
