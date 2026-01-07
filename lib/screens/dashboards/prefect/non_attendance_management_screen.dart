@@ -274,68 +274,77 @@ class _NonAttendanceManagementScreenState
                           itemCount: _nonAttendanceDays.length,
                           itemBuilder: (context, index) {
                             final day = _nonAttendanceDays[index];
+                            // Detectar si es parte de un rango (lógica simple visual)
+                            // Para visualización ideal, deberíamos agrupar rangos, pero mostraremos día por día limpio.
+                            
                             return FadeInUp(
                               delay: Duration(milliseconds: 50 * index),
                               child: Card(
                                 elevation: 0,
-                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                margin: const EdgeInsets.symmetric(vertical: 6),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  side: isDark
-                                      ? BorderSide.none
-                                      : BorderSide(color: Colors.grey.shade200),
+                                  side: BorderSide(color: Colors.red.withOpacity(0.1)),
                                 ),
-                                color: isDark
-                                    ? theme.cardTheme.color
-                                    : Colors.white,
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.all(16),
-                                  leading: CircleAvatar(
-                                    backgroundColor: Colors.red.shade50,
-                                    child: Icon(Icons.event_busy,
-                                        color: Colors.red.shade600),
-                                  ),
-                                  title: Text(
-                                      DateFormat('EEEE d MMMM', 'es_MX')
-                                          .format(day.date),
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  subtitle: Text(
-                                      day.reason ?? 'Sin razón especificada',
-                                      style: TextStyle(
-                                          color: theme
-                                              .textTheme.bodySmall?.color)),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                          icon: Icon(Icons.edit_outlined,
-                                              color: theme.colorScheme.primary),
-                                          onPressed: () =>
-                                              _showNonAttendanceDayFormDialog(
-                                                  day: day)),
-                                      IconButton(
-                                        icon: Icon(Icons.delete_outline,
-                                            color: theme.colorScheme.error),
-                                        onPressed: () async {
-                                          final confirm = await UiHelpers
-                                              .showConfirmationDialog(context,
-                                                  title: 'Eliminar Día',
-                                                  content: '¿Estás seguro?',
-                                                  isDestructive: true);
-                                          if (confirm && _campusId != null) {
-                                            await _appSettingsService
-                                                .deleteNonAttendanceDay(
-                                                    _campusId!, day.id);
-                                            _loadNonAttendanceDays();
-                                            if (mounted) {
-                                              UiHelpers.showSnackBar(
-                                                  context, 'Día eliminado.');
-                                            }
-                                          }
-                                        },
+                                color: isDark ? theme.cardTheme.color : Colors.white,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4.0),
+                                  child: ListTile(
+                                    leading: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
-                                    ],
+                                      child: const Icon(Icons.event_busy_rounded, color: Colors.red),
+                                    ),
+                                    title: Text(
+                                        DateFormat('EEEE d \nde MMMM', 'es_MX').format(day.date).toUpperCase(),
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)
+                                    ),
+                                    subtitle: Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.withOpacity(0.1),
+                                              borderRadius: BorderRadius.circular(6)
+                                            ),
+                                            child: Text(
+                                              day.reason ?? 'Suspensión',
+                                              style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color, fontWeight: FontWeight.w500),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                            icon: const Icon(Icons.edit_outlined, size: 20),
+                                            onPressed: () => _showNonAttendanceDayFormDialog(day: day),
+                                            tooltip: 'Editar',
+                                        ),
+                                        IconButton(
+                                          icon: Icon(Icons.delete_outline, size: 20, color: theme.colorScheme.error),
+                                          onPressed: () async {
+                                            final confirm = await UiHelpers.showConfirmationDialog(
+                                                context,
+                                                title: 'Eliminar',
+                                                content: '¿Eliminar este día de suspensión?',
+                                                isDestructive: true);
+                                            if (confirm && _campusId != null) {
+                                              await _appSettingsService.deleteNonAttendanceDay(_campusId!, day.id);
+                                              _loadNonAttendanceDays();
+                                              if (mounted) UiHelpers.showSnackBar(context, 'Eliminado.');
+                                            }
+                                          },
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),

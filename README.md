@@ -4,32 +4,31 @@
 
 ---
 
-## 🚀 Última Actualización: Versión 1.4.0 (Prefect Suite Pro)
+## 🚀 Última Actualización: Versión 1.5.0 (Optimization & Stability)
 
-Esta actualización transforma radicalmente la experiencia del rol de Prefectura, automatizando procesos complejos y mejorando la organización de datos.
+Esta versión se centra en la estabilidad del código, la optimización del rendimiento y la mejora de la calidad del software mediante un análisis estático riguroso.
 
-### 🌟 Novedades Destacadas
+### ✅ Mejoras de Calidad de Código
+*   **Limpieza Profunda (Linting):** Se han resuelto todas las advertencias y errores detectados por `flutter analyze`.
+*   **Optimización de Constantes:** Uso extensivo de constructores `const` para reducir la reconstrucción de widgets y mejorar el rendimiento de la UI.
+*   **Refactorización de Lógica:** Eliminación de verificaciones nulas redundantes y código muerto en los módulos de gestión de grupos y horarios.
 
-#### 📅 Ciclos Escolares Inteligentes ("Auto-Pilot")
-- **Detección Automática:** El sistema ya no requiere activación manual. Calcula automáticamente cuál es el **Ciclo Actual** basándose en la fecha del servidor/dispositivo y los rangos definidos.
-- **Estados Visuales:**
-    - 🟢 **EN CURSO (ACTUAL):** Ciclo vigente hoy.
-    - 🟠 **PRÓXIMO:** Ciclos futuros programados.
-    - 🔴 **FINALIZADO:** Ciclos históricos cerrados.
-- **Seguridad:** Elimina el error humano de olvidar cambiar el ciclo, garantizando que los nuevos registros siempre caigan en el periodo correcto.
+### 🌟 Funcionalidades Clave
 
-#### 🗂️ Directorio de Alumnos Jerárquico
-- **Organización por Grupos:** La lista plana de alumnos ha evolucionado a un **Árbol de Grupos Expandible**.
-    - Ahora ves tarjetas por grupo (ej. "301-B - 25 Alumnos").
-    - Al tocar, se despliega la lista detallada de estudiantes.
-- **Filtro Histórico:** Selector de Ciclo Escolar para consultar padrones de semestres anteriores sin mezclar datos.
-- **Gestión Dual:** Pestañas separadas para "Alumnos Activos" y "Bajas", manteniendo el historial limpio pero accesible.
+#### 📅 Gestión Académica y Horarios
+- **Ciclos Escolares:** Administración flexible de semestres (A/B) y periodos propedéuticos.
+- **Gestión de Grupos:** Creación y edición intuitiva de grupos, con validación de lógica de semestres (par/impar).
+- **Editor de Horarios:** Interfaz visual para asignar horas de entrada y salida por día de la semana, con validaciones para evitar errores lógicos (entrada > salida).
+- **Protección de Datos:** Modo "Solo Lectura" automático para ciclos escolares cerrados, garantizando la integridad histórica de la información.
 
-#### 📊 Importación Masiva Blindada
-- **Excel Inteligente:**
-    - **Selector de Destino:** Ahora eliges explícitamente a qué Ciclo Escolar vas a importar los datos.
-    - **Validación Estricta:** El sistema verifica que las hojas de tu Excel coincidan con los grupos creados en el sistema.
-    - **Prevención de Errores:** Si intentas subir un grupo que no existe (ej. "101" cuando solo creaste "101-A"), el sistema bloquea la importación y te avisa para corregirlo.
+#### 🛡️ Seguridad y Control de Acceso
+- **Autenticación Robusta:** Integración segura con Firebase Auth.
+- **Roles y Permisos:** Lógica segregada por roles (Alumno, Prefecto, Administrador).
+- **Gestión de Sesiones:** Monitoreo activo para prevenir accesos no autorizados y sesiones concurrentes indebidas.
+
+#### 📊 Dashboard Responsivo
+- **Diseño Adaptativo:** Interfaces que escalan inteligentemente desde móviles hasta pantallas de escritorio.
+- **Grillas Dinámicas:** Visualización optimizada de listados de grupos y alumnos según el espacio disponible.
 
 ---
 
@@ -37,8 +36,15 @@ Esta actualización transforma radicalmente la experiencia del rol de Prefectura
 
 El proyecto está construido sobre una arquitectura **escalable y modular** utilizando las mejores prácticas de ingeniería de software moderno.
 
+### 📂 Estructura del Proyecto
+*   **`lib/models`:** Definiciones de datos tipadas y seguras (`Student`, `Group`, `AttendanceRecord`, `SchoolCycle`).
+*   **`lib/services`:** Capa de lógica de negocio desacoplada (`AuthService`, `DatabaseService`, `ConnectivityService`).
+*   **`lib/screens`:** Interfaces de usuario organizadas por flujo y rol (`Login`, `Dashboards`, `Management`).
+*   **`lib/providers`:** Gestión de estado reactiva (ej. `ThemeProvider`).
+*   **`lib/utils`:** Herramientas transversales para animaciones, formateo y componentes UI reutilizables.
+
 ### 📱 Stack Tecnológico
-*   **Frontend:** [Flutter](https://flutter.dev) 3.4+ (Dart)
+*   **Frontend:** [Flutter](https://flutter.dev) (Dart)
     *   Diseño **Material 3** adaptable (Tema Claro/Oscuro).
     *   Responsive Design (Móvil, Tablet, Escritorio, Web).
 *   **Backend & Cloud:** [Firebase](https://firebase.google.com)
@@ -47,24 +53,14 @@ El proyecto está construido sobre una arquitectura **escalable y modular** util
     *   **Storage:** Almacenamiento optimizado de imágenes y documentos.
     *   **Hosting:** Despliegue global CDN para la versión web.
 *   **Almacenamiento Local:** [Hive](https://docs.hivedb.dev/)
-    *   Base de datos NoSQL ultrarrápida para funcionamiento **Offline-First**.
-*   **Seguridad:**
-    *   **Session Guard:** Monitoreo activo de sesiones concurrentes.
-    *   **Auditoría:** Registro de IPs y dispositivos de acceso.
-
-### 👥 Roles y Funcionalidades
-1.  **Alumno:** Consulta de calificaciones, horarios, credencial digital y muro de avisos.
-2.  **Prefecto:** Pase de lista digital, gestión de incidencias, justificaciones y reportes de asistencia.
-3.  **Académica:** Gestión de cargas horarias, asignación docente y control curricular.
-4.  **Administrativo Plantel:** Control total de la operación del campus específico.
-5.  **Administración General:** Supervisión macro, estadísticas globales y comunicación estatal.
+    *   Base de datos NoSQL ultrarrápida para persistencia de configuraciones y funcionamiento **Offline-First**.
 
 ---
 
 ## 🛠️ Configuración y Despliegue
 
 ### Requisitos Previos
-*   Flutter SDK 3.4.0 o superior.
+*   Flutter SDK 3.x o superior.
 *   Cuenta de Firebase configurada.
 
 ### Comandos Útiles

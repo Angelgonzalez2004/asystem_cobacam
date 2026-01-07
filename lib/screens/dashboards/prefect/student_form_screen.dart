@@ -260,6 +260,24 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
           .child(studentData.studentId)
           .set(studentData.toFirebaseMap());
 
+      // --- ACTUALIZAR CONTADOR DE ALUMNOS EN EL GRUPO ---
+      if (_selectedGroup != null) {
+        final groupRef = FirebaseDatabase.instance
+            .ref('planteles/${widget.campusId}/groups/$_selectedGroup/studentCount');
+        
+        try {
+          await groupRef.runTransaction((mutableData) {
+            // Si no existe, es 0. Si existe, suma 1.
+            int currentCount = (mutableData as int?) ?? 0;
+            return Transaction.success(currentCount + 1);
+          });
+        } catch (e) {
+          debugPrint('Error actualizando contador de grupo: $e');
+          // No detenemos el flujo, es un error secundario
+        }
+      }
+      // --------------------------------------------------
+
       if (mounted) {
         UiHelpers.showSnackBar(context, 'Alumno guardado correctamente.');
         Navigator.pop(context, true);

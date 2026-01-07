@@ -343,7 +343,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
                       continue;
                     }
 
-                    if (isEditing && group != null) {
+                    if (group != null) {
                       _updateGroup(group.key, groupIdentifier, semester);
                       createdCount++;
                     } else {
