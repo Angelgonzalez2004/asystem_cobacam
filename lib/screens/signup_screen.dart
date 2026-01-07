@@ -29,6 +29,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _locationController = TextEditingController();
   final _dobController = TextEditingController();
   final _accessCodeController = TextEditingController();
+  
+  final FocusNode _accessCodeFocus = FocusNode();
 
   String? _selectedRole;
   String? _selectedCampus;
@@ -43,6 +45,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _accessCodeFocus.addListener(_onAccessCodeFocus);
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
@@ -50,7 +58,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _locationController.dispose();
     _dobController.dispose();
     _accessCodeController.dispose();
+    _accessCodeFocus.dispose();
     super.dispose();
+  }
+
+  void _onAccessCodeFocus() {
+    if (_accessCodeFocus.hasFocus) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Clean previous
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.white),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Si usted es el administrador correspondiente favor de escribirla, sino por favor pídasela al personal correspondiente para la creación de esta cuenta.",
+                  style: TextStyle(fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          duration: const Duration(seconds: 4), // Un poco más para leer
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.9),
+          elevation: 6,
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    }
   }
 
   Future<void> _pickImage() async {
@@ -393,7 +430,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             
             if (isGeneralAdmin || (_selectedRole != null && _selectedCampus != null)) ...[
               const SizedBox(width: 16),
-              Expanded(child: _buildStyledField(controller: _accessCodeController, label: 'Código de Validación', icon: Icons.security_rounded)),
+              Expanded(child: _buildStyledField(controller: _accessCodeController, label: 'Código de Validación', icon: Icons.security_rounded, focusNode: _accessCodeFocus)),
             ]
           ],
         )
@@ -401,7 +438,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _buildStyledField(controller: _passwordController, label: 'Contraseña', icon: Icons.vpn_key_outlined, isPassword: true),
         if (isGeneralAdmin || (_selectedRole != null && _selectedCampus != null)) ...[
           const SizedBox(height: 16),
-          _buildStyledField(controller: _accessCodeController, label: 'Código de Validación', icon: Icons.security_rounded),
+          _buildStyledField(controller: _accessCodeController, label: 'Código de Validación', icon: Icons.security_rounded, focusNode: _accessCodeFocus),
         ]
       ]
     ];
@@ -441,6 +478,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     required IconData icon,
     bool isPassword = false,
     TextInputType? keyboardType,
+    FocusNode? focusNode,
   }) {
     final theme = Theme.of(context);
     return Container(
@@ -450,6 +488,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
       child: TextFormField(
         controller: controller,
+        focusNode: focusNode,
         obscureText: isPassword ? _isPasswordObscured : false,
         keyboardType: keyboardType,
         style: TextStyle(color: theme.colorScheme.onSurface),
