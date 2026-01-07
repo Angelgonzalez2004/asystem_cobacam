@@ -297,7 +297,8 @@ class SmartImageGrid extends StatelessWidget {
         child: Hero(
           tag: '$heroPrefix-0',
           child: Container(
-            constraints: const BoxConstraints(maxHeight: 500),
+            // Reducido a 380 para evitar que ocupe toda la pantalla en Desktop
+            constraints: const BoxConstraints(maxHeight: 380),
             width: double.infinity,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
@@ -350,8 +351,15 @@ class SmartImageGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         double width = constraints.maxWidth;
-        // Altura calculada dinámicamente para mantener proporciones
-        double height = (count == 2) ? width * 0.6 : width; 
+        
+        // Cálculo de altura optimizado para pantallas grandes
+        // En móviles (width ~350), la altura será ~260-350.
+        // En Desktop (width ~750), limitamos la altura a 400px máx.
+        double multiplier = (count == 2) ? 0.5 : 0.75;
+        double calculatedHeight = width * multiplier;
+        
+        // Tope máximo de altura para evitar grids gigantes
+        double height = calculatedHeight > 400 ? 400 : calculatedHeight;
         
         return SizedBox(
           height: height,
