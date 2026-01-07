@@ -17,26 +17,63 @@ class GeneralAdminHomeScreen extends StatefulWidget {
 class _GeneralAdminHomeScreenState extends State<GeneralAdminHomeScreen> {
   final AnnouncementService _announcementService = AnnouncementService();
   String _userName = 'Admin General';
+  
+  // Real stats
+  int _totalStudents = 0;
+  int _totalAcademies = 0;
+  int _totalPlants = 0;
+  bool _isLoadingStats = true;
 
   @override
   void initState() {
     super.initState();
-    _loadUserName();
+    _loadData();
   }
 
-  Future<void> _loadUserName() async {
+  Future<void> _loadData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final snapshot = await FirebaseDatabase.instance.ref('users/${user.uid}/fullName').get();
       if (mounted && snapshot.exists) {
-        setState(() {
-          _userName = snapshot.value.toString();
-        });
-        // Mensaje de bienvenida
+        setState(() => _userName = snapshot.value.toString());
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) UiHelpers.showSnackBar(context, 'Portal de Administración General: ¡Hola, $_userName!');
         });
       }
+    }
+    await _fetchRealStats();
+  }
+
+  Future<void> _fetchRealStats() async {
+    try {
+      final usersSnapshot = await FirebaseDatabase.instance.ref('users').get();
+      if (usersSnapshot.exists) {
+        int students = 0;
+        int academies = 0;
+        final data = usersSnapshot.value as Map<dynamic, dynamic>;
+        
+        data.forEach((key, value) {
+          final role = value['role']?.toString();
+          if (role == 'Alumno') students++;
+          if (role == 'Academica') academies++;
+        });
+
+        // Contar planteles únicos
+        final plantelesSnapshot = await FirebaseDatabase.instance.ref('planteles').get();
+        int plants = plantelesSnapshot.exists ? plantelesSnapshot.children.length : 0;
+
+        if (mounted) {
+          setState(() {
+            _totalStudents = students;
+            _totalAcademies = academies;
+            _totalPlants = plants;
+            _isLoadingStats = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching stats: $e');
+      if (mounted) setState(() => _isLoadingStats = false);
     }
   }
 
@@ -58,23 +95,25 @@ class _GeneralAdminHomeScreenState extends State<GeneralAdminHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader(theme, 'Estado Global del Sistema'),
+                _buildSectionHeader(theme, 'Estado Real del Sistema'),
                 const SizedBox(height: 16),
                 
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: MediaQuery.of(context).size.width > 900 ? 4 : (MediaQuery.of(context).size.width > 600 ? 2 : 1),
-                  childAspectRatio: 2.5,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  children: [
-                    _buildGlobalStat('Planteles', '18', Icons.account_balance, Colors.indigo),
-                    _buildGlobalStat('Docentes', '450', Icons.people_alt, Colors.blue),
-                    _buildGlobalStat('Alumnos', '12,400', Icons.school, Colors.green),
-                    _buildGlobalStat('Avisos Hoy', '5', Icons.campaign, Colors.orange),
-                  ],
-                ),
+                _isLoadingStats 
+                  ? const Center(child: LinearProgressIndicator())
+                  : GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: MediaQuery.of(context).size.width > 900 ? 4 : (MediaQuery.of(context).size.width > 600 ? 2 : 1),
+                      childAspectRatio: 2.5,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      children: [
+                        _buildGlobalStat('Planteles', '$_totalPlants', Icons.account_balance, Colors.indigo),
+                        _buildGlobalStat('Académicas', '$_totalAcademies', Icons.people_alt, Colors.blue),
+                        _buildGlobalStat('Alumnos', '$_totalStudents', Icons.school, Colors.green),
+                        _buildGlobalStat('Actividad', 'Alta', Icons.insights, Colors.orange),
+                      ],
+                    ),
 
                 const SizedBox(height: 32),
                 _buildSectionHeader(theme, 'Noticias del Sistema'),

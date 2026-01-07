@@ -43,7 +43,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
   void _initScreens() {
     _screens = [
       PrefectHomeScreen(campus: _userCampus),
-      const ProfileScreen(), // Uses Common Screen
+      const ProfileScreen(isEmbedded: true), // Uses Common Screen
       const SettingsScreen(), // Uses Common Screen
       const GroupManagementScreen(),
       const SchoolCycleManagementScreen(),
@@ -106,6 +106,12 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       case 'home':
         index = 0;
         break;
+      case 'profile':
+        index = 1;
+        break;
+      case 'settings':
+        index = 2;
+        break;
       case 'qr':
         index = 10;
         break;
@@ -134,7 +140,6 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
     setState(() {
       _selectedIndex = index;
     });
-    Navigator.pop(context); // Close drawer
   }
 
   @override

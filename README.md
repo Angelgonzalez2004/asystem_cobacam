@@ -1,36 +1,34 @@
 # Asystem Cobacam - Suite de Gestión Académica
 
-**Asystem Cobacam** es una solución integral diseñada para el sistema COBACAM, ofreciendo una experiencia moderna, segura y eficiente para alumnos, docentes y personal administrativo.
+**Asystem Cobacam** es una plataforma integral diseñada para el ecosistema COBACAM, optimizada para ofrecer seguridad, transparencia y una gestión académica de vanguardia.
 
-## ✨ Novedades de la Versión 1.0.0
+## 🚀 Novedades de la Versión 1.1.0
 
-### 🛡️ Seguridad Avanzada (Nivel Bancario)
-- **Gestión de Sesiones Activas:** Visualiza en tiempo real qué dispositivos tienen acceso a tu cuenta, incluyendo su ubicación (Ciudad, Estado) e IP pública.
-- **Revocación Remota (Kill Switch):** Cierra sesiones en otros dispositivos desde tu teléfono. El intruso será expulsado de inmediato gracias al `SessionGuard`.
-- **Protección Anti-Fuerza Bruta:** Bloqueo progresivo ante intentos fallidos (10s, 1m, 5m) para prevenir accesos no autorizados.
-- **Geolocalización por IP:** Rastreo inteligente de accesos para auditoría de privacidad.
+### 📸 Gestión de Medios Avanzada
+- **Publicación Multimage:** Los administradores ahora pueden subir galerías completas de imágenes en un solo comunicado.
+- **Visualización Social:** Interfaz estilo red social para visualizar fotos adjuntas con cuadrículas inteligentes.
+- **Soporte Web Nativo:** Se ha corregido el error de carga de archivos en navegadores, permitiendo la gestión de contenidos desde cualquier dispositivo.
 
-### 🎨 Experiencia de Usuario (UX/UI)
-- **Diseño Futurista:** Interfaz responsiva con Material 3, degradados dinámicos y animaciones `FadeInUp`.
-- **Header Dinámico:** Saludo personalizado basado en la hora del día (¡Buen día!, ¡Buenas tardes!, ¡Buenas noches!).
-- **Multiplataforma:** Optimizado para Android (14+), iOS y Web (HTTPS seguro).
+### 📊 Datos en Tiempo Real (Real-Time Stats)
+- **Contadores Dinámicos:** Dashboards con estadísticas reales de alumnos registrados, académicas activas y planteles operativos, eliminando datos ficticios.
+- **Filtrado por Plantel:** Los administradores de sede visualizan métricas exclusivas de su centro de trabajo.
 
-### 🚀 Funcionalidades por Rol
-- **Estudiantes:** Credencial digital, horarios y seguimiento de avisos.
-- **Prefectura:** Scanner QR de asistencia y reporte de incidencias en tiempo real.
-- **Académico:** Gestión de maestros, materias y constructor de horarios automatizado.
+### 🛡️ Seguridad y Auditoría
+- **Rastreo de Sesiones:** Sistema de geolocalización por IP y detección de hardware para auditoría de accesos.
+- **Session Guard:** Expulsión inmediata de sesiones remotas revocadas.
+- **Protección de Fuerza Bruta:** Bloqueo inteligente de accesos ante intentos fallidos.
 
-## 🛠️ Requisitos Técnicos
-- Flutter SDK >= 3.4.0
-- Firebase Core & Auth
-- Hive para almacenamiento Offline
-- Device Info Plus & Http para auditoría de seguridad
+## 🛠️ Stack Tecnológico
+- **Frontend:** Flutter 3.4+ (Material 3)
+- **Backend:** Firebase (Auth, RTDB, Storage)
+- **Caché Local:** Hive
+- **Ubicación:** ipapi.co (Secure HTTPS)
 
-## 📥 Despliegue
-Para compilar la versión web:
+## 📥 Guía de Despliegue Web
 ```bash
 flutter build web --release
+firebase deploy --only hosting
 ```
 
 ---
-© 2026 COBACAM - Desarrollado para la excelencia académica y seguridad institucional.
+© 2026 COBACAM - Innovación para la excelencia educativa.

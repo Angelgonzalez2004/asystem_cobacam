@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 
 class AnnouncementCard extends StatelessWidget {
   final AnnouncementModel announcement;
-  final bool isAdmin; // If true, show edit/delete options
+  final bool isAdmin; 
   final VoidCallback? onDelete;
   final VoidCallback? onEdit;
 
@@ -31,23 +31,23 @@ class AnnouncementCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
         ],
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header (Author & Date)
+          // Header (Autor y Fecha)
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
                   child: Text(
                     announcement.authorName.isNotEmpty ? announcement.authorName[0].toUpperCase() : 'A',
                     style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
@@ -73,13 +73,13 @@ class AnnouncementCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.1),
+                      color: Colors.orange.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                      border: Border.all(color: Colors.orange.withOpacity(0.3)),
                     ),
-                    child: Text(
-                      'GENERAL',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange.shade800),
+                    child: const Text(
+                      'OFICIAL',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange),
                     ),
                   ),
                 if (isAdmin)
@@ -97,25 +97,11 @@ class AnnouncementCard extends StatelessWidget {
             ),
           ),
 
-          // Image (if exists)
-          if (announcement.imageUrl != null && announcement.imageUrl!.isNotEmpty)
-            GestureDetector(
-              onTap: () {
-                // TODO: Show full screen image
-              },
-              child: Container(
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: NetworkImage(announcement.imageUrl!),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            ),
+          // Galería de Imágenes (Si existen)
+          if (announcement.imageUrls != null && announcement.imageUrls!.isNotEmpty)
+            _buildGallery(announcement.imageUrls!),
 
-          // Content
+          // Contenido
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
@@ -133,13 +119,58 @@ class AnnouncementCard extends StatelessWidget {
                   announcement.message,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     height: 1.6,
-                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
                   ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGallery(List<String> urls) {
+    if (urls.length == 1) {
+      return Container(
+        height: 250,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          image: DecorationImage(image: NetworkImage(urls[0]), fit: BoxFit.cover),
+        ),
+      );
+    }
+
+    // Cuadrícula para múltiples imágenes (estilo Facebook/Twitter)
+    return SizedBox(
+      height: 250,
+      child: GridView.builder(
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: urls.length >= 2 ? 2 : 1,
+          crossAxisSpacing: 2,
+          mainAxisSpacing: 2,
+        ),
+        itemCount: urls.length > 4 ? 4 : urls.length,
+        itemBuilder: (context, index) {
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.network(urls[index], fit: BoxFit.cover),
+              if (index == 3 && urls.length > 4)
+                Container(
+                  color: Colors.black54,
+                  child: Center(
+                    child: Text(
+                      '+${urls.length - 3}',
+                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -179,6 +210,8 @@ class NewsFeed extends StatelessWidget {
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: announcements.length,
       itemBuilder: (context, index) {
         return FadeInUp(

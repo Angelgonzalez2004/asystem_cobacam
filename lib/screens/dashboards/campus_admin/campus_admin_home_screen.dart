@@ -2,6 +2,7 @@ import 'package:asystem_cobacam/models/announcement_model.dart';
 import 'package:asystem_cobacam/services/announcement_service.dart';
 import 'package:asystem_cobacam/widgets/announcement_widgets.dart';
 import 'package:asystem_cobacam/widgets/welcome_header.dart';
+import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,11 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
   final AnnouncementService _announcementService = AnnouncementService();
   String? _campus;
   String _userName = 'Administrador';
+  
+  // Real stats
+  int _studentCount = 0;
+  int _teacherCount = 0;
+  bool _isLoadingStats = true;
 
   @override
   void initState() {
@@ -34,7 +40,46 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
           _campus = data['campus'];
           _userName = data['fullName'] ?? 'Administrador';
         });
+
+        // Mensaje de bienvenida
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) UiHelpers.showSnackBar(context, '¡Bienvenido(a), Admin $_userName!');
+        });
+        
+        await _fetchRealStats();
       }
+    }
+  }
+
+  Future<void> _fetchRealStats() async {
+    if (_campus == null) return;
+    try {
+      // Filtrar usuarios que pertenecen a este plantel y contar roles
+      final usersSnapshot = await FirebaseDatabase.instance.ref('users').get();
+      if (usersSnapshot.exists) {
+        int students = 0;
+        int teachers = 0;
+        final data = usersSnapshot.value as Map<dynamic, dynamic>;
+        
+        data.forEach((key, value) {
+          if (value['campus'] == _campus) {
+            final role = value['role']?.toString();
+            if (role == 'Alumno') students++;
+            if (role == 'Academica') teachers++;
+          }
+        });
+
+        if (mounted) {
+          setState(() {
+            _studentCount = students;
+            _teacherCount = teachers;
+            _isLoadingStats = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching campus stats: $e');
+      if (mounted) setState(() => _isLoadingStats = false);
     }
   }
 
@@ -47,7 +92,7 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
         children: [
           WelcomeHeader(
             userName: _userName, 
-            role: 'ADMINISTRACIÓN DE PLANTEL',
+            role: 'ADMIN PLANTEL',
             subtitle: _campus != null ? 'Sede: $_campus' : 'Cargando sede...',
           ),
 
@@ -56,28 +101,30 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Panel de Control Local', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Estado del Plantel', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: MediaQuery.of(context).size.width > 600 ? 2 : 1,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 2.5,
-                  children: [
-                    _buildStatCard('Alumnos Activos', '1,240', Icons.people, Colors.blue),
-                    _buildStatCard('Asistencia Hoy', '94%', Icons.check_circle, Colors.green),
-                  ],
-                ),
+                _isLoadingStats
+                  ? const LinearProgressIndicator()
+                  : GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: MediaQuery.of(context).size.width > 600 ? 2 : 1,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 2.5,
+                      children: [
+                        _buildStatCard('Alumnos Registrados', '$_studentCount', Icons.people, Colors.blue),
+                        _buildStatCard('Académicas Activas', '$_teacherCount', Icons.school, Colors.teal),
+                      ],
+                    ),
                 
                 const SizedBox(height: 32),
                 Row(
                   children: [
                     Icon(Icons.campaign, color: theme.colorScheme.primary),
                     const SizedBox(width: 8),
-                    Text('Avisos del Plantel', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Text('Avisos de tu Plantel', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -87,7 +134,7 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
                     final announcements = snapshot.data ?? [];
-                    if (announcements.isEmpty) return const Text("No hay avisos recientes.");
+                    if (announcements.isEmpty) return const Text("No hay avisos recientes publicados por ti.");
 
                     return ListView.builder(
                       shrinkWrap: true,

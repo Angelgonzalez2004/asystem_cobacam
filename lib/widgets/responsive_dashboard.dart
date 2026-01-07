@@ -1,3 +1,5 @@
+import 'package:asystem_cobacam/screens/common/profile_screen.dart';
+import 'package:asystem_cobacam/screens/common/settings_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_announcements_screen.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/slide_transition.dart';
@@ -18,7 +20,6 @@ class ResponsiveDashboard extends StatefulWidget {
 }
 
 class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
-  // User Data State
   String _userName = 'Cargando...';
   String _userRole = '';
   String _userEmail = '';
@@ -26,9 +27,14 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
   String? _userCampus;
   DatabaseReference? _userRef;
 
+  // Control de sub-pantallas internas
+  Widget? _activeSubScreen;
+  String _currentTitle = '';
+
   @override
   void initState() {
     super.initState();
+    _currentTitle = 'Dashboard ${widget.role}';
     _initUserData();
   }
   
@@ -54,24 +60,29 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
           }
         }
       });
-    } else {
-        setState(() {
-            _userRole = widget.role;
-        });
     }
   }
 
   void _onNavigate(String route) {
-    // Handle navigation from Drawer that requires context/state
-    if (route == 'manage_announcements') {
-      Navigator.push(context, SlideRightRoute(
-        page: ManageAnnouncementsScreen(
-          campus: _userCampus,
-          isGeneralAdmin: _userRole.contains('General'),
-        )
-      ));
-    }
-    // Profile and Settings are handled directly in AppDrawer via standard routes
+    setState(() {
+      if (route == 'home') {
+        _activeSubScreen = null;
+        _currentTitle = 'Dashboard $_userRole';
+      } else if (route == 'profile') {
+        _activeSubScreen = const ProfileScreen();
+        _currentTitle = 'Mi Perfil';
+      } else if (route == 'settings') {
+        _activeSubScreen = const SettingsScreen();
+        _currentTitle = 'Ajustes';
+      } else if (route == 'manage_announcements') {
+        Navigator.push(context, SlideRightRoute(
+          page: ManageAnnouncementsScreen(
+            campus: _userCampus,
+            isGeneralAdmin: _userRole.contains('General'),
+          )
+        ));
+      }
+    });
   }
 
   @override
@@ -82,7 +93,7 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Dashboard ${_userRole.isNotEmpty ? _userRole : widget.role}',
+          _currentTitle,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: true,
@@ -99,7 +110,8 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
         onNavigate: _onNavigate,
       ),
       body: FadeInUp(
-        child: widget.body
+        key: ValueKey(_activeSubScreen == null ? 'home' : _activeSubScreen.runtimeType.toString()),
+        child: _activeSubScreen ?? widget.body,
       ),
     );
   }

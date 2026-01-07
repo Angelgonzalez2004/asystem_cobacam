@@ -73,16 +73,6 @@ class WelcomeScreen extends StatelessWidget {
                           letterSpacing: 1.0,
                         ),
                       ),
-                      const Spacer(),
-                      // Botón Login Header (Visible en pantallas grandes o como acceso rápido)
-                      TextButton.icon(
-                        onPressed: () => Navigator.push(context, SlideRightRoute(page: const LoginScreen())),
-                        icon: const Icon(Icons.login_rounded, size: 20),
-                        label: const Text('Acceso', style: TextStyle(fontWeight: FontWeight.bold)),
-                        style: TextButton.styleFrom(
-                          foregroundColor: colors.primary,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -190,7 +180,7 @@ class WelcomeScreen extends StatelessWidget {
                                       ),
                                       _buildFeatureCard(
                                         context,
-                                        'Docentes',
+                                        'Académicas',
                                         'Gestión de grupos, calificaciones y seguimiento académico.',
                                         Icons.menu_book_rounded,
                                         Colors.orange,

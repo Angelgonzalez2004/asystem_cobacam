@@ -29,10 +29,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadAppVersion() async {
-    final packageInfo = await PackageInfo.fromPlatform();
-    setState(() {
-      _appVersion = '${packageInfo.version} (${packageInfo.buildNumber})';
-    });
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          // Si packageInfo devuelve valores vacíos (común en web si no se configura), usamos defaults
+          final version = packageInfo.version.isEmpty ? '1.0.0' : packageInfo.version;
+          final build = packageInfo.buildNumber.isEmpty ? '1' : packageInfo.buildNumber;
+          _appVersion = 'v$version ($build)';
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading app version: $e");
+      if (mounted) {
+        setState(() {
+          _appVersion = 'v1.0.0 (Oficial)';
+        });
+      }
+    }
   }
 
   Future<void> _loadSessions() async {

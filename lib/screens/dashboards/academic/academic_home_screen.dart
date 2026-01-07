@@ -21,7 +21,7 @@ class AcademicHomeScreen extends StatefulWidget {
 class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
   final AnnouncementService _announcementService = AnnouncementService();
   bool _isLoading = true;
-  String _userName = 'Docente';
+  String _userName = 'Académica';
   String? _campus;
 
   @override
@@ -37,14 +37,14 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
       if (mounted && snapshot.exists) {
         final data = Map<String, dynamic>.from(snapshot.value as Map);
         setState(() {
-          _userName = data['fullName'] ?? 'Docente';
+          _userName = data['fullName'] ?? 'Usuario';
           _campus = data['campus'];
           _isLoading = false;
         });
 
         // Mensaje de bienvenida
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) UiHelpers.showSnackBar(context, '¡Bienvenido(a) Docente $_userName!');
+          if (mounted) UiHelpers.showSnackBar(context, '¡Bienvenida, Académica $_userName!');
         });
       }
     }
@@ -61,7 +61,7 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
         children: [
           WelcomeHeader(
             userName: _userName, 
-            role: 'PERSONAL ACADÉMICO',
+            role: 'ACADÉMICA',
             subtitle: _campus != null ? 'Plantel: $_campus' : null,
           ),
           

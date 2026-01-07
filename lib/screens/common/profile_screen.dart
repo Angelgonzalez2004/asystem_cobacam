@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final bool isEmbedded;
+  const ProfileScreen({super.key, this.isEmbedded = false});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -101,24 +102,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       // 2. Update Database
-      await _userRef.child(_currentUser.uid).update({
+      final updateData = {
         'fullName': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
         'location': _locationController.text.trim(),
         'profileImageUrl': imageUrl,
-      });
+      };
+      
+      await _userRef.child(_currentUser.uid).update(updateData);
 
       // 3. Update Local State
       setState(() {
-        _userData['fullName'] = _nameController.text.trim();
-        _userData['phone'] = _phoneController.text.trim();
-        _userData['location'] = _locationController.text.trim();
-        _userData['profileImageUrl'] = imageUrl;
+        _userData.addAll(updateData);
         _isEditing = false;
         _newProfileImage = null;
       });
 
-      if (mounted) UiHelpers.showSnackBar(context, 'Perfil actualizado correctamente.');
+      if (mounted) {
+        UiHelpers.showSnackBar(context, '¡Perfil actualizado con éxito!');
+        // Opcional: Podrías forzar un refresh del Drawer aquí si usas un Provider
+      }
 
     } catch (e) {
       if (mounted) UiHelpers.showSnackBar(context, 'Error al actualizar: $e', isError: true);
@@ -146,10 +149,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             pinned: true,
             backgroundColor: theme.colorScheme.primary,
             elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
+            automaticallyImplyLeading: !widget.isEmbedded,
+            leading: widget.isEmbedded 
+              ? null 
+              : IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
             actions: [
               if (!_isEditing)
                 IconButton(

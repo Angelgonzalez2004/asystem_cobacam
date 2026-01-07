@@ -74,7 +74,7 @@ class AppDrawer extends StatelessWidget {
                   },
                 ),
                 
-                // --- PREFECT SPECIFIC TOOLS ---
+                // --- PREFECTA SPECIFIC TOOLS ---
                 if (role == 'Prefecta') ...[
                   const Divider(),
                   Padding(
@@ -107,8 +107,12 @@ class AppDrawer extends StatelessWidget {
                   icon: Icons.person_outline_rounded,
                   title: 'Mi Perfil',
                   onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context, SlideRightRoute(page: const ProfileScreen()));
+                    Navigator.pop(context); // Solo este pop
+                    if (onNavigate != null) {
+                      onNavigate!.call('profile');
+                    } else {
+                      Navigator.push(context, SlideRightRoute(page: const ProfileScreen()));
+                    }
                   },
                 ),
                 _buildDrawerItem(
@@ -116,8 +120,12 @@ class AppDrawer extends StatelessWidget {
                   icon: Icons.settings_outlined,
                   title: 'Ajustes',
                   onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context, SlideRightRoute(page: const SettingsScreen()));
+                    Navigator.pop(context); // Solo este pop
+                    if (onNavigate != null) {
+                      onNavigate!.call('settings');
+                    } else {
+                      Navigator.push(context, SlideRightRoute(page: const SettingsScreen()));
+                    }
                   },
                 ),
               ],

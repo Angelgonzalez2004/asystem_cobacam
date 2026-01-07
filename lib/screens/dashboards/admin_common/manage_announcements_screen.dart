@@ -5,6 +5,7 @@ import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:asystem_cobacam/widgets/announcement_widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -26,9 +27,11 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
   final AnnouncementService _announcementService = AnnouncementService();
   final _titleController = TextEditingController();
   final _messageController = TextEditingController();
-  File? _selectedImage;
+  
+  // Múltiples imágenes
+  final List<XFile> _selectedImages = [];
   bool _isLoading = false;
-  bool _isCreating = false; // Toggle to show form
+  bool _isCreating = false;
 
   @override
   void dispose() {
@@ -37,12 +40,12 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImages() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
+    final List<XFile> images = await picker.pickMultiImage();
+    if (images.isNotEmpty) {
       setState(() {
-        _selectedImage = File(image.path);
+        _selectedImages.addAll(images);
       });
     }
   }
@@ -59,18 +62,19 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception("Usuario no autenticado");
 
-      await _announcementService.createAnnouncement(
+      // Usar el servicio corregido para Web/Móvil y múltiples imágenes
+      await _announcementService.publishAnnouncement(
         title: _titleController.text.trim(),
         message: _messageController.text.trim(),
         type: widget.isGeneralAdmin ? 'General' : 'Campus',
         campus: widget.isGeneralAdmin ? null : widget.campus,
         authorId: user.uid,
         authorName: widget.isGeneralAdmin ? 'Dirección General' : 'Dirección ${widget.campus ?? ""}',
-        imageFile: _selectedImage,
+        images: _selectedImages,
       );
 
       _resetForm();
-      if (mounted) UiHelpers.showSnackBar(context, 'Aviso publicado correctamente.');
+      if (mounted) UiHelpers.showSnackBar(context, '¡Aviso publicado exitosamente!');
     } catch (e) {
       if (mounted) UiHelpers.showSnackBar(context, 'Error al publicar: $e', isError: true);
     } finally {
@@ -83,7 +87,7 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
       _isCreating = false;
       _titleController.clear();
       _messageController.clear();
-      _selectedImage = null;
+      _selectedImages.clear();
     });
   }
 
@@ -91,17 +95,24 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar Aviso'),
-        content: const Text('¿Estás seguro de que deseas eliminar este aviso? Esta acción no se puede deshacer.'),
+        title: const Text('Confirmar Eliminación'),
+        content: const Text('¿Estás seguro de que deseas eliminar este comunicado? Se borrarán también las imágenes asociadas.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              await _announcementService.deleteAnnouncement(announcement.id, announcement.imageUrl);
-              if (mounted) UiHelpers.showSnackBar(context, 'Aviso eliminado.');
+              setState(() => _isLoading = true);
+              try {
+                await _announcementService.deleteAnnouncement(announcement);
+                if (mounted) UiHelpers.showSnackBar(context, 'Comunicado eliminado correctamente.');
+              } catch (e) {
+                if (mounted) UiHelpers.showSnackBar(context, 'Error al eliminar: $e', isError: true);
+              } finally {
+                if (mounted) setState(() => _isLoading = false);
+              }
             },
-            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+            child: const Text('Eliminar definitivamente', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -119,12 +130,12 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => setState(() => _isCreating = !_isCreating),
-        label: Text(_isCreating ? 'Cancelar' : 'Nuevo Aviso'),
-        icon: Icon(_isCreating ? Icons.close : Icons.add),
+        label: Text(_isCreating ? 'Cerrar' : 'Nuevo Aviso'),
+        icon: Icon(_isCreating ? Icons.close : Icons.add_comment_rounded),
       ),
       body: Column(
         children: [
-          // Form Area
+          // Formulario
           AnimatedSize(
             duration: const Duration(milliseconds: 300),
             child: _isCreating
@@ -133,79 +144,44 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
                     padding: const EdgeInsets.all(16),
                     child: FadeInUp(
                       child: Card(
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: theme.dividerColor),
-                        ),
+                        elevation: 4,
+                        shadowColor: Colors.black12,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                         child: Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(20.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Redactar Comunicado', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 16),
+                              Text('Redactar Nuevo Comunicado', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 20),
                               TextField(
                                 controller: _titleController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Título del Aviso',
-                                  prefixIcon: Icon(Icons.title),
-                                ),
+                                decoration: _buildInputDecoration('Título del Aviso', Icons.title_rounded),
                               ),
                               const SizedBox(height: 12),
                               TextField(
                                 controller: _messageController,
-                                maxLines: 4,
-                                decoration: const InputDecoration(
-                                  labelText: 'Mensaje / Contenido',
-                                  alignLabelWithHint: true,
-                                  prefixIcon: Icon(Icons.article_outlined),
-                                ),
+                                maxLines: 3,
+                                decoration: _buildInputDecoration('Mensaje / Contenido', Icons.article_outlined),
                               ),
-                              const SizedBox(height: 16),
-                              // Image Picker
-                              InkWell(
-                                onTap: _pickImage,
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  height: 150,
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: theme.scaffoldBackgroundColor,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: theme.dividerColor, style: BorderStyle.solid),
-                                    image: _selectedImage != null
-                                        ? DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover)
-                                        : null,
-                                  ),
-                                  child: _selectedImage == null
-                                      ? Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(Icons.add_photo_alternate_outlined, size: 40, color: theme.colorScheme.primary),
-                                            const SizedBox(height: 8),
-                                            Text('Agregar Imagen (Opcional)', style: TextStyle(color: theme.colorScheme.primary)),
-                                          ],
-                                        )
-                                      : Align(
-                                          alignment: Alignment.topRight,
-                                          child: IconButton(
-                                            icon: const CircleAvatar(backgroundColor: Colors.white, child: Icon(Icons.close, size: 20)),
-                                            onPressed: () => setState(() => _selectedImage = null),
-                                          ),
-                                        ),
-                                ),
-                              ),
+                              const SizedBox(height: 20),
+                              
+                              // Galería de Imágenes Seleccionadas
+                              _buildImageSelector(theme),
+                              
                               const SizedBox(height: 24),
                               SizedBox(
                                 width: double.infinity,
-                                height: 50,
+                                height: 54,
                                 child: _isLoading
                                     ? const Center(child: CircularProgressIndicator())
                                     : ElevatedButton.icon(
                                         onPressed: _submitAnnouncement,
+                                        style: ElevatedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                        ),
                                         icon: const Icon(Icons.send_rounded),
-                                        label: const Text('Publicar Aviso'),
+                                        label: const Text('PUBLICAR AHORA', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                                       ),
                               ),
                             ],
@@ -217,7 +193,7 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
                 : const SizedBox.shrink(),
           ),
 
-          // List Area
+          // Lista de Avisos
           Expanded(
             child: StreamBuilder<List<AnnouncementModel>>(
               stream: _announcementService.getAnnouncementsStream(widget.campus, widget.isGeneralAdmin),
@@ -225,31 +201,32 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                final announcements = snapshot.data ?? [];
+                
+                if (announcements.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.mark_email_unread_outlined, size: 64, color: Colors.grey.shade300),
+                        Icon(Icons.auto_stories_rounded, size: 64, color: Colors.grey.shade300),
                         const SizedBox(height: 16),
-                        Text('No has publicado avisos aún', style: TextStyle(color: Colors.grey.shade500)),
+                        const Text('No hay comunicados publicados aún.', style: TextStyle(color: Colors.grey)),
                       ],
                     ),
                   );
                 }
 
-                // Filter only own announcements for editing? Or all visible?
-                // Requirement: "Tanto por plantel como general puede subir, modificar, eliminar o ver los avisos o lo que publique"
-                // Assuming they can manage what matches their scope.
-                
-                return NewsFeed(
-                  announcements: snapshot.data!,
-                  isAdmin: true,
-                  onDelete: _handleDelete,
-                  onEdit: (announcement) {
-                    // Pre-fill form for edit logic could go here
-                    // For simplicity in this iteration, we focus on Create/Delete
-                    UiHelpers.showSnackBar(context, 'Edición disponible en próxima actualización.');
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: announcements.length,
+                  itemBuilder: (context, index) {
+                    final announcement = announcements[index];
+                    return AnnouncementCard(
+                      announcement: announcement,
+                      isAdmin: true,
+                      onDelete: () => _handleDelete(announcement),
+                      onEdit: () => UiHelpers.showSnackBar(context, 'Edición rápida disponible pronto.'),
+                    );
                   },
                 );
               },
@@ -257,6 +234,74 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildImageSelector(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Imágenes Adjuntas (${_selectedImages.length})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            TextButton.icon(
+              onPressed: _pickImages, 
+              icon: const Icon(Icons.add_a_photo_rounded, size: 18), 
+              label: const Text('Agregar')
+            ),
+          ],
+        ),
+        if (_selectedImages.isNotEmpty)
+          SizedBox(
+            height: 80,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _selectedImages.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: kIsWeb 
+                          ? Image.network(_selectedImages[index].path, width: 80, height: 80, fit: BoxFit.cover)
+                          : Image.file(File(_selectedImages[index].path), width: 80, height: 80, fit: BoxFit.cover),
+                      ),
+                      Positioned(
+                        top: 0, right: 0,
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedImages.removeAt(index)),
+                          child: const CircleAvatar(radius: 10, backgroundColor: Colors.red, child: Icon(Icons.close, size: 12, color: Colors.white)),
+                        ),
+                      )
+                    ],
+                  ),
+                );
+              },
+            ),
+          )
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: theme.scaffoldBackgroundColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: theme.dividerColor, style: BorderStyle.solid),
+            ),
+            child: const Center(child: Text('Sin imágenes seleccionadas', style: TextStyle(color: Colors.grey, fontSize: 12))),
+          ),
+      ],
+    );
+  }
+
+  InputDecoration _buildInputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 }

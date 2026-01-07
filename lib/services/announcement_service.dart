@@ -2,113 +2,104 @@ import 'dart:io';
 import 'package:asystem_cobacam/models/announcement_model.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart'; // For kIsWeb
+import 'package:image_picker/image_picker.dart';
 
 class AnnouncementService {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref().child('announcements');
+  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref('announcements');
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // Create Announcement
-  Future<void> createAnnouncement({
+  // Obtener stream de avisos filtrados
+  Stream<List<AnnouncementModel>> getAnnouncementsStream(String? campusId, bool isGeneralAdmin) {
+    return _dbRef.onValue.map((event) {
+      final List<AnnouncementModel> announcements = [];
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+
+      if (data != null) {
+        data.forEach((key, value) {
+          final announcement = AnnouncementModel.fromMap(value, key);
+          
+          // Lógica de filtrado:
+          // 1. Siempre mostrar los 'General'
+          // 2. Si el aviso es de 'Campus', mostrar solo si coincide con el del usuario
+          if (announcement.type == 'General' || (campusId != null && announcement.campus == campusId)) {
+            announcements.add(announcement);
+          }
+        });
+        // Ordenar por fecha reciente
+        announcements.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      }
+      return announcements;
+    });
+  }
+
+  // PUBLICAR AVISO CON MÚLTIPLES IMÁGENES (FIX WEB)
+  Future<void> publishAnnouncement({
     required String title,
     required String message,
     required String type,
-    String? campus,
     required String authorId,
     required String authorName,
-    File? imageFile,
+    String? campus,
+    List<XFile>? images,
   }) async {
-    String? imageUrl;
-    // Simple ID generation without external package
-    String id = '${DateTime.now().millisecondsSinceEpoch}_${authorId.substring(0, 5)}';
+    final List<String> imageUrls = [];
 
-    if (imageFile != null) {
-      final storageRef = _storage.ref().child('announcements/$id.jpg');
-      await storageRef.putFile(imageFile);
-      imageUrl = await storageRef.getDownloadURL();
-    }
+    // 1. Subir cada imagen a Storage
+    if (images != null && images.isNotEmpty) {
+      for (int i = 0; i < images.length; i++) {
+        final String fileName = '${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+        final Reference ref = _storage.ref().child('announcements/$fileName');
 
-    final announcement = AnnouncementModel(
-      id: id,
-      title: title,
-      message: message,
-      imageUrl: imageUrl,
-      type: type,
-      campus: campus,
-      timestamp: DateTime.now().millisecondsSinceEpoch,
-      authorId: authorId,
-      authorName: authorName,
-    );
-
-    await _dbRef.child(id).set(announcement.toMap());
-  }
-
-  // Update Announcement
-  Future<void> updateAnnouncement(AnnouncementModel announcement, File? newImage) async {
-    String? imageUrl = announcement.imageUrl;
-
-    if (newImage != null) {
-      // Upload new image
-      final storageRef = _storage.ref().child('announcements/${announcement.id}.jpg');
-      await storageRef.putFile(newImage);
-      imageUrl = await storageRef.getDownloadURL();
-    }
-
-    // Create updated map
-    Map<String, dynamic> updates = announcement.toMap();
-    updates['imageUrl'] = imageUrl; // Update URL if changed
-
-    await _dbRef.child(announcement.id).update(updates);
-  }
-
-  // Delete Announcement
-  Future<void> deleteAnnouncement(String id, String? imageUrl) async {
-    await _dbRef.child(id).remove();
-    if (imageUrl != null) {
-      try {
-        await _storage.refFromURL(imageUrl).delete();
-      } catch (e) {
-        // Image might not exist or already deleted
+        if (kIsWeb) {
+          // FIX PARA WEB: Usar putData en lugar de putFile
+          final bytes = await images[i].readAsBytes();
+          await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+        } else {
+          // PARA MÓVIL: Usar putFile
+          await ref.putFile(File(images[i].path));
+        }
+        
+        final String url = await ref.getDownloadURL();
+        imageUrls.add(url);
       }
     }
+
+    // 2. Guardar en Realtime Database
+    final String newId = _dbRef.push().key!;
+    final announcement = AnnouncementModel(
+      id: newId,
+      title: title,
+      message: message,
+      type: type,
+      authorId: authorId,
+      authorName: authorName,
+      campus: campus,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+      imageUrls: imageUrls.isNotEmpty ? imageUrls : null,
+    );
+
+    await _dbRef.child(newId).set(announcement.toMap());
   }
 
-  // Get Stream of Announcements (Filtered by User Role/Campus)
-  Stream<List<AnnouncementModel>> getAnnouncementsStream(String? userCampus, bool isGeneralAdmin) {
-    return _dbRef.orderByChild('timestamp').onValue.map((event) {
-      final List<AnnouncementModel> announcements = [];
-      if (event.snapshot.value == null) return [];
-
-      final Map<dynamic, dynamic> data = event.snapshot.value as Map<dynamic, dynamic>;
-      
-      data.forEach((key, value) {
-        final announcement = AnnouncementModel.fromMap(value, key);
-        
-        // Filter Logic
-        bool show = false;
-
-        if (isGeneralAdmin) {
-          // General Admin sees EVERYTHING? Or just what they posted? 
-          // Requirement: "General puede subir, modificar, eliminar o ver los avisos o lo que publique"
-          // Assuming General Admin should see ALL announcements to moderate, or at least General ones.
-          // Let's show everything for now for General Admin so they can manage content.
-          show = true; 
-        } else {
-          // Normal User (Student, Prefect, Campus Admin)
-          if (announcement.type == 'General') {
-            show = true;
-          } else if (announcement.type == 'Campus' && announcement.campus == userCampus) {
-            show = true;
-          }
+  // Eliminar Aviso
+  Future<void> deleteAnnouncement(AnnouncementModel announcement) async {
+    // 1. Eliminar imágenes de Storage si existen
+    if (announcement.imageUrls != null) {
+      for (String url in announcement.imageUrls!) {
+        try {
+          await FirebaseStorage.instance.refFromURL(url).delete();
+        } catch (e) {
+          debugPrint('Error deleting image from storage: $e');
         }
+      }
+    }
+    // 2. Eliminar de DB
+    await _dbRef.child(announcement.id).remove();
+  }
 
-        if (show) {
-          announcements.add(announcement);
-        }
-      });
-
-      // Sort by timestamp descending (newest first)
-      announcements.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-      return announcements;
-    });
+  // Actualizar Aviso
+  Future<void> updateAnnouncement(String id, Map<String, dynamic> data) async {
+    await _dbRef.child(id).update(data);
   }
 }
