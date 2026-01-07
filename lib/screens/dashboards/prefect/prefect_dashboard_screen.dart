@@ -157,6 +157,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         title: Text(_screenTitles[safeIndex]),
         backgroundColor: theme.colorScheme.surface,
         foregroundColor: theme.colorScheme.onSurface,
+        iconTheme: IconThemeData(color: theme.colorScheme.primary),
         elevation: 0,
         centerTitle: true,
         actions: const [

@@ -131,12 +131,14 @@ class _NonAttendanceManagementScreenState
     }
   }
 
-  Future<void> _showNonAttendanceDayFormDialog() async {
+  Future<void> _showNonAttendanceDayFormDialog({_SuspensionGroup? group}) async {
     final formKey = GlobalKey<FormState>();
-    DateTime selectedStartDate = DateTime.now();
-    DateTime selectedEndDate = DateTime.now();
-    final reasonController = TextEditingController();
-    bool isRangeSelection = false;
+    DateTime selectedStartDate = group?.start ?? DateTime.now();
+    DateTime selectedEndDate = group?.end ?? DateTime.now();
+    final reasonController = TextEditingController(text: group?.reason ?? '');
+    
+    // Si editamos un grupo de más de 1 día, activamos el switch por defecto.
+    bool isRangeSelection = group != null ? (group.ids.length > 1) : false;
 
     await showDialog(
       context: context,
@@ -144,7 +146,7 @@ class _NonAttendanceManagementScreenState
         return StatefulBuilder(
           builder: (dialogContext, setStateInDialog) {
             return AlertDialog(
-              title: const Text('Añadir Suspensión'),
+              title: Text(group == null ? 'Añadir Suspensión' : 'Editar Suspensión'),
               content: Form(
                 key: formKey,
                 child: SingleChildScrollView(
@@ -210,6 +212,15 @@ class _NonAttendanceManagementScreenState
                     if (_campusId == null) return;
 
                     try {
+                      // Si es Edición: Borramos primero los días viejos
+                      // Esto maneja cambios de fecha (borra viejos, crea nuevos)
+                      // y cambios de nombre.
+                      if (group != null) {
+                         for (final id in group.ids) {
+                            await _appSettingsService.deleteNonAttendanceDay(_campusId!, id);
+                         }
+                      }
+
                       List<NonAttendanceDay> daysToSave = [];
                       DateTime current = selectedStartDate;
                       
@@ -232,7 +243,9 @@ class _NonAttendanceManagementScreenState
                       
                       if (mounted) {
                         UiHelpers.showSnackBar(
-                            context, 'Se registraron ${daysToSave.length} días de suspensión.');
+                            context, group == null 
+                              ? 'Se registraron ${daysToSave.length} días.'
+                              : 'Suspensión actualizada.');
                       }
                       Navigator.pop(dialogContext);
                       _loadNonAttendanceDays();
@@ -241,7 +254,7 @@ class _NonAttendanceManagementScreenState
                           isError: true);
                     }
                   },
-                  child: const Text('Guardar'),
+                  child: Text(group == null ? 'Guardar' : 'Actualizar'),
                 ),
               ],
             );
@@ -368,10 +381,20 @@ class _NonAttendanceManagementScreenState
                                         ),
                                       ),
                                     ),
-                                    trailing: IconButton(
-                                      icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
-                                      onPressed: () => _confirmDeleteGroup(group),
-                                      tooltip: 'Eliminar suspensión',
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(Icons.edit_outlined, color: theme.colorScheme.primary),
+                                          onPressed: () => _showNonAttendanceDayFormDialog(group: group),
+                                          tooltip: 'Editar suspensión',
+                                        ),
+                                        IconButton(
+                                          icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                                          onPressed: () => _confirmDeleteGroup(group),
+                                          tooltip: 'Eliminar suspensión',
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
