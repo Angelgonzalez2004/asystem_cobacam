@@ -26,6 +26,10 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
   late final ConnectivityService _connectivityService;
   late final AppSettingsService _appSettingsService;
   late TabController _tabController;
+  
+  // Search Controller
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   DatabaseReference? _studentsRef;
   StreamSubscription<DatabaseEvent>? _studentsSubscription;
@@ -40,6 +44,10 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _searchController.addListener(() {
+      setState(() => _searchQuery = _searchController.text.toLowerCase());
+    });
+    
     _hiveService = Provider.of<HiveService>(context, listen: false);
     _connectivityService = Provider.of<ConnectivityService>(context, listen: false);
     _appSettingsService = AppSettingsService(_hiveService, _connectivityService);
@@ -69,35 +77,42 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
         _selectedFilterSchoolCycle = dynamicSchoolCycle;
       });
 
-      _studentsRef = FirebaseDatabase.instance.ref('planteles/$_campus/students/$_selectedFilterSchoolCycle');
+      _loadStudentsForCycle(_selectedFilterSchoolCycle!);
 
-      _studentsSubscription = _studentsRef!.onValue.listen((event) {
-        final newStudents = <Student>[];
-        if (event.snapshot.exists) {
-          for (final child in event.snapshot.children) {
-            newStudents.add(Student.fromSnapshot(child));
-          }
-        }
-        if (mounted) {
-          setState(() {
-            _allStudents = newStudents;
-            _isLoading = false;
-          });
-        }
-      }, onError: (error) {
-        if (mounted) UiHelpers.showSnackBar(context, 'Error al cargar alumnos.', isError: true);
-        if (mounted) setState(() => _isLoading = false);
-      });
     } catch (e) {
       if (mounted) UiHelpers.showSnackBar(context, 'Error: ${e.toString()}', isError: true);
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  void _loadStudentsForCycle(String cycleId) {
+    _studentsSubscription?.cancel();
+    _studentsRef = FirebaseDatabase.instance.ref('planteles/$_campus/students/$cycleId');
+
+    _studentsSubscription = _studentsRef!.onValue.listen((event) {
+      final newStudents = <Student>[];
+      if (event.snapshot.exists) {
+        for (final child in event.snapshot.children) {
+          newStudents.add(Student.fromSnapshot(child));
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _allStudents = newStudents;
+          _isLoading = false;
+        });
+      }
+    }, onError: (error) {
+      if (mounted) UiHelpers.showSnackBar(context, 'Error al cargar alumnos.', isError: true);
+      if (mounted) setState(() => _isLoading = false);
+    });
+  }
+
   @override
   void dispose() {
     _studentsSubscription?.cancel();
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -106,8 +121,15 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final activeStudents = _allStudents.where((s) => s.isActive).toList();
-    final inactiveStudents = _allStudents.where((s) => !s.isActive).toList();
+    // Filter Logic
+    final filteredList = _allStudents.where((s) {
+      if (_searchQuery.isEmpty) return true;
+      return s.fullName.toLowerCase().contains(_searchQuery) ||
+             s.studentId.toLowerCase().contains(_searchQuery);
+    }).toList();
+
+    final activeStudents = filteredList.where((s) => s.isActive).toList();
+    final inactiveStudents = filteredList.where((s) => !s.isActive).toList();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -127,7 +149,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                       children: [
                         // Tabs Container
                         Container(
-                          margin: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                           decoration: BoxDecoration(
                             color: isDark ? theme.cardTheme.color : Colors.white,
                             borderRadius: BorderRadius.circular(16),
@@ -148,6 +170,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                         ),
                         
                         _buildFilterHeader(theme, isDark),
+                        
                         Expanded(
                           child: TabBarView(
                             controller: _tabController,
@@ -169,7 +192,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
   Widget _buildFilterHeader(ThemeData theme, bool isDark) {
     return FadeInUp(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Card(
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -177,28 +200,48 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
             side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.08)),
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _selectedFilterSchoolCycle,
-                    decoration: const InputDecoration(
-                      labelText: 'Ciclo Escolar',
-                      border: InputBorder.none,
-                      prefixIcon: Icon(Icons.calendar_today_outlined, size: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _selectedFilterSchoolCycle,
+                        decoration: const InputDecoration(
+                          labelText: 'Ciclo Escolar',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          prefixIcon: Icon(Icons.calendar_today_outlined, size: 20),
+                        ),
+                        onChanged: (val) => val != null ? _onFilterCycleChanged(val) : null,
+                        items: _availableSchoolCycles.map((c) => DropdownMenuItem(value: c.id, child: Text(c.id))).toList(),
+                      ),
                     ),
-                    onChanged: (val) => val != null ? _onFilterCycleChanged(val) : null,
-                    items: _availableSchoolCycles.map((c) => DropdownMenuItem(value: c.id, child: Text(c.id))).toList(),
-                  ),
+                    const SizedBox(width: 12),
+                    IconButton.filledTonal(
+                      icon: const Icon(Icons.cloud_upload_outlined),
+                      onPressed: () {
+                        if (_campus == null) return;
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => StudentExcelImportScreen(campusId: _campus!, currentSchoolCycle: _currentSchoolCycle)));
+                      },
+                      tooltip: 'Importar Excel',
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: Icon(Icons.cloud_upload_outlined, color: theme.colorScheme.secondary),
-                  onPressed: () {
-                    if (_campus == null) return;
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => StudentExcelImportScreen(campusId: _campus!, currentSchoolCycle: _currentSchoolCycle)));
-                  },
-                  tooltip: 'Importar Excel',
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    labelText: 'Buscar Alumno',
+                    hintText: 'Nombre o Matrícula',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchController.text.isNotEmpty 
+                      ? IconButton(icon: const Icon(Icons.clear), onPressed: () => _searchController.clear())
+                      : null,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
                 ),
               ],
             ),
@@ -218,7 +261,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
             children: [
               Icon(isActiveList ? Icons.people_outline : Icons.person_off_outlined, size: 64, color: Colors.grey.withValues(alpha: 0.3)),
               const SizedBox(height: 16),
-              Text(isActiveList ? 'No hay alumnos activos.' : 'No hay alumnos en baja.', style: const TextStyle(color: Colors.grey)),
+              Text(isActiveList ? 'No hay alumnos que coincidan.' : 'No hay alumnos en baja.', style: const TextStyle(color: Colors.grey)),
             ],
           ),
         ),
@@ -344,14 +387,12 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
 
   void _onFilterCycleChanged(String newCycleId) {
     if (_campus == null) return;
-    _studentsSubscription?.cancel();
     setState(() {
       _selectedFilterSchoolCycle = newCycleId;
       _isLoading = true;
       _allStudents = [];
     });
-    _studentsRef = FirebaseDatabase.instance.ref('planteles/$_campus/students/$_selectedFilterSchoolCycle');
-    _initData();
+    _loadStudentsForCycle(newCycleId);
   }
 
   Future<void> _confirmAndDeleteStudent(Student student) async {
