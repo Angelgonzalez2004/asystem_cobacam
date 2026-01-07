@@ -47,15 +47,20 @@ class AppDrawer extends StatelessWidget {
             accountEmail: Text(userEmail),
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
-              backgroundImage: profileImageUrl != null
-                  ? NetworkImage(profileImageUrl!)
-                  : null,
-              child: profileImageUrl == null
-                  ? Text(
-                      userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-                      style: TextStyle(fontSize: 24, color: theme.colorScheme.primary),
-                    )
-                  : null,
+              child: ClipOval(
+                child: profileImageUrl != null
+                    ? Image.network(
+                        profileImageUrl!,
+                        width: 90,
+                        height: 90,
+                        fit: BoxFit.cover,
+                        errorBuilder: (c, e, s) => Icon(Icons.person, size: 40, color: theme.colorScheme.primary),
+                      )
+                    : Text(
+                        userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                        style: TextStyle(fontSize: 24, color: theme.colorScheme.primary),
+                      ),
+              ),
             ),
           ),
 
@@ -98,6 +103,23 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.campaign_rounded,
                     title: 'Gestionar Avisos',
                     onTap: () => onNavigate?.call('manage_announcements'),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.vpn_key_rounded,
+                    title: 'Llaves de Registro',
+                    onTap: () => onNavigate?.call('manage_access_codes'),
+                  ),
+                ],
+
+                // Académica puede ver llaves si se considera necesario (opcional)
+                if (role == 'Academica') ...[
+                   const Divider(),
+                   _buildDrawerItem(
+                    context,
+                    icon: Icons.vpn_key_rounded,
+                    title: 'Llaves de Registro',
+                    onTap: () => onNavigate?.call('manage_access_codes'),
                   ),
                 ],
 
@@ -142,12 +164,33 @@ class AppDrawer extends StatelessWidget {
               textColor: theme.colorScheme.error,
               iconColor: theme.colorScheme.error,
               onTap: () async {
-                await FirebaseAuth.instance.signOut();
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Cerrar Sesión'),
+                    content: const Text('¿Estás seguro de que deseas salir del sistema?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancelar'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.error, foregroundColor: Colors.white),
+                        child: const Text('Salir'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  await FirebaseAuth.instance.signOut();
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  }
                 }
               },
             ),

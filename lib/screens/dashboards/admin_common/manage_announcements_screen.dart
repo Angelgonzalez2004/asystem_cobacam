@@ -32,12 +32,25 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
   final List<XFile> _selectedImages = [];
   bool _isLoading = false;
   bool _isCreating = false;
+  
+  // Edit mode state
+  AnnouncementModel? _editingAnnouncement;
 
   @override
   void dispose() {
     _titleController.dispose();
     _messageController.dispose();
     super.dispose();
+  }
+
+  void _startEdit(AnnouncementModel announcement) {
+    setState(() {
+      _isCreating = true;
+      _editingAnnouncement = announcement;
+      _titleController.text = announcement.title;
+      _messageController.text = announcement.message;
+      _selectedImages.clear(); 
+    });
   }
 
   Future<void> _pickImages() async {
@@ -62,21 +75,38 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception("Usuario no autenticado");
 
-      // Usar el servicio corregido para Web/Móvil y múltiples imágenes
-      await _announcementService.publishAnnouncement(
-        title: _titleController.text.trim(),
-        message: _messageController.text.trim(),
-        type: widget.isGeneralAdmin ? 'General' : 'Campus',
-        campus: widget.isGeneralAdmin ? null : widget.campus,
-        authorId: user.uid,
-        authorName: widget.isGeneralAdmin ? 'Dirección General' : 'Dirección ${widget.campus ?? ""}',
-        images: _selectedImages,
-      );
+      if (_editingAnnouncement == null) {
+        // MODO CREAR
+        await _announcementService.publishAnnouncement(
+          title: _titleController.text.trim(),
+          message: _messageController.text.trim(),
+          type: widget.isGeneralAdmin ? 'General' : 'Campus',
+          campus: widget.isGeneralAdmin ? null : widget.campus,
+          authorId: user.uid,
+          authorName: widget.isGeneralAdmin ? 'Dirección General' : 'Dirección ${widget.campus ?? ""}',
+          images: _selectedImages,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('¡Aviso publicado exitosamente!'), duration: Duration(seconds: 3))
+          );
+        }
+      } else {
+        // MODO EDITAR
+        await _announcementService.updateAnnouncement(_editingAnnouncement!.id, {
+          'title': _titleController.text.trim(),
+          'message': _messageController.text.trim(),
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('¡Aviso actualizado!'), duration: Duration(seconds: 3))
+          );
+        }
+      }
 
       _resetForm();
-      if (mounted) UiHelpers.showSnackBar(context, '¡Aviso publicado exitosamente!');
     } catch (e) {
-      if (mounted) UiHelpers.showSnackBar(context, 'Error al publicar: $e', isError: true);
+      if (mounted) UiHelpers.showSnackBar(context, 'Error al procesar: $e', isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -85,6 +115,7 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
   void _resetForm() {
     setState(() {
       _isCreating = false;
+      _editingAnnouncement = null;
       _titleController.clear();
       _messageController.clear();
       _selectedImages.clear();
@@ -96,7 +127,7 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmar Eliminación'),
-        content: const Text('¿Estás seguro de que deseas eliminar este comunicado? Se borrarán también las imágenes asociadas.'),
+        content: const Text('¿Estás seguro de que deseas eliminar este comunicado? Se borrarán también las imágenes asociadas de la nube.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
           TextButton(
@@ -105,7 +136,11 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
               setState(() => _isLoading = true);
               try {
                 await _announcementService.deleteAnnouncement(announcement);
-                if (mounted) UiHelpers.showSnackBar(context, 'Comunicado eliminado correctamente.');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Comunicado eliminado correctamente.'), duration: Duration(seconds: 3))
+                  );
+                }
               } catch (e) {
                 if (mounted) UiHelpers.showSnackBar(context, 'Error al eliminar: $e', isError: true);
               } finally {
@@ -152,7 +187,8 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Redactar Nuevo Comunicado', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                              Text(_editingAnnouncement == null ? 'Redactar Nuevo Comunicado' : 'Editar Comunicado', 
+                                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                               const SizedBox(height: 20),
                               TextField(
                                 controller: _titleController,
@@ -166,8 +202,7 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
                               ),
                               const SizedBox(height: 20),
                               
-                              // Galería de Imágenes Seleccionadas
-                              _buildImageSelector(theme),
+                              if (_editingAnnouncement == null) _buildImageSelector(theme),
                               
                               const SizedBox(height: 24),
                               SizedBox(
@@ -180,8 +215,9 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
                                         style: ElevatedButton.styleFrom(
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                         ),
-                                        icon: const Icon(Icons.send_rounded),
-                                        label: const Text('PUBLICAR AHORA', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                        icon: Icon(_editingAnnouncement == null ? Icons.send_rounded : Icons.save_rounded),
+                                        label: Text(_editingAnnouncement == null ? 'PUBLICAR AHORA' : 'GUARDAR CAMBIOS', 
+                                          style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                                       ),
                               ),
                             ],
@@ -202,6 +238,7 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 final announcements = snapshot.data ?? [];
+                final currentUser = FirebaseAuth.instance.currentUser;
                 
                 if (announcements.isEmpty) {
                   return Center(
@@ -221,11 +258,17 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
                   itemCount: announcements.length,
                   itemBuilder: (context, index) {
                     final announcement = announcements[index];
+                    final String role = widget.isGeneralAdmin 
+                        ? 'Personal Administrativo General' 
+                        : 'Personal Administrativo por Plantel';
+                        
                     return AnnouncementCard(
                       announcement: announcement,
-                      isAdmin: true,
+                      currentUserId: currentUser?.uid,
+                      currentUserRole: role,
+                      currentUserCampus: widget.campus,
                       onDelete: () => _handleDelete(announcement),
-                      onEdit: () => UiHelpers.showSnackBar(context, 'Edición rápida disponible pronto.'),
+                      onEdit: () => _startEdit(announcement),
                     );
                   },
                 );

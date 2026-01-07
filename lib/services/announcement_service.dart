@@ -19,11 +19,19 @@ class AnnouncementService {
         data.forEach((key, value) {
           final announcement = AnnouncementModel.fromMap(value, key);
           
-          // Lógica de filtrado:
-          // 1. Siempre mostrar los 'General'
-          // 2. Si el aviso es de 'Campus', mostrar solo si coincide con el del usuario
-          if (announcement.type == 'General' || (campusId != null && announcement.campus == campusId)) {
-            announcements.add(announcement);
+          // LÓGICA DE FILTRADO ESTRICTA
+          
+          // 1. Si es Admin General, SOLO ve avisos Generales (no de planteles)
+          if (isGeneralAdmin) {
+            if (announcement.type == 'General') {
+              announcements.add(announcement);
+            }
+          } 
+          // 2. Si es usuario de Plantel (Alumno o Admin), ve Generales + Su Plantel
+          else {
+            if (announcement.type == 'General' || (campusId != null && announcement.campus == campusId)) {
+              announcements.add(announcement);
+            }
           }
         });
         // Ordenar por fecha reciente

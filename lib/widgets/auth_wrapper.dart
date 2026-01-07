@@ -6,11 +6,12 @@ import 'package:asystem_cobacam/screens/dashboards/student/student_dashboard_scr
 import 'package:asystem_cobacam/screens/welcome_screen.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/services/session_service.dart';
+import 'package:asystem_cobacam/widgets/session_guard.dart';
+import 'package:asystem_cobacam/data/access_codes.dart';
+import 'package:asystem_cobacam/services/access_code_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-
-import 'package:asystem_cobacam/widgets/session_guard.dart'; // Importar SessionGuard
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -30,8 +31,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Future<void> _redirectUser() async {
     try {
-      await Future.delayed(
-          const Duration(seconds: 2)); // Give splash time to show
+      // Inicializar códigos de acceso
+      AccessCodeService().initializeCodes(campusRoleCodes);
+
+      await Future.delayed(const Duration(seconds: 2));
       final user = FirebaseAuth.instance.currentUser;
 
       if (!mounted) return;
@@ -41,12 +44,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
         return;
       }
 
-      // --- REGISTRAR SESIÓN (BACKGROUND) ---
+      // Registrar sesión
       SessionService().registerCurrentSession().catchError((e) => debugPrint("Session error: $e"));
-      // -------------------------------------
 
-      final snapshot =
-          await FirebaseDatabase.instance.ref('users/${user.uid}').get();
+      final snapshot = await FirebaseDatabase.instance.ref('users/${user.uid}').get();
 
       if (!mounted) return;
 
@@ -94,15 +95,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
         dashboard = const WelcomeScreen();
     }
     
-    // Envolver el dashboard seleccionado con el Guardián de Sesión
     if (role != null) {
       dashboard = SessionGuard(child: dashboard);
     }
 
-    Navigator.of(context)
-        .pushReplacement(MaterialPageRoute(builder: (context) => dashboard));
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => dashboard));
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +120,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
               Text(
                 "Iniciando Asystem Cobacam",
                 style: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
                     fontWeight: FontWeight.w500,
                     letterSpacing: 0.5),
               ),

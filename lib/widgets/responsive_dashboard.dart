@@ -1,5 +1,6 @@
 import 'package:asystem_cobacam/screens/common/profile_screen.dart';
 import 'package:asystem_cobacam/screens/common/settings_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_access_codes_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_announcements_screen.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/slide_transition.dart';
@@ -77,6 +78,13 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
       } else if (route == 'manage_announcements') {
         Navigator.push(context, SlideRightRoute(
           page: ManageAnnouncementsScreen(
+            campus: _userCampus,
+            isGeneralAdmin: _userRole.contains('General'),
+          )
+        ));
+      } else if (route == 'manage_access_codes') {
+        Navigator.push(context, SlideRightRoute(
+          page: ManageAccessCodesScreen(
             campus: _userCampus,
             isGeneralAdmin: _userRole.contains('General'),
           )

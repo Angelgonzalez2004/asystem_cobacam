@@ -2,31 +2,37 @@
 
 **Asystem Cobacam** es una plataforma integral diseñada para el ecosistema COBACAM, optimizada para ofrecer seguridad, transparencia y una gestión académica de vanguardia.
 
-## 🚀 Novedades de la Versión 1.1.0
+## 🚀 Novedades de la Versión 1.2.0 (Smart Media Update)
 
-### 📸 Gestión de Medios Avanzada
-- **Publicación Multimage:** Los administradores ahora pueden subir galerías completas de imágenes en un solo comunicado.
-- **Visualización Social:** Interfaz estilo red social para visualizar fotos adjuntas con cuadrículas inteligentes.
-- **Soporte Web Nativo:** Se ha corregido el error de carga de archivos en navegadores, permitiendo la gestión de contenidos desde cualquier dispositivo.
+### 📸 Visualización de Medios Profesional
+- **Smart Image Grid:** Nuevo sistema de visualización inteligente que adapta automáticamente imágenes verticales y horizontales sin recortes.
+- **Efecto Inmersivo:** Las imágenes individuales se presentan con un fondo desenfocado elegante para mantener la estética sin perder información.
+- **Visor Lightbox:** Navegación a pantalla completa con soporte para zoom, gestos y transiciones fluidas.
 
-### 📊 Datos en Tiempo Real (Real-Time Stats)
-- **Contadores Dinámicos:** Dashboards con estadísticas reales de alumnos registrados, académicas activas y planteles operativos, eliminando datos ficticios.
-- **Filtrado por Plantel:** Los administradores de sede visualizan métricas exclusivas de su centro de trabajo.
+### 📥 Sistema de Descargas Universal
+- **Descarga Inteligente:** Posibilidad de guardar una sola imagen o la galería completa de un aviso con un solo clic.
+- **Multi-Plataforma:** Soporte nativo para guardar en la Galería (Android/iOS) y en el Sistema de Archivos (Windows/macOS/Web).
 
-### 🛡️ Seguridad y Auditoría
-- **Rastreo de Sesiones:** Sistema de geolocalización por IP y detección de hardware para auditoría de accesos.
-- **Session Guard:** Expulsión inmediata de sesiones remotas revocadas.
-- **Protección de Fuerza Bruta:** Bloqueo inteligente de accesos ante intentos fallidos.
+### 👥 Gestión Colaborativa de Avisos
+- **Permisos Jerárquicos:**
+    - **Admin General:** Gestión total de avisos de nivel Dirección General.
+    - **Admin Plantel:** Colaboración completa entre administrativos del mismo plantel.
+- **Privacidad Estricta:** Filtrado robusto que garantiza que cada nivel vea y gestione estrictamente lo que le corresponde.
+
+## 🚀 Versiones Anteriores (v1.1.0)
+- **Publicación Multimage:** Subida de galerías completas.
+- **Datos en Tiempo Real:** Contadores dinámicos de alumnos y planteles.
+- **Seguridad:** Rastreo de sesiones y protección contra fuerza bruta.
 
 ## 🛠️ Stack Tecnológico
 - **Frontend:** Flutter 3.4+ (Material 3)
 - **Backend:** Firebase (Auth, RTDB, Storage)
 - **Caché Local:** Hive
-- **Ubicación:** ipapi.co (Secure HTTPS)
+- **Dependencias Clave:** `gal`, `photo_view` (custom impl), `file_picker`.
 
 ## 📥 Guía de Despliegue Web
 ```bash
-flutter build web --release
+flutter build web --release --web-renderer canvaskit
 firebase deploy --only hosting
 ```
 
