@@ -4,33 +4,32 @@
 
 ---
 
-## 🚀 Última Actualización: Versión 1.3.0 (Smart Management Update)
+## 🚀 Última Actualización: Versión 1.4.0 (Prefect Suite Pro)
 
-Esta versión introduce mejoras críticas en la experiencia de usuario y la lógica de negocio administrativa.
+Esta actualización transforma radicalmente la experiencia del rol de Prefectura, automatizando procesos complejos y mejorando la organización de datos.
 
 ### 🌟 Novedades Destacadas
 
-#### 📸 Gestión de Medios Profesional ("Smart Grid")
-- **Visualización Inteligente:** Nuevo motor de renderizado que detecta automáticamente la orientación de las imágenes (vertical/horizontal).
-    - **Anti-Recorte:** Las imágenes verticales (como convocatorias o volantes) se muestran completas, centradas y con un fondo desenfocado estético ("Blur Effect"), eliminando cortes indeseados.
-    - **Mosaicos Dinámicos:** Si se suben múltiples fotos, se organizan automáticamente en collages tipo red social (1, 2, 3, 4+ elementos).
-- **Visor Inmersivo (Lightbox):** Al tocar cualquier imagen, se abre un visor a pantalla completa con soporte para **Zoom** (pellizcar) y deslizamiento fluido.
+#### 📅 Ciclos Escolares Inteligentes ("Auto-Pilot")
+- **Detección Automática:** El sistema ya no requiere activación manual. Calcula automáticamente cuál es el **Ciclo Actual** basándose en la fecha del servidor/dispositivo y los rangos definidos.
+- **Estados Visuales:**
+    - 🟢 **EN CURSO (ACTUAL):** Ciclo vigente hoy.
+    - 🟠 **PRÓXIMO:** Ciclos futuros programados.
+    - 🔴 **FINALIZADO:** Ciclos históricos cerrados.
+- **Seguridad:** Elimina el error humano de olvidar cambiar el ciclo, garantizando que los nuevos registros siempre caigan en el periodo correcto.
 
-#### 📥 Sistema Universal de Descargas
-- **Compatibilidad Total:** Funciona en **Android, iOS, Windows, macOS y Web**.
-- **Descarga Inteligente:**
-    - **Individual:** Guarda la foto que estás viendo con un clic.
-    - **Masiva:** Opción para "Descargar todas las imágenes" de un aviso en un solo paquete.
-- **Nativo:** En móviles guarda directo en la Galería; en escritorio abre el explorador de archivos.
+#### 🗂️ Directorio de Alumnos Jerárquico
+- **Organización por Grupos:** La lista plana de alumnos ha evolucionado a un **Árbol de Grupos Expandible**.
+    - Ahora ves tarjetas por grupo (ej. "301-B - 25 Alumnos").
+    - Al tocar, se despliega la lista detallada de estudiantes.
+- **Filtro Histórico:** Selector de Ciclo Escolar para consultar padrones de semestres anteriores sin mezclar datos.
+- **Gestión Dual:** Pestañas separadas para "Alumnos Activos" y "Bajas", manteniendo el historial limpio pero accesible.
 
-#### 🛡️ Lógica de Gestión "Context-Aware"
-- **Separación de Entornos para Admins de Plantel:**
-    - **Inicio (Modo Lectura):** Ven avisos de Dirección General + Avisos de su Plantel (Visión completa).
-    - **Gestión (Modo Edición):** Solo ven los avisos de SU propio plantel. Los avisos generales se ocultan para mantener el área de trabajo limpia y evitar errores.
-- **Colaboración Jerárquica:**
-    - Múltiples administrativos de un mismo plantel pueden editar/borrar los avisos de sus colegas del mismo centro (trabajo en equipo).
-    - Administradores Generales tienen control total sobre los comunicados de nivel estatal.
-    - Estricta segregación: Un plantel nunca puede ver ni tocar los avisos de otro plantel.
+#### 📊 Importación Masiva Blindada
+- **Excel Inteligente:**
+    - **Selector de Destino:** Ahora eliges explícitamente a qué Ciclo Escolar vas a importar los datos.
+    - **Validación Estricta:** El sistema verifica que las hojas de tu Excel coincidan con los grupos creados en el sistema.
+    - **Prevención de Errores:** Si intentas subir un grupo que no existe (ej. "101" cuando solo creaste "101-A"), el sistema bloquea la importación y te avisa para corregirlo.
 
 ---
 
