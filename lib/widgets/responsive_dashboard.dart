@@ -5,6 +5,7 @@ import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_announcem
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/slide_transition.dart';
 import 'package:asystem_cobacam/widgets/app_drawer.dart';
+import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -109,6 +110,10 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
         foregroundColor: isDark ? Colors.white : theme.colorScheme.onSurface,
         elevation: 0,
         iconTheme: IconThemeData(color: theme.colorScheme.primary),
+        actions: const [
+          RefreshAppButton(),
+          SizedBox(width: 8),
+        ],
       ),
       drawer: AppDrawer(
         role: _userRole,

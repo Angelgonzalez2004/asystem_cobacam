@@ -12,6 +12,7 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/attendance_screen.dar
 import 'package:asystem_cobacam/screens/dashboards/prefect/school_cycle_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/non_attendance_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/attendance_query_screen.dart';
+import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
 
 class PrefectDashboardScreen extends StatefulWidget {
   const PrefectDashboardScreen({super.key});
@@ -158,6 +159,10 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         foregroundColor: theme.colorScheme.onSurface,
         elevation: 0,
         centerTitle: true,
+        actions: const [
+          RefreshAppButton(),
+          SizedBox(width: 8),
+        ],
       ),
       drawer: AppDrawer(
         role: _userRole,
