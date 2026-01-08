@@ -4,31 +4,31 @@
 
 ---
 
-## 🚀 Última Actualización: Versión 1.5.0 (Optimization & Stability)
+## 🚀 Última Actualización: Versión 2.0.0 (Production Ready)
 
-Esta versión se centra en la estabilidad del código, la optimización del rendimiento y la mejora de la calidad del software mediante un análisis estático riguroso.
+Esta versión marca un hito en la madurez del sistema, incorporando módulos críticos para la operación diaria, herramientas de credencialización y una base de datos robusta y escalable.
 
-### ✅ Mejoras de Calidad de Código
-*   **Limpieza Profunda (Linting):** Se han resuelto todas las advertencias y errores detectados por `flutter analyze`.
-*   **Optimización de Constantes:** Uso extensivo de constructores `const` para reducir la reconstrucción de widgets y mejorar el rendimiento de la UI.
-*   **Refactorización de Lógica:** Eliminación de verificaciones nulas redundantes y código muerto en los módulos de gestión de grupos y horarios.
+### 🌟 Nuevos Módulos Implementados
 
-### 🌟 Funcionalidades Clave
+#### 🆔 Generador Universal de Credenciales
+Una herramienta potente para la emisión instantánea de identificaciones estudiantiles.
+*   **Diseño Profesional:** Plantillas oficiales con colores institucionales (Azul COBACAM), logo y tipografía estandarizada.
+*   **Códigos de Barra (Code 128):** Generación automática de códigos escaneables vinculados a la matrícula para agilizar el pase de lista.
+*   **Multi-Formato:** Opción de descarga en **PNG** (Alta Calidad) o **JPG** (Comprimido).
+*   **Compatibilidad Universal:** Descarga inteligente adaptada al dispositivo:
+    *   📱 **Móvil (Android/iOS):** Guarda directo en Galería.
+    *   🌐 **Web:** Descarga automática en el navegador.
+    *   💻 **Escritorio:** Guarda en la carpeta de Documentos.
 
-#### 📅 Gestión Académica y Horarios
-- **Ciclos Escolares:** Administración flexible de semestres (A/B) y periodos propedéuticos.
-- **Gestión de Grupos:** Creación y edición intuitiva de grupos, con validación de lógica de semestres (par/impar).
-- **Editor de Horarios:** Interfaz visual para asignar horas de entrada y salida por día de la semana, con validaciones para evitar errores lógicos (entrada > salida).
-- **Protección de Datos:** Modo "Solo Lectura" automático para ciclos escolares cerrados, garantizando la integridad histórica de la información.
+#### 📋 Sistema Avanzado de Asistencia
+*   **Pase de Lista Masivo:** Registra la entrada o salida de grupos enteros en segundos, ideal para horas pico.
+*   **Modo Offline-First:** ¿Sin internet? No hay problema. El sistema guarda los registros localmente (Hive) y sincroniza automáticamente con la nube (Firebase) cuando recupera la conexión.
+*   **Lógica de Negocio:** Detección automática de retardos basada en los horarios de clase configurados, con solicitud obligatoria de justificación.
 
-#### 🛡️ Seguridad y Control de Acceso
-- **Autenticación Robusta:** Integración segura con Firebase Auth.
-- **Roles y Permisos:** Lógica segregada por roles (Alumno, Prefecto, Administrador).
-- **Gestión de Sesiones:** Monitoreo activo para prevenir accesos no autorizados y sesiones concurrentes indebidas.
-
-#### 📊 Dashboard Responsivo
-- **Diseño Adaptativo:** Interfaces que escalan inteligentemente desde móviles hasta pantallas de escritorio.
-- **Grillas Dinámicas:** Visualización optimizada de listados de grupos y alumnos según el espacio disponible.
+#### 🔍 Consulta de Asistencia en Tiempo Real
+*   **Buscador Global:** Encuentra a cualquier alumno por nombre o matrícula al instante.
+*   **Tarjetas de Información Completa:** Visualización detallada con estado (Presente/Falta/Retardo), horas exactas de entrada/salida y motivos de incidencias.
+*   **Detección de Faltas:** El sistema cruza la lista de inscritos con los registros del día para identificar ausencias automáticamente.
 
 ---
 
@@ -47,13 +47,15 @@ El proyecto está construido sobre una arquitectura **escalable y modular** util
 *   **Frontend:** [Flutter](https://flutter.dev) (Dart)
     *   Diseño **Material 3** adaptable (Tema Claro/Oscuro).
     *   Responsive Design (Móvil, Tablet, Escritorio, Web).
+    *   **Librerías Clave:** `barcode_widget` (Credenciales), `mobile_scanner` (QR), `screenshot` (Captura), `hive` (BD Local).
 *   **Backend & Cloud:** [Firebase](https://firebase.google.com)
     *   **Authentication:** Gestión de usuarios y roles segura.
-    *   **Realtime Database:** Sincronización de datos en milisegundos.
+    *   **Realtime Database:** Sincronización de datos en milisegundos con soporte multi-plantel.
     *   **Storage:** Almacenamiento optimizado de imágenes y documentos.
     *   **Hosting:** Despliegue global CDN para la versión web.
-*   **Almacenamiento Local:** [Hive](https://docs.hivedb.dev/)
-    *   Base de datos NoSQL ultrarrápida para persistencia de configuraciones y funcionamiento **Offline-First**.
+*   **Base de Datos Maestra:**
+    *   Soporte simultáneo para múltiples planteles (**Atasta, Champotón, Hecelchakán, Xpujil**, etc.).
+    *   Historial completo de ciclos escolares y asistencias.
 
 ---
 

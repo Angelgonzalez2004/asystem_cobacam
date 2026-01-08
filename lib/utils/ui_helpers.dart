@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class UiHelpers {
-  /// Muestra un mensaje interactivo de 3 segundos (SnackBar).
+  /// Muestra un mensaje interactivo (SnackBar).
   static void showSnackBar(BuildContext context, String message,
-      {bool isError = false}) {
+      {bool isError = false, Duration duration = const Duration(seconds: 3)}) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -18,7 +18,7 @@ class UiHelpers {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 3),
+        duration: duration,
         action: SnackBarAction(
           label: 'OK',
           textColor: Colors.white,

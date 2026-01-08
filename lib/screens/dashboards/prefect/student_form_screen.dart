@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_management_screen.dart'; // Importa la pantalla de gestión de grupos
@@ -57,6 +58,8 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
   late final ConnectivityService _connectivityService;
   late final AppSettingsService _appSettingsService;
 
+  StreamSubscription<DatabaseEvent>? _groupsSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -97,7 +100,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
     
     _loadSchoolCycles().then((_) {
       _checkCycleStatus(_selectedSchoolCycle); // Check status immediately
-      _loadGroups(_selectedSchoolCycle);
+      _subscribeToGroups(_selectedSchoolCycle);
     });
   }
 
@@ -133,7 +136,9 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
     }
   }
 
-  Future<void> _loadGroups([String? schoolCycleId]) async {
+  void _subscribeToGroups(String? schoolCycleId) {
+    _groupsSubscription?.cancel();
+    
     if (schoolCycleId == null) {
       if (mounted) setState(() => _isLoadingGroups = false);
       return;
@@ -146,18 +151,19 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         });
     }
 
-    try {
-      final groupsSnapshot = await FirebaseDatabase.instance
+    final query = FirebaseDatabase.instance
           .ref('planteles/${widget.campusId}/groups')
           .orderByChild('schoolCycleId')
-          .equalTo(schoolCycleId)
-          .get();
-          
-      if (groupsSnapshot.exists) {
+          .equalTo(schoolCycleId);
+
+    _groupsSubscription = query.onValue.listen((event) {
         final List<Group> fetchedGroups = [];
-        for (final child in groupsSnapshot.children) {
-          fetchedGroups.add(Group.fromSnapshot(child));
+        if (event.snapshot.exists) {
+            for (final child in event.snapshot.children) {
+              fetchedGroups.add(Group.fromSnapshot(child));
+            }
         }
+        
         if (mounted) {
           setState(() {
             _groups = fetchedGroups;
@@ -184,29 +190,20 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
             }
           });
         }
-      } else {
-        if (mounted) {
-          setState(() {
-            _groups = [];
-            _selectedGroup = null;
-            _isLoadingGroups = false;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingGroups = false;
-          _groups = [];
-          _selectedGroup = null;
-        });
-        debugPrint('Error loading groups: $e');
-      }
-    }
+    }, onError: (error) {
+       if (mounted) {
+         setState(() {
+           _isLoadingGroups = false;
+           _groups = [];
+         });
+         debugPrint('Error loading groups stream: $error');
+       }
+    });
   }
 
   @override
   void dispose() {
+    _groupsSubscription?.cancel();
     _fullNameController.dispose();
     _guardianFullNameController.dispose();
     _ageController.dispose();
@@ -215,6 +212,9 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
     _placeOfResidenceController.dispose();
     _institutionalEmailController.dispose();
     _studentIdController.dispose();
+    _allergiesController.dispose();
+    _healthConditionsController.dispose();
+    _generalHealthStatusController.dispose();
     super.dispose();
   }
 
@@ -259,6 +259,15 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
       await databaseRef
           .child(studentData.studentId)
           .set(studentData.toFirebaseMap());
+
+      // Si se cambió la matrícula, eliminar el registro anterior para evitar duplicados
+      if (widget.student != null && widget.student!.id != studentData.studentId) {
+          try {
+            await databaseRef.child(widget.student!.id).remove();
+          } catch (e) {
+            debugPrint('Error eliminando registro anterior: $e');
+          }
+      }
 
       // --- ACTUALIZAR CONTADOR DE ALUMNOS EN EL GRUPO ---
       if (_selectedGroup != null) {
@@ -363,7 +372,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                                               _studentIdController,
                                               'Matrícula',
                                               Icons.badge_outlined,
-                                              enabled: widget.student == null)),
+                                              enabled: true)),
                                       const SizedBox(width: 12),
                                       Expanded(
                                           flex: 1,
@@ -528,7 +537,8 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         if (val != null) {
             setState(() {
               _selectedSchoolCycle = val;
-              _loadGroups(val);
+              // Switch subscription to new cycle
+              _subscribeToGroups(val);
             });
             _checkCycleStatus(val);
         }
@@ -574,7 +584,9 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                  context, 
                  MaterialPageRoute(builder: (context) => const GroupManagementScreen())
                );
-               if (_selectedSchoolCycle != null) _loadGroups(_selectedSchoolCycle);
+               // Refresh handled automatically by stream if groups were added, 
+               // but we can ensure subscription is active.
+               if (_selectedSchoolCycle != null) _subscribeToGroups(_selectedSchoolCycle);
             }, 
             icon: const Icon(Icons.add_business_rounded),
             tooltip: 'Crear/Gestionar Grupos',

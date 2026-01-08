@@ -8,10 +8,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/student_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_schedule_management_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/prefect/attendance_query_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/attendance_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/school_cycle_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/non_attendance_management_screen.dart';
-import 'package:asystem_cobacam/screens/dashboards/prefect/attendance_query_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/prefect/credential_generator_screen.dart';
 import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
 
 class PrefectDashboardScreen extends StatefulWidget {
@@ -53,6 +54,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       const AttendanceScreen(),
       const NonAttendanceManagementScreen(),
       const AttendanceQueryScreen(),
+      const CredentialGeneratorScreen(),
       const Center(child: Text("Scanner QR (Próximamente)")),
       const Center(child: Text("Reporte de Incidencias (Próximamente)")),
     ];
@@ -68,6 +70,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       'Pase de Lista',
       'Días No Lectivos',
       'Consulta de Asistencia',
+      'Generador de Credenciales',
       'Scanner QR',
       'Reportar Incidencia',
     ];
@@ -114,10 +117,10 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         index = 2;
         break;
       case 'qr':
-        index = 10;
+        index = 11;
         break;
       case 'incidencia':
-        index = 11;
+        index = 12;
         break;
       case 'lista':
         index = 7;
@@ -133,6 +136,12 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         break;
       case 'no_lectivos':
         index = 8;
+        break;
+      case 'consulta_asistencia':
+        index = 9;
+        break;
+      case 'credenciales':
+        index = 10;
         break;
       default:
         index = 0;

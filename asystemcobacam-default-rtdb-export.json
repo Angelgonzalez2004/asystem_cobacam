@@ -1,0 +1,384 @@
+{
+  "access_codes": {
+    "Adolfo López Mateos": { "Academica": "ALM-ACA-24", "Alumno": "ALM-ALU-24", "Personal Administrativo por Plantel": "ALM-PAP-24", "Prefecta": "ALM-PRE-24" },
+    "Aguacatal": { "Academica": "AGU-ACA-24", "Alumno": "AGU-ALU-24", "Personal Administrativo por Plantel": "AGU-PAP-24", "Prefecta": "AGU-PRE-24" },
+    "Atasta": { "Academica": "ATA-ACA-24", "Alumno": "ATA-ALU-24", "Personal Administrativo por Plantel": "ATA-PAP-24", "Prefecta": "ATA-PRE-24" },
+    "Bolonchén de Rejón": { "Academica": "BDR-ACA-24", "Alumno": "BDR-ALU-24", "Personal Administrativo por Plantel": "BDR-PAP-24", "Prefecta": "BDR-PRE-24" },
+    "Bécal": { "Academica": "BEC-ACA-24", "Alumno": "BEC-ALU-24", "Personal Administrativo por Plantel": "BEC-PAP-24", "Prefecta": "BEC-PRE-24" },
+    "Calkiní": { "Academica": "CAL-ACA-24", "Alumno": "CAL-ALU-24", "Personal Administrativo por Plantel": "CAL-PAP-24", "Prefecta": "CAL-PRE-24" },
+    "Candelaria": { "Academica": "CAN-ACA-24", "Alumno": "CAN-ALU-24", "Personal Administrativo por Plantel": "CAN-PAP-24", "Prefecta": "CAN-PRE-24" },
+    "Champotón": { "Academica": "CHA-ACA-24", "Alumno": "CHA-ALU-24", "Personal Administrativo por Plantel": "CHA-PAP-24", "Prefecta": "CHA-PRE-24" },
+    "Chicbul": { "Academica": "CHI-ACA-24", "Alumno": "CHI-ALU-24", "Personal Administrativo por Plantel": "CHI-PAP-24", "Prefecta": "CHI-PRE-24" },
+    "Chiná": { "Academica": "CHN-ACA-24", "Alumno": "CHN-ALU-24", "Personal Administrativo por Plantel": "CHN-PAP-24", "Prefecta": "CHN-PRE-24" },
+    "Civalito": { "Academica": "CIV-ACA-24", "Alumno": "CIV-ALU-24", "Personal Administrativo por Plantel": "CIV-PAP-24", "Prefecta": "CIV-PRE-24" },
+    "Conquista Campesina": { "Academica": "CC-ACA-24", "Alumno": "CC-ALU-24", "Personal Administrativo por Plantel": "CC-PAP-24", "Prefecta": "CC-PRE-24" },
+    "Constitución": { "Academica": "CON-ACA-24", "Alumno": "CON-ALU-24", "Personal Administrativo por Plantel": "CON-PAP-24", "Prefecta": "CON-PRE-24" },
+    "Don Samuel": { "Academica": "DS-ACA-24", "Alumno": "DS-ALU-24", "Personal Administrativo por Plantel": "DS-PAP-24", "Prefecta": "DS-PRE-24" },
+    "Dzibalchén": { "Academica": "DZI-ACA-24", "Alumno": "DZI-ALU-24", "Personal Administrativo por Plantel": "DZI-PAP-24", "Prefecta": "DZI-PRE-24" },
+    "El Carmen II": { "Academica": "EC2-ACA-24", "Alumno": "EC2-ALU-24", "Personal Administrativo por Plantel": "EC2-PAP-24", "Prefecta": "EC2-PRE-24" },
+    "El Desengaño": { "Academica": "ED-ACA-24", "Alumno": "ED-ALU-24", "Personal Administrativo por Plantel": "ED-PAP-24", "Prefecta": "ED-PRE-24" },
+    "El Juncal": { "Academica": "EJ-ACA-24", "Alumno": "EJ-ALU-24", "Personal Administrativo por Plantel": "EJ-PAP-24", "Prefecta": "EJ-PRE-24" },
+    "El Naranjo": { "Academica": "EN-ACA-24", "Alumno": "EN-ALU-24", "Personal Administrativo por Plantel": "EN-PAP-24", "Prefecta": "EN-PRE-24" },
+    "El Tesoro": { "Academica": "ET-ACA-24", "Alumno": "ET-ALU-24", "Personal Administrativo por Plantel": "ET-PAP-24", "Prefecta": "ET-PRE-24" },
+    "Escárcega": { "Academica": "ESC-ACA-24", "Alumno": "ESC-ALU-24", "Personal Administrativo por Plantel": "ESC-PAP-24", "Prefecta": "ESC-PRE-24" },
+    "Hecelchakán": { "Academica": "HEC-ACA-24", "Alumno": "HEC-ALU-24", "Personal Administrativo por Plantel": "HEC-PAP-24", "Prefecta": "HEC-PRE-24" },
+    "Isla Aguada": { "Academica": "IA-ACA-24", "Alumno": "IA-ALU-24", "Personal Administrativo por Plantel": "IA-PAP-24", "Prefecta": "IA-PRE-24" },
+    "La Esmeralda": { "Academica": "LE-ACA-24", "Alumno": "LE-ALU-24", "Personal Administrativo por Plantel": "LE-PAP-24", "Prefecta": "LE-PRE-24" },
+    "La Libertad": { "Academica": "LL-ACA-24", "Alumno": "LL-ALU-24", "Personal Administrativo por Plantel": "LL-PAP-24", "Prefecta": "LL-PRE-24" },
+    "Lerma": { "Academica": "LER-ACA-24", "Alumno": "LER-ALU-24", "Personal Administrativo por Plantel": "LER-PAP-24", "Prefecta": "LER-PRE-24" },
+    "Ley Federal de Reforma Agraria": { "Academica": "LFRA-ACA-24", "Alumno": "LFRA-ALU-24", "Personal Administrativo por Plantel": "LFRA-PAP-24", "Prefecta": "LFRA-PRE-24" },
+    "Mamantel": { "Academica": "MAM-ACA-24", "Alumno": "MAM-ALU-24", "Personal Administrativo por Plantel": "MAM-PAP-24", "Prefecta": "MAM-PRE-24" },
+    "Nuevo Progreso": { "Academica": "NP-ACA-24", "Alumno": "NP-ALU-24", "Personal Administrativo por Plantel": "NP-PAP-24", "Prefecta": "NP-PRE-24" },
+    "Nunkiní": { "Academica": "NUN-ACA-24", "Alumno": "NUN-ALU-24", "Personal Administrativo por Plantel": "NUN-PAP-24", "Prefecta": "NUN-PRE-24" },
+    "Pich": { "Academica": "PIC-ACA-24", "Alumno": "PIC-ALU-24", "Personal Administrativo por Plantel": "PIC-PAP-24", "Prefecta": "PIC-PRE-24" },
+    "Seybaplaya": { "Academica": "SEY-ACA-24", "Alumno": "SEY-ALU-24", "Personal Administrativo por Plantel": "SEY-PAP-24", "Prefecta": "SEY-PRE-24" },
+    "Sihochac": { "Academica": "SIH-ACA-24", "Alumno": "SIH-ALU-24", "Personal Administrativo por Plantel": "SIH-PAP-24", "Prefecta": "SIH-PRE-24" },
+    "Tenabo": { "Academica": "TEN-ACA-24", "Alumno": "TEN-ALU-24", "Personal Administrativo por Plantel": "TEN-PAP-24", "Prefecta": "TEN-PRE-24" },
+    "Ukúm": { "Academica": "UKU-ACA-24", "Alumno": "UKU-ALU-24", "Personal Administrativo por Plantel": "UKU-PAP-24", "Prefecta": "UKU-PRE-24" },
+    "Xbacab": { "Academica": "XBA-ACA-24", "Alumno": "XBA-ALU-24", "Personal Administrativo por Plantel": "XBA-PAP-24", "Prefecta": "XBA-PRE-24" },
+    "Xpujil": { "Academica": "XPU-ACA-24", "Alumno": "XPU-ALU-24", "Personal Administrativo por Plantel": "XPU-PAP-24", "Prefecta": "XPU-PRE-24" }
+  },
+  "announcements": {
+    "aviso_gen_001": {
+      "authorId": "0RNc6MDq6Mh7DHFoYKDCT7AFTH72",
+      "authorName": "Dirección General",
+      "imageUrls": ["https://firebasestorage.googleapis.com/v0/b/asystemcobacam.firebasestorage.app/o/announcements%2F1767790547776_0.jpg?alt=media&token=28d2cec5-01d7-4bd1-9d38-151f5e4247f5"],
+      "message": "Se informa a toda la comunidad estudiantil que las clases se reanudarán el próximo lunes 8 de enero en los horarios habituales. ¡Bienvenidos al ciclo 2026-A!",
+      "timestamp": 1767790563361,
+      "title": "Reinicio de Clases",
+      "type": "General"
+    },
+    "aviso_gen_002": {
+      "authorId": "0RNc6MDq6Mh7DHFoYKDCT7AFTH72",
+      "authorName": "Dirección Académica",
+      "imageUrls": ["https://firebasestorage.googleapis.com/v0/b/asystemcobacam.firebasestorage.app/o/announcements%2F1767790602179_0.jpg?alt=media&token=6356b199-70be-4ff1-8eed-43d6f76aa2f6"],
+      "message": "IMPORTANTE: El proceso de reinscripción para el ciclo 2026-A comenzará el 1 de febrero. Evita recargos realizando tu pago en tiempo y forma.",
+      "timestamp": 1767790632655,
+      "title": "Proceso de Reinscripción",
+      "type": "General"
+    },
+    "aviso_gen_becas": {
+      "authorId": "0RNc6MDq6Mh7DHFoYKDCT7AFTH72",
+      "authorName": "Depto. de Becas",
+      "message": "Aviso Urgente: Los beneficiarios de la Beca Benito Juárez con apellidos de la A a la L deben acudir a las oficinas administrativas para actualizar sus datos antes del 15 de enero. Documentos necesarios: CURP y Comprobante de Domicilio.",
+      "timestamp": 1767890000000,
+      "title": "Beca Benito Juárez: Actualización de Datos",
+      "type": "General"
+    },
+    "aviso_gen_cte": {
+      "authorId": "0RNc6MDq6Mh7DHFoYKDCT7AFTH72",
+      "authorName": "Dirección General",
+      "message": "Se les recuerda que este viernes 26 de enero NO HABRÁ CLASES debido a la realización del Consejo Técnico Escolar (CTE). Las actividades se reanudan el lunes.",
+      "timestamp": 1768400000000,
+      "title": "Suspensión por CTE",
+      "type": "General"
+    },
+    "aviso_ata_fumigacion": {
+      "authorId": "admin_atasta",
+      "authorName": "Dirección Plantel Atasta",
+      "campus": "Atasta",
+      "message": "Aviso a padres de familia y alumnos: Este sábado se llevará a cabo la fumigación general del plantel para prevenir el dengue. Se pide no dejar alimentos en los salones.",
+      "timestamp": 1768000000000,
+      "title": "Fumigación del Plantel",
+      "type": "Campus"
+    },
+    "aviso_cha_uniformes": {
+      "authorId": "admin_champoton",
+      "authorName": "Dirección Plantel Champotón",
+      "campus": "Champotón",
+      "message": "La entrega de uniformes deportivos para alumnos de nuevo ingreso se realizará en la biblioteca del plantel los días Martes y Jueves de 9:00 AM a 1:00 PM.",
+      "timestamp": 1768100000000,
+      "title": "Entrega de Uniformes Deportivos",
+      "type": "Campus"
+    },
+    "aviso_hec_jarana": {
+      "authorId": "admin_hecelchakan",
+      "authorName": "Coordinación Cultural Hecelchakán",
+      "campus": "Hecelchakán",
+      "message": "¡Participa en nuestro Gran Concurso de Jarana! Inscripciones abiertas en la dirección. Premios a las tres mejores parejas. ¡Demuestra tu orgullo campechano!",
+      "timestamp": 1768200000000,
+      "title": "Concurso de Jarana 2026",
+      "type": "Campus"
+    },
+    "aviso_can_luz": {
+      "authorId": "admin_candelaria",
+      "authorName": "Dirección Plantel Candelaria",
+      "campus": "Candelaria",
+      "message": "AVISO URGENTE: Debido a fallas en el suministro eléctrico por parte de CFE, se suspenden las clases del turno vespertino el día de hoy. Favor de avisar a sus compañeros.",
+      "timestamp": 1767980000000,
+      "title": "Suspensión de Clases (Turno Vespertino)",
+      "type": "Campus"
+    },
+    "aviso_ler_deportes": {
+      "authorId": "admin_lerma",
+      "authorName": "Coordinación Deportiva Lerma",
+      "campus": "Lerma",
+      "message": "Felicidades a nuestro equipo varonil de fútbol por su pase a la final estatal. El partido decisivo será este sábado en el estadio 'Nelson Barrera'. ¡Apoyemos a nuestros Delfines!",
+      "timestamp": 1768300000000,
+      "title": "¡A la Final Estatal!",
+      "type": "Campus"
+    },
+    "aviso_xpu_aniversario": {
+      "authorId": "admin_xpujil",
+      "authorName": "Dirección Plantel Xpujil",
+      "campus": "Xpujil",
+      "message": "Estamos de fiesta. Invitamos a toda la comunidad a celebrar el XX Aniversario del plantel este viernes con una kermés y eventos deportivos.",
+      "timestamp": 1768350000000,
+      "title": "XX Aniversario del Plantel",
+      "type": "Campus"
+    }
+  },
+  "appSettings": {
+    "currentSchoolCycle": "2025-B"
+  },
+  "planteles": {
+    "Atasta": {
+      "attendance": {
+        "2025-B": {
+          "2026-01-07": {
+            "422862750": { "campusId": "Atasta", "date": "2026-01-07", "entryTime": "07:05", "group": "505", "schoolCycle": "2025-B", "status": "presente", "studentFullName": "Fernanda Cruz Hernández", "studentId": "422862750" },
+            "ATA_101_01": { "campusId": "Atasta", "date": "2026-01-07", "entryTime": "07:01", "group": "101", "schoolCycle": "2025-B", "status": "presente", "studentFullName": "Angel Del Carmen Gonzalez Alcocer", "studentId": "4222010297" },
+            "ATA_101_02": { "campusId": "Atasta", "date": "2026-01-07", "entryTime": "07:02", "group": "101", "schoolCycle": "2025-B", "status": "presente", "studentFullName": "Juan Pérez López", "studentId": "ATA_101_02" },
+            "ATA_101_03": { "campusId": "Atasta", "date": "2026-01-07", "entryTime": "07:15", "group": "101", "schoolCycle": "2025-B", "status": "retardo", "reasonTardy": "Tráfico", "studentFullName": "Sofía Martínez Ruiz", "studentId": "ATA_101_03" },
+            "ATA_101_04": { "campusId": "Atasta", "date": "2026-01-07", "entryTime": "07:03", "group": "101", "schoolCycle": "2025-B", "status": "presente", "studentFullName": "Luis Fernando Chan", "studentId": "ATA_101_04" },
+            "ATA_101_05": { "campusId": "Atasta", "date": "2026-01-07", "entryTime": "07:04", "group": "101", "schoolCycle": "2025-B", "status": "presente", "studentFullName": "Mariana Ek", "studentId": "ATA_101_05" },
+            "ATA_101_06": { "campusId": "Atasta", "date": "2026-01-07", "entryTime": "07:30", "group": "101", "schoolCycle": "2025-B", "status": "retardo", "reasonTardy": "Lluvia", "studentFullName": "Jorge Pech", "studentId": "ATA_101_06" },
+            "ATA_101_07": { "campusId": "Atasta", "date": "2026-01-07", "entryTime": "07:31", "group": "101", "schoolCycle": "2025-B", "status": "retardo", "reasonTardy": "Lluvia", "studentFullName": "Lucía Canché", "studentId": "ATA_101_07" },
+            "ATA_101_08": { "campusId": "Atasta", "date": "2026-01-07", "entryTime": "07:32", "group": "101", "schoolCycle": "2025-B", "status": "retardo", "reasonTardy": "Lluvia", "studentFullName": "Ricardo Moo", "studentId": "ATA_101_08" },
+            "ATA_101_09": { "campusId": "Atasta", "date": "2026-01-07", "entryTime": "08:00", "group": "101", "schoolCycle": "2025-B", "status": "falta", "studentFullName": "Elena Chi", "studentId": "ATA_101_09" }
+          },
+          "2026-01-08": {
+            "422862750": { "campusId": "Atasta", "date": "2026-01-08", "entryTime": "06:55", "group": "505", "schoolCycle": "2025-B", "status": "presente", "studentFullName": "Fernanda Cruz Hernández", "studentId": "422862750" },
+             "ATA_505_02": { "campusId": "Atasta", "date": "2026-01-08", "entryTime": "06:56", "group": "505", "schoolCycle": "2025-B", "status": "presente", "studentFullName": "Luisa Fernanda Morales", "studentId": "ATA_505_02" },
+             "ATA_505_03": { "campusId": "Atasta", "date": "2026-01-08", "entryTime": "06:57", "group": "505", "schoolCycle": "2025-B", "status": "presente", "studentFullName": "Cristian Eduardo May", "studentId": "ATA_505_03" },
+             "ATA_505_04": { "campusId": "Atasta", "date": "2026-01-08", "entryTime": "06:58", "group": "505", "schoolCycle": "2025-B", "status": "presente", "studentFullName": "Rosa Isela Chan", "studentId": "ATA_505_04" },
+             "ATA_505_05": { "campusId": "Atasta", "date": "2026-01-08", "entryTime": "07:15", "group": "505", "schoolCycle": "2025-B", "status": "retardo", "reasonTardy": "Dormido", "studentFullName": "José Angel Dzul", "studentId": "ATA_505_05" },
+             "ATA_505_06": { "campusId": "Atasta", "date": "2026-01-08", "entryTime": "08:05", "group": "505", "schoolCycle": "2025-B", "status": "falta", "studentFullName": "Carlos Huchín", "studentId": "ATA_505_06" }
+          }
+        }
+      },
+      "groups": {
+        "grp_at_101": { "name": "101", "schoolCycleId": "2025-B", "semester": 1, "studentCount": 15 },
+        "grp_at_505": { "name": "505", "schoolCycleId": "2025-B", "semester": 5, "studentCount": 12 }
+      },
+      "nonAttendanceDays": {
+        "2026-02-02": { "campusId": "Atasta", "date": "2026-02-02", "reason": "Día de la Constitución Mexicana" },
+        "2026-03-16": { "campusId": "Atasta", "date": "2026-03-16", "reason": "Natalicio de Benito Juárez" },
+        "2026-05-01": { "campusId": "Atasta", "date": "2026-05-01", "reason": "Día del Trabajo" },
+        "2026-05-05": { "campusId": "Atasta", "date": "2026-05-05", "reason": "Batalla de Puebla" },
+        "2026-05-15": { "campusId": "Atasta", "date": "2026-05-15", "reason": "Día del Maestro" }
+      },
+      "schedules": {
+        "2025-B": {
+          "grp_at_101": {
+            "Lunes": { "dayOfWeek": "Lunes", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_at_101", "schoolCycle": "2025-B" },
+            "Martes": { "dayOfWeek": "Martes", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_at_101", "schoolCycle": "2025-B" },
+            "Miércoles": { "dayOfWeek": "Miércoles", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_at_101", "schoolCycle": "2025-B" },
+            "Jueves": { "dayOfWeek": "Jueves", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_at_101", "schoolCycle": "2025-B" },
+            "Viernes": { "dayOfWeek": "Viernes", "entryTime": "7:00 AM", "exitTime": "12:00 PM", "groupId": "grp_at_101", "schoolCycle": "2025-B" }
+          },
+          "grp_at_505": {
+             "Lunes": { "dayOfWeek": "Lunes", "entryTime": "7:00 AM", "exitTime": "12:00 PM", "groupId": "grp_at_505", "schoolCycle": "2025-B" },
+             "Miércoles": { "dayOfWeek": "Miércoles", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_at_505", "schoolCycle": "2025-B" },
+             "Viernes": { "dayOfWeek": "Viernes", "entryTime": "8:00 AM", "exitTime": "12:00 PM", "groupId": "grp_at_505", "schoolCycle": "2025-B" }
+          }
+        }
+      },
+      "students": {
+        "2025-B": {
+          "422862750": { "age": 17, "fullName": "Fernanda Cruz Hernández", "gender": "Femenino", "group": "505", "guardianFullName": "Roberto Cruz", "guardianPhone": "9381002030", "institutionalEmail": "fernanda.cruz@cobacam.edu.mx", "studentId": "422862750", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "allergies": "Penicilina", "healthConditions": "Usa Lentes", "generalHealthStatus": "Bueno", "studentPhone": "9385551001" },
+          "ATA_101_01": { "age": 16, "fullName": "Angel Del Carmen Gonzalez Alcocer", "gender": "Masculino", "group": "101", "guardianFullName": "Gladys del Carmen Alcocer", "guardianPhone": "9381005060", "institutionalEmail": "angel_gonzalez2@cobacam.edu.mx", "studentId": "4222010297", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9381321268", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_101_02": { "age": 15, "fullName": "Juan Pérez López", "gender": "Masculino", "group": "101", "guardianFullName": "María López", "guardianPhone": "9385551010", "institutionalEmail": "juan.perez@cobacam.edu.mx", "studentId": "ATA_101_02", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385551011", "allergies": "Ninguna", "healthConditions": "Asma leve", "generalHealthStatus": "Bueno" },
+          "ATA_101_03": { "age": 15, "fullName": "Sofía Martínez Ruiz", "gender": "Femenino", "group": "101", "guardianFullName": "Pedro Martínez", "guardianPhone": "9385552020", "institutionalEmail": "sofia.martinez@cobacam.edu.mx", "studentId": "ATA_101_03", "isActive": true, "placeOfResidence": "Puerto Rico", "schoolCycle": "2025-B", "studentPhone": "9385552021", "allergies": "Polen", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_101_04": { "age": 15, "fullName": "Luis Fernando Chan", "gender": "Masculino", "group": "101", "guardianFullName": "Fernando Chan", "guardianPhone": "9385559901", "institutionalEmail": "luis.chan@cobacam.edu.mx", "studentId": "ATA_101_04", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385559911", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_101_05": { "age": 15, "fullName": "Mariana Ek", "gender": "Femenino", "group": "101", "guardianFullName": "José Ek", "guardianPhone": "9385559902", "institutionalEmail": "mariana.ek@cobacam.edu.mx", "studentId": "ATA_101_05", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385559912", "allergies": "Ninguna", "healthConditions": "Pie plano", "generalHealthStatus": "Bueno" },
+          "ATA_101_06": { "age": 15, "fullName": "Jorge Pech", "gender": "Masculino", "group": "101", "guardianFullName": "Marta Pech", "guardianPhone": "9385559903", "institutionalEmail": "jorge.pech@cobacam.edu.mx", "studentId": "ATA_101_06", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385559913", "allergies": "Ibuprofeno", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_101_07": { "age": 15, "fullName": "Lucía Canché", "gender": "Femenino", "group": "101", "guardianFullName": "Juan Canché", "guardianPhone": "9385559904", "institutionalEmail": "lucia.canche@cobacam.edu.mx", "studentId": "ATA_101_07", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385559914", "allergies": "Ninguna", "healthConditions": "Usa Lentes", "generalHealthStatus": "Sano" },
+          "ATA_101_08": { "age": 15, "fullName": "Ricardo Moo", "gender": "Masculino", "group": "101", "guardianFullName": "Patricia Moo", "guardianPhone": "9385559905", "institutionalEmail": "ricardo.moo1@cobacam.edu.mx", "studentId": "ATA_101_08", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385559915", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_101_09": { "age": 15, "fullName": "Elena Chi", "gender": "Femenino", "group": "101", "guardianFullName": "Roberto Chi", "guardianPhone": "9385559906", "institutionalEmail": "elena.chi@cobacam.edu.mx", "studentId": "ATA_101_09", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385559916", "allergies": "Mariscos", "healthConditions": "Ninguna", "generalHealthStatus": "Delicado" },
+          "ATA_101_10": { "age": 15, "fullName": "Carlos Yah", "gender": "Masculino", "group": "101", "guardianFullName": "Esteban Yah", "guardianPhone": "9385559907", "institutionalEmail": "carlos.yah@cobacam.edu.mx", "studentId": "ATA_101_10", "isActive": true, "placeOfResidence": "San Antonio", "schoolCycle": "2025-B", "studentPhone": "9385559917", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_101_11": { "age": 15, "fullName": "Victoria Tun", "gender": "Femenino", "group": "101", "guardianFullName": "Gabriela Tun", "guardianPhone": "9385559908", "institutionalEmail": "victoria.tun@cobacam.edu.mx", "studentId": "ATA_101_11", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385559918", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_101_12": { "age": 15, "fullName": "Humberto May", "gender": "Masculino", "group": "101", "guardianFullName": "Oscar May", "guardianPhone": "9385559909", "institutionalEmail": "humberto.may@cobacam.edu.mx", "studentId": "ATA_101_12", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385559919", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_101_13": { "age": 15, "fullName": "Yolanda Ku", "gender": "Femenino", "group": "101", "guardianFullName": "Felipe Ku", "guardianPhone": "9385559910", "institutionalEmail": "yolanda.ku@cobacam.edu.mx", "studentId": "ATA_101_13", "isActive": true, "placeOfResidence": "Nuevo Progreso", "schoolCycle": "2025-B", "studentPhone": "9385559920", "allergies": "Polvo", "healthConditions": "Rinitis", "generalHealthStatus": "Bueno" },
+          "ATA_101_14": { "age": 15, "fullName": "David Cauich", "gender": "Masculino", "group": "101", "guardianFullName": "Mónica Cauich", "guardianPhone": "9385559921", "institutionalEmail": "david.cauich@cobacam.edu.mx", "studentId": "ATA_101_14", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385559922", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_505_02": { "age": 17, "fullName": "Luisa Fernanda Morales", "gender": "Femenino", "group": "505", "guardianFullName": "Antonio Morales", "guardianPhone": "9385556070", "institutionalEmail": "luisa.morales@cobacam.edu.mx", "studentId": "ATA_505_02", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385556170", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_505_03": { "age": 17, "fullName": "Cristian Eduardo May", "gender": "Masculino", "group": "505", "guardianFullName": "Eduardo May", "guardianPhone": "9385556071", "institutionalEmail": "cristian.may@cobacam.edu.mx", "studentId": "ATA_505_03", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385556171", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_505_04": { "age": 17, "fullName": "Rosa Isela Chan", "gender": "Femenino", "group": "505", "guardianFullName": "Víctor Chan", "guardianPhone": "9385556072", "institutionalEmail": "rosa.chan@cobacam.edu.mx", "studentId": "ATA_505_04", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385556172", "allergies": "Lactosa", "healthConditions": "Gastritis", "generalHealthStatus": "Regular" },
+          "ATA_505_05": { "age": 17, "fullName": "José Angel Dzul", "gender": "Masculino", "group": "505", "guardianFullName": "Angel Dzul", "guardianPhone": "9385556073", "institutionalEmail": "jose.dzul@cobacam.edu.mx", "studentId": "ATA_505_05", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385556173", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_505_06": { "age": 17, "fullName": "Carlos Huchín", "gender": "Masculino", "group": "505", "guardianFullName": "Verónica Huchín", "guardianPhone": "9385556074", "institutionalEmail": "carlos.huchin@cobacam.edu.mx", "studentId": "ATA_505_06", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385556174", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_505_07": { "age": 17, "fullName": "María Fernanda Cahuich", "gender": "Femenino", "group": "505", "guardianFullName": "Humberto Cahuich", "guardianPhone": "9385556075", "institutionalEmail": "maria.cahuich@cobacam.edu.mx", "studentId": "ATA_505_07", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385556175", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_505_08": { "age": 17, "fullName": "Eduardo Tun", "gender": "Masculino", "group": "505", "guardianFullName": "Ricardo Tun", "guardianPhone": "9385556076", "institutionalEmail": "eduardo.tun@cobacam.edu.mx", "studentId": "ATA_505_08", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385556176", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_505_09": { "age": 17, "fullName": "Karla Naal", "gender": "Femenino", "group": "505", "guardianFullName": "Julio Naal", "guardianPhone": "9385556077", "institutionalEmail": "karla.naal@cobacam.edu.mx", "studentId": "ATA_505_09", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385556177", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_505_10": { "age": 17, "fullName": "Felipe Puc", "gender": "Masculino", "group": "505", "guardianFullName": "Andrés Puc", "guardianPhone": "9385556078", "institutionalEmail": "felipe.puc@cobacam.edu.mx", "studentId": "ATA_505_10", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385556178", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_505_11": { "age": 17, "fullName": "Gabriela Ic", "gender": "Femenino", "group": "505", "guardianFullName": "César Ic", "guardianPhone": "9385556079", "institutionalEmail": "gabriela.ic@cobacam.edu.mx", "studentId": "ATA_505_11", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385556179", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "ATA_505_12": { "age": 17, "fullName": "Jorge Ucan", "gender": "Masculino", "group": "505", "guardianFullName": "David Ucan", "guardianPhone": "9385556080", "institutionalEmail": "jorge.ucan@cobacam.edu.mx", "studentId": "ATA_505_12", "isActive": true, "placeOfResidence": "Atasta", "schoolCycle": "2025-B", "studentPhone": "9385556180", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" }
+        }
+      }
+    },
+    "Champotón": {
+      "attendance": {
+        "2025-B": {
+          "2026-01-08": {
+            "CHA_101_01": { "campusId": "Champotón", "date": "2026-01-08", "entryTime": "06:55", "group": "101", "schoolCycle": "2025-B", "status": "presente", "studentFullName": "Manuel Cosgaya", "studentId": "CHA_101_01" }
+          }
+        }
+      },
+      "groups": {
+        "grp_cha_101": { "name": "101", "schoolCycleId": "2025-B", "semester": 1, "studentCount": 7 }
+      },
+      "nonAttendanceDays": {
+        "2026-02-02": { "campusId": "Champotón", "date": "2026-02-02", "reason": "Día de la Constitución Mexicana" },
+        "2026-03-16": { "campusId": "Champotón", "date": "2026-03-16", "reason": "Natalicio de Benito Juárez" },
+        "2026-05-01": { "campusId": "Champotón", "date": "2026-05-01", "reason": "Día del Trabajo" },
+        "2026-05-05": { "campusId": "Champotón", "date": "2026-05-05", "reason": "Batalla de Puebla" },
+        "2026-05-15": { "campusId": "Champotón", "date": "2026-05-15", "reason": "Día del Maestro" }
+      },
+      "schedules": {
+        "2025-B": {
+          "grp_cha_101": {
+            "Lunes": { "dayOfWeek": "Lunes", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_cha_101", "schoolCycle": "2025-B" },
+            "Martes": { "dayOfWeek": "Martes", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_cha_101", "schoolCycle": "2025-B" },
+            "Miércoles": { "dayOfWeek": "Miércoles", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_cha_101", "schoolCycle": "2025-B" },
+            "Jueves": { "dayOfWeek": "Jueves", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_cha_101", "schoolCycle": "2025-B" },
+            "Viernes": { "dayOfWeek": "Viernes", "entryTime": "7:00 AM", "exitTime": "12:00 PM", "groupId": "grp_cha_101", "schoolCycle": "2025-B" }
+          }
+        }
+      },
+      "students": {
+        "2025-B": {
+          "CHA_101_01": { "age": 15, "fullName": "Manuel Cosgaya", "gender": "Masculino", "group": "101", "guardianFullName": "Pedro Cosgaya", "guardianPhone": "9825550001", "institutionalEmail": "manuel.cosgaya@cobacam.edu.mx", "studentId": "CHA_101_01", "isActive": true, "placeOfResidence": "Champotón", "schoolCycle": "2025-B", "studentPhone": "9825550101", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "CHA_101_02": { "age": 15, "fullName": "Rosa Sansores", "gender": "Femenino", "group": "101", "guardianFullName": "Layda Sansores", "guardianPhone": "9825550002", "institutionalEmail": "rosa.sansores@cobacam.edu.mx", "studentId": "CHA_101_02", "isActive": true, "placeOfResidence": "Champotón", "schoolCycle": "2025-B", "studentPhone": "9825550102", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "CHA_101_03": { "age": 15, "fullName": "Carlos Buenfil", "gender": "Masculino", "group": "101", "guardianFullName": "Jorge Buenfil", "guardianPhone": "9825550003", "institutionalEmail": "carlos.buenfil@cobacam.edu.mx", "studentId": "CHA_101_03", "isActive": true, "placeOfResidence": "Champotón", "schoolCycle": "2025-B", "studentPhone": "9825550103", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "CHA_101_04": { "age": 15, "fullName": "Ana Baeza", "gender": "Femenino", "group": "101", "guardianFullName": "Mario Baeza", "guardianPhone": "9825550004", "institutionalEmail": "ana.baeza@cobacam.edu.mx", "studentId": "CHA_101_04", "isActive": true, "placeOfResidence": "Champotón", "schoolCycle": "2025-B", "studentPhone": "9825550104", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "CHA_101_05": { "age": 15, "fullName": "Pedro Duran", "gender": "Masculino", "group": "101", "guardianFullName": "Sofia Duran", "guardianPhone": "9825550005", "institutionalEmail": "pedro.duran@cobacam.edu.mx", "studentId": "CHA_101_05", "isActive": true, "placeOfResidence": "Champotón", "schoolCycle": "2025-B", "studentPhone": "9825550105", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "CHA_101_06": { "age": 15, "fullName": "Julián Medina", "gender": "Masculino", "group": "101", "guardianFullName": "Patricia Medina", "guardianPhone": "9825550006", "institutionalEmail": "julian.medina@cobacam.edu.mx", "studentId": "CHA_101_06", "isActive": true, "placeOfResidence": "Champotón", "schoolCycle": "2025-B", "studentPhone": "9825550106", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "CHA_101_07": { "age": 15, "fullName": "Verónica Loeza", "gender": "Femenino", "group": "101", "guardianFullName": "Oscar Loeza", "guardianPhone": "9825550007", "institutionalEmail": "veronica.loeza@cobacam.edu.mx", "studentId": "CHA_101_07", "isActive": true, "placeOfResidence": "Champotón", "schoolCycle": "2025-B", "studentPhone": "9825550107", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" }
+        }
+      }
+    },
+    "Hecelchakán": {
+      "attendance": {
+        "2025-B": {
+          "2026-01-08": {
+            "HEC_301_01": { "campusId": "Hecelchakán", "date": "2026-01-08", "entryTime": "06:59", "group": "301", "schoolCycle": "2025-B", "status": "presente", "studentFullName": "Felipe Euán", "studentId": "HEC_301_01" }
+          }
+        }
+      },
+      "groups": {
+        "grp_hec_301": { "name": "301", "schoolCycleId": "2025-B", "semester": 3, "studentCount": 5 }
+      },
+      "nonAttendanceDays": {
+        "2026-02-02": { "campusId": "Hecelchakán", "date": "2026-02-02", "reason": "Día de la Constitución Mexicana" },
+        "2026-03-16": { "campusId": "Hecelchakán", "date": "2026-03-16", "reason": "Natalicio de Benito Juárez" },
+        "2026-05-01": { "campusId": "Hecelchakán", "date": "2026-05-01", "reason": "Día del Trabajo" },
+        "2026-05-05": { "campusId": "Hecelchakán", "date": "2026-05-05", "reason": "Batalla de Puebla" },
+        "2026-05-15": { "campusId": "Hecelchakán", "date": "2026-05-15", "reason": "Día del Maestro" }
+      },
+      "schedules": {
+        "2025-B": {
+          "grp_hec_301": {
+            "Lunes": { "dayOfWeek": "Lunes", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_hec_301", "schoolCycle": "2025-B" },
+            "Martes": { "dayOfWeek": "Martes", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_hec_301", "schoolCycle": "2025-B" },
+            "Miércoles": { "dayOfWeek": "Miércoles", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_hec_301", "schoolCycle": "2025-B" },
+            "Jueves": { "dayOfWeek": "Jueves", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_hec_301", "schoolCycle": "2025-B" },
+            "Viernes": { "dayOfWeek": "Viernes", "entryTime": "7:00 AM", "exitTime": "12:00 PM", "groupId": "grp_hec_301", "schoolCycle": "2025-B" }
+          }
+        }
+      },
+      "students": {
+        "2025-B": {
+          "HEC_301_01": { "age": 16, "fullName": "Felipe Euán", "gender": "Masculino", "group": "301", "guardianFullName": "José Euán", "guardianPhone": "9965550001", "institutionalEmail": "felipe.euan@cobacam.edu.mx", "studentId": "HEC_301_01", "isActive": true, "placeOfResidence": "Hecelchakán", "schoolCycle": "2025-B", "studentPhone": "9965550101", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "HEC_301_02": { "age": 16, "fullName": "María Balam", "gender": "Femenino", "group": "301", "guardianFullName": "Pedro Balam", "guardianPhone": "9965550002", "institutionalEmail": "maria.balam@cobacam.edu.mx", "studentId": "HEC_301_02", "isActive": true, "placeOfResidence": "Hecelchakán", "schoolCycle": "2025-B", "studentPhone": "9965550102", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "HEC_301_03": { "age": 16, "fullName": "José Caan", "gender": "Masculino", "group": "301", "guardianFullName": "Luis Caan", "guardianPhone": "9965550003", "institutionalEmail": "jose.caan@cobacam.edu.mx", "studentId": "HEC_301_03", "isActive": true, "placeOfResidence": "Pomuch", "schoolCycle": "2025-B", "studentPhone": "9965550103", "allergies": "Ninguna", "healthConditions": "Diabetes Juvenil", "generalHealthStatus": "Controlado" },
+          "HEC_301_04": { "age": 16, "fullName": "Luisa Yam", "gender": "Femenino", "group": "301", "guardianFullName": "Roberto Yam", "guardianPhone": "9965550004", "institutionalEmail": "luisa.yam@cobacam.edu.mx", "studentId": "HEC_301_04", "isActive": true, "placeOfResidence": "Hecelchakán", "schoolCycle": "2025-B", "studentPhone": "9965550104", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "HEC_301_05": { "age": 16, "fullName": "Antonio Collí", "gender": "Masculino", "group": "301", "guardianFullName": "Marcos Collí", "guardianPhone": "9965550005", "institutionalEmail": "antonio.colli@cobacam.edu.mx", "studentId": "HEC_301_05", "isActive": true, "placeOfResidence": "Hecelchakán", "schoolCycle": "2025-B", "studentPhone": "9965550105", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" }
+        }
+      }
+    },
+    "Xpujil": {
+      "attendance": {
+        "2025-B": {
+          "2026-01-08": {
+            "XPU_501_01": { "campusId": "Xpujil", "date": "2026-01-08", "entryTime": "07:05", "group": "501", "schoolCycle": "2025-B", "status": "presente", "studentFullName": "Javier Calán", "studentId": "XPU_501_01" }
+          }
+        }
+      },
+      "groups": {
+        "grp_xpu_501": { "name": "501", "schoolCycleId": "2025-B", "semester": 5, "studentCount": 5 }
+      },
+      "nonAttendanceDays": {
+        "2026-02-02": { "campusId": "Xpujil", "date": "2026-02-02", "reason": "Día de la Constitución Mexicana" },
+        "2026-03-16": { "campusId": "Xpujil", "date": "2026-03-16", "reason": "Natalicio de Benito Juárez" },
+        "2026-05-01": { "campusId": "Xpujil", "date": "2026-05-01", "reason": "Día del Trabajo" },
+        "2026-05-05": { "campusId": "Xpujil", "date": "2026-05-05", "reason": "Batalla de Puebla" },
+        "2026-05-15": { "campusId": "Xpujil", "date": "2026-05-15", "reason": "Día del Maestro" }
+      },
+      "schedules": {
+        "2025-B": {
+          "grp_xpu_501": {
+            "Lunes": { "dayOfWeek": "Lunes", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_xpu_501", "schoolCycle": "2025-B" },
+            "Martes": { "dayOfWeek": "Martes", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_xpu_501", "schoolCycle": "2025-B" },
+            "Miércoles": { "dayOfWeek": "Miércoles", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_xpu_501", "schoolCycle": "2025-B" },
+            "Jueves": { "dayOfWeek": "Jueves", "entryTime": "7:00 AM", "exitTime": "1:00 PM", "groupId": "grp_xpu_501", "schoolCycle": "2025-B" },
+            "Viernes": { "dayOfWeek": "Viernes", "entryTime": "7:00 AM", "exitTime": "12:00 PM", "groupId": "grp_xpu_501", "schoolCycle": "2025-B" }
+          }
+        }
+      },
+      "students": {
+        "2025-B": {
+          "XPU_501_01": { "age": 17, "fullName": "Javier Calán", "gender": "Masculino", "group": "501", "guardianFullName": "Pedro Calán", "guardianPhone": "9835550001", "institutionalEmail": "javier.calan@cobacam.edu.mx", "studentId": "XPU_501_01", "isActive": true, "placeOfResidence": "Xpujil", "schoolCycle": "2025-B", "studentPhone": "9835550101", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "XPU_501_02": { "age": 17, "fullName": "María Pat", "gender": "Femenino", "group": "501", "guardianFullName": "Josefa Pat", "guardianPhone": "9835550002", "institutionalEmail": "maria.pat@cobacam.edu.mx", "studentId": "XPU_501_02", "isActive": true, "placeOfResidence": "Xpujil", "schoolCycle": "2025-B", "studentPhone": "9835550102", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "XPU_501_03": { "age": 17, "fullName": "Carlos Ku", "gender": "Masculino", "group": "501", "guardianFullName": "Ramón Ku", "guardianPhone": "9835550003", "institutionalEmail": "carlos.ku@cobacam.edu.mx", "studentId": "XPU_501_03", "isActive": true, "placeOfResidence": "Xpujil", "schoolCycle": "2025-B", "studentPhone": "9835550103", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "XPU_501_04": { "age": 17, "fullName": "Sofía Tun", "gender": "Femenino", "group": "501", "guardianFullName": "Marcos Tun", "guardianPhone": "9835550004", "institutionalEmail": "sofia.tun@cobacam.edu.mx", "studentId": "XPU_501_04", "isActive": true, "placeOfResidence": "Xpujil", "schoolCycle": "2025-B", "studentPhone": "9835550104", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" },
+          "XPU_501_05": { "age": 17, "fullName": "Luis Chi", "gender": "Masculino", "group": "501", "guardianFullName": "Antonio Chi", "guardianPhone": "9835550005", "institutionalEmail": "luis.chi@cobacam.edu.mx", "studentId": "XPU_501_05", "isActive": true, "placeOfResidence": "Xpujil", "schoolCycle": "2025-B", "studentPhone": "9835550105", "allergies": "Ninguna", "healthConditions": "Ninguna", "generalHealthStatus": "Sano" }
+        }
+      }
+    }
+  },
+  "school_cycles": {
+    "2024-A": { "endDate": "2024-07-15", "startDate": "2024-02-12", "type": "A" },
+    "2024-B": { "endDate": "2025-02-14", "startDate": "2024-09-02", "type": "B" },
+    "2025-A": { "endDate": "2025-07-18", "startDate": "2025-02-17", "type": "A" },
+    "2025-B": { "endDate": "2026-02-13", "startDate": "2025-09-08", "type": "B" },
+    "2025-P": { "endDate": "2025-08-29", "startDate": "2025-08-11", "type": "Propedéutico" },
+    "2026-A": { "endDate": "2026-07-17", "startDate": "2026-02-16", "type": "A" },
+    "2026-P": { "endDate": "2026-08-21", "startDate": "2026-08-03", "type": "Propedéutico" }
+  },
+  "users": {
+    "0RNc6MDq6Mh7DHFoYKDCT7AFTH72": {
+      "campus": "General",
+      "dateOfBirth": "2026-01-06",
+      "email": "gonzalezalcocera6@gmail.com",
+      "fullName": "Carmen Gonzalez",
+      "location": "Carmen",
+      "phone": "",
+      "profileImageUrl": "https://firebasestorage.googleapis.com/v0/b/asystemcobacam.firebasestorage.app/o/profile_pictures%2F0RNc6MDq6Mh7DHFoYKDCT7AFTH72?alt=media&token=e8a73ff3-d985-4ebb-ba79-715e20df0a30",
+      "role": "Personal Administrativo General",
+      "sessions": { "Unknown_unknown": { "deviceId": "Unknown_unknown", "ip": "189.238.192.106", "isWeb": true, "lastActive": 1767871946511, "location": "Centro Municipality, Tabasco", "model": "Dispositivo Desconocido", "platform": "Unknown" } }
+    },
+    "BTdahGQjzFYrYvKHJ7LbTDP7Xaq1": {
+      "campus": "Atasta",
+      "dateOfBirth": "2026-01-07",
+      "email": "gonzalezalcocera5@gmail.com",
+      "fullName": "Carmen Alcocer",
+      "location": "Atasta",
+      "phone": "",
+      "profileImageUrl": "https://firebasestorage.googleapis.com/v0/b/asystemcobacam.firebasestorage.app/o/profile_pictures%2FBTdahGQjzFYrYvKHJ7LbTDP7Xaq1?alt=media&token=10d3a05d-c133-41d8-86f1-7527980cab4d",
+      "role": "Personal Administrativo por Plantel",
+      "sessions": { "Unknown_unknown": { "deviceId": "Unknown_unknown", "ip": "2806:10a6:28:47d7:c9d7:7116:cdba:e4a2", "isWeb": true, "lastActive": 1767806635124, "location": "Centro Municipality, Tabasco", "model": "Dispositivo Desconocido", "platform": "Unknown" } }
+    },
+    "lf3QV0oFDATlVVK50lgvPna66Wq2": {
+      "bio": "",
+      "campus": "Atasta",
+      "dateOfBirth": "2004-03-04",
+      "email": "agonzalezalcocer8@gmail.com",
+      "fullName": "Angel Del Carmen Gonzalez Alcocer",
+      "location": "Atasta",
+      "office": "",
+      "phone": "9381321268",
+      "profileImageUrl": "https://firebasestorage.googleapis.com/v0/b/asystemcobacam.firebasestorage.app/o/profile_pictures%2Flf3QV0oFDATlVVK50lgvPna66Wq2?alt=media&token=a7b929e9-6696-4701-b794-ac27c017ae59",
+      "role": "Prefecta",
+      "sessions": { "Unknown_unknown": { "deviceId": "Unknown_unknown", "ip": "189.238.192.106", "isWeb": true, "lastActive": 1767876970496, "location": "Centro Municipality, Tabasco", "model": "Dispositivo Desconocido", "platform": "Unknown" } }
+    }
+  }
+}
