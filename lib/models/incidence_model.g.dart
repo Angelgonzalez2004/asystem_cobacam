@@ -26,13 +26,14 @@ class IncidenceAdapter extends TypeAdapter<Incidence> {
       date: fields[6] as DateTime,
       campusId: fields[7] as String,
       isSynced: fields[8] as bool,
+      schoolCycle: fields[9] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, Incidence obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class IncidenceAdapter extends TypeAdapter<Incidence> {
       ..writeByte(7)
       ..write(obj.campusId)
       ..writeByte(8)
-      ..write(obj.isSynced);
+      ..write(obj.isSynced)
+      ..writeByte(9)
+      ..write(obj.schoolCycle);
   }
 
   @override

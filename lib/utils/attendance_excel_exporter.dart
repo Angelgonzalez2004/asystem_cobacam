@@ -69,7 +69,8 @@ class AttendanceExcelExporter {
     }
 
     // --- GUARDAR ARCHIVO ---
-    final fileBytes = excel.save();
+    // Usar encode() en lugar de save() para evitar doble descarga en Web
+    final fileBytes = excel.encode();
     if (fileBytes == null) return null;
 
     final dateStr = DateFormat('yyyyMMdd').format(date);

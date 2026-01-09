@@ -438,7 +438,7 @@ class _CredentialCardContent extends StatelessWidget {
                     height: 85, 
                     color: Colors.grey.shade100, 
                     child: Icon(
-                      student.gender.toLowerCase().startsWith('m') && !student.gender.toLowerCase().contains('ujer') // Masculino logic
+                      (student.gender.toUpperCase().startsWith('H') || (student.gender.toUpperCase().startsWith('M') && !student.gender.toUpperCase().contains('UJE')))
                           ? Icons.man 
                           : Icons.woman, 
                       size: 50, 
@@ -451,6 +451,7 @@ class _CredentialCardContent extends StatelessWidget {
                                       children: [
                                         Text(student.fullName.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF1E3A8A)), maxLines: 2),
                                         const SizedBox(height: 4),
+                                        Text('GÉNERO: ${student.gender.toUpperCase()}', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black54)),
                                         Text('MATRÍCULA: ${student.studentId}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
                                         Text('GRUPO: ${student.group}', style: const TextStyle(fontSize: 10)),
                                         Text('CICLO: ${student.schoolCycle}', style: const TextStyle(fontSize: 10)),

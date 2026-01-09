@@ -651,6 +651,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         date: DateTime.now(),
         campusId: _campus!,
         isSynced: true,
+        schoolCycle: _currentSchoolCycle,
       );
       // Guardar (Si no hay red, la persistencia de Firebase lo maneja, no necesitamos Hive manual crítico para esto ahora)
       await newRef.set(incidence.toFirebaseMap());

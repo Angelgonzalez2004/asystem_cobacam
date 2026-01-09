@@ -31,6 +31,9 @@ class Incidence {
   @HiveField(8)
   bool isSynced;
 
+  @HiveField(9)
+  String schoolCycle;
+
   Incidence({
     required this.id,
     required this.studentId,
@@ -41,6 +44,7 @@ class Incidence {
     required this.date,
     required this.campusId,
     this.isSynced = false,
+    required this.schoolCycle,
   });
 
   Map<String, dynamic> toFirebaseMap() {
@@ -52,6 +56,7 @@ class Incidence {
       'description': description,
       'date': date.toIso8601String(),
       'campusId': campusId,
+      'schoolCycle': schoolCycle,
     };
   }
 
@@ -66,6 +71,7 @@ class Incidence {
       date: DateTime.tryParse(data['date'] ?? '') ?? DateTime.now(),
       campusId: data['campusId'] ?? '',
       isSynced: true,
+      schoolCycle: data['schoolCycle'] ?? 'S/C',
     );
   }
 }
