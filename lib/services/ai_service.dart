@@ -16,7 +16,7 @@ class AIService {
       return;
     }
     _model = GenerativeModel(
-      model: 'gemini-pro', 
+      model: 'gemini-1.5-flash', 
       apiKey: _apiKey,
       generationConfig: GenerationConfig(
         temperature: 0.7, // Creatividad equilibrada
