@@ -1,6 +1,7 @@
 import 'package:asystem_cobacam/models/attendance_record_model.dart';
 import 'package:asystem_cobacam/models/school_cycle_model.dart';
 import 'package:asystem_cobacam/models/student_model.dart';
+import 'package:asystem_cobacam/models/non_attendance_day_model.dart';
 import 'package:asystem_cobacam/services/app_settings_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
@@ -26,22 +27,18 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
 
   String? _campus;
   List<SchoolCycle> _schoolCycles = [];
+  List<NonAttendanceDay> _nonAttendanceDays = [];
   String? _selectedCycle;
   String? _selectedGroup;
-  DateTime _selectedDate = DateTime.now();
+  
+  DateTimeRange _selectedDateRange = DateTimeRange(start: DateTime.now(), end: DateTime.now());
   String _searchQuery = '';
 
-  // Cache masivo para rendimiento
   bool _isLoadingInitial = true;
   bool _isLoadingAttendance = false;
   
-  // Mapa maestro de alumnos: <StudentId, StudentObj>
   Map<String, Student> _allStudentsMap = {};
-  
-  // Mapa de asistencia del día: <StudentId, RecordObj>
-  Map<String, AttendanceRecord> _dailyAttendanceMap = {};
-  
-  // Lista de grupos disponibles (Strings)
+  Map<String, List<AttendanceRecord>> _periodAttendanceMap = {};
   List<String> _availableGroups = [];
 
   @override
@@ -67,14 +64,15 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
 
       _schoolCycles = await _appSettingsService.getAllSchoolCycles();
       _selectedCycle = await _appSettingsService.getCurrentSchoolCycleId();
+      
+      if (_campus != null) {
+         _nonAttendanceDays = await _appSettingsService.getAllNonAttendanceDays(_campus!);
+      }
 
       if (_campus != null && _selectedCycle != null) {
-        // 1. Cargar TODOS los alumnos del ciclo (una sola vez)
         await _loadAllStudents();
-        // 2. Cargar grupos basados en los alumnos
         _extractGroupsFromStudents();
-        // 3. Cargar asistencia de la fecha seleccionada
-        await _fetchDailyAttendance();
+        await _fetchAttendanceRange();
       }
     } catch (e) {
       debugPrint('Error inicializando: $e');
@@ -86,14 +84,13 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
   Future<void> _loadAllStudents() async {
     try {
       final ref = FirebaseDatabase.instance.ref('planteles/$_campus/students/$_selectedCycle');
-      // Optimizacion: Usar once() en lugar de onValue para evitar reconstrucciones masivas constantes en esta pantalla
       final snap = await ref.get();
       
       final Map<String, Student> tempMap = {};
       if (snap.exists) {
         for (var child in snap.children) {
           final student = Student.fromSnapshot(child);
-          if (student.isActive) { // Solo alumnos activos
+          if (student.isActive) {
             tempMap[student.studentId] = student;
           }
         }
@@ -113,33 +110,45 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
     if (mounted) setState(() => _availableGroups = sorted);
   }
 
-  Future<void> _fetchDailyAttendance() async {
+  Future<void> _fetchAttendanceRange() async {
     if (_campus == null || _selectedCycle == null) return;
     if (mounted) setState(() => _isLoadingAttendance = true);
 
     try {
-      final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-      final ref = FirebaseDatabase.instance.ref('planteles/$_campus/attendance/$_selectedCycle/$dateStr');
-      final snap = await ref.get();
+      final Map<String, List<AttendanceRecord>> tempMap = {};
+      final days = _selectedDateRange.end.difference(_selectedDateRange.start).inDays + 1;
+      
+      if (days > 31) {
+         if (mounted) UiHelpers.showSnackBar(context, 'El rango máximo es de 31 días.', isError: true);
+         setState(() => _isLoadingAttendance = false);
+         return;
+      }
 
-      final Map<String, AttendanceRecord> tempAttendance = {};
-      if (snap.exists) {
-        for (var child in snap.children) {
-          final data = Map<String, dynamic>.from(child.value as Map);
-          final record = AttendanceRecord.fromFirebaseMap(
-            child.key!,
-            dateStr,
-            data,
-            campusId: _campus!,
-            schoolCycle: _selectedCycle!
-          );
-          tempAttendance[record.studentId] = record;
+      for (var i = 0; i < days; i++) {
+        final date = _selectedDateRange.start.add(Duration(days: i));
+        final dateStr = DateFormat('yyyy-MM-dd').format(date);
+        
+        final ref = FirebaseDatabase.instance.ref('planteles/$_campus/attendance/$_selectedCycle/$dateStr');
+        final snap = await ref.get();
+
+        if (snap.exists) {
+          for (var child in snap.children) {
+            final data = Map<String, dynamic>.from(child.value as Map);
+            final record = AttendanceRecord.fromFirebaseMap(
+              child.key!, dateStr, data, campusId: _campus!, schoolCycle: _selectedCycle!
+            );
+            
+            if (!tempMap.containsKey(record.studentId)) {
+              tempMap[record.studentId] = [];
+            }
+            tempMap[record.studentId]!.add(record);
+          }
         }
       }
       
-      if (mounted) setState(() => _dailyAttendanceMap = tempAttendance);
+      if (mounted) setState(() => _periodAttendanceMap = tempMap);
     } catch (e) {
-      debugPrint('Error cargando asistencia: $e');
+      debugPrint('Error cargando rango: $e');
     } finally {
       if (mounted) setState(() => _isLoadingAttendance = false);
     }
@@ -149,49 +158,51 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
     final query = _searchQuery.toLowerCase().trim();
     
     return _allStudentsMap.values.where((s) {
-      // Filtro de Grupo
       if (_selectedGroup != null && s.group != _selectedGroup) return false;
-      
-      // Filtro de Buscador
       if (query.isNotEmpty) {
         final matchesName = s.fullName.toLowerCase().contains(query);
         final matchesId = s.studentId.contains(query);
         if (!matchesName && !matchesId) return false;
       }
-      
       return true;
     }).toList()
       ..sort((a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()));
   }
 
-  Future<void> _exportData() async {
-    final list = _getFilteredStudents();
-    if (list.isEmpty) {
-      UiHelpers.showSnackBar(context, 'No hay datos para exportar.');
-      return;
+  Map<String, dynamic> _calculateRisk(Student student) {
+    int faults = 0;
+    int presences = 0;
+    List<Map<String, dynamic>> dailyStatus = [];
+
+    final daysCount = _selectedDateRange.end.difference(_selectedDateRange.start).inDays + 1;
+    
+    for (var i = 0; i < daysCount; i++) {
+      final date = _selectedDateRange.start.add(Duration(days: i));
+      if (date.weekday == DateTime.saturday || date.weekday == DateTime.sunday) continue;
+      
+      final isNonAttendance = _nonAttendanceDays.any((d) => 
+          d.date.year == date.year && d.date.month == date.month && d.date.day == date.day);
+      if (isNonAttendance) continue;
+
+      final dateStr = DateFormat('yyyy-MM-dd').format(date);
+      final records = _periodAttendanceMap[student.studentId];
+      final record = records?.firstWhere((r) => r.date == dateStr, orElse: () => AttendanceRecord(studentId: '', studentFullName: '', group: '', date: '', campusId: '', schoolCycle: '', status: 'null'));
+      
+      if (record != null && record.status != 'null') {
+         presences++;
+         dailyStatus.add({'date': date, 'status': 'presente', 'record': record});
+      } else {
+         faults++;
+         dailyStatus.add({'date': date, 'status': 'falta', 'record': null});
+      }
     }
 
-    UiHelpers.showSnackBar(context, 'Generando Excel...');
-    try {
-      final path = await AttendanceExcelExporter.exportToExcel(
-        students: list,
-        attendanceMap: _dailyAttendanceMap,
-        date: _selectedDate,
-        cycle: _selectedCycle ?? 'S/C',
-        groupFilter: _selectedGroup,
-      );
-      
-      if (mounted) {
-        if (path != null) {
-          UiHelpers.showSnackBar(context, 'Reporte guardado en: $path', isError: false);
-        } else {
-          // Si es null pero no hubo excepción, puede ser que el usuario canceló o es web (ya descargó)
-           UiHelpers.showSnackBar(context, 'Exportación completada.', isError: false);
-        }
-      }
-    } catch (e) {
-      if (mounted) UiHelpers.showSnackBar(context, 'Error exportando: $e', isError: true);
-    }
+    return {
+      'faults': faults,
+      'presences': presences,
+      'isRisk': faults >= 2,
+      'details': dailyStatus
+    };
   }
 
   @override
@@ -206,7 +217,6 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
 
     return Column(
         children: [
-                // --- PANEL DE FILTROS ---
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -215,7 +225,6 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Fila 1: Ciclo y Fecha
                       Row(
                         children: [
                           Expanded(
@@ -232,7 +241,7 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                                   });
                                   await _loadAllStudents();
                                   _extractGroupsFromStudents();
-                                  await _fetchDailyAttendance();
+                                  await _fetchAttendanceRange();
                                   setState(() => _isLoadingInitial = false);
                                 }
                               },
@@ -242,19 +251,19 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                           Expanded(
                             child: InkWell(
                               onTap: () async {
-                                final picked = await showDatePicker(
+                                final picked = await showDateRangePicker(
                                   context: context,
-                                  initialDate: _selectedDate,
                                   firstDate: DateTime(2024),
                                   lastDate: DateTime.now(),
+                                  initialDateRange: _selectedDateRange,
                                 );
                                 if (picked != null) {
-                                  setState(() => _selectedDate = picked);
-                                  _fetchDailyAttendance();
+                                  setState(() => _selectedDateRange = picked);
+                                  _fetchAttendanceRange();
                                 }
                               },
                               child: Container(
-                                height: 56, // Altura estándar de input
+                                height: 56, 
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
                                 decoration: BoxDecoration(
                                   border: Border.all(color: Colors.grey.shade400),
@@ -263,16 +272,21 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text('Fecha', style: TextStyle(fontSize: 10, color: theme.hintColor)),
-                                        Text(DateFormat('dd/MMM/yyyy', 'es_MX').format(_selectedDate), 
-                                          style: const TextStyle(fontWeight: FontWeight.w600)),
-                                      ],
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text('Periodo', style: TextStyle(fontSize: 10, color: theme.hintColor)),
+                                          Text(
+                                            '${DateFormat('dd/MM').format(_selectedDateRange.start)} - ${DateFormat('dd/MM').format(_selectedDateRange.end)}',
+                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    Icon(Icons.event_rounded, color: theme.colorScheme.primary),
+                                    Icon(Icons.date_range, color: theme.colorScheme.primary, size: 20),
                                   ],
                                 ),
                               ),
@@ -281,7 +295,6 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      // Fila 2: Grupo y Buscador
                       Row(
                         children: [
                           Expanded(
@@ -308,7 +321,6 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      // Fila 3: Botón Exportar (Compacto)
                       Align(
                         alignment: Alignment.centerRight,
                         child: ElevatedButton.icon(
@@ -319,7 +331,6 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                             backgroundColor: Colors.green.shade700,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -327,7 +338,6 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                   ),
                 ),
 
-                // --- LISTA DE RESULTADOS ---
                 Expanded(
                   child: _isLoadingAttendance
                       ? const Center(child: CircularProgressIndicator())
@@ -338,191 +348,83 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                               itemCount: filteredList.length,
                               itemBuilder: (context, index) {
                                 final student = filteredList[index];
-                                final record = _dailyAttendanceMap[student.studentId];
-                                return _buildStudentCard(student, record, theme);
+                                final records = _periodAttendanceMap[student.studentId];
+                                return _buildStudentCard(student, records, theme);
                               },
                             ),
                 ),
-                
-                // --- FOOTER ESTADÍSTICO ---
-                if (filteredList.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    color: theme.colorScheme.surface,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Text('Total: ${filteredList.length}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        Text('Presentes: ${_countStatus(filteredList, 'presente')}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                        Text('Faltas: ${_countStatus(filteredList, 'falta')}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
               ],
             );
   }
 
-  int _countStatus(List<Student> students, String type) {
-    int count = 0;
-    for (var s in students) {
-      final record = _dailyAttendanceMap[s.studentId];
-      if (type == 'falta') {
-        if (record == null) count++;
-      } else if (type == 'presente') {
-        if (record != null && (record.status == 'presente' || record.status == 'presente_masivo' || record.status == 'tarde')) count++;
-      }
-    }
-    return count;
-  }
+  Widget _buildStudentCard(Student student, List<AttendanceRecord>? records, ThemeData theme) {
+    final stats = _calculateRisk(student);
+    final int faults = stats['faults'];
+    final bool isRisk = stats['isRisk'];
+    final List<Map<String, dynamic>> details = stats['details'];
 
-  Widget _buildStudentCard(Student student, AttendanceRecord? record, ThemeData theme) {
-    final bool isAbsent = record == null;
-    
-    // Determinar estado visual
-    Color statusColor = Colors.grey;
-    String statusText = 'SIN REGISTRO';
-    IconData statusIcon = Icons.help_outline;
-
-    if (isAbsent) {
-      statusColor = Colors.red;
-      statusText = 'FALTA';
-      statusIcon = Icons.cancel_outlined;
-    } else {
-      if (record.status == 'tarde') {
-        statusColor = Colors.orange;
-        statusText = 'RETARDO';
-        statusIcon = Icons.access_time_filled;
-      } else if (record.status == 'presente' || record.status == 'presente_masivo') {
-        statusColor = Colors.green;
-        statusText = 'PRESENTE';
-        statusIcon = Icons.check_circle;
-      }
-    }
+    Color statusColor = isRisk ? Colors.red : Colors.green;
 
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(16), 
+        side: BorderSide(color: statusColor.withOpacity(0.3), width: isRisk ? 2 : 1)
       ),
-      child: ExpansionTile( // CAMBIO A EXPANSION TILE
+      child: ExpansionTile(
         tilePadding: EdgeInsets.zero,
         shape: const Border(),
         childrenPadding: EdgeInsets.zero,
-        title: Column(
-          children: [
-            // Header Tarjeta (Igual que antes)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.white,
-                    child: Text(
-                      student.fullName.isNotEmpty ? student.fullName[0] : '?',
-                      style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          student.fullName,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          '${student.studentId} • ${student.group} • ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
-                          style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(statusIcon, color: Colors.white, size: 14),
-                        const SizedBox(width: 4),
-                        Text(
-                          statusText,
-                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Body Tarjeta (Horarios)
-            if (!isAbsent)
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Expanded(child: _buildTimeBox('ENTRADA', record.entryTime, Colors.green)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildTimeBox('SALIDA', record.exitTime, Colors.orange)),
-                  ],
-                ),
-              ),
-
-             // Motivos (Si existen)
-            if (record != null && (record.reasonTardy != null || record.reasonEarlyExit != null))
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.1))),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (record.reasonTardy != null)
-                      _buildReasonRow('Motivo Retardo:', record.reasonTardy!, Colors.orange),
-                    if (record.reasonEarlyExit != null)
-                      _buildReasonRow('Motivo Salida:', record.reasonEarlyExit!, Colors.red),
-                  ],
-                ),
-              ),
-          ],
-        ),
-        
-        // --- DETALLES EXPANDIBLES ---
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.05),
-              border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2))),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        title: Container(
+            padding: const EdgeInsets.all(12),
+            child: Row(
               children: [
-                const Text('Información Completa del Alumno', 
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blue)),
-                const SizedBox(height: 10),
-                _buildInfoRow(Icons.person_outline, 'Tutor', student.guardianFullName),
-                _buildInfoRow(Icons.phone, 'Tel. Tutor', student.guardianPhone),
-                _buildInfoRow(Icons.phone_android, 'Tel. Alumno', student.studentPhone ?? 'No registrado'),
-                _buildInfoRow(Icons.home_outlined, 'Residencia', student.placeOfResidence),
-                _buildInfoRow(Icons.medical_services_outlined, 'Salud/Alergias', 
-                    '${student.allergies ?? ''} ${student.healthConditions ?? ''}'.trim().isEmpty 
-                    ? 'Ninguna' 
-                    : '${student.allergies ?? ''} ${student.healthConditions ?? ''}'),
+                CircleAvatar(
+                  backgroundColor: statusColor.withOpacity(0.1),
+                  child: Text(student.fullName[0], style: TextStyle(color: statusColor, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(student.fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text('${student.studentId} • ${student.group} • $faults Faltas', style: const TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
+                if (isRisk) const Icon(Icons.warning_rounded, color: Colors.red)
+                else const Icon(Icons.check_circle, color: Colors.green),
+              ],
+            ),
+        ),
+        children: [
+          if (isRisk)
+            Container(
+              width: double.infinity, padding: const EdgeInsets.all(8), color: Colors.red,
+              child: const Text('⚠️ RIESGO DE BAJA (2+ Faltas)', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: details.length,
+            itemBuilder: (context, i) {
+              final d = details[i];
+              final bool isFalta = d['status'] == 'falta';
+              return ListTile(
+                dense: true,
+                title: Text(DateFormat('EEEE dd/MM', 'es_MX').format(d['date']).toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                trailing: Text(isFalta ? 'FALTA' : 'PRESENTE', style: TextStyle(color: isFalta ? Colors.red : Colors.green, fontWeight: FontWeight.bold, fontSize: 11)),
+              );
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                _buildInfoRow(Icons.person, 'Tutor', student.guardianFullName),
+                _buildInfoRow(Icons.phone, 'Tel', student.guardianPhone),
               ],
             ),
           )
@@ -532,89 +434,42 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 16, color: Colors.grey[600]),
-          const SizedBox(width: 8),
-          SizedBox(width: 80, child: Text('$label:', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black54))),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 12, color: Colors.black87))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeBox(String label, String? time, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: time != null ? color.withOpacity(0.3) : Colors.grey.shade200),
-      ),
-      child: Column(
-        children: [
-          Text(label, style: TextStyle(fontSize: 10, color: Colors.grey.shade600, letterSpacing: 1)),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.access_time, size: 14, color: time != null ? color : Colors.grey.shade300),
-              const SizedBox(width: 6),
-              Text(
-                time ?? '--:--',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: time != null ? Colors.black87 : Colors.grey.shade300,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReasonRow(String label, String reason, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Icon(Icons.info_outline, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-          const SizedBox(width: 4),
-          Expanded(child: Text(reason, style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic), maxLines: 1, overflow: TextOverflow.ellipsis)),
-        ],
-      ),
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: Colors.grey),
+        const SizedBox(width: 8),
+        Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+        Text(value, style: const TextStyle(fontSize: 12)),
+      ],
     );
   }
 
   Widget _buildEmptyState(ThemeData theme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.filter_list_off_rounded, size: 64, color: theme.dividerColor),
-          const SizedBox(height: 16),
-          Text(
-            'No se encontraron alumnos con los filtros actuales.',
-            style: TextStyle(color: theme.hintColor),
-          ),
-        ],
-      ),
-    );
+    return const Center(child: Text('Sin resultados.'));
   }
 
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, size: 18),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
     );
+  }
+
+  Future<void> _exportData() async {
+    final list = _getFilteredStudents();
+    try {
+      await AttendanceExcelExporter.exportToExcel(
+        students: list,
+        attendanceMap: _periodAttendanceMap,
+        startDate: _selectedDateRange.start,
+        endDate: _selectedDateRange.end,
+        cycle: _selectedCycle ?? 'S/C',
+        groupFilter: _selectedGroup,
+        nonAttendanceDays: _nonAttendanceDays,
+      );
+    } catch (e) {
+      if (mounted) UiHelpers.showSnackBar(context, 'Error exportando: $e', isError: true);
+    }
   }
 }

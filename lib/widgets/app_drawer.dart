@@ -90,6 +90,7 @@ class AppDrawer extends StatelessWidget {
                   _buildDrawerItem(context, icon: Icons.history_edu_rounded, title: 'Consulta de Asistencias', onTap: () => onNavigate?.call('consulta_asistencia')),
                   _buildDrawerItem(context, icon: Icons.badge_outlined, title: 'Generador de Credenciales', onTap: () => onNavigate?.call('credenciales')),
                   _buildDrawerItem(context, icon: Icons.warning_amber_rounded, title: 'Reporte de Incidencias', onTap: () => onNavigate?.call('incidencia')),
+                  _buildDrawerItem(context, icon: Icons.auto_awesome_rounded, title: 'Asistente IA', iconColor: Colors.amber, onTap: () => onNavigate?.call('ia')),
                   _buildDrawerItem(context, icon: Icons.people_outline_rounded, title: 'Alumnos', onTap: () => onNavigate?.call('alumnos')),
                   _buildDrawerItem(context, icon: Icons.schedule_rounded, title: 'Horarios', onTap: () => onNavigate?.call('horarios')),
                   _buildDrawerItem(context, icon: Icons.calendar_today_rounded, title: 'Ciclos Escolares', onTap: () => onNavigate?.call('ciclos')),

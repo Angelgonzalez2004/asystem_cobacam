@@ -44,6 +44,8 @@ dependencies:
   barcode_widget: ^2.0.4
   image: ^4.3.0
   pdf: ^3.11.3
+  google_generative_ai: ^0.4.7
+  flutter_markdown: ^0.7.7+1
 
 dev_dependencies:
   flutter_test:

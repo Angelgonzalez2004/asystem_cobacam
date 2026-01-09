@@ -13,7 +13,8 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/attendance_screen.dar
 import 'package:asystem_cobacam/screens/dashboards/prefect/school_cycle_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/non_attendance_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/credential_generator_screen.dart';
-import 'package:asystem_cobacam/screens/dashboards/prefect/incidence_report_screen.dart'; // Importar
+import 'package:asystem_cobacam/screens/dashboards/prefect/incidence_report_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/prefect/ai_assistant_screen.dart'; // Importar
 import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
 
 class PrefectDashboardScreen extends StatefulWidget {
@@ -32,7 +33,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
   int _selectedIndex = 0;
   DatabaseReference? _userRef;
 
-  // Screen List - Indexes must match _onNavigate logic
+  // Screen List
   late List<Widget> _screens;
   late List<String> _screenTitles;
 
@@ -56,8 +57,9 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       const NonAttendanceManagementScreen(),
       const AttendanceQueryScreen(),
       const CredentialGeneratorScreen(),
-      const Center(child: Text("Scanner QR (Próximamente)")), // Opción 11
-      const IncidenceReportScreen(), // Opción 12: Pantalla Real
+      const Center(child: Text("Scanner QR (Próximamente)")), 
+      const IncidenceReportScreen(), 
+      const AIAssistantScreen(), // Opción 13
     ];
 
     _screenTitles = [
@@ -74,6 +76,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       'Generador de Credenciales',
       'Scanner QR',
       'Reporte de Incidencias',
+      'Asistente IA',
     ];
   }
 
@@ -123,6 +126,9 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       case 'incidencia':
         index = 12;
         break;
+      case 'ia':
+        index = 13;
+        break;
       case 'lista':
         index = 7;
         break;
@@ -157,7 +163,6 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    // Ensure safe index
     final safeIndex = (_selectedIndex >= 0 && _selectedIndex < _screens.length) 
         ? _selectedIndex 
         : 0;

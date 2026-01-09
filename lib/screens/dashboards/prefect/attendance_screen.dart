@@ -460,8 +460,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         UiHelpers.showSnackBar(context, 'Registro cancelado.', isError: true);
         return;
       }
-      if (scanType == 'entry') record['reasonTardy'] = reason;
-      else record['reasonEarlyExit'] = reason;
+      if (scanType == 'entry') {
+        record['reasonTardy'] = reason;
+      } else {
+        record['reasonEarlyExit'] = reason;
+      }
     }
 
     _triggerFeedback(true, isWarning: isWarning);
