@@ -307,17 +307,19 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      // Fila 3: Botón Exportar
-                      SizedBox(
-                        width: double.infinity,
+                      const SizedBox(height: 16),
+                      // Fila 3: Botón Exportar (Compacto)
+                      Align(
+                        alignment: Alignment.centerRight,
                         child: ElevatedButton.icon(
                           onPressed: filteredList.isEmpty ? null : _exportData,
-                          icon: const Icon(Icons.file_download),
-                          label: const Text('Exportar Reporte Excel'),
+                          icon: const Icon(Icons.file_download, size: 18),
+                          label: const Text('Exportar Excel'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green.shade700,
                             foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),

@@ -433,7 +433,18 @@ class _CredentialCardContent extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Row(
                 children: [
-                  Container(width: 70, height: 85, color: Colors.grey.shade100, child: const Icon(Icons.person, size: 40, color: Colors.grey)),
+                  Container(
+                    width: 70, 
+                    height: 85, 
+                    color: Colors.grey.shade100, 
+                    child: Icon(
+                      student.gender.toLowerCase().startsWith('m') && !student.gender.toLowerCase().contains('ujer') // Masculino logic
+                          ? Icons.man 
+                          : Icons.woman, 
+                      size: 50, 
+                      color: Colors.grey
+                    )
+                  ),
                   const SizedBox(width: 15),
                                         Expanded(child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,

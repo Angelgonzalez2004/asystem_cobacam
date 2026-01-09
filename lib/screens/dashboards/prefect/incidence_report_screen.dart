@@ -1,7 +1,7 @@
 import 'package:asystem_cobacam/models/incidence_model.dart';
 import 'package:asystem_cobacam/models/student_model.dart';
 import 'package:asystem_cobacam/services/app_settings_service.dart';
-import 'package:asystem_cobacam/services/connectivity_service.dart'; // Importar
+import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -38,6 +38,8 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
   bool _isLoading = false;
   String? _campus;
   String? _cycle;
+  
+  Incidence? _editingIncidence;
 
   @override
   void initState() {
@@ -59,7 +61,7 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
 
       final appSettings = AppSettingsService(
         Provider.of<HiveService>(context, listen: false), 
-        Provider.of<ConnectivityService>(context, listen: false) // Usar Provider
+        Provider.of<ConnectivityService>(context, listen: false)
       );
       _cycle = await appSettings.getCurrentSchoolCycleId();
 
@@ -89,8 +91,6 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
 
   void _loadRecentIncidents() {
     if (_campus == null) return;
-    // Cargar incidencias de hoy (Firebase o Hive logic simple)
-    // Por simplicidad, escuchamos Firebase
     final ref = FirebaseDatabase.instance.ref('planteles/$_campus/incidents');
     ref.limitToLast(20).onValue.listen((event) {
       if (mounted) {
@@ -106,37 +106,110 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
     });
   }
 
-  Future<void> _saveIncidence() async {
-    if (_selectedStudent == null || _selectedType == null) {
-      UiHelpers.showSnackBar(context, 'Selecciona alumno y tipo de incidencia', isError: true);
+  void _prepareEdit(Incidence incidence) {
+    setState(() {
+      _editingIncidence = incidence;
+      _selectedType = incidence.type;
+      _descriptionController.text = incidence.description;
+      
+      try {
+        _selectedStudent = _allStudents.firstWhere((s) => s.studentId == incidence.studentId);
+        _searchController.text = _selectedStudent!.fullName; 
+      } catch (e) {
+        debugPrint('Alumno no encontrado en lista actual');
+      }
+    });
+  }
+
+  void _cancelEdit() {
+    setState(() {
+      _editingIncidence = null;
+      _selectedStudent = null;
+      _selectedType = null;
+      _searchController.clear();
+      _descriptionController.clear();
+    });
+  }
+
+  Future<void> _deleteIncidence(String id) async {
+    try {
+      await FirebaseDatabase.instance.ref('planteles/$_campus/incidents/$id').remove();
+      if (mounted) UiHelpers.showSnackBar(context, 'Incidencia eliminada correctamente.', duration: const Duration(seconds: 3));
+    } catch (e) {
+      if (mounted) UiHelpers.showSnackBar(context, 'Error al eliminar: $e', isError: true);
+    }
+  }
+
+  Future<void> _confirmDelete(Incidence incidence) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Incidencia'),
+        content: Text('¿Estás seguro de eliminar el reporte de ${incidence.studentName}?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _deleteIncidence(incidence.id);
+    }
+  }
+
+  Future<void> _saveOrUpdateIncidence() async {
+    if (_selectedStudent == null && _editingIncidence == null) {
+       UiHelpers.showSnackBar(context, 'Selecciona un alumno.', isError: true);
+       return;
+    }
+    if (_selectedType == null) {
+      UiHelpers.showSnackBar(context, 'Selecciona el tipo de falta.', isError: true);
       return;
     }
 
     setState(() => _isLoading = true);
     try {
-      final newRef = FirebaseDatabase.instance.ref('planteles/$_campus/incidents').push();
+      final DatabaseReference ref;
+      String id;
+      
+      final studentId = _selectedStudent?.studentId ?? _editingIncidence!.studentId;
+      final studentName = _selectedStudent?.fullName ?? _editingIncidence!.studentName;
+      final group = _selectedStudent?.group ?? _editingIncidence!.group;
+
+      if (_editingIncidence != null) {
+        id = _editingIncidence!.id;
+        ref = FirebaseDatabase.instance.ref('planteles/$_campus/incidents/$id');
+      } else {
+        ref = FirebaseDatabase.instance.ref('planteles/$_campus/incidents').push();
+        id = ref.key!;
+      }
+
       final incidence = Incidence(
-        id: newRef.key!,
-        studentId: _selectedStudent!.studentId,
-        studentName: _selectedStudent!.fullName,
-        group: _selectedStudent!.group,
+        id: id,
+        studentId: studentId,
+        studentName: studentName,
+        group: group,
         type: _selectedType!,
         description: _descriptionController.text.trim(),
-        date: DateTime.now(),
+        date: _editingIncidence?.date ?? DateTime.now(),
         campusId: _campus!,
         isSynced: true,
       );
 
-      await newRef.set(incidence.toFirebaseMap());
+      if (_editingIncidence != null) {
+        await ref.update(incidence.toFirebaseMap());
+        if (mounted) UiHelpers.showSnackBar(context, 'Incidencia actualizada.', duration: const Duration(seconds: 3));
+      } else {
+        await ref.set(incidence.toFirebaseMap());
+        if (mounted) UiHelpers.showSnackBar(context, 'Incidencia registrada.', duration: const Duration(seconds: 3));
+      }
       
-      _searchController.clear();
-      _descriptionController.clear();
-      setState(() {
-        _selectedStudent = null;
-        _selectedType = null;
-      });
-      
-      if (mounted) UiHelpers.showSnackBar(context, 'Incidencia registrada correctamente');
+      _cancelEdit();
 
     } catch (e) {
       UiHelpers.showSnackBar(context, 'Error guardando: $e', isError: true);
@@ -148,6 +221,7 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('Gestión de Incidencias')), 
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -161,11 +235,26 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Nueva Incidencia', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(_editingIncidence != null ? 'Editar Reporte' : 'Nueva Incidencia', 
+                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        if (_editingIncidence != null)
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.grey),
+                            onPressed: _cancelEdit,
+                            tooltip: 'Cancelar Edición',
+                          )
+                      ],
+                    ),
                     const SizedBox(height: 16),
                     
                     // BUSCADOR ALUMNO
                     Autocomplete<Student>(
+                      initialValue: _editingIncidence != null 
+                          ? TextEditingValue(text: _editingIncidence!.studentName) 
+                          : null,
                       displayStringForOption: (Student option) => '${option.fullName} (${option.group})',
                       optionsBuilder: (TextEditingValue textEditingValue) {
                         if (textEditingValue.text.isEmpty) return const Iterable<Student>.empty();
@@ -183,7 +272,7 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
                           focusNode: focusNode,
                           onEditingComplete: onEditingComplete,
                           decoration: InputDecoration(
-                            labelText: 'Buscar Alumno',
+                            labelText: 'Buscar Alumno (Nombre o Matrícula)',
                             prefixIcon: const Icon(Icons.search),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                             suffixIcon: _selectedStudent != null 
@@ -221,18 +310,31 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
                     ),
 
                     const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _isLoading ? null : _saveIncidence,
-                        icon: const Icon(Icons.save),
-                        label: const Text('Registrar Incidencia'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                    Row(
+                      children: [
+                        if (_editingIncidence != null) ...[
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _cancelEdit,
+                              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                              child: const Text('Cancelar'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _isLoading ? null : _saveOrUpdateIncidence,
+                            icon: Icon(_editingIncidence != null ? Icons.update : Icons.save),
+                            label: Text(_editingIncidence != null ? 'Actualizar' : 'Registrar'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _editingIncidence != null ? Colors.orange : Colors.redAccent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -261,9 +363,23 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
                             backgroundColor: Colors.red.shade100,
                             child: const Icon(Icons.warning, color: Colors.red),
                           ),
-                          title: Text(inc.studentName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text('${inc.type} • ${DateFormat('dd/MM HH:mm').format(inc.date)}'),
-                          trailing: Text(inc.group, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          title: Text(inc.studentName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          subtitle: Text('${inc.type} • ${DateFormat('dd/MM HH:mm').format(inc.date)}', style: const TextStyle(fontSize: 12)),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                                onPressed: () => _prepareEdit(inc),
+                                tooltip: 'Editar',
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                                onPressed: () => _confirmDelete(inc),
+                                tooltip: 'Eliminar',
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },

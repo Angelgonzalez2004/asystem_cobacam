@@ -111,11 +111,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           _syncOfflineAttendance();
           if (!wasOnline) {
              _loadStudentsAndSchedules(online: true);
-             if (mounted) UiHelpers.showSnackBar(context, '¡Conexión restablecida! Sincronizando datos...');
+             if (mounted) {
+               UiHelpers.showSnackBar(context, '¡Conexión restablecida! Sincronizando datos...');
+             }
           }
         } else {
           _loadStudentsAndSchedules(online: false);
-          if (mounted) UiHelpers.showSnackBar(context, 'Modo Offline activado.', isError: true);
+          if (mounted) {
+            UiHelpers.showSnackBar(context, 'Modo Offline activado.', isError: true);
+          }
         }
         _loadOfflineAttendanceCount();
       }
