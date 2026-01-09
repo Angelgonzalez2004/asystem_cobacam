@@ -10,7 +10,9 @@ import 'package:flutter/material.dart';
 
 class PrefectHomeScreen extends StatefulWidget {
   final String? campus;
-  const PrefectHomeScreen({super.key, this.campus});
+  final Function(String route)? onNavigate;
+  
+  const PrefectHomeScreen({super.key, this.campus, this.onNavigate});
 
   @override
   State<PrefectHomeScreen> createState() => _PrefectHomeScreenState();
@@ -34,7 +36,6 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
         setState(() {
           _userName = snapshot.value.toString();
         });
-        // Mensaje de bienvenida
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) UiHelpers.showSnackBar(context, 'Módulo de Prefectura Activo. ¡Buen día, $_userName!');
         });
@@ -61,7 +62,7 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // STATUS CARD (Novedad)
+                // STATUS CARD
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -78,7 +79,7 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Estado de Operación', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            Text('Registro de entrada activo • 07:00 - 08:30', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                            Text('Registro de asistencia activo', style: TextStyle(fontSize: 12, color: Colors.grey)),
                           ],
                         ),
                       ),
@@ -97,31 +98,38 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
                 GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
+                  crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
-                  childAspectRatio: 1.5,
+                  childAspectRatio: 1.4,
                   children: [
                     _buildQuickAction(
                       context,
                       icon: Icons.qr_code_scanner_rounded,
-                      label: 'Scanner',
-                      color: Colors.blue,
-                      onTap: () => UiHelpers.showSnackBar(context, 'Iniciando Scanner de Asistencia...'),
+                      label: 'Pase de Lista',
+                      color: Colors.green, // Acción principal
+                      onTap: () => widget.onNavigate?.call('lista'),
                     ),
                     _buildQuickAction(
                       context,
-                      icon: Icons.checklist_rtl_rounded,
-                      label: 'Pasar Lista',
-                      color: Colors.green,
-                      onTap: () => UiHelpers.showSnackBar(context, 'Cargando lista de alumnos...'),
+                      icon: Icons.manage_search_rounded,
+                      label: 'Consultar Asist.',
+                      color: Colors.blue,
+                      onTap: () => widget.onNavigate?.call('consulta_asistencia'),
+                    ),
+                    _buildQuickAction(
+                      context,
+                      icon: Icons.badge_rounded,
+                      label: 'Credenciales',
+                      color: Colors.orange,
+                      onTap: () => widget.onNavigate?.call('credenciales'),
                     ),
                     _buildQuickAction(
                       context,
                       icon: Icons.warning_amber_rounded,
-                      label: 'Incidencia',
-                      color: Colors.red,
-                      onTap: () => UiHelpers.showSnackBar(context, 'Preparando reporte de incidencia...'),
+                      label: 'Reportar Incidencia',
+                      color: Colors.redAccent,
+                      onTap: () => widget.onNavigate?.call('incidencia'),
                     ),
                   ],
                 ),

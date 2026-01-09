@@ -2,6 +2,7 @@ import 'package:asystem_cobacam/providers/theme_provider.dart';
 import 'package:asystem_cobacam/widgets/auth_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart'; // Importación agregada
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
@@ -43,6 +44,14 @@ void main() async {
       debugPrint("✅ Firebase inicializado manualmente con opciones.");
     } else {
       debugPrint("ℹ️ Firebase ya estaba inicializado (Nativo/Automático). Usando instancia existente.");
+    }
+
+    // Habilitar persistencia offline
+    try {
+      FirebaseDatabase.instance.setPersistenceEnabled(true);
+      debugPrint("💾 Persistencia de Firebase Database habilitada.");
+    } catch (e) {
+      debugPrint("⚠️ No se pudo habilitar persistencia (quizás ya estaba activa): $e");
     }
 
     debugPrint("✅ Firebase listo.");

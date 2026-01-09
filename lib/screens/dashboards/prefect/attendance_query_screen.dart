@@ -4,6 +4,8 @@ import 'package:asystem_cobacam/models/student_model.dart';
 import 'package:asystem_cobacam/services/app_settings_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
+import 'package:asystem_cobacam/utils/attendance_excel_exporter.dart';
+import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -159,12 +161,37 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
       
       return true;
     }).toList()
-      ..sort((a, b) {
-        // Ordenar por Grupo y luego por Nombre
-        int groupComp = a.group.compareTo(b.group);
-        if (groupComp != 0) return groupComp;
-        return a.fullName.compareTo(b.fullName);
-      });
+      ..sort((a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()));
+  }
+
+  Future<void> _exportData() async {
+    final list = _getFilteredStudents();
+    if (list.isEmpty) {
+      UiHelpers.showSnackBar(context, 'No hay datos para exportar.');
+      return;
+    }
+
+    UiHelpers.showSnackBar(context, 'Generando Excel...');
+    try {
+      final path = await AttendanceExcelExporter.exportToExcel(
+        students: list,
+        attendanceMap: _dailyAttendanceMap,
+        date: _selectedDate,
+        cycle: _selectedCycle ?? 'S/C',
+        groupFilter: _selectedGroup,
+      );
+      
+      if (mounted) {
+        if (path != null) {
+          UiHelpers.showSnackBar(context, 'Reporte guardado en: $path', isError: false);
+        } else {
+          // Si es null pero no hubo excepción, puede ser que el usuario canceló o es web (ya descargó)
+           UiHelpers.showSnackBar(context, 'Exportación completada.', isError: false);
+        }
+      }
+    } catch (e) {
+      if (mounted) UiHelpers.showSnackBar(context, 'Error exportando: $e', isError: true);
+    }
   }
 
   @override
@@ -173,22 +200,12 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final filteredList = _getFilteredStudents();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Consulta de Asistencia', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _fetchDailyAttendance,
-            tooltip: 'Actualizar Asistencias',
-          )
-        ],
-      ),
-      body: _isLoadingInitial
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
+    if (_isLoadingInitial) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Column(
+        children: [
                 // --- PANEL DE FILTROS ---
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -290,6 +307,20 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 12),
+                      // Fila 3: Botón Exportar
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: filteredList.isEmpty ? null : _exportData,
+                          icon: const Icon(Icons.file_download),
+                          label: const Text('Exportar Reporte Excel'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green.shade700,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -326,8 +357,7 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                     ),
                   ),
               ],
-            ),
-    );
+            );
   }
 
   int _countStatus(List<Student> students, String type) {
@@ -374,94 +404,141 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Colors.grey.withOpacity(0.2)),
       ),
-      child: Column(
-        children: [
-          // Header Tarjeta
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    student.fullName.isNotEmpty ? student.fullName[0] : '?',
-                    style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        student.fullName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        '${student.studentId} • ${student.group} • ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
-                        style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(statusIcon, color: Colors.white, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        statusText,
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Body Tarjeta (Horarios)
-          if (!isAbsent)
-            Padding(
+      child: ExpansionTile( // CAMBIO A EXPANSION TILE
+        tilePadding: EdgeInsets.zero,
+        shape: const Border(),
+        childrenPadding: EdgeInsets.zero,
+        title: Column(
+          children: [
+            // Header Tarjeta (Igual que antes)
+            Container(
               padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.1),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              ),
               child: Row(
                 children: [
-                  Expanded(child: _buildTimeBox('ENTRADA', record.entryTime, Colors.green)),
+                  CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: Text(
+                      student.fullName.isNotEmpty ? student.fullName[0] : '?',
+                      style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildTimeBox('SALIDA', record.exitTime, Colors.orange)),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          student.fullName,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '${student.studentId} • ${student.group} • ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
+                          style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(statusIcon, color: Colors.white, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          statusText,
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
+            
+            // Body Tarjeta (Horarios)
+            if (!isAbsent)
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Expanded(child: _buildTimeBox('ENTRADA', record.entryTime, Colors.green)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _buildTimeBox('SALIDA', record.exitTime, Colors.orange)),
+                  ],
+                ),
+              ),
 
-          // Motivos (Si existen)
-          if (record != null && (record.reasonTardy != null || record.reasonEarlyExit != null))
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.1))),
+             // Motivos (Si existen)
+            if (record != null && (record.reasonTardy != null || record.reasonEarlyExit != null))
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.1))),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (record.reasonTardy != null)
+                      _buildReasonRow('Motivo Retardo:', record.reasonTardy!, Colors.orange),
+                    if (record.reasonEarlyExit != null)
+                      _buildReasonRow('Motivo Salida:', record.reasonEarlyExit!, Colors.red),
+                  ],
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (record.reasonTardy != null)
-                    _buildReasonRow('Motivo Retardo:', record.reasonTardy!, Colors.orange),
-                  if (record.reasonEarlyExit != null)
-                    _buildReasonRow('Motivo Salida:', record.reasonEarlyExit!, Colors.red),
-                ],
-              ),
-            )
+          ],
+        ),
+        
+        // --- DETALLES EXPANDIBLES ---
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.05),
+              border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.2))),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Información Completa del Alumno', 
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blue)),
+                const SizedBox(height: 10),
+                _buildInfoRow(Icons.person_outline, 'Tutor', student.guardianFullName),
+                _buildInfoRow(Icons.phone, 'Tel. Tutor', student.guardianPhone),
+                _buildInfoRow(Icons.phone_android, 'Tel. Alumno', student.studentPhone ?? 'No registrado'),
+                _buildInfoRow(Icons.home_outlined, 'Residencia', student.placeOfResidence),
+                _buildInfoRow(Icons.medical_services_outlined, 'Salud/Alergias', 
+                    '${student.allergies ?? ''} ${student.healthConditions ?? ''}'.trim().isEmpty 
+                    ? 'Ninguna' 
+                    : '${student.allergies ?? ''} ${student.healthConditions ?? ''}'),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          SizedBox(width: 80, child: Text('$label:', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black54))),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 12, color: Colors.black87))),
         ],
       ),
     );

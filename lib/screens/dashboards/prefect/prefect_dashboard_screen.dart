@@ -1,7 +1,7 @@
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_home_screen.dart';
-import 'package:asystem_cobacam/screens/common/profile_screen.dart'; // Correct Import
-import 'package:asystem_cobacam/screens/common/settings_screen.dart'; // Correct Import
+import 'package:asystem_cobacam/screens/common/profile_screen.dart'; 
+import 'package:asystem_cobacam/screens/common/settings_screen.dart'; 
 import 'package:asystem_cobacam/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -13,6 +13,7 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/attendance_screen.dar
 import 'package:asystem_cobacam/screens/dashboards/prefect/school_cycle_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/non_attendance_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/credential_generator_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/prefect/incidence_report_screen.dart'; // Importar
 import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
 
 class PrefectDashboardScreen extends StatefulWidget {
@@ -44,9 +45,9 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
 
   void _initScreens() {
     _screens = [
-      PrefectHomeScreen(campus: _userCampus),
-      const ProfileScreen(isEmbedded: true), // Uses Common Screen
-      const SettingsScreen(isEmbedded: true), // Uses Common Screen
+      PrefectHomeScreen(campus: _userCampus, onNavigate: _onNavigate),
+      const ProfileScreen(isEmbedded: true), 
+      const SettingsScreen(isEmbedded: true), 
       const GroupManagementScreen(),
       const SchoolCycleManagementScreen(),
       const StudentManagementScreen(),
@@ -55,8 +56,8 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       const NonAttendanceManagementScreen(),
       const AttendanceQueryScreen(),
       const CredentialGeneratorScreen(),
-      const Center(child: Text("Scanner QR (Próximamente)")),
-      const Center(child: Text("Reporte de Incidencias (Próximamente)")),
+      const Center(child: Text("Scanner QR (Próximamente)")), // Opción 11
+      const IncidenceReportScreen(), // Opción 12: Pantalla Real
     ];
 
     _screenTitles = [
@@ -72,7 +73,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       'Consulta de Asistencia',
       'Generador de Credenciales',
       'Scanner QR',
-      'Reportar Incidencia',
+      'Reporte de Incidencias',
     ];
   }
 

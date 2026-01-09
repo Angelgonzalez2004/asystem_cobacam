@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:asystem_cobacam/utils/web_downloader.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
+import 'package:asystem_cobacam/utils/credential_pdf_generator.dart';
 import 'package:flutter/material.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:screenshot/screenshot.dart';
@@ -71,39 +72,85 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
     }
   }
 
-  Future<void> _addStudentByMatricula(String matricula) async {
-    if (_campus == null || _selectedCycle == null || matricula.isEmpty) return;
-    if (_studentsToGenerate.any((s) => s.studentId == matricula)) {
-      UiHelpers.showSnackBar(context, 'El alumno ya está en la lista.');
-      return;
-    }
+  Future<void> _addStudentsByMatriculas(String rawInput) async {
+    if (_campus == null || _selectedCycle == null || rawInput.trim().isEmpty) return;
+
+    // Normalizar entrada: separar por comas, saltos de línea o espacios
+    final matriculas = rawInput
+        .split(RegExp(r'[,\n\s]+'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toSet() // Eliminar duplicados en la entrada actual
+        .toList();
+
+    if (matriculas.isEmpty) return;
 
     setState(() => _isSearching = true);
+    
+    int addedCount = 0;
+    int inactiveCount = 0;
+    List<String> notFoundList = [];
+
     try {
       final ref = FirebaseDatabase.instance.ref('planteles/$_campus/students/$_selectedCycle');
-      final snap = await ref.child(matricula).get();
-      if (snap.exists) {
-        final student = Student.fromSnapshot(snap);
-        if (student.isActive) {
-          setState(() => _studentsToGenerate.add(student));
-          _studentIdController.clear();
-        } else {
-          UiHelpers.showSnackBar(context, 'El alumno está dado de baja.', isError: true);
+      
+      // Procesar cada matrícula
+      for (final matricula in matriculas) {
+        // Verificar si ya está en la lista visual
+        if (_studentsToGenerate.any((s) => s.studentId == matricula)) {
+          continue; 
         }
-      } else {
-        UiHelpers.showSnackBar(context, 'Matrícula no encontrada.', isError: true);
+
+        final snap = await ref.child(matricula).get();
+        if (snap.exists) {
+          final student = Student.fromSnapshot(snap);
+          if (student.isActive) {
+            setState(() => _studentsToGenerate.add(student));
+            addedCount++;
+          } else {
+            inactiveCount++;
+          }
+        } else {
+          notFoundList.add(matricula);
+        }
       }
+
+      if (mounted) {
+        String message = '';
+        if (addedCount > 0) {
+          message = '✅ Se agregaron $addedCount alumno(s).';
+          _studentIdController.clear(); // Limpiar solo si hubo éxito
+        } else {
+          message = '⚠️ No se agregaron alumnos nuevos.';
+        }
+
+        if (inactiveCount > 0) message += '\n🚫 $inactiveCount inactivos.';
+        if (notFoundList.isNotEmpty) {
+           message += '\n❌ No encontrados: ${notFoundList.length} (${notFoundList.take(3).join(", ")}${notFoundList.length > 3 ? "..." : ""})';
+        }
+
+        UiHelpers.showSnackBar(
+          context, 
+          message, 
+          isError: addedCount == 0 && notFoundList.isNotEmpty,
+          duration: const Duration(seconds: 4)
+        );
+      }
+
     } catch (e) {
-      UiHelpers.showSnackBar(context, 'Error: $e', isError: true);
+      if (mounted) UiHelpers.showSnackBar(context, 'Error procesando lote: $e', isError: true);
     } finally {
-      setState(() => _isSearching = false);
+      if (mounted) setState(() => _isSearching = false);
     }
   }
 
   Future<void> _downloadAllCredentials() async {
     if (_studentsToGenerate.isEmpty) return;
 
-    UiHelpers.showSnackBar(context, 'Generando archivos $_exportFormat...');
+    if (mounted) UiHelpers.showSnackBar(context, 'Generando archivos $_exportFormat...');
+
+    // Lista temporal para PDF
+    final List<Uint8List> pdfImages = [];
 
     for (var i = 0; i < _studentsToGenerate.length; i++) {
       final student = _studentsToGenerate[i];
@@ -123,7 +170,13 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
         pixelRatio: 3.0,
       );
 
-      // 2. Convertir si el usuario pidió JPG
+      // --- CASO PDF ---
+      if (_exportFormat == 'PDF') {
+        pdfImages.add(imageBytes);
+        continue; // Saltar guardado individual
+      }
+
+      // --- CASO IMAGEN INDIVIDUAL (JPG/PNG) ---
       String extension = '.png';
       if (_exportFormat == 'JPG') {
         extension = '.jpg';
@@ -148,6 +201,28 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
           }
         }
       }
+    } // Fin del loop
+
+    // --- GENERAR PDF FINAL ---
+    if (_exportFormat == 'PDF' && pdfImages.isNotEmpty) {
+      try {
+        final pdfBytes = await CredentialPdfGenerator.generatePdf(pdfImages);
+        final fileName = 'credenciales_lote_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+        if (kIsWeb) {
+          await downloadImageWeb(pdfBytes, fileName);
+        } else {
+          // Guardar archivo localmente (Windows/Android/iOS via File)
+          // Nota: En móviles sería ideal share_plus o open_file, pero guardaremos en Docs por ahora.
+           final dir = await getApplicationDocumentsDirectory();
+           final file = File('${dir.path}/$fileName');
+           await file.writeAsBytes(pdfBytes);
+           if (mounted) UiHelpers.showSnackBar(context, 'PDF guardado en: ${file.path}', isError: false);
+        }
+      } catch (e) {
+        if (mounted) UiHelpers.showSnackBar(context, 'Error creando PDF: $e', isError: true);
+        return;
+      }
     }
     
     if (mounted) {
@@ -160,12 +235,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Generador de Credenciales', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
-      body: _isLoading
+    return _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
@@ -201,6 +271,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
                               children: [
                                 _formatChip('PNG'),
                                 _formatChip('JPG'),
+                                _formatChip('PDF'),
                               ],
                             ),
                           ),
@@ -209,18 +280,22 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
                       const SizedBox(height: 16),
                       TextField(
                         controller: _studentIdController,
-                        decoration: _inputDeco('Matrícula del Alumno', Icons.badge_rounded).copyWith(
+                        maxLines: 3, // Permite pegar múltiples líneas
+                        minLines: 1,
+                        keyboardType: TextInputType.multiline,
+                        textInputAction: TextInputAction.done,
+                        decoration: _inputDeco('Matrícula(s) - Separa por espacio, coma o enter', Icons.badge_rounded).copyWith(
                           suffixIcon: _isSearching
                               ? const Padding(
                                   padding: EdgeInsets.all(12.0),
                                   child: CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : IconButton(
-                                  icon: const Icon(Icons.add_circle),
-                                  onPressed: () => _addStudentByMatricula(_studentIdController.text),
+                                  icon: const Icon(Icons.add_circle, size: 32, color: Colors.blue), // Más prominente
+                                  onPressed: () => _addStudentsByMatriculas(_studentIdController.text),
                                 ),
                         ),
-                        onSubmitted: _addStudentByMatricula,
+                        onSubmitted: _addStudentsByMatriculas,
                       ),
                     ],
                   ),
@@ -272,8 +347,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
                         ),
                 ),
               ],
-            ),
-    );
+            );
   }
 
   Widget _formatChip(String label) {
@@ -361,17 +435,17 @@ class _CredentialCardContent extends StatelessWidget {
                 children: [
                   Container(width: 70, height: 85, color: Colors.grey.shade100, child: const Icon(Icons.person, size: 40, color: Colors.grey)),
                   const SizedBox(width: 15),
-                  Expanded(child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(student.fullName.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF1E3A8A)), maxLines: 2),
-                      const SizedBox(height: 4),
-                      Text('ID: ${student.studentId}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
-                      Text('GRUPO: ${student.group}', style: const TextStyle(fontSize: 10)),
-                      Text('PLANTEL: $campus', style: const TextStyle(fontSize: 9), maxLines: 1),
-                    ],
-                  )),
-                ],
+                                        Expanded(child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(student.fullName.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF1E3A8A)), maxLines: 2),
+                                        const SizedBox(height: 4),
+                                        Text('MATRÍCULA: ${student.studentId}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+                                        Text('GRUPO: ${student.group}', style: const TextStyle(fontSize: 10)),
+                                        Text('CICLO: ${student.schoolCycle}', style: const TextStyle(fontSize: 10)),
+                                        Text('PLANTEL: $campus', style: const TextStyle(fontSize: 9), maxLines: 1),
+                                      ],
+                                    )),                ],
               ),
             ),
             const Spacer(),

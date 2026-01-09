@@ -4,31 +4,38 @@
 
 ---
 
-## 🚀 Última Actualización: Versión 2.0.0 (Production Ready)
+## 🚀 Versión 2.1.0: "Seguridad y Offline"
 
-Esta versión marca un hito en la madurez del sistema, incorporando módulos críticos para la operación diaria, herramientas de credencialización y una base de datos robusta y escalable.
+Esta actualización introduce mejoras críticas para la operatividad en planteles con conectividad limitada y herramientas avanzadas para la seguridad del alumnado.
 
-### 🌟 Nuevos Módulos Implementados
+### 🌟 Nuevas Funcionalidades
 
-#### 🆔 Generador Universal de Credenciales
-Una herramienta potente para la emisión instantánea de identificaciones estudiantiles.
-*   **Diseño Profesional:** Plantillas oficiales con colores institucionales (Azul COBACAM), logo y tipografía estandarizada.
-*   **Códigos de Barra (Code 128):** Generación automática de códigos escaneables vinculados a la matrícula para agilizar el pase de lista.
-*   **Multi-Formato:** Opción de descarga en **PNG** (Alta Calidad) o **JPG** (Comprimido).
-*   **Compatibilidad Universal:** Descarga inteligente adaptada al dispositivo:
-    *   📱 **Móvil (Android/iOS):** Guarda directo en Galería.
-    *   🌐 **Web:** Descarga automática en el navegador.
-    *   💻 **Escritorio:** Guarda en la carpeta de Documentos.
+#### 📡 Modo Offline Nativo (Sin Internet)
+El sistema ahora es capaz de operar completamente sin conexión a internet.
+*   **Persistencia Inteligente:** Si se va la red, la aplicación guarda automáticamente los registros de asistencia en una base de datos local segura.
+*   **Sincronización Automática:** En cuanto el dispositivo recupera la conexión, los datos se suben a la nube de Firebase sin intervención del usuario.
+*   **Inicio de Sesión Offline:** Permite acceder a la aplicación incluso si no hay internet al abrirla, utilizando las credenciales y configuración cacheadas de la última sesión exitosa.
 
-#### 📋 Sistema Avanzado de Asistencia
-*   **Pase de Lista Masivo:** Registra la entrada o salida de grupos enteros en segundos, ideal para horas pico.
-*   **Modo Offline-First:** ¿Sin internet? No hay problema. El sistema guarda los registros localmente (Hive) y sincroniza automáticamente con la nube (Firebase) cuando recupera la conexión.
-*   **Lógica de Negocio:** Detección automática de retardos basada en los horarios de clase configurados, con solicitud obligatoria de justificación.
+#### 📸 Pase de Lista Profesional 2.0
+El módulo de asistencia ha sido rediseñado para la velocidad y la precisión.
+*   **Buscador Predictivo:** Si el alumno olvida su credencial, el prefecto puede buscarlo por nombre o matrícula. El sistema despliega una tarjeta con **Foto, Nombre y Grupo** para evitar errores de identidad.
+*   **Feedback Sensorial:**
+    *   🟢 **Verde + Vibración Suave:** Registro exitoso.
+    *   🟠 **Naranja:** Retardo o Salida Anticipada.
+    *   🔴 **Rojo + Vibración Fuerte:** Error o alumno dado de baja.
+*   **Protección Anti-Duplicados:** Bloqueo inteligente del escáner para evitar lecturas dobles accidentales.
+*   **Controles de Cámara:** Flash (Linterna) integrado para operar en entradas oscuras y cambio de cámara frontal/trasera.
 
-#### 🔍 Consulta de Asistencia en Tiempo Real
-*   **Buscador Global:** Encuentra a cualquier alumno por nombre o matrícula al instante.
-*   **Tarjetas de Información Completa:** Visualización detallada con estado (Presente/Falta/Retardo), horas exactas de entrada/salida y motivos de incidencias.
-*   **Detección de Faltas:** El sistema cruza la lista de inscritos con los registros del día para identificar ausencias automáticamente.
+#### ⚠️ Gestión de Incidencias Express
+*   **Reporte Rápido:** Desde la misma pantalla de asistencia, el prefecto puede reportar faltas al reglamento (Uniforme, Cabello, Celular) con solo dos toques, sin detener la fila de entrada.
+*   **Historial Digital:** Todas las incidencias quedan registradas en el expediente del alumno.
+
+#### 💳 Generador de Credenciales Avanzado
+*   **Lotes Masivos:** Capacidad para generar credenciales de grupos enteros copiando y pegando listas de matrículas.
+*   **Formato PDF:** Genera planillas listas para imprimir con 8 credenciales por hoja, optimizando el uso de papel.
+
+#### 📊 Reportes Ejecutivos
+*   **Exportación a Excel:** Descarga reportes detallados de asistencia que incluyen no solo horas, sino datos de contacto de tutores, teléfonos de emergencia y alertas médicas.
 
 ---
 
@@ -36,33 +43,21 @@ Una herramienta potente para la emisión instantánea de identificaciones estudi
 
 El proyecto está construido sobre una arquitectura **escalable y modular** utilizando las mejores prácticas de ingeniería de software moderno.
 
-### 📂 Estructura del Proyecto
-*   **`lib/models`:** Definiciones de datos tipadas y seguras (`Student`, `Group`, `AttendanceRecord`, `SchoolCycle`).
-*   **`lib/services`:** Capa de lógica de negocio desacoplada (`AuthService`, `DatabaseService`, `ConnectivityService`).
-*   **`lib/screens`:** Interfaces de usuario organizadas por flujo y rol (`Login`, `Dashboards`, `Management`).
-*   **`lib/providers`:** Gestión de estado reactiva (ej. `ThemeProvider`).
-*   **`lib/utils`:** Herramientas transversales para animaciones, formateo y componentes UI reutilizables.
-
 ### 📱 Stack Tecnológico
 *   **Frontend:** [Flutter](https://flutter.dev) (Dart)
-    *   Diseño **Material 3** adaptable (Tema Claro/Oscuro).
-    *   Responsive Design (Móvil, Tablet, Escritorio, Web).
-    *   **Librerías Clave:** `barcode_widget` (Credenciales), `mobile_scanner` (QR), `screenshot` (Captura), `hive` (BD Local).
+    *   Diseño **Material 3** adaptable.
+    *   **Librerías Clave:** `mobile_scanner` (QR/Barras), `hive` (BD Local NoSQL), `connectivity_plus` (Red), `excel` (Reportes), `pdf` (Impresión).
 *   **Backend & Cloud:** [Firebase](https://firebase.google.com)
-    *   **Authentication:** Gestión de usuarios y roles segura.
-    *   **Realtime Database:** Sincronización de datos en milisegundos con soporte multi-plantel.
-    *   **Storage:** Almacenamiento optimizado de imágenes y documentos.
-    *   **Hosting:** Despliegue global CDN para la versión web.
-*   **Base de Datos Maestra:**
-    *   Soporte simultáneo para múltiples planteles (**Atasta, Champotón, Hecelchakán, Xpujil**, etc.).
-    *   Historial completo de ciclos escolares y asistencias.
+    *   **Authentication:** Gestión de usuarios.
+    *   **Realtime Database:** Sincronización en milisegundos con persistencia en disco habilitada.
+    *   **Hosting:** Despliegue global.
 
 ---
 
 ## 🛠️ Configuración y Despliegue
 
 ### Requisitos Previos
-*   Flutter SDK 3.x o superior.
+*   Flutter SDK 3.4+
 *   Cuenta de Firebase configurada.
 
 ### Comandos Útiles
@@ -72,14 +67,9 @@ El proyecto está construido sobre una arquitectura **escalable y modular** util
 flutter pub get
 ```
 
-**Ejecutar en modo desarrollo:**
+**Generar Adaptadores (Hive):**
 ```bash
-flutter run
-```
-
-**Analizar código (Linting):**
-```bash
-flutter analyze
+dart run build_runner build
 ```
 
 **Construir para Web (Producción):**
