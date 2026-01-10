@@ -46,6 +46,7 @@ dependencies:
   pdf: ^3.11.3
   google_generative_ai: ^0.4.7
   flutter_markdown: ^0.7.7+1
+  cloud_functions: ^6.0.5
 
 dev_dependencies:
   flutter_test:

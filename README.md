@@ -34,8 +34,12 @@ El módulo de asistencia ha sido rediseñado para la velocidad y la precisión.
 *   **Lotes Masivos:** Capacidad para generar credenciales de grupos enteros copiando y pegando listas de matrículas.
 *   **Formato PDF:** Genera planillas listas para imprimir con 8 credenciales por hoja, optimizando el uso de papel.
 
-#### 📊 Reportes Ejecutivos
-*   **Exportación a Excel:** Descarga reportes detallados de asistencia que incluyen no solo horas, sino datos de contacto de tutores, teléfonos de emergencia y alertas médicas.
+#### 🤖 AsystemBot: Inteligencia Artificial Escolar
+Esta versión introduce a **AsystemBot**, un asistente virtual integrado directamente en el módulo de Prefectura.
+*   **Análisis en Tiempo Real:** Capaz de procesar datos de asistencia e incidencias al momento para responder preguntas complejas.
+*   **Consultas Naturales:** "¿Quiénes llegaron tarde hoy?", "¿Hazme un resumen de las incidencias de esta semana?", "¿Hay alumnos con reportes graves?".
+*   **Arquitectura de Nube (Gen 2):** Implementado mediante **Firebase Cloud Functions (Node.js 22)** para garantizar que la lógica de la IA y las claves de seguridad nunca residan en el dispositivo del usuario.
+*   **Modelo de Vanguardia:** Utiliza **Gemini 1.5 Flash** para respuestas instantáneas y precisas.
 
 ---
 
@@ -45,11 +49,13 @@ El proyecto está construido sobre una arquitectura **escalable y modular** util
 
 ### 📱 Stack Tecnológico
 *   **Frontend:** [Flutter](https://flutter.dev) (Dart)
-    *   Diseño **Material 3** adaptable.
-    *   **Librerías Clave:** `mobile_scanner` (QR/Barras), `hive` (BD Local NoSQL), `connectivity_plus` (Red), `excel` (Reportes), `pdf` (Impresión).
+    *   Diseño **Material 3** adaptable con estilo Tailwind CSS.
+    *   **Librerías Clave:** `mobile_scanner` (QR/Barras), `hive` (BD Local NoSQL), `connectivity_plus` (Red), `excel` (Reportes), `pdf` (Impresión), `http` (API REST).
 *   **Backend & Cloud:** [Firebase](https://firebase.google.com)
     *   **Authentication:** Gestión de usuarios.
-    *   **Realtime Database:** Sincronización en milisegundos con persistencia en disco habilitada.
+    *   **Realtime Database:** Sincronización en milisegundos.
+    *   **Cloud Functions (Gen 2):** Backend en Node.js para procesamiento pesado e integración con IA.
+    *   **Gemini API:** Inteligencia Artificial generativa para análisis académico.
     *   **Hosting:** Despliegue global.
 
 ---

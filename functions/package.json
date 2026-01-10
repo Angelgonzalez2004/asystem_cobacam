@@ -1,0 +1,22 @@
+{
+  "name": "functions",
+  "description": "Cloud Functions for Asystem Cobacam",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.0.0",
+    "@google/generative-ai": "^0.21.0",
+    "cors": "^2.8.5"
+  },
+  "private": true
+}

@@ -15,21 +15,31 @@ class AIAssistantScreen extends StatefulWidget {
   State<AIAssistantScreen> createState() => _AIAssistantScreenState();
 }
 
-class _AIAssistantScreenState extends State<AIAssistantScreen> {
+class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<Map<String, String>> _messages = []; // {role: 'user'|'bot', text: '...'}
+  final List<Map<String, dynamic>> _messages = []; // {role, text, time}
   
   bool _isLoading = false;
   bool _isInitializing = true;
   
   AIService? _aiService;
   String? _currentCycle;
+  
+  // Animaciones
+  late AnimationController _typingController;
 
   @override
   void initState() {
     super.initState();
+    _typingController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))..repeat();
     _initAI();
+  }
+
+  @override
+  void dispose() {
+    _typingController.dispose();
+    super.dispose();
   }
 
   Future<void> _initAI() async {
@@ -42,19 +52,18 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
         if (campus != null) {
           _aiService = AIService(campus);
           
-          // Obtener ciclo
           final appSettings = AppSettingsService(
             Provider.of<HiveService>(context, listen: false), 
             Provider.of<ConnectivityService>(context, listen: false)
           );
           _currentCycle = await appSettings.getCurrentSchoolCycleId();
           
-          // Mensaje de bienvenida
           if (mounted) {
             setState(() {
               _messages.add({
                 'role': 'bot',
-                'text': '¡Hola! Soy tu Asistente Académico Inteligente. 🤖\n\nPuedes preguntarme sobre:\n- Resumen de asistencia de hoy.\n- Incidencias recientes.\n- Alumnos con reportes.\n\n¿En qué te ayudo?'
+                'text': '¡Hola! 👋 Soy AsystemBot.\nAnalizo la asistencia y conducta en tiempo real.\n\nPrueba preguntarme:\n👉 "¿Quién faltó hoy?"\n👉 "Haz un reporte de incidencias"',
+                'time': DateTime.now(),
               });
             });
           }
@@ -71,7 +80,11 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
     if (text.trim().isEmpty || _aiService == null) return;
 
     setState(() {
-      _messages.add({'role': 'user', 'text': text});
+      _messages.add({
+        'role': 'user', 
+        'text': text,
+        'time': DateTime.now()
+      });
       _isLoading = true;
     });
     _controller.clear();
@@ -81,14 +94,22 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
       final response = await _aiService!.askAssistant(text, cycle: _currentCycle);
       if (mounted) {
         setState(() {
-          _messages.add({'role': 'bot', 'text': response});
+          _messages.add({
+            'role': 'bot', 
+            'text': response,
+            'time': DateTime.now()
+          });
         });
         _scrollToBottom();
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add({'role': 'bot', 'text': 'Lo siento, ocurrió un error al procesar tu solicitud.'});
+          _messages.add({
+            'role': 'bot', 
+            'text': '⚠️ Lo siento, no pude procesar tu solicitud en este momento.',
+            'time': DateTime.now()
+          });
         });
       }
     } finally {
@@ -101,8 +122,8 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutQuad,
         );
       }
     });
@@ -113,137 +134,221 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Row(
-          children: [
-            Icon(Icons.auto_awesome, color: Colors.amber),
-            SizedBox(width: 8),
-            Text('Asistente IA'),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_sweep),
-            tooltip: 'Limpiar Chat',
-            onPressed: () => setState(() => _messages.clear()),
-          )
-        ],
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F7FA),
       ),
-      body: _isInitializing 
+      child: _isInitializing 
         ? const Center(child: CircularProgressIndicator())
         : Column(
             children: [
-              // CHAT AREA
+              // MESSAGES LIST
               Expanded(
                 child: _messages.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey.withOpacity(0.3)),
-                          const SizedBox(height: 16),
-                          Text('Escribe una pregunta para comenzar', style: TextStyle(color: theme.hintColor)),
-                          const SizedBox(height: 24),
-                          // Sugerencias
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            alignment: WrapAlignment.center,
-                            children: [
-                              _suggestionChip('¿Resumen de hoy?'),
-                              _suggestionChip('¿Últimas incidencias?'),
-                              _suggestionChip('¿Quién tiene retardos?'),
-                            ],
-                          )
-                        ],
-                      ),
-                    )
+                  ? _buildEmptyState(theme)
                   : ListView.builder(
                       controller: _scrollController,
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _messages.length,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                      itemCount: _messages.length + (_isLoading ? 1 : 0),
                       itemBuilder: (context, index) {
+                        if (index == _messages.length) {
+                          return _buildTypingIndicator(theme);
+                        }
                         final msg = _messages[index];
-                        final isUser = msg['role'] == 'user';
-                        return Align(
-                          alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                          child: Container(
-                            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: isUser ? theme.primaryColor : (isDark ? Colors.grey[800] : Colors.grey[200]),
-                              borderRadius: BorderRadius.only(
-                                topLeft: const Radius.circular(16),
-                                topRight: const Radius.circular(16),
-                                bottomLeft: isUser ? const Radius.circular(16) : Radius.zero,
-                                bottomRight: isUser ? Radius.zero : const Radius.circular(16),
-                              ),
-                            ),
-                            child: isUser 
-                              ? Text(msg['text']!, style: const TextStyle(color: Colors.white))
-                              : MarkdownBody(
-                                  data: msg['text']!,
-                                  styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
-                                    p: TextStyle(color: isDark ? Colors.white : Colors.black87),
-                                  ),
-                                ),
-                          ),
-                        );
+                        return _buildMessageBubble(msg, theme, isDark);
                       },
                     ),
               ),
 
-              // LOADING INDICATOR
-              if (_isLoading)
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: LinearProgressIndicator(minHeight: 2),
+              // SUGGESTIONS CHIPS
+              if (!_isLoading)
+                Container(
+                  height: 50,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _suggestionChip('📊 Resumen de hoy', theme),
+                      _suggestionChip('⚠️ Alumnos con reportes', theme),
+                      _suggestionChip('🕒 Retardos recientes', theme),
+                      _suggestionChip('📝 Generar reporte breve', theme),
+                    ],
+                  ),
                 ),
 
               // INPUT AREA
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  border: Border(top: BorderSide(color: theme.dividerColor)),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: InputDecoration(
-                          hintText: 'Pregunta algo...',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-                          filled: true,
-                          fillColor: isDark ? Colors.grey[900] : Colors.grey[100],
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        ),
-                        onSubmitted: _sendMessage,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    FloatingActionButton(
-                      mini: true,
-                      onPressed: () => _sendMessage(_controller.text),
-                      child: const Icon(Icons.send),
-                    ),
-                  ],
-                ),
-              ),
+              _buildInputArea(theme, isDark),
             ],
           ),
     );
   }
 
-  Widget _suggestionChip(String text) {
-    return ActionChip(
-      label: Text(text),
-      onPressed: () => _sendMessage(text),
-      backgroundColor: Theme.of(context).cardColor,
+  Widget _buildEmptyState(ThemeData theme) {
+    return Center(
+      child: Opacity(
+        opacity: 0.6,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.auto_awesome_mosaic_rounded, size: 80, color: theme.disabledColor),
+            const SizedBox(height: 16),
+            Text('¡Pregúntame lo que necesites!', style: theme.textTheme.titleMedium),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(Map<String, dynamic> msg, ThemeData theme, bool isDark) {
+    final isUser = msg['role'] == 'user';
+    return Align(
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isUser 
+              ? theme.primaryColor 
+              : (isDark ? const Color(0xFF2C2C2C) : Colors.white),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: isUser ? const Radius.circular(16) : Radius.zero,
+            bottomRight: isUser ? Radius.zero : const Radius.circular(16),
+          ),
+          boxShadow: [
+            if (!isUser)
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isUser)
+              Text(
+                msg['text'], 
+                style: const TextStyle(color: Colors.white, fontSize: 15)
+              )
+            else
+              MarkdownBody(
+                data: msg['text'],
+                selectable: true,
+                styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+                  p: TextStyle(color: isDark ? Colors.grey[200] : const Color(0xFF334155), fontSize: 15),
+                  strong: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold),
+                  listBullet: TextStyle(color: theme.primaryColor),
+                ),
+              ),
+            
+            const SizedBox(height: 4),
+            // Timestamp tiny
+            // Align(
+            //   alignment: Alignment.bottomRight,
+            //   child: Text(
+            //     "Justo ahora", 
+            //     style: TextStyle(fontSize: 10, color: isUser ? Colors.white70 : Colors.grey),
+            //   )
+            // ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTypingIndicator(ThemeData theme) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 16, 
+              height: 16, 
+              child: CircularProgressIndicator(strokeWidth: 2, color: theme.primaryColor)
+            ),
+            const SizedBox(width: 8),
+            Text("Analizando datos...", style: TextStyle(color: theme.hintColor, fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputArea(ThemeData theme, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF252525) : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                textCapitalization: TextCapitalization.sentences,
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(
+                  hintText: 'Escribe tu consulta...',
+                  hintStyle: TextStyle(color: theme.hintColor),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF3F4F6),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+                onSubmitted: _sendMessage,
+              ),
+            ),
+            const SizedBox(width: 8),
+            FloatingActionButton(
+              onPressed: () => _sendMessage(_controller.text),
+              backgroundColor: theme.primaryColor,
+              elevation: 2,
+              mini: true,
+              child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _suggestionChip(String text, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
+      child: ActionChip(
+        label: Text(text),
+        onPressed: () => _sendMessage(text),
+        avatar: Icon(Icons.auto_awesome, size: 14, color: theme.primaryColor),
+        backgroundColor: theme.cardColor,
+        elevation: 1,
+        side: BorderSide(color: theme.dividerColor.withOpacity(0.5)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        labelStyle: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.w500),
+      ),
     );
   }
 }
+

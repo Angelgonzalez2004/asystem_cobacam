@@ -169,7 +169,17 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_screenTitles[safeIndex]),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (safeIndex == 13) // Si es el asistente IA
+              const Padding(
+                padding: EdgeInsets.only(right: 10),
+                child: Icon(Icons.psychology, color: Color(0xFFF59E0B)), // Color Tertiary (Amber)
+              ),
+            Text(_screenTitles[safeIndex]),
+          ],
+        ),
         backgroundColor: theme.colorScheme.surface,
         foregroundColor: theme.colorScheme.onSurface,
         iconTheme: IconThemeData(color: theme.colorScheme.primary),
@@ -188,6 +198,19 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         onNavigate: _onNavigate,
       ),
       body: _screens[safeIndex],
+      floatingActionButton: safeIndex == 0
+          ? FloatingActionButton.extended(
+              onPressed: () => _onNavigate('ia'),
+              backgroundColor: theme.colorScheme.tertiary,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.psychology_rounded), // Psychology icon looks more "AI"
+              label: const Text(
+                'Asistente IA',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              elevation: 6,
+            )
+          : null,
     );
   }
 }
