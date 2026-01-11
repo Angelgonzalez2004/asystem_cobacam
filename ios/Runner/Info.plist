@@ -53,5 +53,7 @@
 		<string>Esta aplicación necesita acceso a tu biblioteca de fotos para guardar las imágenes de los horarios.</string>
 		<key>NSCameraUsageDescription</key>
 		<string>Esta aplicación necesita acceso a la cámara para tomar fotos de perfil o documentos.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Esta aplicación necesita acceso al micrófono para grabar videos.</string>
 	</dict>
 </plist>

@@ -4,59 +4,56 @@
 
 ---
 
-## 🚀 Versión 2.1.0: "Seguridad y Offline"
+## 🚀 Versión 2.1.1: "Estabilidad y Mantenimiento"
 
-Esta actualización introduce mejoras críticas para la operatividad en planteles con conectividad limitada y herramientas avanzadas para la seguridad del alumnado.
+Esta actualización se centra en la robustez técnica del sistema, resolviendo compatibilidades críticas y preparando el terreno para futuras expansiones, manteniendo todas las funcionalidades de la versión "Seguridad y Offline".
 
-### 🌟 Nuevas Funcionalidades
+### 🛠️ Actualizaciones Técnicas Recientes (v2.1.1)
 
-#### 📡 Modo Offline Nativo (Sin Internet)
-El sistema ahora es capaz de operar completamente sin conexión a internet.
-*   **Persistencia Inteligente:** Si se va la red, la aplicación guarda automáticamente los registros de asistencia en una base de datos local segura.
-*   **Sincronización Automática:** En cuanto el dispositivo recupera la conexión, los datos se suben a la nube de Firebase sin intervención del usuario.
-*   **Inicio de Sesión Offline:** Permite acceder a la aplicación incluso si no hay internet al abrirla, utilizando las credenciales y configuración cacheadas de la última sesión exitosa.
+*   **⚡ Migración de Librerías:** Se reemplazó el paquete obsoleto `flutter_markdown` por **`flutter_markdown_plus`**, asegurando un renderizado de texto enriquecido más estable para el Asistente IA.
+*   **🍎 Parche de Estabilidad iOS:** Se corrigieron los permisos en `Info.plist` (añadiendo `NSMicrophoneUsageDescription`) para prevenir cierres inesperados al utilizar la cámara en dispositivos iPhone/iPad.
+*   **📦 Optimización de Dependencias:** Se resolvió el "infierno de dependencias" entre los módulos de generación de reportes (`excel`, `pdf`) y procesamiento de imágenes (`image`), logrando una configuración estable y compatible.
+*   **🔧 Configuración de Build:** Ajuste de versiones para `build_runner` y `hive_generator` para garantizar una compilación fluida de los adaptadores de base de datos.
 
-#### 📸 Pase de Lista Profesional 2.0
-El módulo de asistencia ha sido rediseñado para la velocidad y la precisión.
-*   **Buscador Predictivo:** Si el alumno olvida su credencial, el prefecto puede buscarlo por nombre o matrícula. El sistema despliega una tarjeta con **Foto, Nombre y Grupo** para evitar errores de identidad.
-*   **Feedback Sensorial:**
-    *   🟢 **Verde + Vibración Suave:** Registro exitoso.
-    *   🟠 **Naranja:** Retardo o Salida Anticipada.
-    *   🔴 **Rojo + Vibración Fuerte:** Error o alumno dado de baja.
-*   **Protección Anti-Duplicados:** Bloqueo inteligente del escáner para evitar lecturas dobles accidentales.
-*   **Controles de Cámara:** Flash (Linterna) integrado para operar en entradas oscuras y cambio de cámara frontal/trasera.
+---
 
-#### ⚠️ Gestión de Incidencias Express
-*   **Reporte Rápido:** Desde la misma pantalla de asistencia, el prefecto puede reportar faltas al reglamento (Uniforme, Cabello, Celular) con solo dos toques, sin detener la fila de entrada.
-*   **Historial Digital:** Todas las incidencias quedan registradas en el expediente del alumno.
+## 🌟 Funcionalidades Clave (v2.1.0+)
 
-#### 💳 Generador de Credenciales Avanzado
-*   **Lotes Masivos:** Capacidad para generar credenciales de grupos enteros copiando y pegando listas de matrículas.
-*   **Formato PDF:** Genera planillas listas para imprimir con 8 credenciales por hoja, optimizando el uso de papel.
+### 📡 Modo Offline Nativo (Sin Internet)
+El sistema opera completamente sin conexión a internet cuando es necesario.
+*   **Persistencia Inteligente:** Base de datos local segura (Hive) que almacena registros automáticamente.
+*   **Sincronización Automática:** Subida de datos a la nube (Firebase) en cuanto se recupera la conexión.
+*   **Inicio de Sesión Offline:** Acceso continuo utilizando credenciales cacheadas.
 
-#### 🤖 AsystemBot: Inteligencia Artificial Escolar
-Esta versión introduce a **AsystemBot**, un asistente virtual integrado directamente en el módulo de Prefectura.
-*   **Análisis en Tiempo Real:** Capaz de procesar datos de asistencia e incidencias al momento para responder preguntas complejas.
-*   **Consultas Naturales:** "¿Quiénes llegaron tarde hoy?", "¿Hazme un resumen de las incidencias de esta semana?", "¿Hay alumnos con reportes graves?".
-*   **Arquitectura de Nube (Gen 2):** Implementado mediante **Firebase Cloud Functions (Node.js 22)** para garantizar que la lógica de la IA y las claves de seguridad nunca residan en el dispositivo del usuario.
-*   **Modelo de Vanguardia:** Utiliza **Gemini 1.5 Flash** para respuestas instantáneas y precisas.
+### 📸 Pase de Lista Profesional 2.0
+Módulo de asistencia rediseñado para velocidad y precisión.
+*   **Escáner Híbrido:** Soporte para códigos QR y de Barras con control de flash integrado.
+*   **Buscador Predictivo:** Búsqueda por nombre/matrícula con foto de respaldo para alumnos sin credencial.
+*   **Feedback Sensorial:** Confirmaciones visuales (Verde/Rojo) y hápticas (Vibración) para agilizar el flujo de entrada.
+
+### 🤖 AsystemBot: Inteligencia Artificial Escolar
+Asistente virtual potenciado por **Gemini 1.5 Flash**.
+*   **Consultas Naturales:** Pregunta "¿Quién faltó hoy?" o "Resumen de incidencias" y recibe respuestas analizadas en tiempo real.
+*   **Privacidad:** Procesamiento seguro en la nube a través de Firebase Cloud Functions.
+
+### 🛠️ Gestión Administrativa
+*   **Incidencias Express:** Reporte de faltas al reglamento en 2 toques.
+*   **Generador de Credenciales:** Creación masiva de identificaciones en PDF listas para imprimir.
 
 ---
 
 ## 🏛️ Arquitectura del Sistema
 
-El proyecto está construido sobre una arquitectura **escalable y modular** utilizando las mejores prácticas de ingeniería de software moderno.
+El proyecto está construido sobre una arquitectura **escalable y modular**.
 
 ### 📱 Stack Tecnológico
-*   **Frontend:** [Flutter](https://flutter.dev) (Dart)
-    *   Diseño **Material 3** adaptable con estilo Tailwind CSS.
-    *   **Librerías Clave:** `mobile_scanner` (QR/Barras), `hive` (BD Local NoSQL), `connectivity_plus` (Red), `excel` (Reportes), `pdf` (Impresión), `http` (API REST).
+*   **Frontend:** [Flutter](https://flutter.dev) (Dart 3.4+) - Material 3.
 *   **Backend & Cloud:** [Firebase](https://firebase.google.com)
     *   **Authentication:** Gestión de usuarios.
     *   **Realtime Database:** Sincronización en milisegundos.
-    *   **Cloud Functions (Gen 2):** Backend en Node.js para procesamiento pesado e integración con IA.
-    *   **Gemini API:** Inteligencia Artificial generativa para análisis académico.
+    *   **Cloud Functions (Gen 2):** Backend Node.js.
     *   **Hosting:** Despliegue global.
+*   **Librerías Clave:** `hive`, `provider`, `mobile_scanner`, `flutter_markdown_plus`, `pdf`, `excel`.
 
 ---
 
@@ -64,29 +61,32 @@ El proyecto está construido sobre una arquitectura **escalable y modular** util
 
 ### Requisitos Previos
 *   Flutter SDK 3.4+
-*   Cuenta de Firebase configurada.
+*   Cuenta de Firebase configurada y CLI instalado.
 
-### Comandos Útiles
+### Comandos de Desarrollo
 
 **Instalar dependencias:**
 ```bash
 flutter pub get
 ```
 
-**Generar Adaptadores (Hive):**
+**Generar Adaptadores de Base de Datos (Hive):**
 ```bash
-dart run build_runner build
+dart run build_runner build --delete-conflicting-outputs
 ```
 
-**Construir para Web (Producción):**
-```bash
-flutter build web --release --web-renderer canvaskit
-```
+### Despliegue Web (Producción)
 
-**Desplegar a Firebase:**
-```bash
-firebase deploy --only hosting
-```
+1.  **Construir la aplicación:**
+    Utilizamos el renderizador `canvaskit` para mejor rendimiento gráfico.
+    ```bash
+    flutter build web --release --web-renderer canvaskit
+    ```
+
+2.  **Desplegar a Firebase Hosting:**
+    ```bash
+    firebase deploy --only hosting
+    ```
 
 ---
 
