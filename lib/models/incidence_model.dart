@@ -34,6 +34,18 @@ class Incidence {
   @HiveField(9)
   String schoolCycle;
 
+  @HiveField(10)
+  String status; // 'Activo', 'Solucionado'
+
+  @HiveField(11)
+  String? resolutionReason;
+
+  @HiveField(12)
+  String? resolutionDetails;
+
+  @HiveField(13)
+  DateTime? resolutionDate;
+
   Incidence({
     required this.id,
     required this.studentId,
@@ -45,6 +57,10 @@ class Incidence {
     required this.campusId,
     this.isSynced = false,
     required this.schoolCycle,
+    this.status = 'Activo',
+    this.resolutionReason,
+    this.resolutionDetails,
+    this.resolutionDate,
   });
 
   Map<String, dynamic> toFirebaseMap() {
@@ -57,6 +73,10 @@ class Incidence {
       'date': date.toIso8601String(),
       'campusId': campusId,
       'schoolCycle': schoolCycle,
+      'status': status,
+      'resolutionReason': resolutionReason,
+      'resolutionDetails': resolutionDetails,
+      'resolutionDate': resolutionDate?.toIso8601String(),
     };
   }
 
@@ -72,6 +92,10 @@ class Incidence {
       campusId: data['campusId'] ?? '',
       isSynced: true,
       schoolCycle: data['schoolCycle'] ?? 'S/C',
+      status: data['status'] ?? 'Activo',
+      resolutionReason: data['resolutionReason'],
+      resolutionDetails: data['resolutionDetails'],
+      resolutionDate: data['resolutionDate'] != null ? DateTime.tryParse(data['resolutionDate']) : null,
     );
   }
 }

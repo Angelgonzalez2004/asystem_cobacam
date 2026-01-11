@@ -4,20 +4,28 @@
 
 ---
 
-## 🚀 Versión 2.1.1: "Estabilidad y Mantenimiento"
+## 🚀 Versión 2.2.0: "Resolución Inteligente y Seguridad"
 
-Esta actualización se centra en la robustez técnica del sistema, resolviendo compatibilidades críticas y preparando el terreno para futuras expansiones, manteniendo todas las funcionalidades de la versión "Seguridad y Offline".
+Esta actualización introduce un flujo de trabajo avanzado para la gestión de incidencias, mejoras críticas en la seguridad de la localización y una optimización profunda de los reportes.
 
-### 🛠️ Actualizaciones Técnicas Recientes (v2.1.1)
+### 🌟 Nuevas Funcionalidades (v2.2.0)
 
-*   **⚡ Migración de Librerías:** Se reemplazó el paquete obsoleto `flutter_markdown` por **`flutter_markdown_plus`**, asegurando un renderizado de texto enriquecido más estable para el Asistente IA.
-*   **🍎 Parche de Estabilidad iOS:** Se corrigieron los permisos en `Info.plist` (añadiendo `NSMicrophoneUsageDescription`) para prevenir cierres inesperados al utilizar la cámara en dispositivos iPhone/iPad.
-*   **📦 Optimización de Dependencias:** Se resolvió el "infierno de dependencias" entre los módulos de generación de reportes (`excel`, `pdf`) y procesamiento de imágenes (`image`), logrando una configuración estable y compatible.
-*   **🔧 Configuración de Build:** Ajuste de versiones para `build_runner` y `hive_generator` para garantizar una compilación fluida de los adaptadores de base de datos.
+#### 🛡️ Gestión de Incidencias "Soft-Resolve"
+*   **Resolución sin Eliminación:** Ahora los reportes no se eliminan, sino que se "Resuelven" o "Archivan", manteniendo la evidencia histórica.
+*   **Bitácora de Acuerdos:** Al resolver una incidencia, se exige un motivo (ej. "Acuerdo con Tutor", "Conducta Corregida") y detalles opcionales.
+*   **Visualización Clara:** Los reportes resueltos aparecen en el historial con fecha de cierre y detalles, diferenciados visualmente (tachados y en verde).
+
+#### 📊 Reportes Excel de Grado Médico
+*   **Espejo de Datos:** La exportación a Excel ahora incluye **TODOS** los campos del expediente del alumno, incluyendo información médica desglosada (`Alergias`, `Condiciones`, `Estado de Salud`) en columnas independientes.
+*   **Formato Profesional:** Encabezados mejorados, columnas de estatus y resolución, y uso de **Emojis/Íconos** (👥, 📅) dentro del archivo para mejor legibilidad.
+
+#### 📅 Calendario Robusto & Localización
+*   **Soporte Regional:** Integración nativa de `flutter_localizations` para calendarios y selectores en Español (MX).
+*   **Lógica Anti-Bloqueo:** Sistema inteligente que detecta días inhábiles o fines de semana al abrir el calendario y sugiere automáticamente el siguiente día válido, evitando "pantallas grises" o cierres inesperados.
 
 ---
 
-## 🌟 Funcionalidades Clave (v2.1.0+)
+## 🌟 Funcionalidades Clave (Consolidadas)
 
 ### 📡 Modo Offline Nativo (Sin Internet)
 El sistema opera completamente sin conexión a internet cuando es necesario.
@@ -36,10 +44,6 @@ Asistente virtual potenciado por **Gemini 1.5 Flash**.
 *   **Consultas Naturales:** Pregunta "¿Quién faltó hoy?" o "Resumen de incidencias" y recibe respuestas analizadas en tiempo real.
 *   **Privacidad:** Procesamiento seguro en la nube a través de Firebase Cloud Functions.
 
-### 🛠️ Gestión Administrativa
-*   **Incidencias Express:** Reporte de faltas al reglamento en 2 toques.
-*   **Generador de Credenciales:** Creación masiva de identificaciones en PDF listas para imprimir.
-
 ---
 
 ## 🏛️ Arquitectura del Sistema
@@ -53,7 +57,7 @@ El proyecto está construido sobre una arquitectura **escalable y modular**.
     *   **Realtime Database:** Sincronización en milisegundos.
     *   **Cloud Functions (Gen 2):** Backend Node.js.
     *   **Hosting:** Despliegue global.
-*   **Librerías Clave:** `hive`, `provider`, `mobile_scanner`, `flutter_markdown_plus`, `pdf`, `excel`.
+*   **Librerías Clave:** `hive`, `provider`, `mobile_scanner`, `flutter_markdown_plus`, `pdf`, `excel`, `flutter_localizations`.
 
 ---
 
@@ -78,9 +82,8 @@ dart run build_runner build --delete-conflicting-outputs
 ### Despliegue Web (Producción)
 
 1.  **Construir la aplicación:**
-    Utilizamos el renderizador `canvaskit` para mejor rendimiento gráfico.
     ```bash
-    flutter build web --release --web-renderer canvaskit
+    flutter build web --release
     ```
 
 2.  **Desplegar a Firebase Hosting:**

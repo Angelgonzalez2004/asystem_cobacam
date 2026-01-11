@@ -39,6 +39,8 @@ class Student {
   String? healthConditions; // Visión, motricidad, etc.
   @HiveField(16)
   String? generalHealthStatus; // "Sano" por defecto
+  @HiveField(17)
+  String? nss; // Numero de Seguro Social
 
   Student({
     required this.id,
@@ -58,6 +60,7 @@ class Student {
     this.allergies,
     this.healthConditions,
     this.generalHealthStatus = 'Sano',
+    this.nss,
   });
 
   // Factory constructor for creating a Student from a Firebase DataSnapshot
@@ -81,6 +84,7 @@ class Student {
       allergies: data['allergies'],
       healthConditions: data['healthConditions'],
       generalHealthStatus: data['generalHealthStatus'] ?? 'Sano',
+      nss: data['nss'],
     );
   }
 
@@ -103,6 +107,7 @@ class Student {
       'allergies': allergies,
       'healthConditions': healthConditions,
       'generalHealthStatus': generalHealthStatus,
+      'nss': nss,
     };
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:asystem_cobacam/utils/web_downloader.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:asystem_cobacam/utils/credential_pdf_generator.dart';
+import 'package:asystem_cobacam/utils/animations.dart'; // Importar animaciones
 import 'package:flutter/material.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:screenshot/screenshot.dart';
@@ -234,133 +235,236 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final size = MediaQuery.of(context).size;
+    final isWide = size.width > 700;
 
-    return _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // --- PANEL DE CONTROL ---
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: isDark ? theme.cardColor : Colors.white,
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
-                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _selectedCycle,
-                              decoration: _inputDeco('Ciclo', Icons.calendar_month),
-                              items: _schoolCycles.map((c) => DropdownMenuItem(value: c.id, child: Text(c.id))).toList(),
-                              onChanged: (val) => setState(() { _selectedCycle = val; _studentsToGenerate.clear(); }),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // SELECTOR DE FORMATO
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300),
-                              borderRadius: BorderRadius.circular(12)
-                            ),
-                            child: Row(
-                              children: [
-                                _formatChip('PNG'),
-                                _formatChip('JPG'),
-                                _formatChip('PDF'),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _studentIdController,
-                        maxLines: 3, // Permite pegar múltiples líneas
-                        minLines: 1,
-                        keyboardType: TextInputType.multiline,
-                        textInputAction: TextInputAction.done,
-                        decoration: _inputDeco('Matrícula(s) - Separa por espacio, coma o enter', Icons.badge_rounded).copyWith(
-                          suffixIcon: _isSearching
-                              ? const Padding(
-                                  padding: EdgeInsets.all(12.0),
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : IconButton(
-                                  icon: const Icon(Icons.add_circle, size: 32, color: Colors.blue), // Más prominente
-                                  onPressed: () => _addStudentsByMatriculas(_studentIdController.text),
-                                ),
-                        ),
-                        onSubmitted: _addStudentsByMatriculas,
-                      ),
-                    ],
-                  ),
-                ),
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
 
-                // --- ACCIONES ---
-                if (_studentsToGenerate.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
+    return Scaffold( // Usar Scaffold interno para mejor estructura
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : Colors.grey.shade50,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            // --- HEADER & CONTROL PANEL ---
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: Card(
+                  elevation: 4,
+                  shadowColor: Colors.black.withOpacity(0.1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('${_studentsToGenerate.length} Alumnos en lista', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        const Spacer(),
-                        ElevatedButton.icon(
-                          onPressed: _downloadAllCredentials,
-                          icon: const Icon(Icons.download_for_offline),
-                          label: Text('Descargar $_exportFormat'),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade700, foregroundColor: Colors.white),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(color: theme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                              child: Icon(Icons.badge_outlined, color: theme.primaryColor, size: 32),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Generador de Credenciales', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                                  Text('Procesamiento por lotes • $_exportFormat', style: TextStyle(color: Colors.grey.shade600)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        
+                        // CONTROLES RESPONSIVOS
+                        Flex(
+                          direction: isWide ? Axis.horizontal : Axis.vertical,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // CICLO
+                            Expanded(
+                              flex: isWide ? 1 : 0,
+                              child: DropdownButtonFormField<String>(
+                                value: _selectedCycle,
+                                decoration: _inputDeco('Ciclo Escolar', Icons.calendar_today),
+                                items: _schoolCycles.map((c) => DropdownMenuItem(
+                                  value: c.id, 
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.calendar_month_outlined, size: 18, color: theme.primaryColor),
+                                      const SizedBox(width: 8),
+                                      Text(c.id),
+                                    ],
+                                  )
+                                )).toList(),
+                                onChanged: (val) => setState(() { _selectedCycle = val; _studentsToGenerate.clear(); }),
+                              ),
+                            ),
+                            SizedBox(width: isWide ? 16 : 0, height: isWide ? 0 : 16),
+                            
+                            // FORMATO
+                            Expanded(
+                              flex: isWide ? 2 : 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: isDark ? Colors.black26 : Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: theme.dividerColor.withOpacity(0.1))
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    _formatOption('PNG', Icons.image),
+                                    _formatOption('JPG', Icons.photo),
+                                    _formatOption('PDF', Icons.picture_as_pdf),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        
+                        // INPUT AREA
+                        TextField(
+                          controller: _studentIdController,
+                          maxLines: 4,
+                          minLines: 2,
+                          style: const TextStyle(fontSize: 16, height: 1.5),
+                          decoration: _inputDeco('Ingresa matrículas (pegar lista)', Icons.playlist_add).copyWith(
+                            hintText: 'Ejemplo:\n2025001\n2025002',
+                            suffixIcon: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: IconButton.filled(
+                                onPressed: _isSearching ? null : () => _addStudentsByMatriculas(_studentIdController.text),
+                                icon: _isSearching 
+                                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                                  : const Icon(Icons.arrow_forward_rounded),
+                                style: IconButton.styleFrom(
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  padding: const EdgeInsets.all(16)
+                                ),
+                              ),
+                            ),
+                          ),
+                          onSubmitted: _addStudentsByMatriculas,
                         ),
                       ],
                     ),
                   ),
-
-                // --- LISTA ---
-                Expanded(
-                  child: _studentsToGenerate.isEmpty
-                      ? const Center(child: Text('Lista vacía. Agrega una matrícula arriba.'))
-                      : ListView.separated(
-                          padding: const EdgeInsets.all(20),
-                          itemCount: _studentsToGenerate.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 16),
-                          itemBuilder: (context, index) {
-                            final student = _studentsToGenerate[index];
-                            return Center(
-                              child: Stack(
-                                children: [
-                                  _CredentialCardVisual(student: student, campus: _campus ?? ''),
-                                  Positioned(
-                                    top: 0, right: 0,
-                                    child: IconButton(
-                                      icon: const Icon(Icons.remove_circle, color: Colors.red),
-                                      onPressed: () => setState(() => _studentsToGenerate.removeAt(index)),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
                 ),
-              ],
-            );
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // --- RESULTADOS ---
+            if (_studentsToGenerate.isNotEmpty) ...[
+              FadeInUp(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(color: theme.primaryColor, borderRadius: BorderRadius.circular(20)),
+                      child: Text(
+                        '${_studentsToGenerate.length} Credenciales Listas',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton.icon(
+                      onPressed: _downloadAllCredentials,
+                      icon: const Icon(Icons.download_rounded),
+                      label: Text('DESCARGAR $_exportFormat'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade600,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        elevation: 4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // GRID DE CREDENCIALES
+              Center(
+                child: Wrap(
+                  spacing: 24,
+                  runSpacing: 24,
+                  alignment: WrapAlignment.center,
+                  children: _studentsToGenerate.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final student = entry.value;
+                    return FadeInUp(
+                      delay: Duration(milliseconds: index * 50),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          _CredentialCardVisual(student: student, campus: _campus ?? ''),
+                          Positioned(
+                            top: -10, right: -10,
+                            child: IconButton.filled(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () => setState(() => _studentsToGenerate.removeAt(index)),
+                              style: IconButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 100),
+            ] else 
+              Padding(
+                padding: const EdgeInsets.only(top: 40),
+                child: Opacity(
+                  opacity: 0.5,
+                  child: Column(
+                    children: [
+                      Icon(Icons.style_outlined, size: 64, color: theme.disabledColor),
+                      const SizedBox(height: 16),
+                      const Text('La lista de generación está vacía', style: TextStyle(fontSize: 16)),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Widget _formatChip(String label) {
+  Widget _formatOption(String label, IconData icon) {
     bool isSelected = _exportFormat == label;
-    return GestureDetector(
+    final color = isSelected ? Theme.of(context).primaryColor : Colors.grey;
+    
+    return InkWell(
       onTap: () => setState(() => _exportFormat = label),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)] : null,
         ),
-        child: Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.grey, fontWeight: FontWeight.bold, fontSize: 12)),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 8),
+            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }
@@ -368,12 +472,19 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
   InputDecoration _inputDeco(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      alignLabelWithHint: true,
+      prefixIcon: Padding(padding: const EdgeInsets.only(bottom: 24), child: Icon(icon)), // Ajuste para multiline
+      prefixIconConstraints: const BoxConstraints(minWidth: 48),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade300)),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.all(20),
     );
   }
 }
+
+// ... (Resto de clases _CredentialCardVisual y _CredentialCardContent sin cambios en lógica interna)
 
 class _CredentialCardVisual extends StatelessWidget {
   final Student student;
@@ -451,6 +562,7 @@ class _CredentialCardContent extends StatelessWidget {
                                       children: [
                                         Text(student.fullName.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF1E3A8A)), maxLines: 2),
                                         const SizedBox(height: 4),
+                                        Text('NSS: ${student.nss ?? 'SIN REGISTRO'}', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.indigo)),
                                         Text('GÉNERO: ${student.gender.toUpperCase()}', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black54)),
                                         Text('MATRÍCULA: ${student.studentId}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
                                         Text('GRUPO: ${student.group}', style: const TextStyle(fontSize: 10)),

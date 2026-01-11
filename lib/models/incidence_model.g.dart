@@ -27,13 +27,17 @@ class IncidenceAdapter extends TypeAdapter<Incidence> {
       campusId: fields[7] as String,
       isSynced: fields[8] as bool,
       schoolCycle: fields[9] as String,
+      status: fields[10] as String,
+      resolutionReason: fields[11] as String?,
+      resolutionDetails: fields[12] as String?,
+      resolutionDate: fields[13] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Incidence obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,7 +57,15 @@ class IncidenceAdapter extends TypeAdapter<Incidence> {
       ..writeByte(8)
       ..write(obj.isSynced)
       ..writeByte(9)
-      ..write(obj.schoolCycle);
+      ..write(obj.schoolCycle)
+      ..writeByte(10)
+      ..write(obj.status)
+      ..writeByte(11)
+      ..write(obj.resolutionReason)
+      ..writeByte(12)
+      ..write(obj.resolutionDetails)
+      ..writeByte(13)
+      ..write(obj.resolutionDate);
   }
 
   @override

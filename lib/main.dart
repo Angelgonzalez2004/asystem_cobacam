@@ -8,6 +8,7 @@ import 'firebase_options.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 final HiveService _hiveService = HiveService();
 final ConnectivityService _connectivityService = ConnectivityService();
@@ -85,6 +86,14 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           title: 'Asystem-Cobacam',
           themeMode: themeProvider.themeMode,
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('es', 'MX'),
+          ],
           theme: ThemeData(
             useMaterial3: true,
             fontFamily:

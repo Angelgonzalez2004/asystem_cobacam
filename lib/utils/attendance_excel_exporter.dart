@@ -47,7 +47,7 @@ class AttendanceExcelExporter {
     if (sortedGroups.isNotEmpty) {
        for (var groupName in sortedGroups) {
           // Limpieza de nombre de hoja para evitar errores de Excel
-          final safeName = 'Gpo ${groupName.replaceAll(RegExp(r'[\/?:*[\]'), '_')}';
+          final safeName = 'Gpo ${groupName.replaceAll(RegExp(r'[\\/:*?\"<>|\[\]]'), '_')}';
           final finalSheetName = safeName.length > 30 ? safeName.substring(0, 30) : safeName;
           final Sheet sheetGroup = excel[finalSheetName];
           _fillSheet(sheetGroup, studentsByGroup[groupName]!, attendanceMap, cycle, "GRUPO $groupName - $title", startDate, endDate, nonAttendanceDays);

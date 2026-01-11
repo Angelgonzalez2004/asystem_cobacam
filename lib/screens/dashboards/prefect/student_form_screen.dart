@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
-import 'package:asystem_cobacam/screens/dashboards/prefect/group_management_screen.dart'; // Importa la pantalla de gestión de grupos
+import 'package:asystem_cobacam/screens/dashboards/prefect/group_management_screen.dart'; 
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:asystem_cobacam/models/student_model.dart';
@@ -13,10 +13,9 @@ import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:provider/provider.dart';
 
 class StudentFormScreen extends StatefulWidget {
-  final Student? student; // Null if adding new student, not null if editing
+  final Student? student; 
   final String campusId;
-  final String
-      currentSchoolCycle; // This is the *global current* cycle, but we can override it
+  final String currentSchoolCycle; 
 
   const StudentFormScreen({
     super.key,
@@ -39,6 +38,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
   late TextEditingController _placeOfResidenceController;
   late TextEditingController _institutionalEmailController;
   late TextEditingController _studentIdController;
+  late TextEditingController _nssController; 
   late TextEditingController _allergiesController;
   late TextEditingController _healthConditionsController;
   late TextEditingController _generalHealthStatusController;
@@ -64,54 +64,38 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
   void initState() {
     super.initState();
     _hiveService = Provider.of<HiveService>(context, listen: false);
-    _connectivityService =
-        Provider.of<ConnectivityService>(context, listen: false);
-    _appSettingsService =
-        AppSettingsService(_hiveService, _connectivityService);
+    _connectivityService = Provider.of<ConnectivityService>(context, listen: false);
+    _appSettingsService = AppSettingsService(_hiveService, _connectivityService);
 
-    _fullNameController =
-        TextEditingController(text: widget.student?.fullName ?? '');
-    _guardianFullNameController =
-        TextEditingController(text: widget.student?.guardianFullName ?? '');
-    _ageController =
-        TextEditingController(text: widget.student?.age.toString() ?? '');
-    _guardianPhoneController =
-        TextEditingController(text: widget.student?.guardianPhone ?? '');
-    _studentPhoneController =
-        TextEditingController(text: widget.student?.studentPhone ?? '');
-    _placeOfResidenceController =
-        TextEditingController(text: widget.student?.placeOfResidence ?? '');
-    _institutionalEmailController =
-        TextEditingController(text: widget.student?.institutionalEmail ?? '');
-    _studentIdController =
-        TextEditingController(text: widget.student?.studentId ?? '');
-    _allergiesController =
-        TextEditingController(text: widget.student?.allergies ?? '');
-    _healthConditionsController =
-        TextEditingController(text: widget.student?.healthConditions ?? '');
-    _generalHealthStatusController =
-        TextEditingController(text: widget.student?.generalHealthStatus ?? 'Sano');
+    _fullNameController = TextEditingController(text: widget.student?.fullName ?? '');
+    _guardianFullNameController = TextEditingController(text: widget.student?.guardianFullName ?? '');
+    _ageController = TextEditingController(text: widget.student?.age.toString() ?? '');
+    _guardianPhoneController = TextEditingController(text: widget.student?.guardianPhone ?? '');
+    _studentPhoneController = TextEditingController(text: widget.student?.studentPhone ?? '');
+    _placeOfResidenceController = TextEditingController(text: widget.student?.placeOfResidence ?? '');
+    _institutionalEmailController = TextEditingController(text: widget.student?.institutionalEmail ?? '');
+    _studentIdController = TextEditingController(text: widget.student?.studentId ?? '');
+    _nssController = TextEditingController(text: widget.student?.nss ?? ''); 
+    _allergiesController = TextEditingController(text: widget.student?.allergies ?? '');
+    _healthConditionsController = TextEditingController(text: widget.student?.healthConditions ?? '');
+    _generalHealthStatusController = TextEditingController(text: widget.student?.generalHealthStatus ?? 'Sano');
 
     _selectedGender = widget.student?.gender;
     _selectedGroup = widget.student?.group;
     
-    // Si estamos editando, usar el ciclo del alumno. Si es nuevo, el actual global.
     _selectedSchoolCycle = widget.student?.schoolCycle ?? widget.currentSchoolCycle;
     
     _loadSchoolCycles().then((_) {
-      _checkCycleStatus(_selectedSchoolCycle); // Check status immediately
+      _checkCycleStatus(_selectedSchoolCycle); 
       _subscribeToGroups(_selectedSchoolCycle);
     });
   }
 
   void _checkCycleStatus(String? cycleId) {
     if (cycleId == null || _availableSchoolCycles.isEmpty) return;
-    
     try {
       final cycle = _availableSchoolCycles.firstWhere((c) => c.id == cycleId);
       final now = DateTime.now();
-      // Si la fecha de fin ya pasó, es histórico/cerrado.
-      // Agregamos un margen de 1 día para seguridad.
       if (now.isAfter(cycle.endDate.add(const Duration(days: 1)))) {
         setState(() => _isReadOnly = true);
       } else {
@@ -138,18 +122,13 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
 
   void _subscribeToGroups(String? schoolCycleId) {
     _groupsSubscription?.cancel();
-    
     if (schoolCycleId == null) {
       if (mounted) setState(() => _isLoadingGroups = false);
       return;
     }
-    
-    if (mounted) {
-        setState(() {
-            _isLoadingGroups = true;
-            _groups = [];
-        });
-    }
+    if (mounted) setState(() => _isLoadingGroups = true);
+    // Reset groups temporarily
+    if (mounted) setState(() => _groups = []);
 
     final query = FirebaseDatabase.instance
           .ref('planteles/${widget.campusId}/groups')
@@ -169,12 +148,9 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
             _groups = fetchedGroups;
             _isLoadingGroups = false;
             
-            // Validar si el grupo seleccionado previamente existe en la nueva lista
             if (_selectedGroup != null) {
                bool exists = _groups.any((g) => g.key == _selectedGroup);
-               
                if (!exists && widget.student != null) {
-                   // Intento de recuperación por nombre si venimos de editar
                    final matchByName = _groups.firstWhere(
                        (g) => g.name == widget.student!.group, 
                        orElse: () => Group(key: '', name: '', semester: 0, studentCount: 0, schoolCycleId: '')
@@ -212,6 +188,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
     _placeOfResidenceController.dispose();
     _institutionalEmailController.dispose();
     _studentIdController.dispose();
+    _nssController.dispose();
     _allergiesController.dispose();
     _healthConditionsController.dispose();
     _generalHealthStatusController.dispose();
@@ -231,7 +208,6 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
       final databaseRef = FirebaseDatabase.instance.ref(
           'planteles/${widget.campusId}/students/${_selectedSchoolCycle!}');
 
-      // Obtener el nombre del grupo para guardarlo
       final selectedGroupObj = _groups.firstWhere((g) => g.key == _selectedGroup, orElse: () => _groups.first);
       final groupName = selectedGroupObj.name;
 
@@ -241,9 +217,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         guardianFullName: _guardianFullNameController.text,
         age: int.tryParse(_ageController.text) ?? 0,
         guardianPhone: _guardianPhoneController.text,
-        studentPhone: _studentPhoneController.text.isNotEmpty
-            ? _studentPhoneController.text
-            : null,
+        studentPhone: _studentPhoneController.text.isNotEmpty ? _studentPhoneController.text : null,
         gender: _selectedGender!,
         placeOfResidence: _placeOfResidenceController.text,
         schoolCycle: _selectedSchoolCycle!,
@@ -254,13 +228,11 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         allergies: _allergiesController.text.trim(),
         healthConditions: _healthConditionsController.text.trim(),
         generalHealthStatus: _generalHealthStatusController.text.trim(),
+        nss: _nssController.text.trim().isNotEmpty ? _nssController.text.trim() : null,
       );
 
-      await databaseRef
-          .child(studentData.studentId)
-          .set(studentData.toFirebaseMap());
+      await databaseRef.child(studentData.studentId).set(studentData.toFirebaseMap());
 
-      // Si se cambió la matrícula, eliminar el registro anterior para evitar duplicados
       if (widget.student != null && widget.student!.id != studentData.studentId) {
           try {
             await databaseRef.child(widget.student!.id).remove();
@@ -269,23 +241,17 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
           }
       }
 
-      // --- ACTUALIZAR CONTADOR DE ALUMNOS EN EL GRUPO ---
       if (_selectedGroup != null) {
-        final groupRef = FirebaseDatabase.instance
-            .ref('planteles/${widget.campusId}/groups/$_selectedGroup/studentCount');
-        
+        final groupRef = FirebaseDatabase.instance.ref('planteles/${widget.campusId}/groups/$_selectedGroup/studentCount');
         try {
           await groupRef.runTransaction((mutableData) {
-            // Si no existe, es 0. Si existe, suma 1.
             int currentCount = (mutableData as int?) ?? 0;
             return Transaction.success(currentCount + 1);
           });
         } catch (e) {
           debugPrint('Error actualizando contador de grupo: $e');
-          // No detenemos el flujo, es un error secundario
         }
       }
-      // --------------------------------------------------
 
       if (mounted) {
         UiHelpers.showSnackBar(context, 'Alumno guardado correctamente.');
@@ -293,8 +259,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        UiHelpers.showSnackBar(context, 'Error: ${e.toString()}',
-            isError: true);
+        UiHelpers.showSnackBar(context, 'Error: ${e.toString()}', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -347,9 +312,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),
-                            side: isDark
-                                ? BorderSide.none
-                                : BorderSide(color: Colors.grey.shade200),
+                            side: isDark ? BorderSide.none : BorderSide(color: Colors.grey.shade200),
                           ),
                           color: isDark ? theme.cardTheme.color : Colors.white,
                           child: Padding(
@@ -361,35 +324,25 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                                 children: [
                                   _buildSectionTitle(theme, 'Datos del Alumno'),
                                   const SizedBox(height: 16),
-                                  _buildTextField(_fullNameController,
-                                      'Nombre Completo', Icons.person_outline),
+                                  _buildTextField(_fullNameController, 'Nombre Completo', Icons.person_outline),
                                   const SizedBox(height: 12),
                                   Row(
                                     children: [
-                                      Expanded(
-                                          flex: 2,
-                                          child: _buildTextField(
-                                              _studentIdController,
-                                              'Matrícula',
-                                              Icons.badge_outlined,
-                                              enabled: true)),
+                                      Expanded(flex: 2, child: _buildTextField(_studentIdController, 'Matrícula', Icons.badge_outlined)),
                                       const SizedBox(width: 12),
-                                      Expanded(
-                                          flex: 1,
-                                          child: _buildTextField(_ageController,
-                                              'Edad', Icons.cake_outlined,
-                                              keyboardType: TextInputType.number)),
+                                      Expanded(flex: 1, child: _buildTextField(_ageController, 'Edad', Icons.cake_outlined, keyboardType: TextInputType.number)),
                                     ],
                                   ),
                                   const SizedBox(height: 12),
+                                  _buildTextField(_nssController, 'NSS (Número de Seguro Social)', Icons.health_and_safety, keyboardType: TextInputType.number),
+                                  const SizedBox(height: 12),
                                   _buildGenderDropdown(theme),
-                                  
                                   const SizedBox(height: 32),
+                                  
                                   _buildSectionTitle(theme, 'Asignación Académica'),
                                   const SizedBox(height: 16),
                                   _buildCycleDropdown(theme),
                                   const SizedBox(height: 12),
-                                  
                                   _isLoadingGroups 
                                     ? const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()))
                                     : _buildGroupDropdown(theme),
@@ -397,56 +350,31 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                                   if (_groups.isEmpty && !_isLoadingGroups && _selectedSchoolCycle != null)
                                     Padding(
                                       padding: const EdgeInsets.only(top: 8.0),
-                                      child: Text(
-                                        "⚠️ No hay grupos registrados para el ciclo $_selectedSchoolCycle.",
-                                        style: TextStyle(color: Colors.orange.shade800, fontSize: 12),
-                                        textAlign: TextAlign.center,
-                                      ),
+                                      child: Text("⚠️ No hay grupos registrados para el ciclo $_selectedSchoolCycle.", style: TextStyle(color: Colors.orange.shade800, fontSize: 12), textAlign: TextAlign.center),
                                     ),
 
                                   const SizedBox(height: 32),
                                   _buildSectionTitle(theme, 'Contacto y Tutor'),
                                   const SizedBox(height: 16),
-                                  _buildTextField(
-                                      _guardianFullNameController,
-                                      'Nombre del Tutor',
-                                      Icons.family_restroom_outlined),
+                                  _buildTextField(_guardianFullNameController, 'Nombre del Tutor', Icons.family_restroom_outlined),
                                   const SizedBox(height: 12),
-                                  _buildTextField(_guardianPhoneController,
-                                      'Teléfono Tutor', Icons.phone_outlined,
-                                      keyboardType: TextInputType.phone),
+                                  _buildTextField(_guardianPhoneController, 'Teléfono Tutor', Icons.phone_outlined, keyboardType: TextInputType.phone),
                                   const SizedBox(height: 12),
-                                  _buildTextField(
-                                      _studentPhoneController,
-                                      'Teléfono Alumno (Opcional)',
-                                      Icons.phone_android_outlined,
-                                      keyboardType: TextInputType.phone),
+                                  _buildTextField(_studentPhoneController, 'Teléfono Alumno (Opcional)', Icons.phone_android_outlined, keyboardType: TextInputType.phone),
                                   const SizedBox(height: 12),
-                                  _buildTextField(_placeOfResidenceController,
-                                      'Lugar de Residencia', Icons.home_outlined),
+                                  _buildTextField(_placeOfResidenceController, 'Lugar de Residencia', Icons.home_outlined),
                                   const SizedBox(height: 12),
-                                  _buildTextField(
-                                      _institutionalEmailController,
-                                      'Correo Institucional',
-                                      Icons.alternate_email_outlined,
-                                      keyboardType: TextInputType.emailAddress),
+                                  _buildTextField(_institutionalEmailController, 'Correo Institucional', Icons.alternate_email_outlined, keyboardType: TextInputType.emailAddress),
+                                  
                                   const SizedBox(height: 32),
                                   _buildSectionTitle(theme, 'INFORMACIÓN MÉDICA (OPCIONAL)'),
                                   const SizedBox(height: 16),
-                                  _buildTextField(
-                                      _allergiesController,
-                                      'Alergias (Medicamentos, comida, etc.)',
-                                      Icons.warning_amber_rounded),
+                                  _buildTextField(_allergiesController, 'Alergias (Medicamentos, comida, etc.)', Icons.warning_amber_rounded),
                                   const SizedBox(height: 12),
-                                  _buildTextField(
-                                      _healthConditionsController,
-                                      'Condiciones de Salud (Visión, caminar, etc.)',
-                                      Icons.health_and_safety_outlined),
+                                  _buildTextField(_healthConditionsController, 'Condiciones de Salud (Visión, caminar, etc.)', Icons.health_and_safety_outlined),
                                   const SizedBox(height: 12),
-                                  _buildTextField(
-                                      _generalHealthStatusController,
-                                      'Estado General (ej. Sano)',
-                                      Icons.favorite_border_rounded),
+                                  _buildTextField(_generalHealthStatusController, 'Estado General (ej. Sano)', Icons.favorite_border_rounded),
+                                  
                                   const SizedBox(height: 40),
                                   SizedBox(
                                     height: 56,
@@ -455,17 +383,9 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: theme.colorScheme.primary,
                                         foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12)),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       ),
-                                      child: Text(
-                                          widget.student == null
-                                              ? 'Registrar Alumno'
-                                              : 'Guardar Cambios',
-                                          style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold)),
+                                      child: Text(widget.student == null ? 'Registrar Alumno' : 'Guardar Cambios', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                 ],
@@ -490,9 +410,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
             letterSpacing: 1));
   }
 
-  Widget _buildTextField(
-      TextEditingController controller, String label, IconData icon,
-      {bool enabled = true, TextInputType? keyboardType}) {
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool enabled = true, TextInputType? keyboardType}) {
     return TextFormField(
       controller: controller,
       enabled: enabled,
@@ -501,18 +419,26 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         labelText: label,
         prefixIcon: Icon(icon, size: 20),
         filled: !enabled,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
-      validator: (val) => val!.isEmpty && label != 'Teléfono Alumno (Opcional)'
-          ? 'Campo requerido'
-          : null,
+      validator: (val) {
+          if (label == 'Teléfono Alumno (Opcional)' || 
+              label == 'Alergias (Medicamentos, comida, etc.)' || 
+              label == 'Condiciones de Salud (Visión, caminar, etc.)' ||
+              label == 'Estado General (ej. Sano)' ||
+              label == 'NSS (Número de Seguro Social)') {
+            return null; // Opcionales
+          }
+          return val!.isEmpty ? 'Campo requerido' : null;
+      },
     );
   }
 
   Widget _buildGenderDropdown(ThemeData theme) {
     return DropdownButtonFormField<String>(
       initialValue: _selectedGender,
-      decoration: const InputDecoration(
-          labelText: 'Género', prefixIcon: Icon(Icons.wc_outlined, size: 20)),
+      decoration: InputDecoration(labelText: 'Género', prefixIcon: const Icon(Icons.wc_outlined, size: 20), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
       items: const [
         DropdownMenuItem(value: 'Masculino', child: Text('Masculino')),
         DropdownMenuItem(value: 'Femenino', child: Text('Femenino')),
@@ -525,19 +451,18 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
   Widget _buildCycleDropdown(ThemeData theme) {
     return DropdownButtonFormField<String>(
       initialValue: _selectedSchoolCycle,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
           labelText: 'Ciclo Escolar de Alta',
           helperText: 'Selecciona el ciclo al que pertenece el alumno',
-          prefixIcon: Icon(Icons.calendar_today_outlined, size: 20)),
+          prefixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
       items: _availableSchoolCycles
-          .map((cycle) =>
-              DropdownMenuItem(value: cycle.id, child: Text(cycle.id)))
+          .map((cycle) => DropdownMenuItem(value: cycle.id, child: Text(cycle.id)))
           .toList(),
       onChanged: (val) {
         if (val != null) {
             setState(() {
               _selectedSchoolCycle = val;
-              // Switch subscription to new cycle
               _subscribeToGroups(val);
             });
             _checkCycleStatus(val);
@@ -562,11 +487,9 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                   ? 'Primero selecciona un ciclo'
                   : (_groups.isEmpty ? 'No existen grupos en este ciclo' : null),
               helperStyle: _groups.isEmpty ? TextStyle(color: Colors.orange.shade800, fontWeight: FontWeight.bold) : null,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            items: _groups
-                .map((group) =>
-                    DropdownMenuItem(value: group.key, child: Text(group.name)))
-                .toList(),
+            items: _groups.map((group) => DropdownMenuItem(value: group.key, child: Text(group.name))).toList(),
             onChanged: _selectedSchoolCycle == null || _groups.isEmpty
                 ? null
                 : (val) => setState(() => _selectedGroup = val),
@@ -578,14 +501,9 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
           padding: const EdgeInsets.only(top: 4.0),
           child: IconButton.filledTonal(
             onPressed: _isReadOnly 
-              ? null // No permitir crear grupos en ciclos cerrados
+              ? null 
               : () async {
-               await Navigator.push(
-                 context, 
-                 MaterialPageRoute(builder: (context) => const GroupManagementScreen())
-               );
-               // Refresh handled automatically by stream if groups were added, 
-               // but we can ensure subscription is active.
+               await Navigator.push(context, MaterialPageRoute(builder: (context) => const GroupManagementScreen()));
                if (_selectedSchoolCycle != null) _subscribeToGroups(_selectedSchoolCycle);
             }, 
             icon: const Icon(Icons.add_business_rounded),
