@@ -81,46 +81,75 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
 
   Future<void> _loadGroupsForCycle(String cycleId) async {
     if (_campus == null) return;
+    
+    setState(() {
+      _availableGroups = []; // Limpiar lista actual
+      _selectedGroup = null; // Resetear selección
+    });
+
     try {
       final ref = FirebaseDatabase.instance.ref('planteles/$_campus/groups');
-      final snap = await ref.orderByChild('schoolCycleId').equalTo(cycleId).get();
+      final snap = await ref.get(); // Obtener todos los grupos del plantel
+      
       final List<Group> groups = [];
       if (snap.exists) {
         for (var child in snap.children) {
-          groups.add(Group.fromSnapshot(child));
+          final g = Group.fromSnapshot(child);
+          // Filtrar por ciclo usando Dart
+          if (g.schoolCycleId == cycleId) {
+            groups.add(g);
+          }
         }
         groups.sort((a, b) => a.name.compareTo(b.name));
       }
-      if (mounted) setState(() => _availableGroups = groups);
+      
+      if (mounted) {
+        setState(() {
+          _availableGroups = groups;
+        });
+        if (groups.isEmpty) {
+          debugPrint('No se encontraron grupos para el ciclo $cycleId en $_campus');
+        }
+      }
     } catch (e) {
       debugPrint('Error loading groups: $e');
+      if (mounted) UiHelpers.showSnackBar(context, 'Error al cargar grupos.', isError: true);
     }
   }
 
   Future<void> _loadStudentsFromGroup(String groupName) async {
     if (_campus == null || _selectedCycle == null) return;
-    setState(() => _isSearching = true);
+    setState(() {
+      _isSearching = true;
+      _studentsToGenerate.clear(); // LIMPIAR LISTA PREVIA AL CAMBIAR DE GRUPO
+    });
+    
     try {
       final ref = FirebaseDatabase.instance.ref('planteles/$_campus/students/$_selectedCycle');
-      final snap = await ref.orderByChild('group').equalTo(groupName).get();
-      final List<Student> loaded = [];
+      final snap = await ref.get(); // Obtener todos los alumnos del ciclo (más fiable que query parcial)
       
+      final List<Student> loaded = [];
       if (snap.exists) {
         for (var child in snap.children) {
           final s = Student.fromSnapshot(child);
-          if (s.isActive) loaded.add(s);
+          // Filtrar por grupo y estatus activo
+          if (s.isActive && s.group == groupName) {
+            loaded.add(s);
+          }
         }
       }
       
       if (mounted) {
         setState(() {
+           int added = 0;
            for (var s in loaded) {
              if (!_studentsToGenerate.any((existing) => existing.studentId == s.studentId)) {
                _studentsToGenerate.add(s);
+               added++;
              }
            }
+           UiHelpers.showSnackBar(context, 'Se cargaron $added alumnos nuevos del grupo $groupName.');
         });
-        UiHelpers.showSnackBar(context, 'Se cargaron ${loaded.length} alumnos del grupo $groupName.');
       }
     } catch (e) {
       if (mounted) UiHelpers.showSnackBar(context, 'Error cargando grupo: $e', isError: true);
@@ -397,8 +426,13 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
                                 )).toList(),
                                 onChanged: (val) {
                                   if (val != null) {
-                                    setState(() { _selectedCycle = val; _studentsToGenerate.clear(); _selectedGroup = null; });
-                                    _loadGroupsForCycle(val);
+                                    setState(() { 
+                                      _selectedCycle = val; 
+                                      _studentsToGenerate.clear(); 
+                                      _selectedGroup = null; 
+                                      _availableGroups = [];
+                                    });
+                                    _loadGroupsForCycle(val); // Cargar nuevos grupos
                                   }
                                 },
                               ),
@@ -408,13 +442,16 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
                             Expanded(
                               flex: isWide ? 1 : 0,
                               child: DropdownButtonFormField<String>(
+                                key: ValueKey('group_dropdown_${_selectedCycle}_${_availableGroups.length}'), // Key dinámico para refresco
                                 value: _selectedGroup,
-                                decoration: _inputDeco('Grupo', Icons.groups),
+                                decoration: _inputDeco('Grupo', Icons.groups).copyWith(
+                                  hintText: _availableGroups.isEmpty ? 'Sin grupos' : 'Elegir...',
+                                ),
                                 items: _availableGroups.map((g) => DropdownMenuItem(
                                   value: g.name, 
-                                  child: Text(g.name),
+                                  child: Text('Grupo ${g.name}'),
                                 )).toList(),
-                                onChanged: (val) {
+                                onChanged: _availableGroups.isEmpty ? null : (val) {
                                    setState(() => _selectedGroup = val);
                                    if (val != null) _loadStudentsFromGroup(val);
                                 },

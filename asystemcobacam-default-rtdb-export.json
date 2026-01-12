@@ -121,11 +121,29 @@
           "semester": 1,
           "studentCount": 8
         },
+        "grp_at_201_26A": {
+          "name": "201",
+          "schoolCycleId": "2026-A",
+          "semester": 2,
+          "studentCount": 20
+        },
         "grp_at_201_A": {
           "name": "201",
           "schoolCycleId": "2025-A",
           "semester": 2,
           "studentCount": 5
+        },
+        "grp_at_202_26A": {
+          "name": "202",
+          "schoolCycleId": "2026-A",
+          "semester": 2,
+          "studentCount": 18
+        },
+        "grp_at_202_A": {
+          "name": "202",
+          "schoolCycleId": "2025-A",
+          "semester": 2,
+          "studentCount": 15
         },
         "grp_at_301": {
           "name": "301",
@@ -139,11 +157,29 @@
           "semester": 3,
           "studentCount": 8
         },
+        "grp_at_401_26A": {
+          "name": "401",
+          "schoolCycleId": "2026-A",
+          "semester": 4,
+          "studentCount": 15
+        },
         "grp_at_401_A": {
           "name": "401",
           "schoolCycleId": "2025-A",
           "semester": 4,
           "studentCount": 5
+        },
+        "grp_at_402_26A": {
+          "name": "402",
+          "schoolCycleId": "2026-A",
+          "semester": 4,
+          "studentCount": 14
+        },
+        "grp_at_402_A": {
+          "name": "402",
+          "schoolCycleId": "2025-A",
+          "semester": 4,
+          "studentCount": 12
         },
         "grp_at_501": {
           "name": "501",
@@ -163,63 +199,27 @@
           "semester": 5,
           "studentCount": 10
         },
-        "grp_at_601_A": {
-          "name": "601",
-          "schoolCycleId": "2025-A",
-          "semester": 6,
-          "studentCount": 5
-        },
-        "grp_at_202_A": {
-          "name": "202",
-          "schoolCycleId": "2025-A",
-          "semester": 2,
-          "studentCount": 15
-        },
-        "grp_at_402_A": {
-          "name": "402",
-          "schoolCycleId": "2025-A",
-          "semester": 4,
-          "studentCount": 12
-        },
-        "grp_at_602_A": {
-          "name": "602",
-          "schoolCycleId": "2025-A",
-          "semester": 6,
-          "studentCount": 10
-        },
-        "grp_at_201_26A": {
-          "name": "201",
-          "schoolCycleId": "2026-A",
-          "semester": 2,
-          "studentCount": 20
-        },
-        "grp_at_202_26A": {
-          "name": "202",
-          "schoolCycleId": "2026-A",
-          "semester": 2,
-          "studentCount": 18
-        },
-        "grp_at_401_26A": {
-          "name": "401",
-          "schoolCycleId": "2026-A",
-          "semester": 4,
-          "studentCount": 15
-        },
-        "grp_at_402_26A": {
-          "name": "402",
-          "schoolCycleId": "2026-A",
-          "semester": 4,
-          "studentCount": 14
-        },
         "grp_at_601_26A": {
           "name": "601",
           "schoolCycleId": "2026-A",
           "semester": 6,
           "studentCount": 12
         },
+        "grp_at_601_A": {
+          "name": "601",
+          "schoolCycleId": "2025-A",
+          "semester": 6,
+          "studentCount": 5
+        },
         "grp_at_602_26A": {
           "name": "602",
           "schoolCycleId": "2026-A",
+          "semester": 6,
+          "studentCount": 10
+        },
+        "grp_at_602_A": {
+          "name": "602",
+          "schoolCycleId": "2025-A",
           "semester": 6,
           "studentCount": 10
         }
@@ -387,6 +387,26 @@
           "campusId": "Atasta",
           "date": "2026-01-06",
           "reason": "mal clima"
+        }
+      },
+      "schedules": {
+        "2025-B": {
+          "grp_at_101": {
+            "Lunes": {
+              "dayOfWeek": "Lunes",
+              "entryTime": "7:00",
+              "exitTime": "14:00",
+              "groupId": "grp_at_101",
+              "schoolCycle": "2025-B"
+            },
+            "Martes": {
+              "dayOfWeek": "Martes",
+              "entryTime": "7:00",
+              "exitTime": "12:00",
+              "groupId": "grp_at_101",
+              "schoolCycle": "2025-B"
+            }
+          }
         }
       },
       "students": {
@@ -2447,7 +2467,7 @@
           "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Safari_537_36",
           "ip": "2806:10a6:28:c401:118e:7825:f6cf:7558",
           "isWeb": true,
-          "lastActive": 1768166759105,
+          "lastActive": 1768180932448,
           "location": "Centro Municipality, Tabasco",
           "model": "chrome on Win32",
           "platform": "Web"

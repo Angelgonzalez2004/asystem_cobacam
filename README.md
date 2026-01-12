@@ -4,29 +4,27 @@
 
 ---
 
-## 🚀 Versión 2.3.0: "Gestión Masiva y Seguridad Estudiantil"
+## 🚀 Versión 2.3.1: "Optimización de Credenciales y Estabilidad"
 
-Esta actualización representa un salto cualitativo en la capacidad de procesamiento administrativo y en la protección proactiva de los estudiantes.
+Esta actualización perfecciona el motor de generación masiva de credenciales y asegura la integridad de los datos entre ciclos escolares.
 
-### 🌟 Novedades Destacadas (v2.3.0)
+### 🌟 Novedades Destacadas (v2.3.1)
 
-#### 🪪 Generador de Credenciales Pro 2.0
-*   **Procesamiento Masivo por Grupo:** Ahora es posible cargar y generar las credenciales de un grupo completo con un solo clic seleccionando el ciclo escolar.
+#### 🪪 Generador de Credenciales Pro 2.1
+*   **Detección de Grupos Robusta:** Se corrigió la lógica de carga de grupos, ahora el sistema detecta grupos de forma instantánea filtrando localmente, evitando errores de indexación en Firebase.
+*   **Limpieza Inteligente:** Al cambiar de grupo, la vista previa se refresca automáticamente, mostrando únicamente a los alumnos del grupo consultado en ese momento.
 *   **Descarga Inteligente (ZIP/PDF):** 
-    *   Implementación de descargas en archivos **.zip** cuando se generan múltiples imágenes (PNG/JPG) para mantener el orden.
-    *   **PDF Optimizado:** Nuevo algoritmo de maquetación que ajusta hasta **10 credenciales por hoja** (5x2), optimizando el ahorro de papel.
-*   **Control Individual:** Cada credencial en la vista previa cuenta con su propio botón de descarga rápida y opción de eliminación.
-*   **Alta Resolución:** Captura de imágenes con `pixelRatio: 3.0` para una impresión nítida y profesional.
+    *   **Pack ZIP:** Las imágenes masivas (PNG/JPG) se agrupan automáticamente en archivos comprimidos para facilitar su gestión.
+    *   **PDF de Alta Densidad:** Maquetación optimizada para imprimir **10 credenciales por hoja** (5x2), reduciendo el desperdicio de papel.
+*   **Control Individual:** Cada credencial cuenta con un botón de descarga directa (⬇️) para obtener la imagen suelta en alta resolución.
 
-#### 🚑 Sistema de Alerta Médica Inteligente
-*   **Gatillo de Seguridad Manual:** Se añadió el campo `medicalAlert` al expediente del alumno. Los administradores pueden activar esta bandera solo para casos de gravedad (Diabetes, Epilepsia, etc.).
-*   **Intervención en Pase de Lista:** Al escanear a un alumno con la alerta activa, el sistema lanza un **diálogo de emergencia bloqueante** con vibración de alto impacto, mostrando instantáneamente: **Estado General, Condiciones y Alergias**.
-*   **Importación Masiva:** El importador de Excel ahora soporta la columna `alerta_medica` (SI/NO) para configurar la seguridad de cientos de alumnos en segundos.
+#### 🚑 Sistema de Alerta Médica Crítica
+*   **Intervención en Tiempo Real:** Activación de alertas manuales para alumnos con condiciones graves. Al pasar lista, el sistema lanza una alerta bloqueante con vibración y datos detallados.
+*   **Integración con Excel:** Soporte completo en la importación masiva para activar alertas médicas desde el archivo de origen.
 
-#### 🎨 Rediseño Visual "Dashboard Profesional"
-*   **Pantallas Modernizadas:** Se aplicó un rediseño completo a las secciones de **Horarios de Grupo** y **Días No Lectivos** utilizando principios de diseño limpio (estilo Tailwind/Material 3).
-*   **UX Responsiva:** Uso de contenedores restringidos y layouts adaptativos que garantizan una experiencia fluida tanto en dispositivos móviles como en pantallas de escritorio.
-*   **Semántica de Colores:** Uso de códigos de color consistentes (Teal para entradas, Indigo para salidas, Naranja para suspensiones).
+#### 🎨 Experiencia de Usuario Profesional
+*   **Rediseño de Dashboards:** Pantallas de Horarios y Días No Lectivos con diseño estilo "Tailwind", más limpio y responsivo.
+*   **Seguridad de Fecha:** Bloqueo total de asistencias masivas e individuales en fines de semana y días festivos.
 
 ---
 
@@ -34,23 +32,17 @@ Esta actualización representa un salto cualitativo en la capacidad de procesami
 
 ### 📡 Modo Offline Nativo (Sin Internet)
 *   **Persistencia Local:** Uso de **Hive** para almacenar registros de asistencia sin conexión.
-*   **Sincronización Automática:** Subida de datos en segundo plano al recuperar señal.
-
-### 📸 Pase de Lista Profesional
-*   **Escáner Híbrido:** Soporte para QR y Código de Barras (Code 128).
-*   **Validación de Horarios:** El sistema detecta automáticamente retardos y salidas anticipadas basándose en el horario del grupo.
-*   **Protección de Fechas:** Bloqueo automático de registros en fines de semana y días no lectivos configurados.
+*   **Sincronización Automática:** Subida de datos al recuperar señal.
 
 ### 🤖 AsystemBot: Asistente IA
-*   Consultas en lenguaje natural potenciadas por **Gemini 1.5 Flash**.
+*   Consultas en lenguaje natural potenciadas por **Gemini 1.5 Flash** para análisis de incidencias y asistencias.
 
 ---
 
 ## 🏛️ Arquitectura y Tecnologías
 *   **Lenguaje:** Dart 3.4+ / Flutter
 *   **Base de Datos:** Firebase Realtime Database & Hive (Local).
-*   **Backend:** Firebase Cloud Functions (Gen 2).
-*   **Hosting:** Firebase Hosting con renderizado CanvasKit.
+*   **Hosting:** Firebase Hosting con renderizado CanvasKit para máxima fluidez.
 
 ---
 
