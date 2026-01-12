@@ -303,114 +303,186 @@ class _NonAttendanceManagementScreenState
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      // AppBar eliminado
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showNonAttendanceDayFormDialog(),
+        backgroundColor: theme.colorScheme.primary,
+        elevation: 4,
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text('Agregar Suspensión', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : LayoutBuilder(builder: (context, constraints) {
               return Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 800),
-                  child: _groupedDays.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.event_available, size: 64, color: Colors.grey.withOpacity(0.3)),
-                              const SizedBox(height: 16),
-                              Text('No hay suspensiones registradas.',
-                                  style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+                  constraints: const BoxConstraints(maxWidth: 900),
+                  child: Column(
+                    children: [
+                      // --- HEADER ---
+                      FadeInDown(
+                        child: Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)], // Orange-50 to 100
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(color: Colors.orange.withOpacity(0.1), blurRadius: 15, offset: const Offset(0, 8))
                             ],
                           ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16.0),
-                          itemCount: _groupedDays.length,
-                          itemBuilder: (context, index) {
-                            final group = _groupedDays[index];
-                            final isRange = group.ids.length > 1;
-                            
-                            return FadeInUp(
-                              delay: Duration(milliseconds: 30 * index),
-                              child: Card(
-                                elevation: 0,
-                                margin: const EdgeInsets.only(bottom: 12),
-                                shape: RoundedRectangleBorder(
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
                                   borderRadius: BorderRadius.circular(16),
-                                  side: BorderSide(color: Colors.orange.withOpacity(0.3)),
                                 ),
-                                color: isDark ? theme.cardTheme.color : Colors.white,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                                  child: ListTile(
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange.shade50,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Icon(isRange ? Icons.date_range_rounded : Icons.event_busy, color: Colors.orange.shade800),
-                                    ),
-                                    title: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                            isRange 
-                                              ? 'Del ${DateFormat('d MMM', 'es_MX').format(group.start)} al ${DateFormat('d MMM', 'es_MX').format(group.end)}'.toUpperCase()
-                                              : DateFormat('EEEE d \nde MMMM', 'es_MX').format(group.start).toUpperCase(),
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold, 
-                                              fontSize: isRange ? 15 : 14,
-                                              color: theme.textTheme.titleMedium?.color
-                                            )
-                                        ),
-                                        if (isRange)
-                                          Text(
-                                            '${group.ids.length} días hábiles',
-                                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                                          )
-                                      ],
-                                    ),
-                                    subtitle: Padding(
-                                      padding: const EdgeInsets.only(top: 8.0),
-                                      child: Text(
-                                        group.reason,
-                                        style: TextStyle(
-                                          fontSize: 13, 
-                                          color: theme.textTheme.bodyMedium?.color, 
-                                          fontStyle: FontStyle.italic
-                                        ),
-                                      ),
-                                    ),
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          icon: Icon(Icons.edit_outlined, color: theme.colorScheme.primary),
-                                          onPressed: () => _showNonAttendanceDayFormDialog(group: group),
-                                          tooltip: 'Editar suspensión',
-                                        ),
-                                        IconButton(
-                                          icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
-                                          onPressed: () => _confirmDeleteGroup(group),
-                                          tooltip: 'Eliminar suspensión',
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                child: const Icon(Icons.event_busy_rounded, color: Colors.deepOrange, size: 32),
+                              ),
+                              const SizedBox(width: 20),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Gestión de Días No Lectivos', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.deepOrange)),
+                                    SizedBox(height: 4),
+                                    Text('Configura suspensiones, días festivos o inhábiles para bloquear la asistencia automáticamente.', style: TextStyle(fontSize: 13, color: Colors.brown)),
+                                  ],
                                 ),
                               ),
-                            );
-                          },
+                            ],
+                          ),
                         ),
+                      ),
+
+                      // --- LIST ---
+                      Expanded(
+                        child: _groupedDays.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.calendar_today_rounded, size: 80, color: Colors.grey.withOpacity(0.2)),
+                                    const SizedBox(height: 16),
+                                    Text('Calendario limpio',
+                                        style: TextStyle(color: Colors.grey.withOpacity(0.8), fontSize: 18, fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 8),
+                                    const Text('No hay suspensiones programadas.', style: TextStyle(color: Colors.grey)),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                itemCount: _groupedDays.length,
+                                itemBuilder: (context, index) {
+                                  final group = _groupedDays[index];
+                                  final isRange = group.ids.length > 1;
+                                  
+                                  return FadeInUp(
+                                    delay: Duration(milliseconds: 50 * (index > 6 ? 6 : index)),
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 16),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? theme.cardTheme.color : Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                                        border: Border(left: BorderSide(color: Colors.orange.shade400, width: 6)),
+                                      ),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(20),
+                                          onTap: () => _showNonAttendanceDayFormDialog(group: group),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                            child: Row(
+                                              children: [
+                                                // FECHA BADGE
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.orange.shade50,
+                                                    borderRadius: BorderRadius.circular(14),
+                                                  ),
+                                                  child: Column(
+                                                    children: [
+                                                      Text(
+                                                        DateFormat('d', 'es_MX').format(group.start),
+                                                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.orange.shade800, height: 1.0),
+                                                      ),
+                                                      Text(
+                                                        DateFormat('MMM', 'es_MX').format(group.start).toUpperCase(),
+                                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange.shade700),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 20),
+                                                
+                                                // INFO
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        group.reason,
+                                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Row(
+                                                        children: [
+                                                          Icon(isRange ? Icons.date_range : Icons.today, size: 14, color: Colors.grey),
+                                                          const SizedBox(width: 6),
+                                                          Text(
+                                                            isRange 
+                                                              ? 'Hasta el ${DateFormat('d ' 'MMMM', 'es_MX').format(group.end)} (${group.ids.length} días)'
+                                                              : DateFormat('EEEE', 'es_MX').format(group.start).toUpperCase(),
+                                                            style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w500),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+
+                                                // ACTIONS
+                                                Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    IconButton.filledTonal(
+                                                      icon: const Icon(Icons.edit_rounded, size: 18),
+                                                      onPressed: () => _showNonAttendanceDayFormDialog(group: group),
+                                                      style: IconButton.styleFrom(backgroundColor: Colors.blue.shade50, foregroundColor: Colors.blue),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    IconButton.filledTonal(
+                                                      icon: const Icon(Icons.delete_rounded, size: 18),
+                                                      onPressed: () => _confirmDeleteGroup(group),
+                                                      style: IconButton.styleFrom(backgroundColor: Colors.red.shade50, foregroundColor: Colors.red),
+                                                    ),
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showNonAttendanceDayFormDialog(),
-        backgroundColor: theme.colorScheme.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Nueva Suspensión', style: TextStyle(color: Colors.white)),
-      ),
     );
   }
 

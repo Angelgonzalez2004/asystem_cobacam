@@ -343,6 +343,33 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     _processStudentId(studentId);
   }
 
+  bool _isDayValidForAttendance(Function(String) onError) {
+    if (_currentSchoolCycle.isEmpty) { 
+      onError('Error: No hay ciclo escolar activo.'); 
+      return false; 
+    }
+    
+    final now = DateTime.now();
+    final dayOfWeek = now.weekday;
+    if (dayOfWeek == DateTime.saturday || dayOfWeek == DateTime.sunday) { 
+      onError('Hoy es fin de semana (No hay asistencia).'); 
+      return false; 
+    }
+    
+    // Normalizar fecha de hoy y de la lista para comparar solo YYYY-MM-DD
+    final todayStr = DateFormat('yyyy-MM-dd').format(now);
+    
+    if (_nonAttendanceDays.any((day) {
+        final dayStr = DateFormat('yyyy-MM-dd').format(day.date);
+        return dayStr == todayStr;
+    })) { 
+      onError('Hoy está marcado como día no lectivo.'); 
+      return false; 
+    }
+
+    return true;
+  }
+
   // --- LOGICA DE PROCESAMIENTO ---
   Future<void> _processStudentId(String studentId) async {
     if (!_isProcessing || _campus == null) return;
@@ -359,12 +386,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       _resumeProcessingAfterDelay();
     }
 
-    if (_currentSchoolCycle.isEmpty) { triggerError('Error: No hay ciclo escolar activo.'); return; }
-    
-    final dayOfWeek = DateTime.now().weekday;
-    if (dayOfWeek == DateTime.saturday || dayOfWeek == DateTime.sunday) { triggerError('Hoy es fin de semana.'); return; }
-    
-    if (_nonAttendanceDays.any((day) => DateFormat('yyyy-MM-dd').format(day.date) == _todayDate)) { triggerError('Hoy es día no lectivo.'); return; }
+    if (!_isDayValidForAttendance(triggerError)) return;
 
     final Student? student = _studentsMap[studentId];
     if (student == null) { triggerError('Matrícula "$studentId" no encontrada.'); return; }
@@ -467,6 +489,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
     }
 
+    // --- LÓGICA DE ALERTA MÉDICA ---
+    _checkAndShowMedicalAlert(student);
+
     _triggerFeedback(true, isWarning: isWarning);
 
     try {
@@ -488,6 +513,75 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     } catch (e) {
       if (mounted) UiHelpers.showSnackBar(context, 'Error al guardar.', isError: true);
     }
+  }
+
+  void _checkAndShowMedicalAlert(Student student) {
+    // 1. EL "GATILLO" MAESTRO: Si no está activada la alerta manual, ignorar todo.
+    if (!student.medicalAlert) return;
+
+    final cleanAllergies = (student.allergies ?? '').trim();
+    final cleanConditions = (student.healthConditions ?? '').trim();
+    final cleanStatus = (student.generalHealthStatus ?? '').trim();
+
+    // Vibración de advertencia fuerte
+    HapticFeedback.heavyImpact();
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Obliga a leer y cerrar
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.red.shade50,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Colors.red, width: 2)),
+        title: const Row(
+          children: [
+            Icon(Icons.medical_services_outlined, color: Colors.red, size: 32),
+            SizedBox(width: 12),
+            Expanded(child: Text('ALERTA MÉDICA', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('El alumno ${student.fullName} requiere atención especial:', style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 16),
+            
+            _buildMedicalInfoBox('ESTADO GENERAL', cleanStatus.isNotEmpty ? cleanStatus : 'No especificado'),
+            if (cleanConditions.isNotEmpty && cleanConditions.toLowerCase() != 'ninguna')
+               _buildMedicalInfoBox('CONDICIONES', cleanConditions),
+            if (cleanAllergies.isNotEmpty && cleanAllergies.toLowerCase() != 'ninguna')
+               _buildMedicalInfoBox('ALERGIAS', cleanAllergies),
+          ],
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('ENTENDIDO', style: TextStyle(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16)),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMedicalInfoBox(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.brown)),
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(top: 4, bottom: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.red.shade200)),
+          child: Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        )
+      ],
+    );
   }
 
   void _triggerFeedback(bool isSuccess, {bool isWarning = false}) {
@@ -977,7 +1071,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   void _showMassAttendanceDialog() {
-    String? type; // entry, exit
+    // Validar día antes de abrir
+    if (!_isDayValidForAttendance((msg) => UiHelpers.showSnackBar(context, msg, isError: true))) {
+      return;
+    }
+
+    const String type = 'exit'; // Forzado a Salida
     String? scope; // all, group
     String? groupId;
 
@@ -986,20 +1085,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, stfSetState) {
           return AlertDialog(
-            title: const Text('Asistencia Masiva'),
+            title: const Row(
+              children: [
+                Icon(Icons.logout_rounded, color: Colors.purple),
+                SizedBox(width: 10),
+                Text('Salida Masiva'),
+              ],
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Tipo de Registro:'),
-                Row(
-                  children: [
-                    Expanded(child: ChoiceChip(label: const Text('Entrada'), selected: type == 'entry', onSelected: (v) => stfSetState(() => type = 'entry'))),
-                    const SizedBox(width: 8),
-                    Expanded(child: ChoiceChip(label: const Text('Salida'), selected: type == 'exit', onSelected: (v) => stfSetState(() => type = 'exit'))),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Text('Alcance:'),
+                const Text('Esta acción registrará la salida de los alumnos que ingresaron hoy y aún no han salido.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 20),
+                const Text('Seleccionar Alcance:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(child: ChoiceChip(label: const Text('Todo el Plantel'), selected: scope == 'all', onSelected: (v) => stfSetState(() => scope = 'all'))),
@@ -1019,9 +1119,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       ),
                     )
                   else
-                    DropdownButton<String>(
-                      isExpanded: true,
-                      hint: const Text('Selecciona Grupo'),
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(labelText: 'Selecciona Grupo', border: OutlineInputBorder(), isDense: true, prefixIcon: Icon(Icons.groups)),
                       value: groupId,
                       items: _groups
                           .map((group) => DropdownMenuItem(value: group.name, child: Text(group.name)))
@@ -1034,11 +1133,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             actions: [
               TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
               ElevatedButton(
-                onPressed: (type == null || scope == null || (scope == 'group' && groupId == null)) ? null : () {
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.purple, foregroundColor: Colors.white),
+                onPressed: (scope == null || (scope == 'group' && groupId == null)) ? null : () {
                   Navigator.pop(context);
-                  _performMassiveAttendance(type!, scope!, groupId);
+                  _performMassiveAttendance(type, scope!, groupId);
                 },
-                child: const Text('Continuar'),
+                child: const Text('Confirmar Salida'),
               ),
             ],
           );
@@ -1070,6 +1170,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     setState(() => _isLoading = true);
     final currentTime = DateFormat('HH:mm').format(DateTime.now());
     
+    int successCount = 0;
+    
     try {
       final Map<String, dynamic> updates = {};
       for (var s in students) {
@@ -1077,26 +1179,48 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         final existing = _todayAttendance.firstWhere((rec) => rec['studentId'] == s.studentId, orElse: () => <String, dynamic>{});
         
         final Map<String, dynamic> record = Map<String, dynamic>.from(existing);
-        record['studentFullName'] = s.fullName;
-        record['group'] = s.group;
-        record['campusId'] = _campus;
-        record['schoolCycle'] = _currentSchoolCycle;
-        record['date'] = _todayDate;
-        record['studentId'] = s.studentId;
+        
+        // --- LOGICA AVANZADA DE FILTRADO ---
+        bool shouldUpdate = false;
 
         if (type == 'entry') {
-          record['entryTime'] = currentTime;
-          record['status'] = 'presente_masivo';
-          record['reasonTardy'] = reason;
-        } else {
-          record['exitTime'] = currentTime;
-          record['reasonEarlyExit'] = reason;
+          // Solo registrar si NO tiene entrada previa
+          if (!record.containsKey('entryTime')) {
+             record['entryTime'] = currentTime;
+             record['status'] = 'presente_masivo';
+             record['reasonTardy'] = reason;
+             shouldUpdate = true;
+          }
+        } else { // type == 'exit'
+          // Solo registrar si TIENE entrada Y NO TIENE salida
+          if (record.containsKey('entryTime') && !record.containsKey('exitTime')) {
+             record['exitTime'] = currentTime;
+             record['reasonEarlyExit'] = reason;
+             shouldUpdate = true;
+          }
         }
-        updates[path] = record;
+
+        if (shouldUpdate) {
+          // Asegurar campos base si es un registro nuevo (solo relevante para entry)
+          if (!record.containsKey('studentId')) {
+             record['studentFullName'] = s.fullName;
+             record['group'] = s.group;
+             record['campusId'] = _campus;
+             record['schoolCycle'] = _currentSchoolCycle;
+             record['date'] = _todayDate;
+             record['studentId'] = s.studentId;
+          }
+          updates[path] = record;
+          successCount++;
+        }
       }
 
-      await _attendanceRef!.update(updates);
-      UiHelpers.showSnackBar(context, 'Asistencia masiva de $type completada para ${students.length} alumnos.');
+      if (updates.isNotEmpty) {
+        await _attendanceRef!.update(updates);
+        UiHelpers.showSnackBar(context, 'Asistencia masiva de $type aplicada a $successCount alumnos (se omitieron ${students.length - successCount}).');
+      } else {
+        UiHelpers.showSnackBar(context, 'Ningún alumno requería actualización de $type.', isError: true);
+      }
     } catch (e) {
       UiHelpers.showSnackBar(context, 'Error en registro masivo.', isError: true);
     } finally {

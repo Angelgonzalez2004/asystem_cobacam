@@ -53,6 +53,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
   bool _isLoadingCycles = true;
   bool _isSaving = false;
   bool _isReadOnly = false;
+  bool _medicalAlert = false; // Estado para el Switch
 
   late final HiveService _hiveService;
   late final ConnectivityService _connectivityService;
@@ -82,6 +83,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
 
     _selectedGender = widget.student?.gender;
     _selectedGroup = widget.student?.group;
+    _medicalAlert = widget.student?.medicalAlert ?? false; // Inicializar
     
     _selectedSchoolCycle = widget.student?.schoolCycle ?? widget.currentSchoolCycle;
     
@@ -229,6 +231,7 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         healthConditions: _healthConditionsController.text.trim(),
         generalHealthStatus: _generalHealthStatusController.text.trim(),
         nss: _nssController.text.trim().isNotEmpty ? _nssController.text.trim() : null,
+        medicalAlert: _medicalAlert, // Guardar preferencia
       );
 
       await databaseRef.child(studentData.studentId).set(studentData.toFirebaseMap());
@@ -374,6 +377,22 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                                   _buildTextField(_healthConditionsController, 'Condiciones de Salud (Visión, caminar, etc.)', Icons.health_and_safety_outlined),
                                   const SizedBox(height: 12),
                                   _buildTextField(_generalHealthStatusController, 'Estado General (ej. Sano)', Icons.favorite_border_rounded),
+                                  const SizedBox(height: 16),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: _medicalAlert ? Colors.red.withOpacity(0.1) : Colors.grey.withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: _medicalAlert ? Colors.red : Colors.transparent),
+                                    ),
+                                    child: SwitchListTile(
+                                      title: const Text('Activar Alerta Médica Crítica', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      subtitle: const Text('Mostrará un aviso urgente al pasar lista. Úsalo solo para casos graves (Diabetes, Epilepsia, etc).', style: TextStyle(fontSize: 12)),
+                                      value: _medicalAlert,
+                                      activeColor: Colors.red,
+                                      secondary: Icon(Icons.add_alert_rounded, color: _medicalAlert ? Colors.red : Colors.grey),
+                                      onChanged: _isReadOnly ? null : (val) => setState(() => _medicalAlert = val),
+                                    ),
+                                  ),
                                   
                                   const SizedBox(height: 40),
                                   SizedBox(

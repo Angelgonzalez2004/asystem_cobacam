@@ -49,6 +49,7 @@ dependencies:
   google_generative_ai: ^0.4.7
   flutter_markdown_plus: ^1.0.7
   cloud_functions: ^6.0.5
+  archive: ^3.6.1
 
 dev_dependencies:
   flutter_test:

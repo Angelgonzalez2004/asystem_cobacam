@@ -4,21 +4,23 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:asystem_cobacam/utils/web_downloader.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:asystem_cobacam/utils/credential_pdf_generator.dart';
-import 'package:asystem_cobacam/utils/animations.dart'; // Importar animaciones
+import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:screenshot/screenshot.dart';
-import 'package:gal/gal.dart'; // Para guardar en galería
-import 'package:path_provider/path_provider.dart'; // Para guardar temporalmente
+import 'package:gal/gal.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:asystem_cobacam/models/student_model.dart';
 import 'package:asystem_cobacam/models/school_cycle_model.dart';
+import 'package:asystem_cobacam/models/group_model.dart';
 import 'package:asystem_cobacam/services/app_settings_service.dart';
-import 'package:provider/provider.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
-import 'package:image/image.dart' as img; // Para conversión JPG
+import 'package:provider/provider.dart';
+import 'package:image/image.dart' as img;
+import 'package:archive/archive.dart';
 
 class CredentialGeneratorScreen extends StatefulWidget {
   const CredentialGeneratorScreen({super.key});
@@ -33,16 +35,16 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
   late final AppSettingsService _appSettingsService;
   
   String? _selectedCycle;
+  String? _selectedGroup;
   String? _campus;
   List<SchoolCycle> _schoolCycles = [];
+  List<Group> _availableGroups = [];
   
-  // Lista de alumnos agregados para generar credencial
   final List<Student> _studentsToGenerate = [];
   bool _isLoading = false;
   bool _isSearching = false;
 
-  // Formato de descarga
-  String _exportFormat = 'PNG'; // Default
+  String _exportFormat = 'PNG';
 
   @override
   void initState() {
@@ -65,23 +67,76 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
         }
       }
       _schoolCycles = await _appSettingsService.getAllSchoolCycles();
-      _selectedCycle = await _appSettingsService.getCurrentSchoolCycleId();
+      final current = await _appSettingsService.getCurrentSchoolCycleId();
+      if (mounted) {
+         setState(() => _selectedCycle = current);
+         if (current.isNotEmpty) _loadGroupsForCycle(current);
+      }
     } catch (e) {
-      UiHelpers.showSnackBar(context, 'Error cargando datos: $e', isError: true);
+      if (mounted) UiHelpers.showSnackBar(context, 'Error cargando datos: $e', isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadGroupsForCycle(String cycleId) async {
+    if (_campus == null) return;
+    try {
+      final ref = FirebaseDatabase.instance.ref('planteles/$_campus/groups');
+      final snap = await ref.orderByChild('schoolCycleId').equalTo(cycleId).get();
+      final List<Group> groups = [];
+      if (snap.exists) {
+        for (var child in snap.children) {
+          groups.add(Group.fromSnapshot(child));
+        }
+        groups.sort((a, b) => a.name.compareTo(b.name));
+      }
+      if (mounted) setState(() => _availableGroups = groups);
+    } catch (e) {
+      debugPrint('Error loading groups: $e');
+    }
+  }
+
+  Future<void> _loadStudentsFromGroup(String groupName) async {
+    if (_campus == null || _selectedCycle == null) return;
+    setState(() => _isSearching = true);
+    try {
+      final ref = FirebaseDatabase.instance.ref('planteles/$_campus/students/$_selectedCycle');
+      final snap = await ref.orderByChild('group').equalTo(groupName).get();
+      final List<Student> loaded = [];
+      
+      if (snap.exists) {
+        for (var child in snap.children) {
+          final s = Student.fromSnapshot(child);
+          if (s.isActive) loaded.add(s);
+        }
+      }
+      
+      if (mounted) {
+        setState(() {
+           for (var s in loaded) {
+             if (!_studentsToGenerate.any((existing) => existing.studentId == s.studentId)) {
+               _studentsToGenerate.add(s);
+             }
+           }
+        });
+        UiHelpers.showSnackBar(context, 'Se cargaron ${loaded.length} alumnos del grupo $groupName.');
+      }
+    } catch (e) {
+      if (mounted) UiHelpers.showSnackBar(context, 'Error cargando grupo: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _isSearching = false);
     }
   }
 
   Future<void> _addStudentsByMatriculas(String rawInput) async {
     if (_campus == null || _selectedCycle == null || rawInput.trim().isEmpty) return;
 
-    // Normalizar entrada: separar por comas, saltos de línea o espacios
     final matriculas = rawInput
         .split(RegExp(r'[,\n\s]+'))
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
-        .toSet() // Eliminar duplicados en la entrada actual
+        .toSet() 
         .toList();
 
     if (matriculas.isEmpty) return;
@@ -95,9 +150,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
     try {
       final ref = FirebaseDatabase.instance.ref('planteles/$_campus/students/$_selectedCycle');
       
-      // Procesar cada matrícula
       for (final matricula in matriculas) {
-        // Verificar si ya está en la lista visual
         if (_studentsToGenerate.any((s) => s.studentId == matricula)) {
           continue; 
         }
@@ -120,7 +173,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
         String message = '';
         if (addedCount > 0) {
           message = '✅ Se agregaron $addedCount alumno(s).';
-          _studentIdController.clear(); // Limpiar solo si hubo éxito
+          _studentIdController.clear();
         } else {
           message = '⚠️ No se agregaron alumnos nuevos.';
         }
@@ -130,12 +183,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
            message += '\n❌ No encontrados: ${notFoundList.length} (${notFoundList.take(3).join(", ")}${notFoundList.length > 3 ? "..." : ""})';
         }
 
-        UiHelpers.showSnackBar(
-          context, 
-          message, 
-          isError: addedCount == 0 && notFoundList.isNotEmpty,
-          duration: const Duration(seconds: 4)
-        );
+        UiHelpers.showSnackBar(context, message, isError: addedCount == 0 && notFoundList.isNotEmpty);
       }
 
     } catch (e) {
@@ -150,14 +198,12 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
 
     if (mounted) UiHelpers.showSnackBar(context, 'Generando archivos $_exportFormat...');
 
-    // Lista temporal para PDF
-    final List<Uint8List> pdfImages = [];
+    final Map<String, Uint8List> generatedImages = {};
 
     for (var i = 0; i < _studentsToGenerate.length; i++) {
       final student = _studentsToGenerate[i];
       final controller = ScreenshotController();
 
-      // 1. Capturar como PNG (default de la librería)
       Uint8List imageBytes = await controller.captureFromWidget(
         Material(
           child: Container(
@@ -171,13 +217,6 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
         pixelRatio: 3.0,
       );
 
-      // --- CASO PDF ---
-      if (_exportFormat == 'PDF') {
-        pdfImages.add(imageBytes);
-        continue; // Saltar guardado individual
-      }
-
-      // --- CASO IMAGEN INDIVIDUAL (JPG/PNG) ---
       String extension = '.png';
       if (_exportFormat == 'JPG') {
         extension = '.jpg';
@@ -186,48 +225,107 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
           imageBytes = Uint8List.fromList(img.encodeJpg(decodedImage, quality: 90));
         }
       }
-
-      final fileName = 'credencial_${student.studentId}_$_selectedCycle$extension';
       
-      if (kIsWeb) {
-        await downloadImageWeb(imageBytes, fileName);
-      } else {
+      final fileName = '${student.studentId}_${student.fullName.replaceAll(" ", "_")}$extension';
+      generatedImages[fileName] = imageBytes;
+    } 
+
+    if (_exportFormat == 'PDF') {
         try {
-          await Gal.putImageBytes(imageBytes, name: fileName);
+          final imagesList = generatedImages.values.toList();
+          final pdfBytes = await CredentialPdfGenerator.generatePdf(imagesList);
+          
+          String groupSuffix = _selectedGroup != null ? '_Grupo_$_selectedGroup' : '';
+          final fileName = 'Credenciales_$_selectedCycle$groupSuffix.pdf';
+
+          if (kIsWeb) {
+            await downloadImageWeb(pdfBytes, fileName);
+          } else {
+             final dir = await getApplicationDocumentsDirectory();
+             final file = File('${dir.path}/$fileName');
+             await file.writeAsBytes(pdfBytes);
+             if (mounted) UiHelpers.showSnackBar(context, 'PDF guardado.');
+          }
         } catch (e) {
-          if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+          if (mounted) UiHelpers.showSnackBar(context, 'Error creando PDF: $e', isError: true);
+        }
+    } else {
+        if (generatedImages.length == 1) {
+           final entry = generatedImages.entries.first;
+           if (kIsWeb) {
+             await downloadImageWeb(entry.value, entry.key);
+           } else {
+             await Gal.putImageBytes(entry.value, name: entry.key);
+           }
+        } else {
+           final archive = Archive();
+           generatedImages.forEach((name, bytes) {
+             archive.addFile(ArchiveFile(name, bytes.length, bytes));
+           });
+           
+           final zipEncoder = ZipEncoder();
+           final zipBytes = zipEncoder.encode(archive);
+           
+           if (zipBytes != null) {
+             String groupSuffix = _selectedGroup != null ? '_Grupo_$_selectedGroup' : '';
+             final zipName = 'Credenciales_$_selectedCycle$groupSuffix.zip';
+             
+             if (kIsWeb) {
+               await downloadImageWeb(Uint8List.fromList(zipBytes), zipName);
+             } else {
+               final dir = await getApplicationDocumentsDirectory();
+               final file = File('${dir.path}/$zipName');
+               await file.writeAsBytes(zipBytes);
+               if (mounted) UiHelpers.showSnackBar(context, 'ZIP guardado.');
+             }
+           }
+        }
+    }
+    
+    if (mounted) UiHelpers.showSnackBar(context, '¡Proceso completado!');
+  }
+
+  Future<void> _downloadSingleCredential(Student student) async {
+    if (mounted) UiHelpers.showSnackBar(context, 'Descargando credencial de ${student.fullName}...');
+    
+    final controller = ScreenshotController();
+    Uint8List imageBytes = await controller.captureFromWidget(
+      Material(
+        child: Container(
+          width: 350,
+          height: 220,
+          color: Colors.white,
+          child: _CredentialCardContent(student: student, campus: _campus ?? 'COBACAM'),
+        ),
+      ),
+      delay: const Duration(milliseconds: 100),
+      pixelRatio: 3.0,
+    );
+
+    String extension = '.png';
+    if (_exportFormat == 'JPG') {
+      extension = '.jpg';
+      final decodedImage = img.decodeImage(imageBytes);
+      if (decodedImage != null) {
+        imageBytes = Uint8List.fromList(img.encodeJpg(decodedImage, quality: 90));
+      }
+    }
+
+    final fileName = '${student.studentId}_${student.fullName.replaceAll(" ", "_")}$extension';
+    
+    if (kIsWeb) {
+      await downloadImageWeb(imageBytes, fileName);
+    } else {
+      try {
+        await Gal.putImageBytes(imageBytes, name: fileName);
+        if (mounted) UiHelpers.showSnackBar(context, 'Guardado.');
+      } catch (e) {
+         if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
              final dir = await getApplicationDocumentsDirectory();
              final file = File('${dir.path}/$fileName');
              await file.writeAsBytes(imageBytes);
-          }
-        }
+         }
       }
-    } // Fin del loop
-
-    // --- GENERAR PDF FINAL ---
-    if (_exportFormat == 'PDF' && pdfImages.isNotEmpty) {
-      try {
-        final pdfBytes = await CredentialPdfGenerator.generatePdf(pdfImages);
-        final fileName = 'credenciales_lote_${DateTime.now().millisecondsSinceEpoch}.pdf';
-
-        if (kIsWeb) {
-          await downloadImageWeb(pdfBytes, fileName);
-        } else {
-          // Guardar archivo localmente (Windows/Android/iOS via File)
-          // Nota: En móviles sería ideal share_plus o open_file, pero guardaremos en Docs por ahora.
-           final dir = await getApplicationDocumentsDirectory();
-           final file = File('${dir.path}/$fileName');
-           await file.writeAsBytes(pdfBytes);
-           if (mounted) UiHelpers.showSnackBar(context, 'PDF guardado en: ${file.path}', isError: false);
-        }
-      } catch (e) {
-        if (mounted) UiHelpers.showSnackBar(context, 'Error creando PDF: $e', isError: true);
-        return;
-      }
-    }
-    
-    if (mounted) {
-      UiHelpers.showSnackBar(context, '¡Proceso completado con éxito!', isError: false);
     }
   }
 
@@ -240,19 +338,17 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
 
     if (_isLoading) return const Center(child: CircularProgressIndicator());
 
-    return Scaffold( // Usar Scaffold interno para mejor estructura
+    return Scaffold(
       backgroundColor: isDark ? theme.scaffoldBackgroundColor : Colors.grey.shade50,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            // --- HEADER & CONTROL PANEL ---
             Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 800),
                 child: Card(
                   elevation: 4,
-                  shadowColor: Colors.black.withOpacity(0.1),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   child: Padding(
                     padding: const EdgeInsets.all(32),
@@ -280,12 +376,10 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
                         ),
                         const SizedBox(height: 32),
                         
-                        // CONTROLES RESPONSIVOS
                         Flex(
                           direction: isWide ? Axis.horizontal : Axis.vertical,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // CICLO
                             Expanded(
                               flex: isWide ? 1 : 0,
                               child: DropdownButtonFormField<String>(
@@ -301,12 +395,33 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
                                     ],
                                   )
                                 )).toList(),
-                                onChanged: (val) => setState(() { _selectedCycle = val; _studentsToGenerate.clear(); }),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() { _selectedCycle = val; _studentsToGenerate.clear(); _selectedGroup = null; });
+                                    _loadGroupsForCycle(val);
+                                  }
+                                },
                               ),
                             ),
                             SizedBox(width: isWide ? 16 : 0, height: isWide ? 0 : 16),
                             
-                            // FORMATO
+                            Expanded(
+                              flex: isWide ? 1 : 0,
+                              child: DropdownButtonFormField<String>(
+                                value: _selectedGroup,
+                                decoration: _inputDeco('Grupo', Icons.groups),
+                                items: _availableGroups.map((g) => DropdownMenuItem(
+                                  value: g.name, 
+                                  child: Text(g.name),
+                                )).toList(),
+                                onChanged: (val) {
+                                   setState(() => _selectedGroup = val);
+                                   if (val != null) _loadStudentsFromGroup(val);
+                                },
+                              ),
+                            ),
+                            SizedBox(width: isWide ? 16 : 0, height: isWide ? 0 : 16),
+
                             Expanded(
                               flex: isWide ? 2 : 0,
                               child: Container(
@@ -319,9 +434,9 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    _formatOption('PNG', Icons.image),
-                                    _formatOption('JPG', Icons.photo),
-                                    _formatOption('PDF', Icons.picture_as_pdf),
+                                    _formatOption(context, 'PNG', Icons.image),
+                                    _formatOption(context, 'JPG', Icons.photo),
+                                    _formatOption(context, 'PDF', Icons.picture_as_pdf),
                                   ],
                                 ),
                               ),
@@ -330,7 +445,6 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
                         ),
                         const SizedBox(height: 24),
                         
-                        // INPUT AREA
                         TextField(
                           controller: _studentIdController,
                           maxLines: 4,
@@ -363,7 +477,6 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
 
             const SizedBox(height: 32),
 
-            // --- RESULTADOS ---
             if (_studentsToGenerate.isNotEmpty) ...[
               FadeInUp(
                 child: Row(
@@ -381,7 +494,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
                     ElevatedButton.icon(
                       onPressed: _downloadAllCredentials,
                       icon: const Icon(Icons.download_rounded),
-                      label: Text('DESCARGAR $_exportFormat'),
+                      label: Text('DESCARGAR PACK ($_exportFormat)'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green.shade600,
                         foregroundColor: Colors.white,
@@ -394,7 +507,6 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
               ),
               const SizedBox(height: 24),
               
-              // GRID DE CREDENCIALES
               Center(
                 child: Wrap(
                   spacing: 24,
@@ -409,12 +521,24 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
                         clipBehavior: Clip.none,
                         children: [
                           _CredentialCardVisual(student: student, campus: _campus ?? ''),
+                          
                           Positioned(
                             top: -10, right: -10,
                             child: IconButton.filled(
                               icon: const Icon(Icons.close, size: 18),
                               onPressed: () => setState(() => _studentsToGenerate.removeAt(index)),
                               style: IconButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                              tooltip: 'Quitar de la lista',
+                            ),
+                          ),
+
+                          Positioned(
+                            top: -10, left: -10,
+                            child: IconButton.filled(
+                              icon: const Icon(Icons.download_rounded, size: 18),
+                              onPressed: () => _downloadSingleCredential(student),
+                              style: IconButton.styleFrom(backgroundColor: Colors.blueAccent, foregroundColor: Colors.white),
+                              tooltip: 'Descargar solo esta',
                             ),
                           ),
                         ],
@@ -444,7 +568,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
     );
   }
 
-  Widget _formatOption(String label, IconData icon) {
+  Widget _formatOption(BuildContext context, String label, IconData icon) {
     bool isSelected = _exportFormat == label;
     final color = isSelected ? Theme.of(context).primaryColor : Colors.grey;
     
@@ -473,7 +597,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
     return InputDecoration(
       labelText: label,
       alignLabelWithHint: true,
-      prefixIcon: Padding(padding: const EdgeInsets.only(bottom: 24), child: Icon(icon)), // Ajuste para multiline
+      prefixIcon: Padding(padding: const EdgeInsets.only(bottom: 24), child: Icon(icon)), 
       prefixIconConstraints: const BoxConstraints(minWidth: 48),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade300)),
@@ -483,8 +607,6 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
     );
   }
 }
-
-// ... (Resto de clases _CredentialCardVisual y _CredentialCardContent sin cambios en lógica interna)
 
 class _CredentialCardVisual extends StatelessWidget {
   final Student student;

@@ -160,6 +160,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
         'alergias',
         'condiciones_salud',
         'estado_salud',
+        'alerta_medica', // Nuevo campo
       ];
 
       for (var table in excel.tables.keys) {
@@ -167,8 +168,6 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
         if (sheet == null || sheet.maxColumns < expectedHeaders.length) continue;
 
         // Validar si el nombre de la hoja corresponde a un grupo existente
-        // Opcional: Si el Excel tiene columna 'grupo', usaremos esa.
-        // Pero la instrucción dice: "cada hoja de excel es un grupo".
         
         final groupNameFromSheet = table.trim();
         // Verificar si este grupo existe en el ciclo seleccionado
@@ -183,7 +182,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
         for (var h in expectedHeaders) {
           if (!headers.contains(h)) {
             // Permitir que las médicas sean opcionales
-            if (!['alergias', 'condiciones_salud', 'estado_salud', 'grupo'].contains(h)) {
+            if (!['alergias', 'condiciones_salud', 'estado_salud', 'grupo', 'alerta_medica'].contains(h)) {
               headersMatch = false;
               break;
             }
@@ -199,6 +198,15 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
             final studentId = row[headers.indexOf('matricula')]?.value?.toString() ?? '';
             final fullName = row[headers.indexOf('nombre_completo')]?.value?.toString() ?? '';
             if (studentId.isEmpty || fullName.isEmpty) continue;
+
+            // Lógica para Alerta Médica
+            bool isMedicalAlert = false;
+            if (headers.contains('alerta_medica')) {
+               final val = row[headers.indexOf('alerta_medica')]?.value?.toString().toLowerCase().trim();
+               if (val == 'si' || val == '1' || val == 'true') {
+                 isMedicalAlert = true;
+               }
+            }
 
             studentsToImport.add(Student(
               id: studentId,
@@ -217,6 +225,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
               allergies: headers.contains('alergias') ? row[headers.indexOf('alergias')]?.value?.toString() : null,
               healthConditions: headers.contains('condiciones_salud') ? row[headers.indexOf('condiciones_salud')]?.value?.toString() : null,
               generalHealthStatus: headers.contains('estado_salud') ? (row[headers.indexOf('estado_salud')]?.value?.toString() ?? 'Sano') : 'Sano',
+              medicalAlert: isMedicalAlert,
             ));
           } catch (e) { continue; }
         }

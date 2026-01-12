@@ -4,92 +4,53 @@
 
 ---
 
-## 🚀 Versión 2.2.0: "Resolución Inteligente y Seguridad"
+## 🚀 Versión 2.3.0: "Gestión Masiva y Seguridad Estudiantil"
 
-Esta actualización introduce un flujo de trabajo avanzado para la gestión de incidencias, mejoras críticas en la seguridad de la localización y una optimización profunda de los reportes.
+Esta actualización representa un salto cualitativo en la capacidad de procesamiento administrativo y en la protección proactiva de los estudiantes.
 
-### 🌟 Nuevas Funcionalidades (v2.2.0)
+### 🌟 Novedades Destacadas (v2.3.0)
 
-#### 🛡️ Gestión de Incidencias "Soft-Resolve"
-*   **Resolución sin Eliminación:** Ahora los reportes no se eliminan, sino que se "Resuelven" o "Archivan", manteniendo la evidencia histórica.
-*   **Bitácora de Acuerdos:** Al resolver una incidencia, se exige un motivo (ej. "Acuerdo con Tutor", "Conducta Corregida") y detalles opcionales.
-*   **Visualización Clara:** Los reportes resueltos aparecen en el historial con fecha de cierre y detalles, diferenciados visualmente (tachados y en verde).
+#### 🪪 Generador de Credenciales Pro 2.0
+*   **Procesamiento Masivo por Grupo:** Ahora es posible cargar y generar las credenciales de un grupo completo con un solo clic seleccionando el ciclo escolar.
+*   **Descarga Inteligente (ZIP/PDF):** 
+    *   Implementación de descargas en archivos **.zip** cuando se generan múltiples imágenes (PNG/JPG) para mantener el orden.
+    *   **PDF Optimizado:** Nuevo algoritmo de maquetación que ajusta hasta **10 credenciales por hoja** (5x2), optimizando el ahorro de papel.
+*   **Control Individual:** Cada credencial en la vista previa cuenta con su propio botón de descarga rápida y opción de eliminación.
+*   **Alta Resolución:** Captura de imágenes con `pixelRatio: 3.0` para una impresión nítida y profesional.
 
-#### 📊 Reportes Excel de Grado Médico
-*   **Espejo de Datos:** La exportación a Excel ahora incluye **TODOS** los campos del expediente del alumno, incluyendo información médica desglosada (`Alergias`, `Condiciones`, `Estado de Salud`) en columnas independientes.
-*   **Formato Profesional:** Encabezados mejorados, columnas de estatus y resolución, y uso de **Emojis/Íconos** (👥, 📅) dentro del archivo para mejor legibilidad.
+#### 🚑 Sistema de Alerta Médica Inteligente
+*   **Gatillo de Seguridad Manual:** Se añadió el campo `medicalAlert` al expediente del alumno. Los administradores pueden activar esta bandera solo para casos de gravedad (Diabetes, Epilepsia, etc.).
+*   **Intervención en Pase de Lista:** Al escanear a un alumno con la alerta activa, el sistema lanza un **diálogo de emergencia bloqueante** con vibración de alto impacto, mostrando instantáneamente: **Estado General, Condiciones y Alergias**.
+*   **Importación Masiva:** El importador de Excel ahora soporta la columna `alerta_medica` (SI/NO) para configurar la seguridad de cientos de alumnos en segundos.
 
-#### 📅 Calendario Robusto & Localización
-*   **Soporte Regional:** Integración nativa de `flutter_localizations` para calendarios y selectores en Español (MX).
-*   **Lógica Anti-Bloqueo:** Sistema inteligente que detecta días inhábiles o fines de semana al abrir el calendario y sugiere automáticamente el siguiente día válido, evitando "pantallas grises" o cierres inesperados.
+#### 🎨 Rediseño Visual "Dashboard Profesional"
+*   **Pantallas Modernizadas:** Se aplicó un rediseño completo a las secciones de **Horarios de Grupo** y **Días No Lectivos** utilizando principios de diseño limpio (estilo Tailwind/Material 3).
+*   **UX Responsiva:** Uso de contenedores restringidos y layouts adaptativos que garantizan una experiencia fluida tanto en dispositivos móviles como en pantallas de escritorio.
+*   **Semántica de Colores:** Uso de códigos de color consistentes (Teal para entradas, Indigo para salidas, Naranja para suspensiones).
 
 ---
 
-## 🌟 Funcionalidades Clave (Consolidadas)
+## 🛠️ Funcionalidades Base
 
 ### 📡 Modo Offline Nativo (Sin Internet)
-El sistema opera completamente sin conexión a internet cuando es necesario.
-*   **Persistencia Inteligente:** Base de datos local segura (Hive) que almacena registros automáticamente.
-*   **Sincronización Automática:** Subida de datos a la nube (Firebase) en cuanto se recupera la conexión.
-*   **Inicio de Sesión Offline:** Acceso continuo utilizando credenciales cacheadas.
+*   **Persistencia Local:** Uso de **Hive** para almacenar registros de asistencia sin conexión.
+*   **Sincronización Automática:** Subida de datos en segundo plano al recuperar señal.
 
-### 📸 Pase de Lista Profesional 2.0
-Módulo de asistencia rediseñado para velocidad y precisión.
-*   **Escáner Híbrido:** Soporte para códigos QR y de Barras con control de flash integrado.
-*   **Buscador Predictivo:** Búsqueda por nombre/matrícula con foto de respaldo para alumnos sin credencial.
-*   **Feedback Sensorial:** Confirmaciones visuales (Verde/Rojo) y hápticas (Vibración) para agilizar el flujo de entrada.
+### 📸 Pase de Lista Profesional
+*   **Escáner Híbrido:** Soporte para QR y Código de Barras (Code 128).
+*   **Validación de Horarios:** El sistema detecta automáticamente retardos y salidas anticipadas basándose en el horario del grupo.
+*   **Protección de Fechas:** Bloqueo automático de registros en fines de semana y días no lectivos configurados.
 
-### 🤖 AsystemBot: Inteligencia Artificial Escolar
-Asistente virtual potenciado por **Gemini 1.5 Flash**.
-*   **Consultas Naturales:** Pregunta "¿Quién faltó hoy?" o "Resumen de incidencias" y recibe respuestas analizadas en tiempo real.
-*   **Privacidad:** Procesamiento seguro en la nube a través de Firebase Cloud Functions.
+### 🤖 AsystemBot: Asistente IA
+*   Consultas en lenguaje natural potenciadas por **Gemini 1.5 Flash**.
 
 ---
 
-## 🏛️ Arquitectura del Sistema
-
-El proyecto está construido sobre una arquitectura **escalable y modular**.
-
-### 📱 Stack Tecnológico
-*   **Frontend:** [Flutter](https://flutter.dev) (Dart 3.4+) - Material 3.
-*   **Backend & Cloud:** [Firebase](https://firebase.google.com)
-    *   **Authentication:** Gestión de usuarios.
-    *   **Realtime Database:** Sincronización en milisegundos.
-    *   **Cloud Functions (Gen 2):** Backend Node.js.
-    *   **Hosting:** Despliegue global.
-*   **Librerías Clave:** `hive`, `provider`, `mobile_scanner`, `flutter_markdown_plus`, `pdf`, `excel`, `flutter_localizations`.
-
----
-
-## 🛠️ Configuración y Despliegue
-
-### Requisitos Previos
-*   Flutter SDK 3.4+
-*   Cuenta de Firebase configurada y CLI instalado.
-
-### Comandos de Desarrollo
-
-**Instalar dependencias:**
-```bash
-flutter pub get
-```
-
-**Generar Adaptadores de Base de Datos (Hive):**
-```bash
-dart run build_runner build --delete-conflicting-outputs
-```
-
-### Despliegue Web (Producción)
-
-1.  **Construir la aplicación:**
-    ```bash
-    flutter build web --release
-    ```
-
-2.  **Desplegar a Firebase Hosting:**
-    ```bash
-    firebase deploy --only hosting
-    ```
+## 🏛️ Arquitectura y Tecnologías
+*   **Lenguaje:** Dart 3.4+ / Flutter
+*   **Base de Datos:** Firebase Realtime Database & Hive (Local).
+*   **Backend:** Firebase Cloud Functions (Gen 2).
+*   **Hosting:** Firebase Hosting con renderizado CanvasKit.
 
 ---
 

@@ -41,6 +41,8 @@ class Student {
   String? generalHealthStatus; // "Sano" por defecto
   @HiveField(17)
   String? nss; // Numero de Seguro Social
+  @HiveField(18)
+  bool medicalAlert; // Gatillo manual para alertas graves
 
   Student({
     required this.id,
@@ -61,6 +63,7 @@ class Student {
     this.healthConditions,
     this.generalHealthStatus = 'Sano',
     this.nss,
+    this.medicalAlert = false, // Default false
   });
 
   // Factory constructor for creating a Student from a Firebase DataSnapshot
@@ -85,6 +88,7 @@ class Student {
       healthConditions: data['healthConditions'],
       generalHealthStatus: data['generalHealthStatus'] ?? 'Sano',
       nss: data['nss'],
+      medicalAlert: data['medicalAlert'] ?? false,
     );
   }
 
@@ -108,6 +112,7 @@ class Student {
       'healthConditions': healthConditions,
       'generalHealthStatus': generalHealthStatus,
       'nss': nss,
+      'medicalAlert': medicalAlert,
     };
   }
 }
