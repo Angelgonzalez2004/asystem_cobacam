@@ -16,7 +16,8 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/non_attendance_manage
 import 'package:asystem_cobacam/screens/dashboards/prefect/credential_generator_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/incidence_report_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/ai_assistant_screen.dart';
-import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_faq_screen.dart'; // Importado
+import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_faq_screen.dart'; 
+import 'package:asystem_cobacam/screens/dashboards/prefect/statistics_screen.dart'; // Importado
 import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
 
 class PrefectDashboardScreen extends StatefulWidget {
@@ -61,8 +62,9 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       const CredentialGeneratorScreen(),
       const Center(child: Text("Scanner QR (Próximamente)")), 
       const IncidenceReportScreen(), 
-      const AIAssistantScreen(), // Opción 13
-      const PrefectFaqScreen(), // Opción 14
+      const StatisticsScreen(), // Opción 13
+      const AIAssistantScreen(), // Opción 14
+      const PrefectFaqScreen(), // Opción 15
     ];
 
     _screenTitles = [
@@ -79,6 +81,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       'Generador de Credenciales',
       'Scanner QR',
       'Reporte de Incidencias',
+      'Estadísticas y Métricas',
       'Asistente IA',
       'Manual Operativo (FAQ)',
     ];
@@ -153,8 +156,11 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       case 'incidencia':
         index = 12;
         break;
-      case 'ia':
+      case 'stats':
         index = 13;
+        break;
+      case 'ia':
+        index = 14;
         break;
       case 'lista':
         index = 7;
@@ -178,7 +184,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         index = 10;
         break;
       case 'faq':
-        index = 14;
+        index = 15;
         break;
       default:
         index = 0;
@@ -202,7 +208,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (safeIndex == 13) // Si es el asistente IA
+            if (safeIndex == 14) // Si es el asistente IA
               const Padding(
                 padding: EdgeInsets.only(right: 10),
                 child: Icon(Icons.psychology, color: Color(0xFFF59E0B)), // Color Tertiary (Amber)

@@ -646,10 +646,10 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                         _infoRowFull(Icons.medical_services_outlined, 'Condiciones:', s.healthConditions ?? 'Ninguna'),
                         if (s.medicalAlert) ...[
                            const SizedBox(height: 8),
-                           Row(children: [
+                           const Row(children: [
                              Icon(Icons.add_alert, color: Colors.red, size: 16),
-                             const SizedBox(width: 8),
-                             const Text('ALERTA MÉDICA ACTIVA', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12))
+                             SizedBox(width: 8),
+                             Text('ALERTA MÉDICA ACTIVA', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12))
                            ])
                         ]
                       ]),

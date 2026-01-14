@@ -48,6 +48,7 @@ dependencies:
   pdf: ^3.11.3
   google_generative_ai: ^0.4.7
   flutter_markdown_plus: ^1.0.7
+  fl_chart: ^0.68.0
   cloud_functions: ^6.0.5
   archive: ^3.6.1
 

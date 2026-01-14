@@ -30,6 +30,33 @@ class _NonAttendanceManagementScreenState
   bool _isLoading = true;
   String? _campusId;
 
+  // LISTA DE MOTIVOS PREDEFINIDOS (20+)
+  final List<String> _presetReasons = [
+    'Suspensión Oficial (SEP)',
+    'Consejo Técnico Escolar (CTE)',
+    'Descarga Administrativa',
+    'Día Festivo Oficial',
+    'Vacaciones de Semana Santa',
+    'Vacaciones de Invierno',
+    'Vacaciones de Verano',
+    'Día del Maestro',
+    'Día de las Madres',
+    'Día del Estudiante',
+    'Aniversario del Sindicato',
+    'Aniversario del Colegio',
+    'Condiciones Climáticas (Lluvias/Huracán)',
+    'Fumigación / Sanitización',
+    'Mantenimiento de Instalaciones',
+    'Falla de Suministro Eléctrico/Agua',
+    'Capacitación Docente',
+    'Evento Cívico / Desfile',
+    'Evento Cultural / Deportivo',
+    'Luto Institucional',
+    'Contingencia Sanitaria',
+    'Usos y Costumbres Locales',
+    'Otro (Especificar)',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -67,7 +94,7 @@ class _NonAttendanceManagementScreenState
       _loadNonAttendanceDays();
     } catch (e) {
       if (mounted) {
-        UiHelpers.showSnackBar(context, 'Error: ${e.toString()}',
+        UiHelpers.showSnackBar(context, 'Error de conexión: ${e.toString()}',
             isError: true);
       }
       if (mounted) setState(() => _isLoading = false);
@@ -83,10 +110,8 @@ class _NonAttendanceManagementScreenState
       
       if (!mounted) return;
       
-      // Ordenar por fecha
       days.sort((a, b) => a.date.compareTo(b.date));
 
-      // Agrupar rangos
       final List<_SuspensionGroup> groups = [];
       if (days.isNotEmpty) {
         _SuspensionGroup currentGroup = _SuspensionGroup(
@@ -98,9 +123,7 @@ class _NonAttendanceManagementScreenState
 
         for (int i = 1; i < days.length; i++) {
           final day = days[i];
-          // Verificar si es consecutivo (día siguiente) y misma razón
-          final isConsecutive = day.date.difference(currentGroup.end).inHours <= 24; 
-          // Check < 25 hours to be safe with DST etc, basically consecutive days
+          final isConsecutive = day.date.difference(currentGroup.end).inHours <= 25; 
           final isSameReason = (day.reason ?? 'Sin motivo') == currentGroup.reason;
 
           if (isConsecutive && isSameReason) {
@@ -125,7 +148,7 @@ class _NonAttendanceManagementScreenState
       });
     } catch (e) {
       if (mounted) {
-        UiHelpers.showSnackBar(context, 'Error al cargar días.', isError: true);
+        UiHelpers.showSnackBar(context, 'No se pudieron cargar los datos.', isError: true);
       }
       if (mounted) setState(() => _isLoading = false);
     }
@@ -135,86 +158,160 @@ class _NonAttendanceManagementScreenState
     final formKey = GlobalKey<FormState>();
     DateTime selectedStartDate = group?.start ?? DateTime.now();
     DateTime selectedEndDate = group?.end ?? DateTime.now();
-    final reasonController = TextEditingController(text: group?.reason ?? '');
     
-    // Si editamos un grupo de más de 1 día, activamos el switch por defecto.
+    // Determinar valor inicial del dropdown
+    String? initialDropdownValue;
+    final existingReason = group?.reason;
+    if (existingReason != null) {
+      if (_presetReasons.contains(existingReason)) {
+        initialDropdownValue = existingReason;
+      } else {
+        initialDropdownValue = 'Otro (Especificar)';
+      }
+    }
+
+    String? selectedReason = initialDropdownValue;
+    final otherReasonController = TextEditingController(
+      text: (initialDropdownValue == 'Otro (Especificar)') ? existingReason : ''
+    );
+    
     bool isRangeSelection = group != null ? (group.ids.length > 1) : false;
 
     await showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return StatefulBuilder(
           builder: (dialogContext, setStateInDialog) {
             return AlertDialog(
-              title: Text(group == null ? 'Añadir Suspensión' : 'Editar Suspensión'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Row(
+                children: [
+                  Icon(group == null ? Icons.add_circle_outline : Icons.edit_calendar_rounded, 
+                       color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 12),
+                  Text(group == null ? 'Nueva Suspensión' : 'Modificar Evento', style: const TextStyle(fontSize: 18)),
+                ],
+              ),
               content: Form(
                 key: formKey,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SwitchListTile(
-                        title: const Text('Rango de Fechas',
-                            style: TextStyle(fontSize: 14)),
-                        value: isRangeSelection,
-                        onChanged: (bool value) {
-                          setStateInDialog(() {
-                            isRangeSelection = value;
-                            if (!isRangeSelection) {
-                              selectedEndDate = selectedStartDate;
-                            }
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      _buildDateTile(dialogContext, 'Inicio', selectedStartDate,
-                          (d) {
-                        setStateInDialog(() {
-                          selectedStartDate = d;
-                          if (!isRangeSelection || selectedEndDate.isBefore(d)) {
-                            selectedEndDate = d;
-                          }
-                        });
-                      }),
-                      if (isRangeSelection)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: _buildDateTile(
-                              dialogContext,
-                              'Fin',
-                              selectedEndDate,
-                              (d) =>
-                                  setStateInDialog(() => selectedEndDate = d),
-                              minDate: selectedStartDate),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.blue.withOpacity(0.1))
                         ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: reasonController,
-                        decoration: const InputDecoration(
-                            labelText: 'Razón / Motivo',
-                            hintText: 'Ej. Vacaciones, Junta, Mal Clima',
-                            prefixIcon: Icon(Icons.info_outline),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Requerido' : null,
+                        child: SwitchListTile(
+                          title: const Text('Periodo de varios días', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          subtitle: const Text('Activar para puentes o vacaciones', style: TextStyle(fontSize: 12)),
+                          value: isRangeSelection,
+                          activeColor: Theme.of(context).primaryColor,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          onChanged: (bool value) {
+                            setStateInDialog(() {
+                              isRangeSelection = value;
+                              if (!isRangeSelection) {
+                                selectedEndDate = selectedStartDate;
+                              }
+                            });
+                          },
+                        ),
                       ),
+                      const SizedBox(height: 20),
+                      
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildDateTile(
+                              dialogContext, 
+                              'Inicio', 
+                              selectedStartDate,
+                              (d) {
+                                setStateInDialog(() {
+                                  selectedStartDate = d;
+                                  if (!isRangeSelection || selectedEndDate.isBefore(d)) {
+                                    selectedEndDate = d;
+                                  }
+                                });
+                              }
+                            ),
+                          ),
+                          if (isRangeSelection) ...[
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildDateTile(
+                                dialogContext,
+                                'Fin',
+                                selectedEndDate,
+                                (d) => setStateInDialog(() => selectedEndDate = d),
+                                minDate: selectedStartDate
+                              ),
+                            ),
+                          ]
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      DropdownButtonFormField<String>(
+                        value: selectedReason,
+                        decoration: InputDecoration(
+                          labelText: 'Motivo de Suspensión',
+                          prefixIcon: const Icon(Icons.category_outlined),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        ),
+                        isExpanded: true,
+                        items: _presetReasons.map((r) => DropdownMenuItem(value: r, child: Text(r, overflow: TextOverflow.ellipsis))).toList(),
+                        onChanged: (val) => setStateInDialog(() => selectedReason = val),
+                        validator: (val) => val == null ? 'Seleccione un motivo' : null,
+                      ),
+
+                      if (selectedReason == 'Otro (Especificar)')
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: TextFormField(
+                            controller: otherReasonController,
+                            autofocus: true,
+                            decoration: InputDecoration(
+                              labelText: 'Especifique el motivo',
+                              hintText: 'Ej. Desfile Conmemorativo',
+                              prefixIcon: const Icon(Icons.edit_note_rounded),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            validator: (value) => value!.trim().isEmpty ? 'Es necesario especificar' : null,
+                          ),
+                        ),
                     ],
                   ),
                 ),
               ),
+              actionsPadding: const EdgeInsets.all(16),
               actions: [
                 TextButton(
-                    onPressed: () => Navigator.pop(dialogContext),
-                    child: const Text('Cancelar')),
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                ),
                 ElevatedButton(
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
                     if (_campusId == null) return;
 
+                    final finalReason = (selectedReason == 'Otro (Especificar)') 
+                        ? otherReasonController.text.trim() 
+                        : selectedReason!;
+
                     try {
-                      // Si es Edición: Borramos primero los días viejos
-                      // Esto maneja cambios de fecha (borra viejos, crea nuevos)
-                      // y cambios de nombre.
+                      // Feedback Visual de Carga (Overlay básico o bloqueo)
+                      // Como es un dialog modal, la operación async bloqueará un poco si no cerramos.
+                      // Cerramos y mostramos loading en pantalla principal.
+                      Navigator.pop(dialogContext);
+                      setState(() => _isLoading = true);
+
+                      // Si es Edición: Borrar anteriores
                       if (group != null) {
                          for (final id in group.ids) {
                             await _appSettingsService.deleteNonAttendanceDay(_campusId!, id);
@@ -224,8 +321,6 @@ class _NonAttendanceManagementScreenState
                       List<NonAttendanceDay> daysToSave = [];
                       DateTime current = selectedStartDate;
                       
-                      // Asegurar que iteramos correctamente hasta el final inclusive
-                      // Normalizamos fechas para evitar errores de hora
                       final end = DateTime(selectedEndDate.year, selectedEndDate.month, selectedEndDate.day, 23, 59, 59);
                       
                       while (current.isBefore(end)) {
@@ -233,7 +328,7 @@ class _NonAttendanceManagementScreenState
                             id: DateFormat('yyyy-MM-dd').format(current),
                             campusId: _campusId!,
                             date: current,
-                            reason: reasonController.text));
+                            reason: finalReason));
                         current = current.add(const Duration(days: 1));
                       }
                       
@@ -243,18 +338,25 @@ class _NonAttendanceManagementScreenState
                       
                       if (mounted) {
                         UiHelpers.showSnackBar(
-                            context, group == null 
-                              ? 'Se registraron ${daysToSave.length} días.'
-                              : 'Suspensión actualizada.');
+                            context, 
+                            group == null ? 'Suspensión registrada exitosamente.' : 'Cambios guardados correctamente.',
+                            isError: false); // Green snackbar
                       }
-                      Navigator.pop(dialogContext);
                       _loadNonAttendanceDays();
                     } catch (e) {
-                      UiHelpers.showSnackBar(context, 'Error al guardar.',
-                          isError: true);
+                      setState(() => _isLoading = false);
+                      if (mounted) {
+                        UiHelpers.showSnackBar(context, 'Error al guardar: intente nuevamente.', isError: true);
+                      }
                     }
                   },
-                  child: Text(group == null ? 'Guardar' : 'Actualizar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)
+                  ),
+                  child: Text(group == null ? 'Registrar Evento' : 'Guardar Cambios'),
                 ),
               ],
             );
@@ -272,24 +374,33 @@ class _NonAttendanceManagementScreenState
         final d = await showDatePicker(
             context: context,
             initialDate: date,
-            firstDate: minDate ?? DateTime(2020),
-            lastDate: DateTime(2100));
+            firstDate: minDate ?? DateTime(2024),
+            lastDate: DateTime(2030),
+            locale: const Locale('es', 'MX'),
+            helpText: 'SELECCIONAR FECHA DE $label');
         if (d != null) onPicked(d);
       },
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
         decoration: BoxDecoration(
+            color: Colors.white,
             border: Border.all(color: Colors.grey.shade300),
             borderRadius: BorderRadius.circular(12)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('$label:',
-                style: const TextStyle(fontWeight: FontWeight.w500)),
-            Text(DateFormat('dd/MMM/yyyy', 'es_MX').format(date).toUpperCase(),
-                style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.bold)),
+            Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 16, color: Colors.blueGrey),
+                const SizedBox(width: 8),
+                Text(
+                  DateFormat('dd/MMM/yyyy', 'es_MX').format(date).toUpperCase(),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -308,7 +419,7 @@ class _NonAttendanceManagementScreenState
         backgroundColor: theme.colorScheme.primary,
         elevation: 4,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('Agregar Suspensión', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text('Nueva Suspensión', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -325,8 +436,10 @@ class _NonAttendanceManagementScreenState
                           margin: const EdgeInsets.fromLTRB(20, 20, 20, 10),
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)], // Orange-50 to 100
+                            gradient: LinearGradient(
+                              colors: isDark 
+                                ? [const Color(0xFF424242), const Color(0xFF303030)]
+                                : [const Color(0xFFFFF3E0), const Color(0xFFFFE0B2)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -340,19 +453,20 @@ class _NonAttendanceManagementScreenState
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: isDark ? Colors.grey[800] : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: const Icon(Icons.event_busy_rounded, color: Colors.deepOrange, size: 32),
                               ),
                               const SizedBox(width: 20),
-                              const Expanded(
+                              Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Gestión de Días No Lectivos', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.deepOrange)),
-                                    SizedBox(height: 4),
-                                    Text('Configura suspensiones, días festivos o inhábiles para bloquear la asistencia automáticamente.', style: TextStyle(fontSize: 13, color: Colors.brown)),
+                                    const Text('Calendario de Suspensiones', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.deepOrange)),
+                                    const SizedBox(height: 4),
+                                    Text('Días inhábiles donde el sistema bloqueará automáticamente la toma de asistencia.', 
+                                      style: TextStyle(fontSize: 13, color: isDark ? Colors.grey[300] : Colors.brown)),
                                   ],
                                 ),
                               ),
@@ -364,17 +478,20 @@ class _NonAttendanceManagementScreenState
                       // --- LIST ---
                       Expanded(
                         child: _groupedDays.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.calendar_today_rounded, size: 80, color: Colors.grey.withOpacity(0.2)),
-                                    const SizedBox(height: 16),
-                                    Text('Calendario limpio',
-                                        style: TextStyle(color: Colors.grey.withOpacity(0.8), fontSize: 18, fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 8),
-                                    const Text('No hay suspensiones programadas.', style: TextStyle(color: Colors.grey)),
-                                  ],
+                            ? const Center(
+                                child: Opacity(
+                                  opacity: 0.6,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.check_circle_outline_rounded, size: 80, color: Colors.green),
+                                      SizedBox(height: 16),
+                                      Text('Sin suspensiones activas',
+                                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                      SizedBox(height: 8),
+                                      Text('Todos los días son lectivos actualmente.', style: TextStyle(fontSize: 14)),
+                                    ],
+                                  ),
                                 ),
                               )
                             : ListView.builder(
@@ -405,9 +522,10 @@ class _NonAttendanceManagementScreenState
                                               children: [
                                                 // FECHA BADGE
                                                 Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                                  width: 60,
+                                                  padding: const EdgeInsets.symmetric(vertical: 10),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.orange.shade50,
+                                                    color: isDark ? Colors.orange.withOpacity(0.2) : Colors.orange.shade50,
                                                     borderRadius: BorderRadius.circular(14),
                                                   ),
                                                   child: Column(
@@ -434,7 +552,7 @@ class _NonAttendanceManagementScreenState
                                                         group.reason,
                                                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                                       ),
-                                                      const SizedBox(height: 4),
+                                                      const SizedBox(height: 6),
                                                       Row(
                                                         children: [
                                                           Icon(isRange ? Icons.date_range : Icons.today, size: 14, color: Colors.grey),
@@ -455,16 +573,17 @@ class _NonAttendanceManagementScreenState
                                                 Row(
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: [
-                                                    IconButton.filledTonal(
-                                                      icon: const Icon(Icons.edit_rounded, size: 18),
+                                                    IconButton(
+                                                      icon: const Icon(Icons.edit_outlined, size: 20),
+                                                      tooltip: 'Editar',
                                                       onPressed: () => _showNonAttendanceDayFormDialog(group: group),
-                                                      style: IconButton.styleFrom(backgroundColor: Colors.blue.shade50, foregroundColor: Colors.blue),
+                                                      color: Colors.blue,
                                                     ),
-                                                    const SizedBox(width: 8),
-                                                    IconButton.filledTonal(
-                                                      icon: const Icon(Icons.delete_rounded, size: 18),
+                                                    IconButton(
+                                                      icon: const Icon(Icons.delete_outline, size: 20),
+                                                      tooltip: 'Eliminar',
                                                       onPressed: () => _confirmDeleteGroup(group),
-                                                      style: IconButton.styleFrom(backgroundColor: Colors.red.shade50, foregroundColor: Colors.red),
+                                                      color: Colors.red,
                                                     ),
                                                   ],
                                                 )
@@ -487,21 +606,50 @@ class _NonAttendanceManagementScreenState
   }
 
   Future<void> _confirmDeleteGroup(_SuspensionGroup group) async {
-    final confirm = await UiHelpers.showConfirmationDialog(
-        context,
-        title: 'Eliminar Suspensión',
-        content: group.ids.length > 1 
-            ? '¿Deseas eliminar este periodo de ${group.ids.length} días?' 
-            : '¿Eliminar este día de suspensión?',
-        isDestructive: true);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+            SizedBox(width: 12),
+            Text('Confirmar Eliminación'),
+          ],
+        ),
+        content: Text(
+          group.ids.length > 1 
+            ? '¿Estás seguro de eliminar este periodo de ${group.ids.length} días? \n\nEsto rehabilitará la toma de asistencia para esas fechas.' 
+            : '¿Estás seguro de eliminar este día de suspensión? \n\nLa asistencia se reactivará para esta fecha.',
+          style: const TextStyle(fontSize: 14),
+        ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+            ),
+            child: const Text('Sí, Eliminar'),
+          ),
+        ],
+      ),
+    );
         
-    if (confirm && _campusId != null) {
+    if (confirm == true && _campusId != null) {
+      setState(() => _isLoading = true);
       // Eliminar uno por uno
       for (final id in group.ids) {
          await _appSettingsService.deleteNonAttendanceDay(_campusId!, id);
       }
+      if (mounted) UiHelpers.showSnackBar(context, 'Suspensión eliminada correctamente.');
       _loadNonAttendanceDays();
-      if (mounted) UiHelpers.showSnackBar(context, 'Suspensión eliminada.');
     }
   }
 }

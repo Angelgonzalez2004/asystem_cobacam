@@ -4,22 +4,26 @@
 
 ---
 
-## 🚀 Versión 2.4.1: "Ajuste de Calendarios y Estabilidad"
+## 🚀 Versión 2.5.0: "Inteligencia Operativa"
 
-Esta actualización menor refina la lógica de selección de fechas en el módulo de Consultas.
+Esta actualización introduce un Dashboard de Métricas avanzado y refina herramientas clave para la toma de decisiones.
 
-### 🌟 Novedades Destacadas (v2.4.1)
+### 🌟 Novedades Destacadas (v2.5.0)
 
-#### 📅 Calendario Inteligente (Corrección)
-*   **Bloqueo Total de Días No Lectivos:** Se corrigió el selector de "Semana" en Consultas de Asistencia. Ahora, los días marcados como "No Lectivos" aparecen visualmente bloqueados (gris) y no son seleccionables, igualando el comportamiento del selector diario para evitar errores operativos.
+#### 📈 Panel de Inteligencia (Prefectura)
+*   **Métricas en Tiempo Real:** Visualización instantánea de KPIs: Matrícula Activa, % Asistencia del Día y Total de Incidencias.
+*   **Radar de Riesgo:** Identificación automática de los **5 alumnos con más reportes** en el periodo seleccionado (Semana/Mes/Ciclo).
+*   **Gráficos Interactivos:**
+    *   **Tendencia:** Evolución de la asistencia en los últimos 7 días.
+    *   **Distribución:** Análisis de tipos de faltas (Pastel) y grupos críticos (Barras).
+*   **Filtros Temporales:** Segmentación dinámica por Semana, Mes o Ciclo Escolar completo.
 
-#### 📚 Manual Operativo Digital (FAQ Pro)
-*   **Base de Conocimiento Extensa:** Se han integrado **150 preguntas y respuestas** clave, cubriendo todos los roles del sistema.
-*   **Buscador Inteligente:** Búsqueda en tiempo real con filtrado por categorías y limpieza rápida.
+#### 📅 Gestión de Tiempos
+*   **Calendario Inteligente:** Bloqueo visual y funcional de días inhábiles en consultas.
+*   **Motivos Estandarizados:** Catálogo de 20+ razones oficiales para suspensiones (SEP, Clima, CTE).
 
-#### 📊 Consulta de Asistencia Avanzada
-*   **Selector de Semana Inteligente:** Cálculo automático del rango semanal (Lunes-Viernes).
-*   **Exclusión Automática:** El sistema ignora días inhábiles en el cálculo de estadísticas de faltas.
+#### 📚 Manual Operativo Digital
+*   **Base de Conocimiento (150 Q&A):** Guía exhaustiva de protocolos para todos los roles.
 
 ---
 
