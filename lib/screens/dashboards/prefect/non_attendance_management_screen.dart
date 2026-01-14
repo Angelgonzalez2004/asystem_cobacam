@@ -30,7 +30,7 @@ class _NonAttendanceManagementScreenState
   bool _isLoading = true;
   String? _campusId;
 
-  // LISTA DE MOTIVOS PREDEFINIDOS (20+)
+  // LISTA DE MOTIVOS PREDEFINIDOS (23)
   final List<String> _presetReasons = [
     'Suspensión Oficial (SEP)',
     'Consejo Técnico Escolar (CTE)',
@@ -56,6 +56,33 @@ class _NonAttendanceManagementScreenState
     'Usos y Costumbres Locales',
     'Otro (Especificar)',
   ];
+
+  // MAPEO DE ICONOS PROFESIONALES
+  final Map<String, IconData> _reasonIcons = {
+    'Suspensión Oficial (SEP)': Icons.gavel_rounded,
+    'Consejo Técnico Escolar (CTE)': Icons.groups_rounded,
+    'Descarga Administrativa': Icons.receipt_long_rounded,
+    'Día Festivo Oficial': Icons.flag_rounded,
+    'Vacaciones de Semana Santa': Icons.beach_access_rounded,
+    'Vacaciones de Invierno': Icons.ac_unit_rounded,
+    'Vacaciones de Verano': Icons.wb_sunny_rounded,
+    'Día del Maestro': Icons.school_rounded,
+    'Día de las Madres': Icons.favorite_rounded,
+    'Día del Estudiante': Icons.celebration_rounded,
+    'Aniversario del Sindicato': Icons.badge_rounded,
+    'Aniversario del Colegio': Icons.workspace_premium_rounded,
+    'Condiciones Climáticas (Lluvias/Huracán)': Icons.thunderstorm_rounded,
+    'Fumigación / Sanitización': Icons.clean_hands_rounded,
+    'Mantenimiento de Instalaciones': Icons.build_rounded,
+    'Falla de Suministro Eléctrico/Agua': Icons.power_off_rounded,
+    'Capacitación Docente': Icons.model_training_rounded,
+    'Evento Cívico / Desfile': Icons.military_tech_rounded,
+    'Evento Cultural / Deportivo': Icons.emoji_events_rounded,
+    'Luto Institucional': Icons.church_rounded,
+    'Contingencia Sanitaria': Icons.medical_services_rounded,
+    'Usos y Costumbres Locales': Icons.theater_comedy_rounded,
+    'Otro (Especificar)': Icons.more_horiz_rounded,
+  };
 
   @override
   void initState() {
@@ -265,7 +292,19 @@ class _NonAttendanceManagementScreenState
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         ),
                         isExpanded: true,
-                        items: _presetReasons.map((r) => DropdownMenuItem(value: r, child: Text(r, overflow: TextOverflow.ellipsis))).toList(),
+                        items: _presetReasons.map((r) {
+                          final icon = _reasonIcons[r] ?? Icons.event_busy_rounded;
+                          return DropdownMenuItem(
+                            value: r, 
+                            child: Row(
+                              children: [
+                                Icon(icon, size: 20, color: Theme.of(context).primaryColor),
+                                const SizedBox(width: 12),
+                                Expanded(child: Text(r, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14))),
+                              ],
+                            )
+                          );
+                        }).toList(),
                         onChanged: (val) => setStateInDialog(() => selectedReason = val),
                         validator: (val) => val == null ? 'Seleccione un motivo' : null,
                       ),
@@ -548,9 +587,18 @@ class _NonAttendanceManagementScreenState
                                                   child: Column(
                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                     children: [
-                                                      Text(
-                                                        group.reason,
-                                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                                      Row(
+                                                        children: [
+                                                          Icon(_reasonIcons[group.reason] ?? Icons.event_note_rounded, size: 18, color: Colors.orange.shade800),
+                                                          const SizedBox(width: 8),
+                                                          Expanded(
+                                                            child: Text(
+                                                              group.reason,
+                                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                                              overflow: TextOverflow.ellipsis,
+                                                            ),
+                                                          ),
+                                                        ],
                                                       ),
                                                       const SizedBox(height: 6),
                                                       Row(

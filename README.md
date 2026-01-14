@@ -4,23 +4,21 @@
 
 ---
 
-## 🚀 Versión 2.5.0: "Inteligencia Operativa"
+## 🚀 Versión 2.5.1: "Inteligencia Operativa Total"
 
-Esta actualización introduce un Dashboard de Métricas avanzado y refina herramientas clave para la toma de decisiones.
+Esta versión consolida el módulo de Estadísticas con capacidades de análisis predictivo y una experiencia de usuario refinada.
 
-### 🌟 Novedades Destacadas (v2.5.0)
+### 🌟 Novedades Destacadas (v2.5.1)
 
-#### 📈 Panel de Inteligencia (Prefectura)
-*   **Métricas en Tiempo Real:** Visualización instantánea de KPIs: Matrícula Activa, % Asistencia del Día y Total de Incidencias.
-*   **Radar de Riesgo:** Identificación automática de los **5 alumnos con más reportes** en el periodo seleccionado (Semana/Mes/Ciclo).
-*   **Gráficos Interactivos:**
-    *   **Tendencia:** Evolución de la asistencia en los últimos 7 días.
-    *   **Distribución:** Análisis de tipos de faltas (Pastel) y grupos críticos (Barras).
-*   **Filtros Temporales:** Segmentación dinámica por Semana, Mes o Ciclo Escolar completo.
+#### 📈 Centro de Inteligencia (Prefectura)
+*   **50 Insights Estratégicos:** El sistema ahora responde automáticamente a 50 preguntas clave sobre disciplina, asistencia, seguridad y operatividad.
+*   **Buscador de Análisis:** Herramienta para filtrar instantáneamente los insights (ej. buscar "bullying" o "celulares").
+*   **Visualización Dinámica:** Gráficos responsivos que se adaptan a móviles y escritorio.
+*   **Métricas en Tiempo Real:** Visualización instantánea de KPIs y tendencias de asistencia semanal.
 
 #### 📅 Gestión de Tiempos
-*   **Calendario Inteligente:** Bloqueo visual y funcional de días inhábiles en consultas.
-*   **Motivos Estandarizados:** Catálogo de 20+ razones oficiales para suspensiones (SEP, Clima, CTE).
+*   **Iconografía Profesional:** Cada motivo de suspensión ahora cuenta con un icono distintivo para rápida identificación.
+*   **Calendario Inteligente:** Bloqueo visual y funcional de días inhábiles.
 
 #### 📚 Manual Operativo Digital
 *   **Base de Conocimiento (150 Q&A):** Guía exhaustiva de protocolos para todos los roles.
