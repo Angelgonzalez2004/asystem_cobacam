@@ -47,6 +47,34 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
   String? _selectedGroup;
   String? _selectedSchoolCycle;
 
+  // Smart Selectors State
+  String? _selectedAllergyOption;
+  String? _selectedConditionOption;
+  String? _selectedHealthStatusOption;
+  String? _selectedAge;
+
+  final List<String> _commonAllergies = [
+    'Ninguna', 'Penicilina', 'Sulfa', 'Polvo/Ácaros', 'Polen', 'Aines (Aspirina)', 
+    'Látex', 'Picaduras de insectos', 'Mariscos', 'Nueces/Cacahuates', 'Lácteos', 
+    'Huevo', 'Pelo de animal', 'Moho', 'Colorantes', 'Otro (especificar)'
+  ];
+
+  final List<String> _commonConditions = [
+    'Ninguna', 'Asma', 'Diabetes Tipo 1', 'Diabetes Tipo 2', 'Hipertensión', 
+    'Epilepsia/Convulsiones', 'Migraña Crónica', 'Gastritis', 'Anemia', 'Artritis', 
+    'Problemas Cardíacos', 'Problemas Renales', 'Hipotiroidismo', 'TDAH', 
+    'Ansiedad/Depresión', 'Otro (especificar)'
+  ];
+
+  final List<String> _commonHealthStatus = [
+    'Excelente', 'Bueno', 'Regular', 'Malo', 'En tratamiento médico', 'Convaleciente', 
+    'Requiere observación', 'Estable', 'Delicado', 'Con fatiga crónica', 'Sobrepeso', 
+    'Bajo peso', 'Saludable con alergias', 'Saludable con condiciones controladas', 
+    'Desconocido', 'Otro (especificar)'
+  ];
+
+  final List<String> _ageOptions = List.generate(68, (index) => (index + 13).toString()); // 13 to 80
+
   List<Group> _groups = [];
   List<SchoolCycle> _availableSchoolCycles = [];
   bool _isLoadingGroups = true;
@@ -77,20 +105,39 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
     _institutionalEmailController = TextEditingController(text: widget.student?.institutionalEmail ?? '');
     _studentIdController = TextEditingController(text: widget.student?.studentId ?? '');
     _nssController = TextEditingController(text: widget.student?.nss ?? ''); 
-    _allergiesController = TextEditingController(text: widget.student?.allergies ?? '');
-    _healthConditionsController = TextEditingController(text: widget.student?.healthConditions ?? '');
-    _generalHealthStatusController = TextEditingController(text: widget.student?.generalHealthStatus ?? 'Sano');
+    _allergiesController = TextEditingController(text: widget.student?.allergies ?? 'Ninguna');
+    _healthConditionsController = TextEditingController(text: widget.student?.healthConditions ?? 'Ninguna');
+    _generalHealthStatusController = TextEditingController(text: widget.student?.generalHealthStatus ?? 'Bueno');
 
     _selectedGender = widget.student?.gender;
     _selectedGroup = widget.student?.group;
     _medicalAlert = widget.student?.medicalAlert ?? false; // Inicializar
     
     _selectedSchoolCycle = widget.student?.schoolCycle ?? widget.currentSchoolCycle;
+
+    // Initialize Smart Selectors Logic
+    _initSmartSelection(_allergiesController, _commonAllergies, (val) => _selectedAllergyOption = val);
+    _initSmartSelection(_healthConditionsController, _commonConditions, (val) => _selectedConditionOption = val);
+    _initSmartSelection(_generalHealthStatusController, _commonHealthStatus, (val) => _selectedHealthStatusOption = val);
+
+    // Initialize Age
+    if (_ageController.text.isNotEmpty && _ageOptions.contains(_ageController.text)) {
+      _selectedAge = _ageController.text;
+    }
     
     _loadSchoolCycles().then((_) {
       _checkCycleStatus(_selectedSchoolCycle); 
       _subscribeToGroups(_selectedSchoolCycle);
     });
+  }
+
+  void _initSmartSelection(TextEditingController ctrl, List<String> options, Function(String) setSelection) {
+    final text = ctrl.text.trim();
+    if (options.contains(text)) {
+      setSelection(text);
+    } else {
+      setSelection('Otro (especificar)');
+    }
   }
 
   void _checkCycleStatus(String? cycleId) {
@@ -333,7 +380,26 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                                     children: [
                                       Expanded(flex: 2, child: _buildTextField(_studentIdController, 'Matrícula', Icons.badge_outlined)),
                                       const SizedBox(width: 12),
-                                      Expanded(flex: 1, child: _buildTextField(_ageController, 'Edad', Icons.cake_outlined, keyboardType: TextInputType.number)),
+                                      Expanded(
+                                        flex: 1, 
+                                        child: DropdownButtonFormField<String>(
+                                          value: _selectedAge,
+                                          items: _ageOptions.map((age) => DropdownMenuItem(value: age, child: Text(age))).toList(),
+                                          onChanged: _isReadOnly ? null : (val) {
+                                            setState(() {
+                                              _selectedAge = val;
+                                              _ageController.text = val ?? '';
+                                            });
+                                          },
+                                          decoration: InputDecoration(
+                                            labelText: 'Edad',
+                                            prefixIcon: const Icon(Icons.calendar_today, size: 20), // Icono profesional
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                          ),
+                                          validator: (val) => val == null ? 'Requerido' : null,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 12),
@@ -372,11 +438,34 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                                   const SizedBox(height: 32),
                                   _buildSectionTitle(theme, 'INFORMACIÓN MÉDICA (OPCIONAL)'),
                                   const SizedBox(height: 16),
-                                  _buildTextField(_allergiesController, 'Alergias (Medicamentos, comida, etc.)', Icons.warning_amber_rounded),
+                                  
+                                  // --- SELECTORES INTELIGENTES MÉDICOS ---
+                                  _buildSmartSelector(
+                                    label: 'Alergias',
+                                    icon: Icons.warning_amber_rounded,
+                                    options: _commonAllergies,
+                                    selectedValue: _selectedAllergyOption,
+                                    controller: _allergiesController,
+                                    onChanged: (val) => setState(() => _selectedAllergyOption = val),
+                                  ),
                                   const SizedBox(height: 12),
-                                  _buildTextField(_healthConditionsController, 'Condiciones de Salud (Visión, caminar, etc.)', Icons.health_and_safety_outlined),
+                                  _buildSmartSelector(
+                                    label: 'Condiciones de Salud',
+                                    icon: Icons.health_and_safety_outlined,
+                                    options: _commonConditions,
+                                    selectedValue: _selectedConditionOption,
+                                    controller: _healthConditionsController,
+                                    onChanged: (val) => setState(() => _selectedConditionOption = val),
+                                  ),
                                   const SizedBox(height: 12),
-                                  _buildTextField(_generalHealthStatusController, 'Estado General (ej. Sano)', Icons.favorite_border_rounded),
+                                  _buildSmartSelector(
+                                    label: 'Estado General de Salud',
+                                    icon: Icons.favorite_border_rounded,
+                                    options: _commonHealthStatus,
+                                    selectedValue: _selectedHealthStatusOption,
+                                    controller: _generalHealthStatusController,
+                                    onChanged: (val) => setState(() => _selectedHealthStatusOption = val),
+                                  ),
                                   const SizedBox(height: 16),
                                   Container(
                                     decoration: BoxDecoration(
@@ -442,14 +531,15 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       validator: (val) {
-          if (label == 'Teléfono Alumno (Opcional)' || 
-              label == 'Alergias (Medicamentos, comida, etc.)' || 
-              label == 'Condiciones de Salud (Visión, caminar, etc.)' ||
-              label == 'Estado General (ej. Sano)' ||
-              label == 'NSS (Número de Seguro Social)') {
-            return null; // Opcionales
+          // --- CAMPOS OBLIGATORIOS SEGÚN INSTRUCCIÓN ---
+          if (label == 'Nombre Completo' || 
+              label == 'Matrícula') {
+            return val!.isEmpty ? 'Este campo es obligatorio' : null;
           }
-          return val!.isEmpty ? 'Campo requerido' : null;
+          
+          // Otros campos son necesarios pero no bloqueantes si el usuario así lo decide,
+          // excepto los que ya tienen sus propios validadores (Dropdowns).
+          return null; 
       },
     );
   }
@@ -529,6 +619,63 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
             tooltip: 'Crear/Gestionar Grupos',
           ),
         )
+      ],
+    );
+  }
+
+  Widget _buildSmartSelector({
+    required String label,
+    required IconData icon,
+    required List<String> options,
+    required String? selectedValue,
+    required TextEditingController controller,
+    required Function(String?) onChanged,
+  }) {
+    final bool isCustom = selectedValue == 'Otro (especificar)';
+    
+    return Column(
+      children: [
+        DropdownButtonFormField<String>(
+          value: selectedValue,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: label,
+            prefixIcon: Icon(icon, size: 20),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          items: options.map((opt) => DropdownMenuItem(
+            value: opt, 
+            child: Text(opt, overflow: TextOverflow.ellipsis)
+          )).toList(),
+          onChanged: _isReadOnly ? null : (val) {
+             onChanged(val);
+             if (val != 'Otro (especificar)') {
+               controller.text = val!;
+             } else {
+               controller.text = ''; // Clear for user input
+             }
+          },
+        ),
+        if (isCustom)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, left: 12),
+            child: FadeInUp(
+              duration: const Duration(milliseconds: 300),
+              child: TextFormField(
+                controller: controller,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Especifique $label',
+                  prefixIcon: const Icon(Icons.edit_note_rounded, size: 20, color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                validator: (val) => val!.isEmpty ? 'Por favor especifique' : null,
+              ),
+            ),
+          ),
       ],
     );
   }

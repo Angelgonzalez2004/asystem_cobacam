@@ -195,9 +195,16 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
           if (row.every((cell) => cell?.value == null)) continue;
 
           try {
-            final studentId = row[headers.indexOf('matricula')]?.value?.toString() ?? '';
-            final fullName = row[headers.indexOf('nombre_completo')]?.value?.toString() ?? '';
-            if (studentId.isEmpty || fullName.isEmpty) continue;
+            // --- VALIDACIÓN DE CAMPOS OBLIGATORIOS (EXCEL) ---
+            final studentId = row[headers.indexOf('matricula')]?.value?.toString().trim() ?? '';
+            final fullName = row[headers.indexOf('nombre_completo')]?.value?.toString().trim() ?? '';
+            final gender = row[headers.indexOf('genero')]?.value?.toString().trim() ?? '';
+            
+            // Si falta alguno de los obligatorios, saltamos la fila
+            if (studentId.isEmpty || fullName.isEmpty || gender.isEmpty) {
+              debugPrint("Fila $i omitida: Faltan datos obligatorios (Matrícula, Nombre o Género)");
+              continue;
+            }
 
             // Lógica para Alerta Médica
             bool isMedicalAlert = false;
@@ -215,10 +222,10 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
               age: int.tryParse(row[headers.indexOf('edad')]?.value?.toString() ?? '0') ?? 0,
               guardianPhone: row[headers.indexOf('telefono_tutor')]?.value?.toString() ?? '',
               studentPhone: row[headers.indexOf('telefono_alumno')]?.value?.toString(),
-              gender: row[headers.indexOf('genero')]?.value?.toString() ?? 'Otro',
+              gender: gender,
               placeOfResidence: row[headers.indexOf('residencia')]?.value?.toString() ?? '',
-              schoolCycle: _targetSchoolCycle!, // USAR EL CICLO SELECCIONADO
-              group: groupNameFromSheet, // USAR NOMBRE DE LA HOJA
+              schoolCycle: _targetSchoolCycle!, // OBLIGATORIO (Seleccionado en UI)
+              group: groupNameFromSheet, // OBLIGATORIO (Nombre de la Hoja)
               institutionalEmail: row[headers.indexOf('email_institucional')]?.value?.toString() ?? '',
               studentId: studentId,
               isActive: true,

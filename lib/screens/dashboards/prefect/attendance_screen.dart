@@ -92,6 +92,32 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     'Otro (especificar)',
   ];
 
+  final List<String> _incidenceTypes = [
+    'Uniforme Incompleto', 'Cabello/Corte no permitido', 'Uso de Celular sin autorización',
+    'Falta de Respeto a Autoridad', 'Daño a Mobiliario o Instalaciones', 'Salida del Plantel sin Pase',
+    'Retardo injustificado', 'Incumplimiento de Tareas/Material', 'Agresión Física o Verbal',
+    'Robo o Extorsión', 'Vandalismo o Grafiti', 'Consumo de Sustancias Prohibidas',
+    'Acoso Escolar (Bullying)', 'Falsificación de Firmas/Documentos', 'Interrupción de la Labor Docente',
+    'Lenguaje Obsceno o Inapropiado', 'Consumo de Alimentos en Aula', 'Desobediencia a Instrucciones',
+    'Copia en Examen o Plagio', 'Riña o Connatos de Violencia', 'Portación de Objetos Peligrosos',
+    'Inasistencia Injustificada (Saltarse clases)', 'Uso de Gorras o Lentes de Sol en Aula', 'Otro'
+  ];
+
+  final Map<String, IconData> _incidenceIcons = {
+    'Uniforme Incompleto': Icons.checkroom, 'Cabello/Corte no permitido': Icons.face,
+    'Uso de Celular sin autorización': Icons.phonelink_ring, 'Falta de Respeto a Autoridad': Icons.sentiment_very_dissatisfied,
+    'Daño a Mobiliario o Instalaciones': Icons.chair, 'Salida del Plantel sin Pase': Icons.door_back_door,
+    'Retardo injustificado': Icons.access_time, 'Incumplimiento de Tareas/Material': Icons.assignment_late,
+    'Agresión Física o Verbal': Icons.back_hand, 'Robo o Extorsión': Icons.security,
+    'Vandalismo o Grafiti': Icons.brush, 'Consumo de Sustancias Prohibidas': Icons.smoke_free,
+    'Acoso Escolar (Bullying)': Icons.groups_outlined, 'Falsificación de Firmas/Documentos': Icons.description,
+    'Interrupción de la Labor Docente': Icons.volume_up, 'Lenguaje Obsceno o Inapropiado': Icons.record_voice_over,
+    'Consumo de Alimentos en Aula': Icons.restaurant, 'Desobediencia a Instrucciones': Icons.gavel,
+    'Copia en Examen o Plagio': Icons.auto_fix_normal, 'Riña o Connatos de Violencia': Icons.sports_kabaddi,
+    'Portación de Objetos Peligrosos': Icons.priority_high, 'Inasistencia Injustificada (Saltarse clases)': Icons.event_busy,
+    'Uso de Gorras o Lentes de Sol en Aula': Icons.accessibility, 'Otro': Icons.more_horiz,
+  };
+
   @override
   void initState() {
     super.initState();
@@ -165,7 +191,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
       _attendanceRef = FirebaseDatabase.instance.ref('planteles/$_campus/attendance/$_currentSchoolCycle/$_todayDate');
       _studentsRef = FirebaseDatabase.instance.ref('planteles/$_campus/students/$_currentSchoolCycle');
-      _groupSchedulesRef = FirebaseDatabase.instance.ref('planteles/$_campus/groupSchedules/$_currentSchoolCycle');
+      _groupSchedulesRef = FirebaseDatabase.instance.ref('planteles/$_campus/schedules/$_currentSchoolCycle');
       _groupsRef = FirebaseDatabase.instance.ref('planteles/$_campus/groups');
 
       _connectivityResult = await _connectivityService.checkConnectivity();
@@ -210,6 +236,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           newStudentsMap[student.studentId] = student;
         }
       }
+
+      // Update Hive for Offline Mode
+      _hiveService.studentsBox.putAll(newStudentsMap);
+
       if (mounted) setState(() => _studentsMap = newStudentsMap);
     });
 
@@ -234,6 +264,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           newGroupSchedulesMap[groupId] = schedulesForGroup;
         }
       }
+      
+      // Update Hive for Offline Mode
+      _hiveService.groupSchedulesBox.putAll(newGroupSchedulesMap);
+
       if (mounted) setState(() => _groupSchedulesMap = newGroupSchedulesMap);
     });
 
@@ -245,6 +279,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               fetchedGroups.add(Group.fromSnapshot(child));
             }
         }
+        
+        // Update Hive for Offline Mode
+        _hiveService.groupsBox.clear().then((_) {
+          _hiveService.groupsBox.addAll(fetchedGroups);
+        });
+
         if (mounted) setState(() => _groups = fetchedGroups);
     });
   }
@@ -296,6 +336,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
      if (!online) {
         final studentsBox = _hiveService.studentsBox;
         final groupSchedulesBox = _hiveService.groupSchedulesBox;
+        final groupsBox = _hiveService.groupsBox;
         
         if (studentsBox.isNotEmpty) {
            final newStudentsMap = <String, Student>{};
@@ -311,6 +352,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               newGroupSchedulesMap[entry.key as String] = List<GroupSchedule>.from(entry.value);
            }
            if (mounted) setState(() => _groupSchedulesMap = newGroupSchedulesMap);
+        }
+
+        if (groupsBox.isNotEmpty) {
+           if (mounted) setState(() => _groups = groupsBox.values.toList());
         }
      }
   }
@@ -423,7 +468,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Future<void> _registerAttendance(Student student, String scanType, Map<String, dynamic> existingRecord) async {
     final String todayDayOfWeek = DateFormat('EEEE', 'es_MX').format(DateTime.now()).toLowerCase();
     
-    final List<GroupSchedule>? schedules = _groupSchedulesMap[student.group];
+    // RESOLUCIÓN DE GRUPO: Nombre (Estudiante) -> ID (Firebase/Horario)
+    String targetGroupId = student.group;
+    try {
+      final groupObj = _groups.firstWhere((g) => g.name == student.group);
+      targetGroupId = groupObj.key;
+    } catch (_) {
+      // Si no encontramos el grupo por nombre, usamos el valor directo (fallback)
+    }
+
+    final List<GroupSchedule>? schedules = _groupSchedulesMap[targetGroupId];
+    
     final GroupSchedule? currentDaySchedule = schedules?.firstWhere(
       (s) => s.dayOfWeek.toLowerCase() == todayDayOfWeek,
       orElse: () => GroupSchedule(id: '', groupId: '', schoolCycle: '', dayOfWeek: '', entryTime: '', exitTime: ''),
@@ -672,36 +727,49 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   // --- NUEVA LÓGICA DE INCIDENCIA RÁPIDA ---
   void _showQuickIncidenceModal(String studentId, String studentName, String group) {
+     final theme = Theme.of(context);
      showModalBottomSheet(
        context: context,
-       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+       isScrollControlled: true,
+       backgroundColor: Colors.transparent,
        builder: (context) => Container(
          padding: const EdgeInsets.all(24),
-         height: 380, // Altura fija cómoda
+         decoration: BoxDecoration(
+           color: theme.scaffoldBackgroundColor,
+           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+         ),
+         height: MediaQuery.of(context).size.height * 0.7,
          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+               Center(
+                 child: Container(
+                   width: 40, height: 4, 
+                   margin: const EdgeInsets.only(bottom: 20),
+                   decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                 ),
+               ),
                Text('Reportar Incidencia: $studentName', 
-                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                  maxLines: 1, overflow: TextOverflow.ellipsis
                ),
                const SizedBox(height: 4),
-               Text('Grupo: $group', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+               Text('Grupo: $group', style: const TextStyle(color: Colors.grey, fontSize: 14)),
                const SizedBox(height: 20),
                Expanded(
-                 child: GridView.count(
-                    crossAxisCount: 3,
-                    childAspectRatio: 1.0,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    children: [
-                       _quickIncidenceBtn(studentId, studentName, group, 'Uniforme', Icons.checkroom, Colors.blue),
-                       _quickIncidenceBtn(studentId, studentName, group, 'Cabello', Icons.face, Colors.brown),
-                       _quickIncidenceBtn(studentId, studentName, group, 'Celular', Icons.phone_android, Colors.purple),
-                       _quickIncidenceBtn(studentId, studentName, group, 'Conducta', Icons.gavel, Colors.red),
-                       _quickIncidenceBtn(studentId, studentName, group, 'Retardo', Icons.timer_off, Colors.orange),
-                       _quickIncidenceBtn(studentId, studentName, group, 'Otro', Icons.edit_note, Colors.grey),
-                    ],
+                 child: GridView.builder(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 0.9,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                    ),
+                    itemCount: _incidenceTypes.length,
+                    itemBuilder: (context, index) {
+                      final type = _incidenceTypes[index];
+                      final icon = _incidenceIcons[type] ?? Icons.warning;
+                      return _quickIncidenceBtn(studentId, studentName, group, type, icon, theme.colorScheme.primary);
+                    },
                  ),
                )
             ]
@@ -712,23 +780,40 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   Widget _quickIncidenceBtn(String sid, String sName, String grp, String type, IconData icon, Color color) {
     return InkWell(
-      onTap: () {
+      onTap: () async {
         Navigator.pop(context); // Cerrar modal rápido
-        _saveQuickIncidence(sid, sName, grp, type);
+        
+        String finalType = type;
+        if (type == 'Otro') {
+           final String? reason = await _showReasonDialog('Especificar Incidencia', ['Otro (especificar)']);
+           if (reason == null) return;
+           finalType = "Otro: $reason";
+        }
+        
+        _saveQuickIncidence(sid, sName, grp, finalType);
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withOpacity(0.05),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withOpacity(0.2)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 32),
+            Icon(icon, color: color, size: 28),
             const SizedBox(height: 8),
-            Text(type, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Text(
+                type, 
+                style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
       ),

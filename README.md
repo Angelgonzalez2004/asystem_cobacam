@@ -4,27 +4,30 @@
 
 ---
 
-## 🚀 Versión 2.3.1: "Optimización de Credenciales y Estabilidad"
+## 🚀 Versión 2.4.0: "Base de Conocimiento y Consultas Inteligentes"
 
-Esta actualización perfecciona el motor de generación masiva de credenciales y asegura la integridad de los datos entre ciclos escolares.
+Esta actualización introduce una robusta base de conocimientos operativa y refina drásticamente las herramientas de consulta de asistencia.
 
-### 🌟 Novedades Destacadas (v2.3.1)
+### 🌟 Novedades Destacadas (v2.4.0)
+
+#### 📚 Manual Operativo Digital (FAQ Pro)
+*   **Base de Conocimiento Extensa:** Se han integrado **150 preguntas y respuestas** clave, cubriendo todos los roles del sistema:
+    *   **Alumnos:** Reglamentos, uniformes, derechos y obligaciones.
+    *   **Académica:** Protocolos docentes, exámenes y gestión áulica.
+    *   **Administrativo:** Trámites, pagos, becas y mantenimiento.
+    *   **Prefectura:** Procedimientos de seguridad, emergencias y bitácoras.
+    *   **Sistema:** Soporte técnico, uso de la App y seguridad de datos.
+*   **Buscador Inteligente:** Búsqueda en tiempo real con filtrado por categorías y limpieza rápida.
+
+#### 📊 Consulta de Asistencia Avanzada
+*   **Selector de Semana Inteligente:** Al seleccionar cualquier día en el calendario, el sistema calcula automáticamente el rango de la semana laboral (Lunes a Viernes).
+*   **Lógica de Ciclo Escolar:** Los selectores de fecha ahora respetan estrictamente las fechas de inicio y fin del ciclo escolar activo.
+*   **Filtros de Exclusión:** El sistema ignora automáticamente fines de semana (Sábados/Domingos) y días marcados como "No Lectivos" en los cálculos de asistencia y reportes.
+*   **Navegación Mejorada:** Las tarjetas de detalle de alumno ahora incluyen un botón de cierre rápido para agilizar la revisión masiva.
 
 #### 🪪 Generador de Credenciales Pro 2.1
-*   **Detección de Grupos Robusta:** Se corrigió la lógica de carga de grupos, ahora el sistema detecta grupos de forma instantánea filtrando localmente, evitando errores de indexación en Firebase.
-*   **Limpieza Inteligente:** Al cambiar de grupo, la vista previa se refresca automáticamente, mostrando únicamente a los alumnos del grupo consultado en ese momento.
-*   **Descarga Inteligente (ZIP/PDF):** 
-    *   **Pack ZIP:** Las imágenes masivas (PNG/JPG) se agrupan automáticamente en archivos comprimidos para facilitar su gestión.
-    *   **PDF de Alta Densidad:** Maquetación optimizada para imprimir **10 credenciales por hoja** (5x2), reduciendo el desperdicio de papel.
-*   **Control Individual:** Cada credencial cuenta con un botón de descarga directa (⬇️) para obtener la imagen suelta en alta resolución.
-
-#### 🚑 Sistema de Alerta Médica Crítica
-*   **Intervención en Tiempo Real:** Activación de alertas manuales para alumnos con condiciones graves. Al pasar lista, el sistema lanza una alerta bloqueante con vibración y datos detallados.
-*   **Integración con Excel:** Soporte completo en la importación masiva para activar alertas médicas desde el archivo de origen.
-
-#### 🎨 Experiencia de Usuario Profesional
-*   **Rediseño de Dashboards:** Pantallas de Horarios y Días No Lectivos con diseño estilo "Tailwind", más limpio y responsivo.
-*   **Seguridad de Fecha:** Bloqueo total de asistencias masivas e individuales en fines de semana y días festivos.
+*   **Detección de Grupos Robusta:** Detección instantánea de grupos con filtrado local.
+*   **Descarga Inteligente (ZIP/PDF):** Maquetación automática de 10 credenciales por hoja para ahorro de papel y descarga masiva en ZIP.
 
 ---
 
@@ -32,7 +35,10 @@ Esta actualización perfecciona el motor de generación masiva de credenciales y
 
 ### 📡 Modo Offline Nativo (Sin Internet)
 *   **Persistencia Local:** Uso de **Hive** para almacenar registros de asistencia sin conexión.
-*   **Sincronización Automática:** Subida de datos al recuperar señal.
+*   **Sincronización Automática:** Subida de datos (Color Verde) al recuperar señal de internet.
+
+### 🚑 Sistema de Alerta Médica Crítica
+*   **Intervención en Tiempo Real:** Alertas visuales y vibratorias al pasar lista a alumnos con condiciones médicas graves.
 
 ### 🤖 AsystemBot: Asistente IA
 *   Consultas en lenguaje natural potenciadas por **Gemini 1.5 Flash** para análisis de incidencias y asistencias.
@@ -43,6 +49,7 @@ Esta actualización perfecciona el motor de generación masiva de credenciales y
 *   **Lenguaje:** Dart 3.4+ / Flutter
 *   **Base de Datos:** Firebase Realtime Database & Hive (Local).
 *   **Hosting:** Firebase Hosting con renderizado CanvasKit para máxima fluidez.
+*   **Roles Soportados:** Alumno, Docente, Prefecto, Administrativo de Plantel, Administrador General.
 
 ---
 

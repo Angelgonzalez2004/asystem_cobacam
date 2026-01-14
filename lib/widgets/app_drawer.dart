@@ -95,6 +95,7 @@ class AppDrawer extends StatelessWidget {
                   _buildDrawerItem(context, icon: Icons.schedule_rounded, title: 'Horarios', onTap: () => onNavigate?.call('horarios')),
                   _buildDrawerItem(context, icon: Icons.calendar_today_rounded, title: 'Ciclos Escolares', onTap: () => onNavigate?.call('ciclos')),
                   _buildDrawerItem(context, icon: Icons.event_busy_rounded, title: 'Días No Lectivos', onTap: () => onNavigate?.call('no_lectivos')),
+                  _buildDrawerItem(context, icon: Icons.help_outline_rounded, title: 'Manual Operativo (FAQ)', onTap: () => onNavigate?.call('faq')),
                   const Divider(),
                 ],
 
