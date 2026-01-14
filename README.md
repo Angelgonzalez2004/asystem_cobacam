@@ -4,30 +4,22 @@
 
 ---
 
-## 🚀 Versión 2.4.0: "Base de Conocimiento y Consultas Inteligentes"
+## 🚀 Versión 2.4.1: "Ajuste de Calendarios y Estabilidad"
 
-Esta actualización introduce una robusta base de conocimientos operativa y refina drásticamente las herramientas de consulta de asistencia.
+Esta actualización menor refina la lógica de selección de fechas en el módulo de Consultas.
 
-### 🌟 Novedades Destacadas (v2.4.0)
+### 🌟 Novedades Destacadas (v2.4.1)
+
+#### 📅 Calendario Inteligente (Corrección)
+*   **Bloqueo Total de Días No Lectivos:** Se corrigió el selector de "Semana" en Consultas de Asistencia. Ahora, los días marcados como "No Lectivos" aparecen visualmente bloqueados (gris) y no son seleccionables, igualando el comportamiento del selector diario para evitar errores operativos.
 
 #### 📚 Manual Operativo Digital (FAQ Pro)
-*   **Base de Conocimiento Extensa:** Se han integrado **150 preguntas y respuestas** clave, cubriendo todos los roles del sistema:
-    *   **Alumnos:** Reglamentos, uniformes, derechos y obligaciones.
-    *   **Académica:** Protocolos docentes, exámenes y gestión áulica.
-    *   **Administrativo:** Trámites, pagos, becas y mantenimiento.
-    *   **Prefectura:** Procedimientos de seguridad, emergencias y bitácoras.
-    *   **Sistema:** Soporte técnico, uso de la App y seguridad de datos.
+*   **Base de Conocimiento Extensa:** Se han integrado **150 preguntas y respuestas** clave, cubriendo todos los roles del sistema.
 *   **Buscador Inteligente:** Búsqueda en tiempo real con filtrado por categorías y limpieza rápida.
 
 #### 📊 Consulta de Asistencia Avanzada
-*   **Selector de Semana Inteligente:** Al seleccionar cualquier día en el calendario, el sistema calcula automáticamente el rango de la semana laboral (Lunes a Viernes).
-*   **Lógica de Ciclo Escolar:** Los selectores de fecha ahora respetan estrictamente las fechas de inicio y fin del ciclo escolar activo.
-*   **Filtros de Exclusión:** El sistema ignora automáticamente fines de semana (Sábados/Domingos) y días marcados como "No Lectivos" en los cálculos de asistencia y reportes.
-*   **Navegación Mejorada:** Las tarjetas de detalle de alumno ahora incluyen un botón de cierre rápido para agilizar la revisión masiva.
-
-#### 🪪 Generador de Credenciales Pro 2.1
-*   **Detección de Grupos Robusta:** Detección instantánea de grupos con filtrado local.
-*   **Descarga Inteligente (ZIP/PDF):** Maquetación automática de 10 credenciales por hoja para ahorro de papel y descarga masiva en ZIP.
+*   **Selector de Semana Inteligente:** Cálculo automático del rango semanal (Lunes-Viernes).
+*   **Exclusión Automática:** El sistema ignora días inhábiles en el cálculo de estadísticas de faltas.
 
 ---
 
@@ -41,14 +33,14 @@ Esta actualización introduce una robusta base de conocimientos operativa y refi
 *   **Intervención en Tiempo Real:** Alertas visuales y vibratorias al pasar lista a alumnos con condiciones médicas graves.
 
 ### 🤖 AsystemBot: Asistente IA
-*   Consultas en lenguaje natural potenciadas por **Gemini 1.5 Flash** para análisis de incidencias y asistencias.
+*   Consultas en lenguaje natural potenciadas por **Gemini 1.5 Flash**.
 
 ---
 
 ## 🏛️ Arquitectura y Tecnologías
 *   **Lenguaje:** Dart 3.4+ / Flutter
 *   **Base de Datos:** Firebase Realtime Database & Hive (Local).
-*   **Hosting:** Firebase Hosting con renderizado CanvasKit para máxima fluidez.
+*   **Hosting:** Firebase Hosting con renderizado CanvasKit.
 *   **Roles Soportados:** Alumno, Docente, Prefecto, Administrativo de Plantel, Administrador General.
 
 ---

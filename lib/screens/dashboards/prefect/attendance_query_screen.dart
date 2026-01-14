@@ -261,7 +261,7 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
       initialDate: _selectedWeekRange?.start ?? DateTime.now(),
       firstDate: start,
       lastDate: end,
-      selectableDayPredicate: (d) => d.weekday < 6, // Solo Lunes-Viernes permitidos para seleccionar
+      selectableDayPredicate: _isDaySelectable, // Corregido: Ahora respeta días no lectivos
       locale: const Locale('es', 'MX'),
       helpText: 'SELECCIONA CUALQUIER DÍA PARA MARCAR LA SEMANA',
     );
