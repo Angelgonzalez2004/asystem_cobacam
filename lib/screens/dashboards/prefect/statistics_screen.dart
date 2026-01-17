@@ -190,7 +190,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         if (i['schoolCycle'] != _selectedCycleId) continue;
 
         // Group Filter
-        if (_selectedGroupFilter != null && i['group'] != _selectedGroupFilter) {
+        if (_selectedGroupFilter != null &&
+            i['group'] != _selectedGroupFilter) {
           continue;
         }
 
@@ -199,7 +200,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         if (iDateStr != null) {
           final iDate = DateTime.tryParse(iDateStr);
           if (iDate != null) {
-            if (iDate.isBefore(startFilterDate) || iDate.isAfter(endFilterDate)) {
+            if (iDate.isBefore(startFilterDate) ||
+                iDate.isAfter(endFilterDate)) {
               continue;
             }
 

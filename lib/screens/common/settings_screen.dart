@@ -217,6 +217,102 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  void _handlePinManagement() {
+    final lockService = Provider.of<LockService>(context, listen: false);
+    if (lockService.isPinSet) {
+      showModalBottomSheet(
+        context: context,
+        builder: (context) => Wrap(
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.edit_rounded),
+              title: const Text('Cambiar PIN'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SetupPinScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.lock_open_rounded, color: Colors.red),
+              title: const Text('Desactivar Bloqueo',
+                  style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(context);
+                _handleDisablePin();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.cancel_outlined),
+              title: const Text('Cancelar'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Si no hay PIN, vamos directamente a la configuración
+      Navigator.push(
+          context, MaterialPageRoute(builder: (_) => const SetupPinScreen()));
+    }
+  }
+
+  Future<void> _handleDisablePin() async {
+    final lockService = Provider.of<LockService>(context, listen: false);
+    final pinController = TextEditingController();
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar PIN Actual'),
+        content: TextField(
+          controller: pinController,
+          keyboardType: TextInputType.number,
+          maxLength: 4,
+          obscureText: true,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Introduce tu PIN',
+            border: OutlineInputBorder(),
+            counterText: '',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final success = await lockService.verifyPin(pinController.text);
+              if (success) {
+                // We just need to verify, not unlock the app
+                lockService.lock();
+              }
+              if (mounted) {
+                Navigator.pop(context, success);
+              }
+            },
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await lockService.removePin();
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Bloqueo de aplicación desactivado.');
+      }
+    } else if (confirmed != null) {
+      // Si el usuario intentó y falló (confirmed == false)
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'PIN incorrecto.', isError: true);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -247,12 +343,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.phonelink_lock_rounded,
             title: 'Bloqueo de Aplicación',
             subtitle: lockService.isPinSet
-                ? 'PIN configurado'
+                ? 'Activado - Toca para gestionar'
                 : 'Configurar PIN de bloqueo',
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const SetupPinScreen()));
-            },
+            onTap: _handlePinManagement,
           ),
           if (lockService.isPinSet)
             _buildSettingsTile(
@@ -262,6 +355,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               subtitle: 'Bloquea la aplicación inmediatamente',
               onTap: () {
                 lockService.lock();
+                UiHelpers.showSnackBar(context, 'Aplicación Bloqueada.');
               },
             ),
 
