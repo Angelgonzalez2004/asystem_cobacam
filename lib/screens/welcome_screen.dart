@@ -8,336 +8,157 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 800) {
+            return _buildWideLayout(context);
+          } else {
+            return _buildNarrowLayout(context);
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildWideLayout(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: _buildBrandingPanel(context),
+        ),
+        Expanded(
+          flex: 3,
+          child: _buildLoginPanel(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNarrowLayout(BuildContext context) {
+    return Column(
+      children: [
+        // Use a smaller, more compact branding panel for mobile
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40.0),
+          child: _buildBrandingPanel(context, isNarrow: true),
+        ),
+        Expanded(
+          child: _buildLoginPanel(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBrandingPanel(BuildContext context, {bool isNarrow = false}) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final textStyle = TextStyle(
+      color: colors.onPrimary.withOpacity(0.8),
+      fontSize: isNarrow ? 14 : 16,
+      height: 1.5,
+    );
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          // Fondo Decorativo Moderno (Gradientes sutiles)
-          Positioned(
-            top: -200,
-            right: -100,
-            child: Container(
-              width: 600,
-              height: 600,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    colors.primary.withOpacity(0.1),
-                    colors.primary.withOpacity(0.0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -150,
-            left: -150,
-            child: Container(
-              width: 500,
-              height: 500,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    colors.secondary.withOpacity(0.1),
-                    colors.secondary.withOpacity(0.0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          SafeArea(
+    return Container(
+      color: colors.primary,
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(40.0),
+          child: FadeInUp(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: isNarrow
+                  ? CrossAxisAlignment.center
+                  : CrossAxisAlignment.start,
               children: [
-                // Barra de Navegación "Falsa" (Header)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0, vertical: 16),
-                  child: Row(
-                    children: [
-                      Hero(
-                        tag: 'app_logo_mini',
-                        child:
-                            Image.asset('assets/images/logo1.png', height: 40),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'COBACAM',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: colors.primary,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ],
+                Hero(
+                  tag: 'app_logo_main',
+                  child: Image.asset(
+                    'assets/images/logo2.jpg', // Using the alternative logo which might be better for a dark background
+                    height: isNarrow ? 80 : 120,
                   ),
                 ),
-
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1200),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24.0, vertical: 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              const SizedBox(height: 40),
-
-                              // HERO SECTION
-                              FadeInUp(
-                                duration: const Duration(milliseconds: 800),
-                                child: Column(
-                                  children: [
-                                    Hero(
-                                      tag: 'app_logo_main',
-                                      child: Container(
-                                        padding: const EdgeInsets.all(20),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: colors.primary
-                                                  .withOpacity(0.15),
-                                              blurRadius: 30,
-                                              offset: const Offset(0, 10),
-                                            )
-                                          ],
-                                        ),
-                                        child: Image.asset(
-                                            'assets/images/logo1.png',
-                                            height: 120),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 40),
-                                    Text(
-                                      'Gestión Académica\nInteligente',
-                                      textAlign: TextAlign.center,
-                                      style: theme.textTheme.displayMedium
-                                          ?.copyWith(
-                                        fontWeight: FontWeight.w900,
-                                        color: colors.onSurface,
-                                        height: 1.1,
-                                        letterSpacing: -1.0,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 24),
-                                    ConstrainedBox(
-                                      constraints:
-                                          const BoxConstraints(maxWidth: 600),
-                                      child: Text(
-                                        'Plataforma integral para el control escolar, asistencia digital y comunicación efectiva entre estudiantes, docentes y administrativos del sistema COBACAM.',
-                                        textAlign: TextAlign.center,
-                                        style:
-                                            theme.textTheme.bodyLarge?.copyWith(
-                                          color:
-                                              colors.onSurface.withOpacity(0.7),
-                                          fontSize: 18,
-                                          height: 1.5,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 40),
-                                    _buildPrimaryButton(context),
-                                  ],
-                                ),
-                              ),
-
-                              const SizedBox(height: 100),
-
-                              // FEATURES / ROLES SECTION
-                              Text(
-                                'SECCIONES DEL SISTEMA',
-                                style: TextStyle(
-                                  color: colors.primary,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                              const SizedBox(height: 30),
-
-                              LayoutBuilder(
-                                builder: (context, constraints) {
-                                  // Responsive Grid: 1 columna en móvil, 2 en tablet, 4 en desktop
-                                  int cols = 1;
-                                  if (constraints.maxWidth > 600) cols = 2;
-                                  if (constraints.maxWidth > 1000) cols = 4;
-
-                                  return GridView.count(
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    crossAxisCount: cols,
-                                    crossAxisSpacing: 20,
-                                    mainAxisSpacing: 20,
-                                    childAspectRatio:
-                                        0.85, // Más altas para estilo "Card Web"
-                                    children: [
-                                      _buildFeatureCard(
-                                        context,
-                                        'Estudiantes',
-                                        'Accede a tu historial, justificaciones y credencial digital.',
-                                        Icons.school_rounded,
-                                        Colors.blue,
-                                      ),
-                                      _buildFeatureCard(
-                                        context,
-                                        'Académicas',
-                                        'Gestión de grupos, calificaciones y seguimiento académico.',
-                                        Icons.menu_book_rounded,
-                                        Colors.orange,
-                                      ),
-                                      _buildFeatureCard(
-                                        context,
-                                        'Prefectura',
-                                        'Scanner de asistencia QR y control de accesos en tiempo real.',
-                                        Icons.qr_code_scanner_rounded,
-                                        Colors.green,
-                                      ),
-                                      _buildFeatureCard(
-                                        context,
-                                        'Administración',
-                                        'Panel de control global, estadísticas y gestión de planteles.',
-                                        Icons.admin_panel_settings_rounded,
-                                        Colors.purple,
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-
-                              const SizedBox(height: 100),
-
-                              // FOOTER SIMPLE
-                              Divider(color: colors.onSurface.withOpacity(0.1)),
-                              const SizedBox(height: 20),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '© 2026 COBACAM',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color:
-                                            colors.onSurface.withOpacity(0.5)),
-                                  ),
-                                  const SizedBox(width: 20),
-                                  Text(
-                                    'v1.0.0',
-                                    style: TextStyle(
-                                        color:
-                                            colors.onSurface.withOpacity(0.3)),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                const SizedBox(height: 32),
+                Text(
+                  'Asystem COBACAM',
+                  textAlign: isNarrow ? TextAlign.center : TextAlign.start,
+                  style: theme.textTheme.displaySmall?.copyWith(
+                    color: colors.onPrimary,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1,
                   ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Innovación y control en la palma de tu mano. La plataforma que unifica la experiencia académica.',
+                  textAlign: isNarrow ? TextAlign.center : TextAlign.start,
+                  style: textStyle,
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPrimaryButton(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.push(context, SlideRightRoute(page: const LoginScreen()));
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).primaryColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-          elevation: 0,
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Ingresar al Portal',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(width: 12),
-            Icon(Icons.arrow_forward_rounded),
-          ],
         ),
       ),
     );
   }
 
-  Widget _buildFeatureCard(BuildContext context, String title, String desc,
-      IconData icon, Color accentColor) {
+  Widget _buildLoginPanel(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colors = theme.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isDark ? theme.cardColor : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
+      color: theme.scaffoldBackgroundColor,
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(40.0),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: FadeInUp(
+              delay: const Duration(milliseconds: 200),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Icon(
+                    Icons.school_outlined,
+                    size: 64,
+                    color: colors.primary,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Bienvenido',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Inicia sesión para acceder a tu portal.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colors.onSurface.withOpacity(0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                          context, SlideRightRoute(page: const LoginScreen()));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                    ),
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                    label: const Text('Ingresar al Portal'),
+                  ),
+                ],
+              ),
             ),
-            child: Icon(icon, color: accentColor, size: 30),
           ),
-          const Spacer(),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            desc,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
-              height: 1.4,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
