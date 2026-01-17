@@ -39,9 +39,10 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
           _userName = snapshot.value.toString();
         });
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted)
+          if (mounted) {
             UiHelpers.showSnackBar(
                 context, 'Módulo de Prefectura Activo. ¡Buen día, $_userName!');
+          }
         });
       }
     }

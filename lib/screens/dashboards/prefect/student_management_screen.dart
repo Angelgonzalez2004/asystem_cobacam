@@ -64,14 +64,16 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
 
       final userProfileSnapshot =
           await FirebaseDatabase.instance.ref('users/${user.uid}').get();
-      if (!userProfileSnapshot.exists)
+      if (!userProfileSnapshot.exists) {
         throw Exception('No se encontró el perfil del usuario.');
+      }
 
       final userData =
           Map<String, dynamic>.from(userProfileSnapshot.value as Map);
       final campus = userData['campus'];
-      if (campus == null)
+      if (campus == null) {
         throw Exception('El usuario no tiene un plantel asignado.');
+      }
 
       final dynamicSchoolCycle =
           await _appSettingsService.getCurrentSchoolCycleId();
@@ -87,9 +89,10 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
 
       _loadStudentsForCycle(_selectedFilterSchoolCycle!);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error: ${e.toString()}',
             isError: true);
+      }
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -113,9 +116,10 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
         });
       }
     }, onError: (error) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error al cargar alumnos.',
             isError: true);
+      }
       if (mounted) setState(() => _isLoading = false);
     });
   }

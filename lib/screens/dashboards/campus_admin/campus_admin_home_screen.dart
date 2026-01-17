@@ -44,9 +44,10 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
 
         // Mensaje de bienvenida
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted)
+          if (mounted) {
             UiHelpers.showSnackBar(
                 context, '¡Bienvenido(a), Admin $_userName!');
+          }
         });
 
         await _fetchRealStats();
@@ -139,12 +140,14 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
                   stream: _announcementService.getAnnouncementsStream(
                       _campus, false),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting)
+                    if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
+                    }
                     final announcements = snapshot.data ?? [];
-                    if (announcements.isEmpty)
+                    if (announcements.isEmpty) {
                       return const Text(
                           "No hay avisos recientes publicados por ti.");
+                    }
 
                     return ListView.builder(
                       shrinkWrap: true,

@@ -118,11 +118,13 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
             prefs.setString(
                 'cached_userName', userData['fullName'] ?? 'Usuario');
             prefs.setString('cached_userRole', userData['role'] ?? 'Prefecta');
-            if (userData['campus'] != null)
+            if (userData['campus'] != null) {
               prefs.setString('cached_campus', userData['campus']);
-            if (userData['profileImageUrl'] != null)
+            }
+            if (userData['profileImageUrl'] != null) {
               prefs.setString(
                   'cached_userPhotoUrl', userData['profileImageUrl']);
+            }
 
             if (mounted) {
               setState(() {

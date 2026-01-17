@@ -77,8 +77,9 @@ class _GroupScheduleManagementScreenState
           Map<String, dynamic>.from(userProfileSnapshot.value as Map);
       _campus = userData['campus'];
 
-      if (_campus == null)
+      if (_campus == null) {
         throw Exception('El usuario no tiene un plantel asignado.');
+      }
 
       // Load cycles first
       final cycles = await _appSettingsService.getAllSchoolCycles();

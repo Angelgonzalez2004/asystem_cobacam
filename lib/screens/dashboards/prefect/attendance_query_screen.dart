@@ -191,7 +191,9 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
         final date = start.add(Duration(days: i));
         if (_filterMode != FilterMode.cycle &&
             (date.weekday == DateTime.saturday ||
-                date.weekday == DateTime.sunday)) continue;
+                date.weekday == DateTime.sunday)) {
+          continue;
+        }
 
         final dateStr = DateFormat('yyyy-MM-dd').format(date);
 
@@ -223,8 +225,9 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
   }
 
   bool _isDaySelectable(DateTime day) {
-    if (day.weekday == DateTime.saturday || day.weekday == DateTime.sunday)
+    if (day.weekday == DateTime.saturday || day.weekday == DateTime.sunday) {
       return false;
+    }
     return !_nonAttendanceDays.any((d) =>
         d.date.year == day.year &&
         d.date.month == day.month &&
@@ -336,7 +339,9 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
       if (_nonAttendanceDays.any((d) =>
           d.date.year == date.year &&
           d.date.month == date.month &&
-          d.date.day == date.day)) continue;
+          d.date.day == date.day)) {
+        continue;
+      }
 
       final dateStr = DateFormat('yyyy-MM-dd').format(date);
       final record = records.firstWhere((r) => r.date == dateStr,
@@ -456,8 +461,9 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                           _loadGroupsAndStudents()
                               .then((_) => _fetchAttendanceData())
                               .then((_) {
-                            if (mounted)
+                            if (mounted) {
                               Navigator.of(context, rootNavigator: true).pop();
+                            }
                           });
                         }
                       },
@@ -1137,8 +1143,9 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
         isIndividual: isIndividual,
       );
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error exportando: $e', isError: true);
+      }
     } finally {
       if (mounted) Navigator.of(context, rootNavigator: true).pop();
     }
@@ -1178,7 +1185,9 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
       if (_nonAttendanceDays.any((nad) =>
           nad.date.year == d.year &&
           nad.date.month == d.month &&
-          nad.date.day == d.day)) continue;
+          nad.date.day == d.day)) {
+        continue;
+      }
 
       final dateStr = DateFormat('yyyy-MM-dd').format(d);
       final record = records.firstWhere((r) => r.date == dateStr,
@@ -1207,8 +1216,9 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
   String _getRangeLabelForExport(
       FilterMode mode, DateTime date, DateTimeRange? week, String cycle) {
     if (mode == FilterMode.day) return DateFormat('dd-MM-yyyy').format(date);
-    if (mode == FilterMode.week)
+    if (mode == FilterMode.week) {
       return 'Semana_${DateFormat('dd-MM').format(week!.start)}_al_${DateFormat('dd-MM').format(week.end)}';
+    }
     return 'Ciclo_$cycle';
   }
 

@@ -190,16 +190,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         if (i['schoolCycle'] != _selectedCycleId) continue;
 
         // Group Filter
-        if (_selectedGroupFilter != null && i['group'] != _selectedGroupFilter)
+        if (_selectedGroupFilter != null && i['group'] != _selectedGroupFilter) {
           continue;
+        }
 
         // Date Filter
         final iDateStr = i['date'];
         if (iDateStr != null) {
           final iDate = DateTime.tryParse(iDateStr);
           if (iDate != null) {
-            if (iDate.isBefore(startFilterDate) || iDate.isAfter(endFilterDate))
+            if (iDate.isBefore(startFilterDate) || iDate.isAfter(endFilterDate)) {
               continue;
+            }
 
             // --- DATA AGGREGATION ---
             _totalIncidences++;
@@ -326,8 +328,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    if (_isLoading)
+    if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       backgroundColor:
@@ -662,8 +665,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildPieChart() {
-    if (_incidencesByType.isEmpty)
+    if (_incidencesByType.isEmpty) {
       return const Center(child: Text('Sin datos'));
+    }
     final data = _incidencesByType.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final top = data.take(5).toList();
@@ -694,8 +698,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildGenderChart() {
-    if (_incidencesByGender.isEmpty)
+    if (_incidencesByGender.isEmpty) {
       return const Center(child: Text('Sin datos'));
+    }
     return Row(
       children: [
         Expanded(
@@ -729,8 +734,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildHourlyChart() {
-    if (_incidencesByHour.isEmpty)
+    if (_incidencesByHour.isEmpty) {
       return const Center(child: Text('Sin datos'));
+    }
     return BarChart(BarChartData(
       barGroups: List.generate(8, (i) {
         final hour = 7 + i; // 7am to 14pm
@@ -760,8 +766,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildGroupsChart() {
-    if (_incidencesByGroup.isEmpty)
+    if (_incidencesByGroup.isEmpty) {
       return const Center(child: Text('Sin datos'));
+    }
     final sorted = _incidencesByGroup.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final top = sorted.take(6).toList();
@@ -809,11 +816,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final filtered = _riskRadar
         .where((s) => s['name'].toString().toLowerCase().contains(_searchQuery))
         .toList();
-    if (filtered.isEmpty)
+    if (filtered.isEmpty) {
       return const Center(
           child: Padding(
               padding: EdgeInsets.all(20),
               child: Text('No hay alumnos en riesgo bajo este criterio.')));
+    }
 
     return Column(
       children: filtered
@@ -851,11 +859,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           item['a'].toString().toLowerCase().contains(_searchQuery);
     }).toList();
 
-    if (insights.isEmpty)
+    if (insights.isEmpty) {
       return const Center(
           child: Padding(
               padding: EdgeInsets.all(20),
               child: Text('No se encontraron insights con ese criterio.')));
+    }
 
     return ListView.separated(
       shrinkWrap: true,

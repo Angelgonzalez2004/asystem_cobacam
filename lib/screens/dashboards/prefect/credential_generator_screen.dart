@@ -76,9 +76,10 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
         if (current.isNotEmpty) _loadGroupsForCycle(current);
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error cargando datos: $e',
             isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -119,9 +120,10 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
       }
     } catch (e) {
       debugPrint('Error loading groups: $e');
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error al cargar grupos.',
             isError: true);
+      }
     }
   }
 
@@ -164,17 +166,19 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
         });
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error cargando grupo: $e',
             isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isSearching = false);
     }
   }
 
   Future<void> _addStudentsByMatriculas(String rawInput) async {
-    if (_campus == null || _selectedCycle == null || rawInput.trim().isEmpty)
+    if (_campus == null || _selectedCycle == null || rawInput.trim().isEmpty) {
       return;
+    }
 
     final matriculas = rawInput
         .split(RegExp(r'[,\n\s]+'))
@@ -233,9 +237,10 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
             isError: addedCount == 0 && notFoundList.isNotEmpty);
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error procesando lote: $e',
             isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isSearching = false);
     }
@@ -244,8 +249,9 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
   Future<void> _downloadAllCredentials() async {
     if (_studentsToGenerate.isEmpty) return;
 
-    if (mounted)
+    if (mounted) {
       UiHelpers.showSnackBar(context, 'Generando archivos $_exportFormat...');
+    }
 
     final Map<String, Uint8List> generatedImages = {};
 
@@ -300,9 +306,10 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
           if (mounted) UiHelpers.showSnackBar(context, 'PDF guardado.');
         }
       } catch (e) {
-        if (mounted)
+        if (mounted) {
           UiHelpers.showSnackBar(context, 'Error creando PDF: $e',
               isError: true);
+        }
       }
     } else {
       if (generatedImages.length == 1) {
@@ -342,9 +349,10 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
   }
 
   Future<void> _downloadSingleCredential(Student student) async {
-    if (mounted)
+    if (mounted) {
       UiHelpers.showSnackBar(
           context, 'Descargando credencial de ${student.fullName}...');
+    }
 
     final controller = ScreenshotController();
     Uint8List imageBytes = await controller.captureFromWidget(
@@ -509,8 +517,9 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
                                     ? null
                                     : (val) {
                                         setState(() => _selectedGroup = val);
-                                        if (val != null)
+                                        if (val != null) {
                                           _loadStudentsFromGroup(val);
+                                        }
                                       },
                               ),
                             ),

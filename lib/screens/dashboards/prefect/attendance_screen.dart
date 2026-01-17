@@ -244,9 +244,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       _setupFirebaseListeners();
       _loadOfflineAttendanceCount();
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error inicializando: ${e.toString()}',
             isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -362,15 +363,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         combinedAttendance[record['studentId']] = record;
       } else {
         final existing = combinedAttendance[record['studentId']]!;
-        if (record.containsKey('entryTime'))
+        if (record.containsKey('entryTime')) {
           existing['entryTime'] = record['entryTime'];
-        if (record.containsKey('exitTime'))
+        }
+        if (record.containsKey('exitTime')) {
           existing['exitTime'] = record['exitTime'];
+        }
         if (record.containsKey('status')) existing['status'] = record['status'];
-        if (record.containsKey('reasonTardy'))
+        if (record.containsKey('reasonTardy')) {
           existing['reasonTardy'] = record['reasonTardy'];
-        if (record.containsKey('reasonEarlyExit'))
+        }
+        if (record.containsKey('reasonEarlyExit')) {
           existing['reasonEarlyExit'] = record['reasonEarlyExit'];
+        }
       }
     }
 
@@ -643,8 +648,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
       _loadOfflineAttendanceCount();
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error al guardar.', isError: true);
+      }
     }
   }
 
@@ -828,7 +834,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           ? customReasonController.text.trim()
                           : selectedReason;
                       if (selectedReason == 'Otro (especificar)' &&
-                          result!.isEmpty) return;
+                          result!.isEmpty) {
+                        return;
+                      }
                       Navigator.pop(context, result);
                     },
               child: const Text('Confirmar'),
@@ -964,12 +972,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       );
       // Guardar (Si no hay red, la persistencia de Firebase lo maneja, no necesitamos Hive manual crítico para esto ahora)
       await newRef.set(incidence.toFirebaseMap());
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, '⚠️ Incidencia "$type" registrada.');
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error al guardar reporte.',
             isError: true);
+      }
     }
   }
 

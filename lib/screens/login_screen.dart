@@ -171,8 +171,9 @@ class _LoginScreenState extends State<LoginScreen> {
           // Normal error
           if (e.code == 'user-not-found') message = 'Usuario no encontrado.';
           if (e.code == 'wrong-password') message = 'Contraseña incorrecta.';
-          if (e.code == 'invalid-credential')
+          if (e.code == 'invalid-credential') {
             message = 'Correo o contraseña inválidos.';
+          }
         }
       }
 

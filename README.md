@@ -4,46 +4,103 @@
 
 ---
 
-## 🚀 Versión 2.5.1: "Inteligencia Operativa Total"
+## 🚀 Funcionalidades Principales
 
-Esta versión consolida el módulo de Estadísticas con capacidades de análisis predictivo y una experiencia de usuario refinada.
+Un vistazo a las capacidades que hacen de Asystem una herramienta indispensable.
 
-### 🌟 Novedades Destacadas (v2.5.1)
-
-#### 📈 Centro de Inteligencia (Prefectura)
-*   **50 Insights Estratégicos:** El sistema ahora responde automáticamente a 50 preguntas clave sobre disciplina, asistencia, seguridad y operatividad.
-*   **Buscador de Análisis:** Herramienta para filtrar instantáneamente los insights (ej. buscar "bullying" o "celulares").
-*   **Visualización Dinámica:** Gráficos responsivos que se adaptan a móviles y escritorio.
-*   **Métricas en Tiempo Real:** Visualización instantánea de KPIs y tendencias de asistencia semanal.
-
-#### 📅 Gestión de Tiempos
-*   **Iconografía Profesional:** Cada motivo de suspensión ahora cuenta con un icono distintivo para rápida identificación.
-*   **Calendario Inteligente:** Bloqueo visual y funcional de días inhábiles.
-
-#### 📚 Manual Operativo Digital
-*   **Base de Conocimiento (150 Q&A):** Guía exhaustiva de protocolos para todos los roles.
-
----
-
-## 🛠️ Funcionalidades Base
+### 🌟 Seguridad Avanzada y Acceso Flexible
+*   **Bloqueo de Aplicación Local:** Protege la aplicación con un PIN de 4 dígitos o mediante datos biométricos (huella/rostro), permitiendo asegurar la sesión sin necesidad de cerrar la cuenta. Ideal para mantener el acceso offline.
+*   **Gestión de Sesiones Activas:** Los usuarios pueden ver y revocar el acceso en otros dispositivos directamente desde los ajustes.
+*   **Autenticación por Roles:** Sistema robusto que dirige a cada usuario (Alumno, Prefecto, Administrador) a su panel de control correspondiente.
 
 ### 📡 Modo Offline Nativo (Sin Internet)
-*   **Persistencia Local:** Uso de **Hive** para almacenar registros de asistencia sin conexión.
-*   **Sincronización Automática:** Subida de datos (Color Verde) al recuperar señal de internet.
+*   **Asistencia sin Conexión:** Permite registrar la asistencia de los alumnos incluso sin conexión a internet.
+*   **Persistencia Local con Hive:** Los registros se guardan de forma segura en el dispositivo usando una base de datos local de alto rendimiento.
+*   **Sincronización Automática:** En cuanto se recupera la conexión, todos los datos locales se suben automáticamente al servidor central de Firebase.
+
+### 🧠 Inteligencia Operativa y Asistencia IA
+*   **Centro de Inteligencia (Prefectura):** Un dashboard que responde a 50 preguntas clave sobre disciplina, asistencia y operatividad, con un buscador para filtrar insights al instante.
+*   **AsystemBot (Gemini 1.5 Flash):** Un asistente de IA integrado que permite realizar consultas en lenguaje natural para obtener información y ejecutar acciones.
+*   **Estadísticas en Tiempo Real:** Gráficos y KPIs dinámicos que muestran tendencias y métricas de asistencia.
 
 ### 🚑 Sistema de Alerta Médica Crítica
-*   **Intervención en Tiempo Real:** Alertas visuales y vibratorias al pasar lista a alumnos con condiciones médicas graves.
+*   **Protocolo de Seguridad:** Al escanear la credencial de un alumno con una condición médica registrada, el sistema emite una alerta visual y vibratoria inmediata para el prefecto, mostrando la información relevante para una posible intervención.
 
-### 🤖 AsystemBot: Asistente IA
-*   Consultas en lenguaje natural potenciadas por **Gemini 1.5 Flash**.
+### 🛠️ Gestión y Operaciones
+*   **Pase de Lista con QR:** Registro de entradas y salidas mediante el escaneo de credenciales con códigos QR o Code128.
+*   **Registro Manual y Masivo:** Opciones para registrar asistencia de forma manual con un buscador predictivo o aplicar registros masivos a grupos completos.
+*   **Generación de Reportes:** Exportación de listas de asistencia e incidencias a formato Excel.
+*   **Generación de Credenciales:** Creación de credenciales en formato PDF listas para imprimir.
+*   **Gestión de Incidencias:** Módulo completo para reportar y dar seguimiento a las incidencias de los alumnos.
 
 ---
 
 ## 🏛️ Arquitectura y Tecnologías
-*   **Lenguaje:** Dart 3.4+ / Flutter
-*   **Base de Datos:** Firebase Realtime Database & Hive (Local).
-*   **Hosting:** Firebase Hosting con renderizado CanvasKit.
-*   **Roles Soportados:** Alumno, Docente, Prefecto, Administrativo de Plantel, Administrador General.
+
+El proyecto está construido con un enfoque moderno, priorizando el rendimiento, la escalabilidad y la mantenibilidad.
+
+*   **Framework Principal:** [Flutter](https://flutter.dev/) 3.38+
+*   **Lenguaje:** [Dart](https://dart.dev/) 3.10+
+*   **Backend y Base de Datos:**
+    *   **Firebase Realtime Database:** Para la sincronización de datos en tiempo real.
+    *   **Firebase Authentication:** Para la gestión de usuarios y roles.
+    *   **Firebase Hosting:** Para el despliegue de la aplicación web.
+    *   **Cloud Functions for Firebase:** Para lógica de backend.
+*   **Almacenamiento Local:** [Hive](https://pub.dev/packages/hive) para una persistencia de datos offline rápida y eficiente.
+*   **Gestión de Estado:** [Provider](https://pub.dev/packages/provider) para un manejo de estado simple y reactivo.
+*   **Inteligencia Artificial:** [Google AI SDK (Gemini)](https://pub.dev/packages/google_generative_ai) para las funcionalidades del Asistente IA.
+*   **Seguridad Local:** [local_auth](https://pub.dev/packages/local_auth) y [flutter_secure_storage](https://pub.dev/packages/flutter_secure_storage) para el bloqueo con PIN/Biometría.
+
+---
+
+## ⚙️ Primeros Pasos (Para Desarrolladores)
+
+Sigue estos pasos para configurar el entorno de desarrollo y ejecutar el proyecto.
+
+### **1. Prerrequisitos**
+*   Tener [Flutter SDK](https://flutter.dev/docs/get-started/install) instalado (versión 3.38 o superior).
+*   Un editor de código como [Visual Studio Code](https://code.visualstudio.com/) o [Android Studio](https://developer.android.com/studio).
+*   Tener una cuenta de [Firebase](https://firebase.google.com/) y un proyecto creado.
+
+### **2. Configuración**
+
+```bash
+# Clona el repositorio
+git clone https://github.com/Angelgonzalez2004/asystem_cobacam.git
+
+# Navega al directorio del proyecto
+cd asystem_cobacam
+
+# Instala todas las dependencias
+flutter pub get
+```
+
+### **3. Configuración de Firebase**
+
+Para que el proyecto se conecte a Firebase, necesitas los archivos de configuración correspondientes. **Estos archivos no deben ser subidos al repositorio por seguridad.**
+
+*   **Android:** Coloca tu archivo `google-services.json` en la carpeta `android/app/`.
+*   **iOS:** Abre el proyecto de iOS en Xcode y añade tu archivo `GoogleService-Info.plist` a la carpeta `Runner`.
+*   **Web:** La configuración de Firebase para la web ya está integrada en el código y se inicializa en `main.dart`. Asegúrate de que las credenciales en `firebase_options.dart` sean las correctas.
+
+### **4. Ejecutar la Aplicación**
+
+```bash
+# Ejecuta la app en el dispositivo o emulador seleccionado
+flutter run
+```
+
+---
+
+## 🤝 Cómo Contribuir
+
+Las contribuciones son bienvenidas. Si deseas mejorar el proyecto, sigue estos pasos:
+
+1.  **Crea un Fork** del repositorio.
+2.  **Crea una nueva rama** para tu funcionalidad (`git checkout -b feature/AmazingFeature`).
+3.  **Realiza tus cambios** y haz commit (`git commit -m 'Add some AmazingFeature'`).
+4.  **Haz Push** a tu rama (`git push origin feature/AmazingFeature`).
+5.  **Abre un Pull Request** para que tus cambios puedan ser revisados.
 
 ---
 

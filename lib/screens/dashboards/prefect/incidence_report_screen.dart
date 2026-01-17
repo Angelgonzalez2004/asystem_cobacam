@@ -313,12 +313,14 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
           .ref('planteles/$_campus/incidents/${incidence.id}')
           .update(updatedIncidence.toFirebaseMap());
 
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Reporte marcado como solucionado.');
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error al actualizar: $e',
             isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -513,10 +515,11 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
                       }
 
                       if (!_isDaySelectable(initial)) {
-                        if (context.mounted)
+                        if (context.mounted) {
                           UiHelpers.showSnackBar(context,
                               'No hay días hábiles disponibles para seleccionar.',
                               isError: true);
+                        }
                         return;
                       }
 
@@ -668,10 +671,11 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
     }
 
     if (!_isDaySelectable(initial)) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(
             context, 'No hay días hábiles disponibles en este ciclo.',
             isError: true);
+      }
       return;
     }
 
@@ -938,8 +942,9 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
                                 displayStringForOption: (s) =>
                                     '${s.fullName} (${s.group})',
                                 optionsBuilder: (text) {
-                                  if (text.text.isEmpty)
+                                  if (text.text.isEmpty) {
                                     return const Iterable<Student>.empty();
+                                  }
                                   return _allStudents.where((s) =>
                                       s.fullName
                                           .toLowerCase()

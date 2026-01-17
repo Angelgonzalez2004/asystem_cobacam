@@ -212,7 +212,7 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
             _numpadButton('0'),
             _numpadButton(
               'delete',
-              child: Icon(Icons.backspace_outlined, size: 28),
+              child: const Icon(Icons.backspace_outlined, size: 28),
             ),
           ],
         ),

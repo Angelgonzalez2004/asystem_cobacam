@@ -125,9 +125,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // Opcional: Podrías forzar un refresh del Drawer aquí si usas un Provider
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error al actualizar: $e',
             isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

@@ -39,9 +39,10 @@ class _GeneralAdminHomeScreenState extends State<GeneralAdminHomeScreen> {
       if (mounted && snapshot.exists) {
         setState(() => _userName = snapshot.value.toString());
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted)
+          if (mounted) {
             UiHelpers.showSnackBar(context,
                 'Portal de Administración General: ¡Hola, $_userName!');
+          }
         });
       }
     }
@@ -131,11 +132,13 @@ class _GeneralAdminHomeScreenState extends State<GeneralAdminHomeScreen> {
                   stream:
                       _announcementService.getAnnouncementsStream(null, true),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting)
+                    if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
+                    }
                     final announcements = snapshot.data ?? [];
-                    if (announcements.isEmpty)
+                    if (announcements.isEmpty) {
                       return const Text("No hay avisos globales.");
+                    }
 
                     return ListView.builder(
                       shrinkWrap: true,

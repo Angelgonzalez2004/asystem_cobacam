@@ -112,8 +112,9 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
 
       _resetForm();
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Error al procesar: $e', isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -152,9 +153,10 @@ class _ManageAnnouncementsScreenState extends State<ManageAnnouncementsScreen> {
                       duration: Duration(seconds: 3)));
                 }
               } catch (e) {
-                if (mounted)
+                if (mounted) {
                   UiHelpers.showSnackBar(context, 'Error al eliminar: $e',
                       isError: true);
+                }
               } finally {
                 if (mounted) setState(() => _isLoading = false);
               }

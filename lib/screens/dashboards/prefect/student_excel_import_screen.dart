@@ -167,8 +167,9 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
 
       for (var table in excel.tables.keys) {
         var sheet = excel.tables[table];
-        if (sheet == null || sheet.maxColumns < expectedHeaders.length)
+        if (sheet == null || sheet.maxColumns < expectedHeaders.length) {
           continue;
+        }
 
         // Validar si el nombre de la hoja corresponde a un grupo existente
 
@@ -286,10 +287,11 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
       }
 
       if (studentsToImport.isEmpty) {
-        if (mounted)
+        if (mounted) {
           UiHelpers.showSnackBar(context,
               'No se encontraron alumnos válidos o los grupos del Excel no existen en este ciclo.',
               isError: true);
+        }
       } else {
         if (mounted) {
           setState(() => _parsedStudents = studentsToImport);

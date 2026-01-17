@@ -45,9 +45,10 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
 
         // Mensaje de bienvenida
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted)
+          if (mounted) {
             UiHelpers.showSnackBar(
                 context, '¡Bienvenida, Académica $_userName!');
+          }
         });
       }
     }
@@ -136,11 +137,13 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
                   stream: _announcementService.getAnnouncementsStream(
                       _campus, false),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting)
+                    if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
+                    }
                     final announcements = snapshot.data ?? [];
-                    if (announcements.isEmpty)
+                    if (announcements.isEmpty) {
                       return const Text('No hay avisos hoy.');
+                    }
 
                     return ListView.builder(
                       shrinkWrap: true,

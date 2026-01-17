@@ -853,8 +853,9 @@ class _NonAttendanceManagementScreenState
       for (final id in group.ids) {
         await _appSettingsService.deleteNonAttendanceDay(_campusId!, id);
       }
-      if (mounted)
+      if (mounted) {
         UiHelpers.showSnackBar(context, 'Suspensión eliminada correctamente.');
+      }
       _loadNonAttendanceDays();
     }
   }

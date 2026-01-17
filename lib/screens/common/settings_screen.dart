@@ -119,12 +119,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (confirm == true) {
       try {
         await SessionService().revokeSession(deviceKey);
-        if (mounted)
+        if (mounted) {
           UiHelpers.showSnackBar(context, 'Dispositivo desconectado.');
+        }
       } catch (e) {
-        if (mounted)
+        if (mounted) {
           UiHelpers.showSnackBar(context, 'Error al desconectar: $e',
               isError: true);
+        }
       }
     }
   }
@@ -283,15 +285,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   DateFormat('dd/MM HH:mm').format(lastActive);
 
               IconData deviceIcon = Icons.devices_other;
-              if (session['platform'].toString().contains('Android'))
+              if (session['platform'].toString().contains('Android')) {
                 deviceIcon = Icons.phone_android;
-              if (session['platform'].toString().contains('iOS'))
+              }
+              if (session['platform'].toString().contains('iOS')) {
                 deviceIcon = Icons.phone_iphone;
-              if (session['platform'].toString().contains('Web'))
+              }
+              if (session['platform'].toString().contains('Web')) {
                 deviceIcon = Icons.web;
+              }
               if (session['platform'].toString().contains('Windows') ||
-                  session['platform'].toString().contains('Mac'))
+                  session['platform'].toString().contains('Mac')) {
                 deviceIcon = Icons.computer;
+              }
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),

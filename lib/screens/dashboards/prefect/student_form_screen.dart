@@ -797,8 +797,9 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                         MaterialPageRoute(
                             builder: (context) =>
                                 const GroupManagementScreen()));
-                    if (_selectedSchoolCycle != null)
+                    if (_selectedSchoolCycle != null) {
                       _subscribeToGroups(_selectedSchoolCycle);
+                    }
                   },
             icon: const Icon(Icons.add_business_rounded),
             tooltip: 'Crear/Gestionar Grupos',

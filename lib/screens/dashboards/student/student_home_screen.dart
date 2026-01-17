@@ -40,9 +40,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
         // Mensaje de bienvenida sutil (Toast)
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted)
+          if (mounted) {
             UiHelpers.showSnackBar(
                 context, '¡Bienvenido de vuelta, $_userName!');
+          }
         });
       }
     }

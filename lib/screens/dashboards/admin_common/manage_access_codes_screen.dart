@@ -40,14 +40,16 @@ class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
 
   // Vista para Admin de Plantel (Solo sus roles)
   Widget _buildCampusView() {
-    if (widget.campus == null)
+    if (widget.campus == null) {
       return const Center(child: Text("Identificando plantel..."));
+    }
 
     return StreamBuilder<Map<dynamic, dynamic>>(
       stream: _codeService.getCampusCodesStream(widget.campus!),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting)
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
 
         final codes = snapshot.data ?? {};
         if (codes.isEmpty) return _buildNoDataPlaceholder();
@@ -67,8 +69,9 @@ class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
     return StreamBuilder<Map<dynamic, dynamic>>(
       stream: _codeService.getAllCodesStream(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting)
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
 
         final allData = snapshot.data ?? {};
 
