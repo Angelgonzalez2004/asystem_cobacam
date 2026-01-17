@@ -155,7 +155,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     _appSettingsService =
         AppSettingsService(_hiveService, _connectivityService);
 
-    _initData();
+    _initOfflineFirstData();
 
     _connectivitySubscription =
         _connectivityService.connectivityStream.listen((result) {
@@ -164,17 +164,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         setState(() {
           _connectivityResult = result;
         });
-        if (_connectivityResult != ConnectivityResult.none) {
+        if (result != ConnectivityResult.none) {
           _syncOfflineAttendance();
           if (!wasOnline) {
-            _loadStudentsAndSchedules(online: true);
+            _syncFirebaseData(); // Sync all data now that we are online
             if (mounted) {
               UiHelpers.showSnackBar(
                   context, '¡Conexión restablecida! Sincronizando datos...');
             }
           }
         } else {
-          _loadStudentsAndSchedules(online: false);
           if (mounted) {
             UiHelpers.showSnackBar(context, 'Modo Offline activado.',
                 isError: true);
@@ -185,72 +184,110 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     });
   }
 
-  Future<void> _initData() async {
+  /// Initializes the screen with data available locally (offline-first).
+  Future<void> _initOfflineFirstData() async {
+    setState(() => _isLoading = true);
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('No hay usuario autenticado.');
-
+      // 1. Load campus from SharedPreferences (very fast)
       final prefs = await SharedPreferences.getInstance();
-
-      String? campus;
-      try {
-        final userProfileSnapshot =
-            await FirebaseDatabase.instance.ref('users/${user.uid}').get();
-        if (userProfileSnapshot.exists) {
-          final userData =
-              Map<String, dynamic>.from(userProfileSnapshot.value as Map);
-          campus = userData['campus'];
-          if (campus != null) await prefs.setString('cached_campus', campus);
-        }
-      } catch (e) {
-        debugPrint('Error obteniendo perfil online: $e');
-      }
-
-      // Si falló Firebase (sin red), usar caché
-      campus ??= prefs.getString('cached_campus');
-
-      if (campus == null) {
+      final cachedCampus = prefs.getString('cached_campus');
+      if (cachedCampus == null) {
+        // If there is no campus, we can't proceed. This might happen on first ever launch without internet.
         throw Exception(
-            'El usuario no tiene un plantel asignado o requiere conexión para la primera configuración.');
+            'El plantel no está configurado. Se requiere conexión a internet la primera vez.');
       }
+      _campus = cachedCampus;
 
-      final dynamicSchoolCycle =
-          await _appSettingsService.getCurrentSchoolCycleId();
-      final fetchedNonAttendanceDays =
-          await _appSettingsService.getAllNonAttendanceDays(campus);
+      // 2. Load school cycle and non-attendance days from Hive (very fast)
+      final cycleId = _appSettingsService.getActiveSchoolCycleIdFromCache();
+      final nonAttendance = _hiveService.nonAttendanceDaysBox.values
+          .where((d) => d.campusId == _campus)
+          .toList();
 
-      if (!mounted) return;
+      // 3. Set initial state and build UI
       setState(() {
-        _campus = campus;
-        _currentSchoolCycle = dynamicSchoolCycle;
-        _nonAttendanceDays = fetchedNonAttendanceDays;
+        _currentSchoolCycle = cycleId;
+        _nonAttendanceDays = nonAttendance;
         _todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        _isLoading = false;
       });
 
-      _attendanceRef = FirebaseDatabase.instance.ref(
-          'planteles/$_campus/attendance/$_currentSchoolCycle/$_todayDate');
-      _studentsRef = FirebaseDatabase.instance
-          .ref('planteles/$_campus/students/$_currentSchoolCycle');
-      _groupSchedulesRef = FirebaseDatabase.instance
-          .ref('planteles/$_campus/schedules/$_currentSchoolCycle');
-      _groupsRef = FirebaseDatabase.instance.ref('planteles/$_campus/groups');
-
-      _connectivityResult = await _connectivityService.checkConnectivity();
-
-      if (_connectivityResult == ConnectivityResult.none) {
-        _loadStudentsAndSchedules(online: false);
-      }
-
-      _setupFirebaseListeners();
+      // 4. Load all other data from cache
+      await _loadStudentsAndSchedules(online: false);
       _loadOfflineAttendanceCount();
+
+      // 5. Setup Firebase refs now that we have campus and cycle
+      _setupFirebaseRefs();
+
+      // 6. Start listening to Firebase (will use cache first) and combine with Hive attendance
+      _setupFirebaseListeners();
+
+      // 7. Trigger background sync with Firebase (don't await it)
+      _syncFirebaseData();
     } catch (e) {
       if (mounted) {
-        UiHelpers.showSnackBar(context, 'Error inicializando: ${e.toString()}',
+        setState(() => _isLoading = false);
+        UiHelpers.showSnackBar(context, 'Error de inicio: ${e.toString()}',
             isError: true);
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  /// Fetches fresh data from Firebase and updates the state.
+  Future<void> _syncFirebaseData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null ||
+        await _connectivityService.checkConnectivity() ==
+            ConnectivityResult.none) {
+      return; // Don't sync if there's no user or no connection
+    }
+
+    try {
+      // Fetch and update user's campus
+      final userProfileSnapshot = await FirebaseDatabase.instance
+          .ref('users/${user.uid}')
+          .get()
+          .timeout(const Duration(seconds: 5));
+      if (userProfileSnapshot.exists) {
+        final userData =
+            Map<String, dynamic>.from(userProfileSnapshot.value as Map);
+        if (userData['campus'] != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('cached_campus', userData['campus']);
+          if (mounted) setState(() => _campus = userData['campus']);
+        }
+      }
+
+      // Fetch and update school cycle and non-attendance days
+      final onlineCycleId = await _appSettingsService.getCurrentSchoolCycleId();
+      final onlineNonAttendance =
+          await _appSettingsService.getAllNonAttendanceDays(_campus!);
+
+      if (mounted) {
+        setState(() {
+          _currentSchoolCycle = onlineCycleId;
+          _nonAttendanceDays = onlineNonAttendance;
+        });
+      }
+
+      // Re-initialize listeners with potentially new cycle/campus info
+      _setupFirebaseRefs();
+      _setupFirebaseListeners();
+    } catch (e) {
+      debugPrint("Background sync failed: $e");
+      // Don't show a snackbar here to avoid bothering the user on minor background sync issues.
+    }
+  }
+
+  void _setupFirebaseRefs() {
+    if (_campus == null || _currentSchoolCycle.isEmpty) return;
+    _attendanceRef = FirebaseDatabase.instance.ref(
+        'planteles/$_campus/attendance/$_currentSchoolCycle/$_todayDate');
+    _studentsRef = FirebaseDatabase.instance
+        .ref('planteles/$_campus/students/$_currentSchoolCycle');
+    _groupSchedulesRef = FirebaseDatabase.instance
+        .ref('planteles/$_campus/schedules/$_currentSchoolCycle');
+    _groupsRef = FirebaseDatabase.instance.ref('planteles/$_campus/groups');
   }
 
   void _setupFirebaseListeners() {

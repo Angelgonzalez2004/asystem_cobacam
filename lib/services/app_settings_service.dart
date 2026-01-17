@@ -1,219 +1,177 @@
+import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:asystem_cobacam/models/school_cycle_model.dart'; // Import SchoolCycle model
-import 'package:asystem_cobacam/models/non_attendance_day_model.dart'; // Import NonAttendanceDay model
-import 'package:asystem_cobacam/services/hive_service.dart'; // Import HiveService
-import 'package:asystem_cobacam/services/connectivity_service.dart'; // Import ConnectivityService
+import 'package:asystem_cobacam/models/school_cycle_model.dart';
+import 'package:asystem_cobacam/models/non_attendance_day_model.dart';
+import 'package:asystem_cobacam/services/hive_service.dart';
+import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 
 class AppSettingsService {
   final DatabaseReference _schoolCyclesRef =
-      FirebaseDatabase.instance.ref('school_cycles'); // CORREGIDO: Root
+      FirebaseDatabase.instance.ref('school_cycles');
 
   final HiveService _hiveService;
   final ConnectivityService _connectivityService;
 
   AppSettingsService(this._hiveService, this._connectivityService);
 
+  /// Returns the active school cycle ID purely from the local cache.
+  /// This method is synchronous and safe to call on app startup.
+  String getActiveSchoolCycleIdFromCache() {
+    try {
+      final cycles = _hiveService.schoolCyclesBox.values.toList();
+      return _calculateCurrentCycle(cycles);
+    } catch (e) {
+      debugPrint('Error getting cycle from cache: $e');
+      // Fallback to a sensible default if cache is empty or fails.
+      return '${DateTime.now().year}-${DateTime.now().month > 7 ? 'B' : 'A'}';
+    }
+  }
+
+  /// Calculates the current school cycle ID from a given list of cycles.
+  String _calculateCurrentCycle(List<SchoolCycle> cycles) {
+    if (cycles.isEmpty) {
+      throw Exception(
+          'No school cycles available to calculate the current one.');
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // 1. Find active cycle
+    final activeCycle = cycles.where((c) {
+      final start =
+          DateTime(c.startDate.year, c.startDate.month, c.startDate.day);
+      final end = DateTime(c.endDate.year, c.endDate.month, c.endDate.day);
+      return !today.isBefore(start) && !today.isAfter(end);
+    });
+
+    if (activeCycle.isNotEmpty) {
+      return activeCycle.first.id;
+    }
+
+    // 2. Find nearest upcoming cycle
+    final upcomingCycles =
+        cycles.where((c) => c.startDate.isAfter(today)).toList();
+    if (upcomingCycles.isNotEmpty) {
+      upcomingCycles.sort((a, b) => a.startDate.compareTo(b.startDate));
+      return upcomingCycles.first.id;
+    }
+
+    // 3. Find most recent past cycle
+    final pastCycles = cycles.where((c) => c.endDate.isBefore(today)).toList();
+    if (pastCycles.isNotEmpty) {
+      pastCycles.sort((a, b) => b.endDate.compareTo(a.endDate));
+      return pastCycles.first.id;
+    }
+
+    // 4. Default fallback
+    return cycles.first.id;
+  }
+
+  /// Fetches all school cycles, prioritizing online data but with a quick fallback to cache.
+  Future<List<SchoolCycle>> getAllSchoolCycles() async {
+    if (await _connectivityService.checkConnectivity() !=
+        ConnectivityResult.none) {
+      try {
+        final snapshot =
+            await _schoolCyclesRef.get().timeout(const Duration(seconds: 5));
+        if (snapshot.exists && snapshot.value != null) {
+          final firebaseCycles = snapshot.children
+              .map((child) => SchoolCycle.fromSnapshot(child))
+              .toList();
+          await _hiveService.schoolCyclesBox.clear();
+          await _hiveService.schoolCyclesBox.addAll(firebaseCycles);
+          return firebaseCycles;
+        }
+      } catch (e) {
+        debugPrint(
+            'Error fetching SchoolCycles from Firebase, using cache: $e');
+      }
+    }
+    return _hiveService.schoolCyclesBox.values.toList();
+  }
+
+  /// Fetches all non-attendance days for a campus, prioritizing online data with a quick fallback.
+  Future<List<NonAttendanceDay>> getAllNonAttendanceDays(
+      String campusId) async {
+    if (await _connectivityService.checkConnectivity() !=
+        ConnectivityResult.none) {
+      try {
+        final snapshot = await _getNonAttendanceDaysRef(campusId)
+            .get()
+            .timeout(const Duration(seconds: 5));
+        if (snapshot.exists && snapshot.value != null) {
+          final firebaseDays = snapshot.children
+              .map((child) => NonAttendanceDay.fromSnapshot(child))
+              .toList();
+          // More efficient cache update: clear only this campus's days
+          final allCachedDays =
+              _hiveService.nonAttendanceDaysBox.values.toList();
+          final otherCampusDays =
+              allCachedDays.where((day) => day.campusId != campusId);
+          await _hiveService.nonAttendanceDaysBox.clear();
+          await _hiveService.nonAttendanceDaysBox
+              .addAll([...otherCampusDays, ...firebaseDays]);
+          return firebaseDays;
+        }
+      } catch (e) {
+        debugPrint(
+            'Error fetching NonAttendanceDays from Firebase, using cache: $e');
+      }
+    }
+    return _hiveService.nonAttendanceDaysBox.values
+        .where((day) => day.campusId == campusId)
+        .toList();
+  }
+
   Future<String> getCurrentSchoolCycleId() async {
     try {
       final cycles = await getAllSchoolCycles();
-      if (cycles.isEmpty) return '2025-A';
-
-      final now = DateTime.now();
-      // Normalizar 'now' para comparar solo fechas (sin hora)
-      final today = DateTime(now.year, now.month, now.day);
-
-      // 1. Buscar ciclo ACTIVO (hoy dentro del rango)
-      try {
-        final activeCycle = cycles.firstWhere((c) {
-          final start =
-              DateTime(c.startDate.year, c.startDate.month, c.startDate.day);
-          final end = DateTime(c.endDate.year, c.endDate.month, c.endDate.day);
-          return (today.isAfter(start) || today.isAtSameMomentAs(start)) &&
-              (today.isBefore(end) || today.isAtSameMomentAs(end));
-        });
-        return activeCycle.id;
-      } catch (e) {
-        // No hay ciclo activo hoy (vacaciones/receso)
-      }
-
-      // 2. Buscar ciclo PRÓXIMO más cercano
-      final upcomingCycles = cycles.where((c) {
-        final start =
-            DateTime(c.startDate.year, c.startDate.month, c.startDate.day);
-        return start.isAfter(today);
-      }).toList();
-
-      if (upcomingCycles.isNotEmpty) {
-        upcomingCycles.sort((a, b) => a.startDate.compareTo(b.startDate));
-        return upcomingCycles.first.id;
-      }
-
-      // 3. Buscar el ciclo PASADO más reciente
-      final pastCycles = cycles.where((c) {
-        final end = DateTime(c.endDate.year, c.endDate.month, c.endDate.day);
-        return end.isBefore(today);
-      }).toList();
-
-      if (pastCycles.isNotEmpty) {
-        pastCycles
-            .sort((a, b) => b.endDate.compareTo(a.endDate)); // Descendente
-        return pastCycles.first.id;
-      }
-
-      // Default si algo falla
-      return cycles.first.id;
+      return _calculateCurrentCycle(cycles);
     } catch (e) {
-      debugPrint('Error calculando ciclo escolar: $e');
-      return '2025-A';
+      debugPrint('Error calculating school cycle: $e');
+      return '${DateTime.now().year}-${DateTime.now().month > 7 ? 'B' : 'A'}';
     }
-  }
-
-  // --- SchoolCycle Management ---
-  Future<List<SchoolCycle>> getAllSchoolCycles() async {
-    final schoolCyclesBox = _hiveService.schoolCyclesBox;
-    // Primero, intentar cargar desde la caché local
-    final cachedCycles = schoolCyclesBox.values.toList();
-    if (cachedCycles.isNotEmpty &&
-        await _connectivityService.checkConnectivity() ==
-            ConnectivityResult.none) {
-      return cachedCycles; // Devolver caché si no hay conexión
-    }
-
-    // Si hay conexión o la caché está vacía, intentar Firebase
-    try {
-      if (await _connectivityService.checkConnectivity() !=
-          ConnectivityResult.none) {
-        final snapshot = await _schoolCyclesRef.get();
-        final List<SchoolCycle> firebaseCycles = [];
-        if (snapshot.exists && snapshot.value != null) {
-          for (final child in snapshot.children) {
-            firebaseCycles.add(SchoolCycle.fromSnapshot(child));
-          }
-        }
-        // Actualizar la caché de Hive con los datos de Firebase
-        await schoolCyclesBox.clear();
-        for (final cycle in firebaseCycles) {
-          await schoolCyclesBox.put(cycle.id, cycle);
-        }
-        return firebaseCycles;
-      }
-    } catch (e) {
-      debugPrint('Error al obtener SchoolCycles de Firebase: $e');
-      // Si falla Firebase y teníamos caché, la devolvemos
-      if (cachedCycles.isNotEmpty) return cachedCycles;
-    }
-    return [];
   }
 
   Future<void> addSchoolCycle(SchoolCycle cycle) async {
-    try {
-      await _schoolCyclesRef.child(cycle.id).set(cycle.toFirebaseMap());
-      await _hiveService.schoolCyclesBox
-          .put(cycle.id, cycle); // Actualizar caché
-    } catch (e) {
-      rethrow;
-    }
+    await _schoolCyclesRef.child(cycle.id).set(cycle.toFirebaseMap());
+    await _hiveService.schoolCyclesBox.put(cycle.id, cycle);
   }
 
   Future<void> updateSchoolCycle(SchoolCycle cycle) async {
-    try {
-      await _schoolCyclesRef.child(cycle.id).update(cycle.toFirebaseMap());
-      await _hiveService.schoolCyclesBox
-          .put(cycle.id, cycle); // Actualizar caché
-    } catch (e) {
-      rethrow;
-    }
+    await _schoolCyclesRef.child(cycle.id).update(cycle.toFirebaseMap());
+    await _hiveService.schoolCyclesBox.put(cycle.id, cycle);
   }
 
   Future<void> deleteSchoolCycle(String cycleId) async {
-    try {
-      await _schoolCyclesRef.child(cycleId).remove();
-      await _hiveService.schoolCyclesBox.delete(cycleId); // Actualizar caché
-    } catch (e) {
-      rethrow;
-    }
+    await _schoolCyclesRef.child(cycleId).remove();
+    await _hiveService.schoolCyclesBox.delete(cycleId);
   }
 
-  // --- NonAttendanceDay Management ---
   DatabaseReference _getNonAttendanceDaysRef(String campusId) {
     return FirebaseDatabase.instance
         .ref('planteles/$campusId/nonAttendanceDays');
   }
 
-  Future<List<NonAttendanceDay>> getAllNonAttendanceDays(
-      String campusId) async {
-    final nonAttendanceBox = _hiveService.nonAttendanceDaysBox;
-    // Primero, intentar cargar desde la caché local
-    final cachedDays = nonAttendanceBox.values
-        .where((day) => day.campusId == campusId)
-        .toList();
-    if (cachedDays.isNotEmpty &&
-        await _connectivityService.checkConnectivity() ==
-            ConnectivityResult.none) {
-      return cachedDays; // Devolver caché si no hay conexión
-    }
-
-    // Si hay conexión o la caché está vacía, intentar Firebase
-    try {
-      if (await _connectivityService.checkConnectivity() !=
-          ConnectivityResult.none) {
-        final snapshot = await _getNonAttendanceDaysRef(campusId).get();
-        final List<NonAttendanceDay> firebaseDays = [];
-        if (snapshot.exists && snapshot.value != null) {
-          for (final child in snapshot.children) {
-            firebaseDays.add(NonAttendanceDay.fromSnapshot(child));
-          }
-        }
-        // Actualizar la caché de Hive con los datos de Firebase
-        // Podríamos querer borrar solo los de este campus o todos y recargar
-        // Por simplicidad, asumimos que la caja es por campus o manejamos por clave
-        // Para una caché más eficiente, se podría estructurar Hive por campus.
-        // Por ahora, solo actualizaremos si la caja global.
-        await nonAttendanceBox.clear(); // Ojo: Esto borra todos los campus.
-        for (final day in firebaseDays) {
-          await nonAttendanceBox.put(day.id, day);
-        }
-        return firebaseDays;
-      }
-    } catch (e) {
-      debugPrint('Error al obtener NonAttendanceDays de Firebase: $e');
-      if (cachedDays.isNotEmpty) return cachedDays;
-    }
-    return [];
-  }
-
   Future<void> addNonAttendanceDay(NonAttendanceDay day) async {
-    try {
-      await _getNonAttendanceDaysRef(day.campusId)
-          .child(day.id)
-          .set(day.toFirebaseMap());
-      await _hiveService.nonAttendanceDaysBox
-          .put(day.id, day); // Actualizar caché
-    } catch (e) {
-      rethrow;
-    }
+    await _getNonAttendanceDaysRef(day.campusId)
+        .child(day.id)
+        .set(day.toFirebaseMap());
+    await _hiveService.nonAttendanceDaysBox.put(day.id, day);
   }
 
   Future<void> updateNonAttendanceDay(NonAttendanceDay day) async {
-    try {
-      await _getNonAttendanceDaysRef(day.campusId)
-          .child(day.id)
-          .update(day.toFirebaseMap());
-      await _hiveService.nonAttendanceDaysBox
-          .put(day.id, day); // Actualizar caché
-    } catch (e) {
-      rethrow;
-    }
+    await _getNonAttendanceDaysRef(day.campusId)
+        .child(day.id)
+        .update(day.toFirebaseMap());
+    await _hiveService.nonAttendanceDaysBox.put(day.id, day);
   }
 
   Future<void> deleteNonAttendanceDay(String campusId, String dayId) async {
-    try {
-      await _getNonAttendanceDaysRef(campusId).child(dayId).remove();
-      await _hiveService.nonAttendanceDaysBox.delete(dayId); // Actualizar caché
-    } catch (e) {
-      rethrow;
-    }
+    await _getNonAttendanceDaysRef(campusId).child(dayId).remove();
+    await _hiveService.nonAttendanceDaysBox.delete(dayId);
   }
 }
