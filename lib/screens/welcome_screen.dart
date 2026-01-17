@@ -56,12 +56,14 @@ class WelcomeScreen extends StatelessWidget {
               children: [
                 // Barra de Navegación "Falsa" (Header)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 16),
                   child: Row(
                     children: [
                       Hero(
                         tag: 'app_logo_mini',
-                        child: Image.asset('assets/images/logo1.png', height: 40),
+                        child:
+                            Image.asset('assets/images/logo1.png', height: 40),
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -84,12 +86,13 @@ class WelcomeScreen extends StatelessWidget {
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 1200),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0, vertical: 20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               const SizedBox(height: 40),
-                              
+
                               // HERO SECTION
                               FadeInUp(
                                 duration: const Duration(milliseconds: 800),
@@ -104,20 +107,24 @@ class WelcomeScreen extends StatelessWidget {
                                           shape: BoxShape.circle,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: colors.primary.withOpacity(0.15),
+                                              color: colors.primary
+                                                  .withOpacity(0.15),
                                               blurRadius: 30,
                                               offset: const Offset(0, 10),
                                             )
                                           ],
                                         ),
-                                        child: Image.asset('assets/images/logo1.png', height: 120),
+                                        child: Image.asset(
+                                            'assets/images/logo1.png',
+                                            height: 120),
                                       ),
                                     ),
                                     const SizedBox(height: 40),
                                     Text(
                                       'Gestión Académica\nInteligente',
                                       textAlign: TextAlign.center,
-                                      style: theme.textTheme.displayMedium?.copyWith(
+                                      style: theme.textTheme.displayMedium
+                                          ?.copyWith(
                                         fontWeight: FontWeight.w900,
                                         color: colors.onSurface,
                                         height: 1.1,
@@ -126,12 +133,15 @@ class WelcomeScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 24),
                                     ConstrainedBox(
-                                      constraints: const BoxConstraints(maxWidth: 600),
+                                      constraints:
+                                          const BoxConstraints(maxWidth: 600),
                                       child: Text(
                                         'Plataforma integral para el control escolar, asistencia digital y comunicación efectiva entre estudiantes, docentes y administrativos del sistema COBACAM.',
                                         textAlign: TextAlign.center,
-                                        style: theme.textTheme.bodyLarge?.copyWith(
-                                          color: colors.onSurface.withOpacity(0.7),
+                                        style:
+                                            theme.textTheme.bodyLarge?.copyWith(
+                                          color:
+                                              colors.onSurface.withOpacity(0.7),
                                           fontSize: 18,
                                           height: 1.5,
                                         ),
@@ -155,7 +165,7 @@ class WelcomeScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 30),
-                              
+
                               LayoutBuilder(
                                 builder: (context, constraints) {
                                   // Responsive Grid: 1 columna en móvil, 2 en tablet, 4 en desktop
@@ -165,11 +175,13 @@ class WelcomeScreen extends StatelessWidget {
 
                                   return GridView.count(
                                     shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
                                     crossAxisCount: cols,
                                     crossAxisSpacing: 20,
                                     mainAxisSpacing: 20,
-                                    childAspectRatio: 0.85, // Más altas para estilo "Card Web"
+                                    childAspectRatio:
+                                        0.85, // Más altas para estilo "Card Web"
                                     children: [
                                       _buildFeatureCard(
                                         context,
@@ -214,12 +226,17 @@ class WelcomeScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     '© 2026 COBACAM',
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: colors.onSurface.withOpacity(0.5)),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                            colors.onSurface.withOpacity(0.5)),
                                   ),
                                   const SizedBox(width: 20),
                                   Text(
                                     'v1.0.0',
-                                    style: TextStyle(color: colors.onSurface.withOpacity(0.3)),
+                                    style: TextStyle(
+                                        color:
+                                            colors.onSurface.withOpacity(0.3)),
                                   ),
                                 ],
                               ),
@@ -258,7 +275,8 @@ class WelcomeScreen extends StatelessWidget {
           backgroundColor: Theme.of(context).primaryColor,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
           elevation: 0,
         ),
         child: const Row(
@@ -276,7 +294,8 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureCard(BuildContext context, String title, String desc, IconData icon, Color accentColor) {
+  Widget _buildFeatureCard(BuildContext context, String title, String desc,
+      IconData icon, Color accentColor) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 

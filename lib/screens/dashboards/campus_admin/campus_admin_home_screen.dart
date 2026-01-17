@@ -18,7 +18,7 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
   final AnnouncementService _announcementService = AnnouncementService();
   String? _campus;
   String _userName = 'Administrador';
-  
+
   // Real stats
   int _studentCount = 0;
   int _teacherCount = 0;
@@ -33,7 +33,8 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
   Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final snapshot = await FirebaseDatabase.instance.ref('users/${user.uid}').get();
+      final snapshot =
+          await FirebaseDatabase.instance.ref('users/${user.uid}').get();
       if (mounted && snapshot.exists) {
         final data = Map<String, dynamic>.from(snapshot.value as Map);
         setState(() {
@@ -43,9 +44,11 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
 
         // Mensaje de bienvenida
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) UiHelpers.showSnackBar(context, '¡Bienvenido(a), Admin $_userName!');
+          if (mounted)
+            UiHelpers.showSnackBar(
+                context, '¡Bienvenido(a), Admin $_userName!');
         });
-        
+
         await _fetchRealStats();
       }
     }
@@ -60,7 +63,7 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
         int students = 0;
         int teachers = 0;
         final data = usersSnapshot.value as Map<dynamic, dynamic>;
-        
+
         data.forEach((key, value) {
           if (value['campus'] == _campus) {
             final role = value['role']?.toString();
@@ -91,56 +94,64 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
       child: Column(
         children: [
           WelcomeHeader(
-            userName: _userName, 
+            userName: _userName,
             role: 'ADMIN PLANTEL',
             subtitle: _campus != null ? 'Sede: $_campus' : 'Cargando sede...',
           ),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Estado del Plantel', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Estado del Plantel',
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
-                
                 _isLoadingStats
-                  ? const LinearProgressIndicator()
-                  : GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: MediaQuery.of(context).size.width > 600 ? 2 : 1,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 2.5,
-                      children: [
-                        _buildStatCard('Alumnos Registrados', '$_studentCount', Icons.people, Colors.blue),
-                        _buildStatCard('Académicas Activas', '$_teacherCount', Icons.school, Colors.teal),
-                      ],
-                    ),
-                
+                    ? const LinearProgressIndicator()
+                    : GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount:
+                            MediaQuery.of(context).size.width > 600 ? 2 : 1,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 2.5,
+                        children: [
+                          _buildStatCard('Alumnos Registrados',
+                              '$_studentCount', Icons.people, Colors.blue),
+                          _buildStatCard('Académicas Activas', '$_teacherCount',
+                              Icons.school, Colors.teal),
+                        ],
+                      ),
                 const SizedBox(height: 32),
                 Row(
                   children: [
                     Icon(Icons.campaign, color: theme.colorScheme.primary),
                     const SizedBox(width: 8),
-                    Text('Avisos de tu Plantel', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Text('Avisos de tu Plantel',
+                        style: theme.textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold)),
                   ],
                 ),
                 const SizedBox(height: 16),
-
                 StreamBuilder<List<AnnouncementModel>>(
-                  stream: _announcementService.getAnnouncementsStream(_campus, false),
+                  stream: _announcementService.getAnnouncementsStream(
+                      _campus, false),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                    if (snapshot.connectionState == ConnectionState.waiting)
+                      return const Center(child: CircularProgressIndicator());
                     final announcements = snapshot.data ?? [];
-                    if (announcements.isEmpty) return const Text("No hay avisos recientes publicados por ti.");
+                    if (announcements.isEmpty)
+                      return const Text(
+                          "No hay avisos recientes publicados por ti.");
 
                     return ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: announcements.length,
-                      itemBuilder: (context, index) => AnnouncementCard(announcement: announcements[index]),
+                      itemBuilder: (context, index) =>
+                          AnnouncementCard(announcement: announcements[index]),
                     );
                   },
                 ),
@@ -153,7 +164,8 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, String value, IconData icon, Color color) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -166,7 +178,8 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+                color: color.withOpacity(0.1), shape: BoxShape.circle),
             child: Icon(icon, color: color),
           ),
           const SizedBox(width: 16),
@@ -174,8 +187,11 @@ class _CampusAdminHomeScreenState extends State<CampusAdminHomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(value,
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(label,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
             ],
           )
         ],

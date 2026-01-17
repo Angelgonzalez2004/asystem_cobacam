@@ -118,7 +118,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     const SizedBox(height: 32),
                     Container(
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withOpacity(0.3),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: TextField(
@@ -127,9 +128,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         style: TextStyle(color: theme.colorScheme.onSurface),
                         decoration: InputDecoration(
                           labelText: 'Correo Electrónico',
-                          prefixIcon: Icon(Icons.email_outlined, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                          prefixIcon: Icon(Icons.email_outlined,
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.5)),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 16),
                         ),
                       ),
                     ),

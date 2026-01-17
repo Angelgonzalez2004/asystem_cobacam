@@ -29,17 +29,20 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final snapshot = await FirebaseDatabase.instance.ref('users/${user.uid}').get();
+      final snapshot =
+          await FirebaseDatabase.instance.ref('users/${user.uid}').get();
       if (mounted && snapshot.exists) {
         final data = Map<String, dynamic>.from(snapshot.value as Map);
         setState(() {
           _campus = data['campus'];
           _userName = data['fullName'] ?? 'Estudiante';
         });
-        
+
         // Mensaje de bienvenida sutil (Toast)
         Future.delayed(const Duration(milliseconds: 500), () {
-           if(mounted) UiHelpers.showSnackBar(context, '¡Bienvenido de vuelta, $_userName!');
+          if (mounted)
+            UiHelpers.showSnackBar(
+                context, '¡Bienvenido de vuelta, $_userName!');
         });
       }
     }
@@ -62,11 +65,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               WelcomeHeader(
-                userName: _userName, 
+                userName: _userName,
                 role: 'ALUMNO',
                 subtitle: _campus != null ? 'Plantel: $_campus' : null,
               ),
-
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
@@ -74,7 +76,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   children: [
                     Text(
                       'Mis Herramientas',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
                     GridView.count(
@@ -91,7 +96,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           icon: Icons.grade_rounded,
                           label: 'Calificaciones',
                           color: Colors.blue.shade600,
-                          onTap: () => UiHelpers.showSnackBar(context, 'Módulo de calificaciones próximamente'),
+                          onTap: () => UiHelpers.showSnackBar(
+                              context, 'Módulo de calificaciones próximamente'),
                         ),
                         _buildDashboardCard(
                           context,
@@ -99,7 +105,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           icon: Icons.schedule_rounded,
                           label: 'Horario',
                           color: Colors.teal.shade500,
-                          onTap: () => UiHelpers.showSnackBar(context, 'Tu horario se está actualizando...'),
+                          onTap: () => UiHelpers.showSnackBar(
+                              context, 'Tu horario se está actualizando...'),
                         ),
                         _buildDashboardCard(
                           context,
@@ -107,7 +114,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           icon: Icons.badge_rounded,
                           label: 'Credencial',
                           color: Colors.orange.shade500,
-                          onTap: () => UiHelpers.showSnackBar(context, 'Generando credencial digital...'),
+                          onTap: () => UiHelpers.showSnackBar(
+                              context, 'Generando credencial digital...'),
                         ),
                         _buildDashboardCard(
                           context,
@@ -119,16 +127,18 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 32),
-                    
                     Row(
                       children: [
-                        Icon(Icons.feed_rounded, color: Theme.of(context).colorScheme.primary),
+                        Icon(Icons.feed_rounded,
+                            color: Theme.of(context).colorScheme.primary),
                         const SizedBox(width: 8),
                         Text(
                           'Muro Informativo',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -136,15 +146,19 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   ],
                 ),
               ),
-
               StreamBuilder<List<AnnouncementModel>>(
-                stream: _announcementService.getAnnouncementsStream(_campus, false),
+                stream:
+                    _announcementService.getAnnouncementsStream(_campus, false),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
+                    return const Center(
+                        child: Padding(
+                            padding: EdgeInsets.all(20),
+                            child: CircularProgressIndicator()));
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Padding(
+                    return const Center(
+                        child: Padding(
                       padding: EdgeInsets.all(20.0),
                       child: Text("No hay avisos recientes de la dirección."),
                     ));
@@ -156,12 +170,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
-                      return AnnouncementCard(announcement: snapshot.data![index]);
+                      return AnnouncementCard(
+                          announcement: snapshot.data![index]);
                     },
                   );
                 },
               ),
-              
               const SizedBox(height: 40),
             ],
           ),

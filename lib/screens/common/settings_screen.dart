@@ -1,5 +1,7 @@
 import 'package:asystem_cobacam/providers/theme_provider.dart';
+import 'package:asystem_cobacam/services/lock_service.dart';
 import 'package:asystem_cobacam/services/session_service.dart';
+import 'package:asystem_cobacam/screens/common/setup_pin_screen.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -35,8 +37,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) {
         setState(() {
           // Si packageInfo devuelve valores vacíos (común en web si no se configura), usamos defaults
-          final version = packageInfo.version.isEmpty ? '1.0.0' : packageInfo.version;
-          final build = packageInfo.buildNumber.isEmpty ? '1' : packageInfo.buildNumber;
+          final version =
+              packageInfo.version.isEmpty ? '1.0.0' : packageInfo.version;
+          final build =
+              packageInfo.buildNumber.isEmpty ? '1' : packageInfo.buildNumber;
           _appVersion = 'v$version ($build)';
         });
       }
@@ -56,7 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     try {
       _currentDeviceId = await SessionService().getCurrentDeviceId();
-      
+
       // Escuchar cambios en tiempo real en las sesiones
       FirebaseDatabase.instance
           .ref('users/${user.uid}/sessions')
@@ -65,20 +69,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (!mounted) return;
         final data = event.snapshot.value;
         final List<Map<String, dynamic>> sessions = [];
-        
+
         if (data != null && data is Map) {
-           data.forEach((key, value) {
-             final session = Map<String, dynamic>.from(value as Map);
-             session['key'] = key;
-             sessions.add(session);
-           });
+          data.forEach((key, value) {
+            final session = Map<String, dynamic>.from(value as Map);
+            session['key'] = key;
+            sessions.add(session);
+          });
         }
-        
+
         // Ordenar: Actual primero, luego por fecha reciente
         sessions.sort((a, b) {
-           if (a['deviceId'] == _currentDeviceId) return -1;
-           if (b['deviceId'] == _currentDeviceId) return 1;
-           return (b['lastActive'] ?? 0).compareTo(a['lastActive'] ?? 0);
+          if (a['deviceId'] == _currentDeviceId) return -1;
+          if (b['deviceId'] == _currentDeviceId) return 1;
+          return (b['lastActive'] ?? 0).compareTo(a['lastActive'] ?? 0);
         });
 
         setState(() {
@@ -97,11 +101,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('¿Cerrar sesión en este dispositivo?'),
-        content: Text('Se desconectará la cuenta en "$modelName". Si no reconoces este dispositivo, cambia tu contraseña inmediatamente.'),
+        content: Text(
+            'Se desconectará la cuenta en "$modelName". Si no reconoces este dispositivo, cambia tu contraseña inmediatamente.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
           TextButton(
-            onPressed: () => Navigator.pop(context, true), 
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Desconectar'),
           ),
@@ -112,16 +119,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (confirm == true) {
       try {
         await SessionService().revokeSession(deviceKey);
-        if (mounted) UiHelpers.showSnackBar(context, 'Dispositivo desconectado.');
+        if (mounted)
+          UiHelpers.showSnackBar(context, 'Dispositivo desconectado.');
       } catch (e) {
-        if (mounted) UiHelpers.showSnackBar(context, 'Error al desconectar: $e', isError: true);
+        if (mounted)
+          UiHelpers.showSnackBar(context, 'Error al desconectar: $e',
+              isError: true);
       }
     }
   }
 
   Future<void> _showChangePasswordDialog() async {
     final emailController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) {
@@ -130,7 +140,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Se enviará un enlace a tu correo para cambiar la contraseña de forma segura.'),
+              const Text(
+                  'Se enviará un enlace a tu correo para cambiar la contraseña de forma segura.'),
               const SizedBox(height: 16),
               TextField(
                 controller: emailController,
@@ -151,10 +162,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: () async {
                 if (emailController.text.trim().isEmpty) return;
                 try {
-                  await FirebaseAuth.instance.sendPasswordResetEmail(email: emailController.text.trim());
+                  await FirebaseAuth.instance.sendPasswordResetEmail(
+                      email: emailController.text.trim());
                   if (context.mounted) {
                     Navigator.pop(context);
-                    UiHelpers.showSnackBar(context, 'Correo enviado. Revisa tu bandeja de entrada.');
+                    UiHelpers.showSnackBar(context,
+                        'Correo enviado. Revisa tu bandeja de entrada.');
                   }
                 } catch (e) {
                   if (context.mounted) {
@@ -195,7 +208,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (confirm == true) {
       if (mounted) {
-          UiHelpers.showSnackBar(context, 'Por seguridad, contacta al administrador para eliminar tu cuenta.', isError: true);
+        UiHelpers.showSnackBar(context,
+            'Por seguridad, contacta al administrador para eliminar tu cuenta.',
+            isError: true);
       }
     }
   }
@@ -204,12 +219,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final lockService = Provider.of<LockService>(context);
 
     return Scaffold(
-      appBar: widget.isEmbedded 
-          ? null 
+      appBar: widget.isEmbedded
+          ? null
           : AppBar(
-              title: const Text('Ajustes del Sistema', style: TextStyle(fontWeight: FontWeight.bold)),
+              title: const Text('Ajustes del Sistema',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               centerTitle: true,
               elevation: 0,
               backgroundColor: theme.scaffoldBackgroundColor,
@@ -222,34 +239,76 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.all(20),
         children: [
           _buildSectionHeader(theme, 'Seguridad de la Cuenta'),
-          
+
+          _buildSettingsTile(
+            context,
+            icon: Icons.phonelink_lock_rounded,
+            title: 'Bloqueo de Aplicación',
+            subtitle: lockService.isPinSet
+                ? 'PIN configurado'
+                : 'Configurar PIN de bloqueo',
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const SetupPinScreen()));
+            },
+          ),
+          if (lockService.isPinSet)
+            _buildSettingsTile(
+              context,
+              icon: Icons.lock_clock_rounded,
+              title: 'Bloquear Ahora',
+              subtitle: 'Bloquea la aplicación inmediatamente',
+              onTap: () {
+                lockService.lock();
+              },
+            ),
+
           // --- ACTIVE SESSIONS LIST ---
           if (_isLoadingSessions)
-             const Center(child: Padding(padding: EdgeInsets.all(20.0), child: CircularProgressIndicator()))
+            const Center(
+                child: Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: CircularProgressIndicator()))
           else if (_activeSessions.isEmpty)
-             _buildSettingsTile(context, icon: Icons.error_outline, title: 'No se pudo cargar la información')
-          else 
+            _buildSettingsTile(context,
+                icon: Icons.error_outline,
+                title: 'No se pudo cargar la información')
+          else
             ..._activeSessions.map((session) {
               final isCurrent = session['deviceId'] == _currentDeviceId;
-              final lastActive = session['lastActive'] != null 
-                  ? DateTime.fromMillisecondsSinceEpoch(session['lastActive']) 
+              final lastActive = session['lastActive'] != null
+                  ? DateTime.fromMillisecondsSinceEpoch(session['lastActive'])
                   : DateTime.now();
-              final formattedDate = DateFormat('dd/MM HH:mm').format(lastActive);
-              
+              final formattedDate =
+                  DateFormat('dd/MM HH:mm').format(lastActive);
+
               IconData deviceIcon = Icons.devices_other;
-              if (session['platform'].toString().contains('Android')) deviceIcon = Icons.phone_android;
-              if (session['platform'].toString().contains('iOS')) deviceIcon = Icons.phone_iphone;
-              if (session['platform'].toString().contains('Web')) deviceIcon = Icons.web;
-              if (session['platform'].toString().contains('Windows') || session['platform'].toString().contains('Mac')) deviceIcon = Icons.computer;
+              if (session['platform'].toString().contains('Android'))
+                deviceIcon = Icons.phone_android;
+              if (session['platform'].toString().contains('iOS'))
+                deviceIcon = Icons.phone_iphone;
+              if (session['platform'].toString().contains('Web'))
+                deviceIcon = Icons.web;
+              if (session['platform'].toString().contains('Windows') ||
+                  session['platform'].toString().contains('Mac'))
+                deviceIcon = Icons.computer;
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
-                  color: isCurrent ? theme.colorScheme.primary.withOpacity(0.05) : theme.cardColor,
+                  color: isCurrent
+                      ? theme.colorScheme.primary.withOpacity(0.05)
+                      : theme.cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: isCurrent ? Border.all(color: theme.colorScheme.primary.withOpacity(0.3)) : null,
+                  border: isCurrent
+                      ? Border.all(
+                          color: theme.colorScheme.primary.withOpacity(0.3))
+                      : null,
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4)),
                   ],
                 ),
                 child: ListTile(
@@ -258,62 +317,79 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: isCurrent ? theme.colorScheme.primary : Colors.grey.withOpacity(0.1),
+                          color: isCurrent
+                              ? theme.colorScheme.primary
+                              : Colors.grey.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(deviceIcon, color: isCurrent ? Colors.white : Colors.grey),
+                        child: Icon(deviceIcon,
+                            color: isCurrent ? Colors.white : Colors.grey),
                       ),
                       if (isCurrent)
                         Positioned(
                           right: 0,
                           bottom: 0,
                           child: Container(
-                            width: 12, height: 12,
+                            width: 12,
+                            height: 12,
                             decoration: BoxDecoration(
                               color: Colors.greenAccent,
                               shape: BoxShape.circle,
-                              border: Border.all(color: theme.cardColor, width: 2),
+                              border:
+                                  Border.all(color: theme.cardColor, width: 2),
                             ),
                           ),
                         )
                     ],
                   ),
-                  title: Text(session['model'] ?? 'Dispositivo', style: const TextStyle(fontWeight: FontWeight.w600)),
+                  title: Text(session['model'] ?? 'Dispositivo',
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isCurrent ? 'Este dispositivo • Activo ahora' : 'Última vez: $formattedDate • ${session['platform']}',
-                        style: TextStyle(fontSize: 12, color: isCurrent ? theme.colorScheme.primary : Colors.grey),
+                        isCurrent
+                            ? 'Este dispositivo • Activo ahora'
+                            : 'Última vez: $formattedDate • ${session['platform']}',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: isCurrent
+                                ? theme.colorScheme.primary
+                                : Colors.grey),
                       ),
                       if (session['location'] != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 4.0),
                           child: Row(
                             children: [
-                              Icon(Icons.location_on, size: 12, color: Colors.grey[600]),
+                              Icon(Icons.location_on,
+                                  size: 12, color: Colors.grey[600]),
                               const SizedBox(width: 4),
                               Text(
                                 session['location'],
-                                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey[600]),
                               ),
                             ],
                           ),
                         ),
                     ],
                   ),
-                  trailing: isCurrent 
-                      ? null 
+                  trailing: isCurrent
+                      ? null
                       : IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-                          onPressed: () => _revokeSession(session['key'], session['model']),
+                          icon: const Icon(Icons.delete_outline_rounded,
+                              color: Colors.red),
+                          onPressed: () =>
+                              _revokeSession(session['key'], session['model']),
                           tooltip: 'Desconectar dispositivo',
                         ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
               );
             }),
-          
+
           const SizedBox(height: 20),
           _buildSettingsTile(
             context,
@@ -333,7 +409,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: themeProvider.themeMode == ThemeMode.dark,
               onChanged: (val) {
-                themeProvider.setThemeMode(val ? ThemeMode.dark : ThemeMode.light);
+                themeProvider
+                    .setThemeMode(val ? ThemeMode.dark : ThemeMode.light);
               },
               activeColor: theme.colorScheme.primary,
             ),
@@ -350,14 +427,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 40),
           OutlinedButton.icon(
-             onPressed: _handleDeleteAccount,
-             icon: const Icon(Icons.delete_forever_rounded),
-             label: const Text('Solicitar Eliminación de Cuenta'),
-             style: OutlinedButton.styleFrom(
-               foregroundColor: Colors.red,
-               side: const BorderSide(color: Colors.red),
-               padding: const EdgeInsets.symmetric(vertical: 16),
-             ),
+            onPressed: _handleDeleteAccount,
+            icon: const Icon(Icons.delete_forever_rounded),
+            label: const Text('Solicitar Eliminación de Cuenta'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
           ),
         ],
       ),
@@ -412,9 +489,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: subtitle != null
-            ? Text(subtitle, style: TextStyle(color: theme.textTheme.bodySmall?.color?.withOpacity(0.7)))
+            ? Text(subtitle,
+                style: TextStyle(
+                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.7)))
             : null,
-        trailing: trailing ?? (onTap != null ? const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey) : null),
+        trailing: trailing ??
+            (onTap != null
+                ? const Icon(Icons.arrow_forward_ios_rounded,
+                    size: 16, color: Colors.grey)
+                : null),
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

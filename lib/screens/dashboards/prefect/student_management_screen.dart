@@ -17,7 +17,8 @@ class StudentManagementScreen extends StatefulWidget {
   const StudentManagementScreen({super.key});
 
   @override
-  State<StudentManagementScreen> createState() => _StudentManagementScreenState();
+  State<StudentManagementScreen> createState() =>
+      _StudentManagementScreenState();
 }
 
 class _StudentManagementScreenState extends State<StudentManagementScreen>
@@ -26,7 +27,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
   late final ConnectivityService _connectivityService;
   late final AppSettingsService _appSettingsService;
   late TabController _tabController;
-  
+
   // Search Controller
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -47,10 +48,12 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
     _searchController.addListener(() {
       setState(() => _searchQuery = _searchController.text.toLowerCase());
     });
-    
+
     _hiveService = Provider.of<HiveService>(context, listen: false);
-    _connectivityService = Provider.of<ConnectivityService>(context, listen: false);
-    _appSettingsService = AppSettingsService(_hiveService, _connectivityService);
+    _connectivityService =
+        Provider.of<ConnectivityService>(context, listen: false);
+    _appSettingsService =
+        AppSettingsService(_hiveService, _connectivityService);
     _initData();
   }
 
@@ -59,14 +62,19 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('No hay usuario autenticado.');
 
-      final userProfileSnapshot = await FirebaseDatabase.instance.ref('users/${user.uid}').get();
-      if (!userProfileSnapshot.exists) throw Exception('No se encontró el perfil del usuario.');
+      final userProfileSnapshot =
+          await FirebaseDatabase.instance.ref('users/${user.uid}').get();
+      if (!userProfileSnapshot.exists)
+        throw Exception('No se encontró el perfil del usuario.');
 
-      final userData = Map<String, dynamic>.from(userProfileSnapshot.value as Map);
+      final userData =
+          Map<String, dynamic>.from(userProfileSnapshot.value as Map);
       final campus = userData['campus'];
-      if (campus == null) throw Exception('El usuario no tiene un plantel asignado.');
+      if (campus == null)
+        throw Exception('El usuario no tiene un plantel asignado.');
 
-      final dynamicSchoolCycle = await _appSettingsService.getCurrentSchoolCycleId();
+      final dynamicSchoolCycle =
+          await _appSettingsService.getCurrentSchoolCycleId();
       final allCycles = await _appSettingsService.getAllSchoolCycles();
 
       if (!mounted) return;
@@ -78,16 +86,18 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
       });
 
       _loadStudentsForCycle(_selectedFilterSchoolCycle!);
-
     } catch (e) {
-      if (mounted) UiHelpers.showSnackBar(context, 'Error: ${e.toString()}', isError: true);
+      if (mounted)
+        UiHelpers.showSnackBar(context, 'Error: ${e.toString()}',
+            isError: true);
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _loadStudentsForCycle(String cycleId) {
     _studentsSubscription?.cancel();
-    _studentsRef = FirebaseDatabase.instance.ref('planteles/$_campus/students/$cycleId');
+    _studentsRef =
+        FirebaseDatabase.instance.ref('planteles/$_campus/students/$cycleId');
 
     _studentsSubscription = _studentsRef!.onValue.listen((event) {
       final newStudents = <Student>[];
@@ -103,7 +113,9 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
         });
       }
     }, onError: (error) {
-      if (mounted) UiHelpers.showSnackBar(context, 'Error al cargar alumnos.', isError: true);
+      if (mounted)
+        UiHelpers.showSnackBar(context, 'Error al cargar alumnos.',
+            isError: true);
       if (mounted) setState(() => _isLoading = false);
     });
   }
@@ -125,7 +137,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
     final filteredList = _allStudents.where((s) {
       if (_searchQuery.isEmpty) return true;
       return s.fullName.toLowerCase().contains(_searchQuery) ||
-             s.studentId.toLowerCase().contains(_searchQuery);
+          s.studentId.toLowerCase().contains(_searchQuery);
     }).toList();
 
     final activeStudents = filteredList.where((s) => s.isActive).toList();
@@ -151,9 +163,12 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                         Container(
                           margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                           decoration: BoxDecoration(
-                            color: isDark ? theme.cardTheme.color : Colors.white,
+                            color:
+                                isDark ? theme.cardTheme.color : Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+                            border: Border.all(
+                                color:
+                                    theme.dividerColor.withValues(alpha: 0.1)),
                           ),
                           child: TabBar(
                             controller: _tabController,
@@ -168,15 +183,17 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                             ],
                           ),
                         ),
-                        
+
                         _buildFilterHeader(theme, isDark),
-                        
+
                         Expanded(
                           child: TabBarView(
                             controller: _tabController,
                             children: [
-                              _buildGroupedStudentList(activeStudents, true, theme, isDark),
-                              _buildGroupedStudentList(inactiveStudents, false, theme, isDark),
+                              _buildGroupedStudentList(
+                                  activeStudents, true, theme, isDark),
+                              _buildGroupedStudentList(
+                                  inactiveStudents, false, theme, isDark),
                             ],
                           ),
                         ),
@@ -197,7 +214,8 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.08)),
+            side: BorderSide(
+                color: theme.colorScheme.primary.withValues(alpha: 0.08)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -211,11 +229,17 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                         decoration: const InputDecoration(
                           labelText: 'Ciclo Escolar',
                           border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          prefixIcon: Icon(Icons.calendar_today_outlined, size: 20),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
+                          prefixIcon:
+                              Icon(Icons.calendar_today_outlined, size: 20),
                         ),
-                        onChanged: (val) => val != null ? _onFilterCycleChanged(val) : null,
-                        items: _availableSchoolCycles.map((c) => DropdownMenuItem(value: c.id, child: Text(c.id))).toList(),
+                        onChanged: (val) =>
+                            val != null ? _onFilterCycleChanged(val) : null,
+                        items: _availableSchoolCycles
+                            .map((c) => DropdownMenuItem(
+                                value: c.id, child: Text(c.id)))
+                            .toList(),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -223,7 +247,12 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                       icon: const Icon(Icons.cloud_upload_outlined),
                       onPressed: () {
                         if (_campus == null) return;
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => StudentExcelImportScreen(campusId: _campus!, currentSchoolCycle: _currentSchoolCycle)));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => StudentExcelImportScreen(
+                                    campusId: _campus!,
+                                    currentSchoolCycle: _currentSchoolCycle)));
                       },
                       tooltip: 'Importar Excel',
                     ),
@@ -236,10 +265,13 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                     labelText: 'Buscar Alumno',
                     hintText: 'Nombre o Matrícula',
                     prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty 
-                      ? IconButton(icon: const Icon(Icons.clear), onPressed: () => _searchController.clear())
-                      : null,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => _searchController.clear())
+                        : null,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
                 ),
@@ -252,16 +284,26 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
   }
 
   // NUEVA IMPLEMENTACIÓN: Lista agrupada por Grupos
-  Widget _buildGroupedStudentList(List<Student> students, bool isActiveList, ThemeData theme, bool isDark) {
+  Widget _buildGroupedStudentList(
+      List<Student> students, bool isActiveList, ThemeData theme, bool isDark) {
     if (students.isEmpty) {
       return Center(
         child: FadeInUp(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(isActiveList ? Icons.people_outline : Icons.person_off_outlined, size: 64, color: Colors.grey.withValues(alpha: 0.3)),
+              Icon(
+                  isActiveList
+                      ? Icons.people_outline
+                      : Icons.person_off_outlined,
+                  size: 64,
+                  color: Colors.grey.withValues(alpha: 0.3)),
               const SizedBox(height: 16),
-              Text(isActiveList ? 'No hay alumnos que coincidan.' : 'No hay alumnos en baja.', style: const TextStyle(color: Colors.grey)),
+              Text(
+                  isActiveList
+                      ? 'No hay alumnos que coincidan.'
+                      : 'No hay alumnos en baja.',
+                  style: const TextStyle(color: Colors.grey)),
             ],
           ),
         ),
@@ -286,7 +328,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
       itemBuilder: (context, index) {
         final groupName = sortedGroupKeys[index];
         final groupList = groupedStudents[groupName]!;
-        
+
         // Ordenar alumnos por nombre dentro del grupo
         groupList.sort((a, b) => a.fullName.compareTo(b.fullName));
 
@@ -297,27 +339,36 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
             margin: const EdgeInsets.only(bottom: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1)),
+              side:
+                  BorderSide(color: theme.dividerColor.withValues(alpha: 0.1)),
             ),
             color: isDark ? theme.cardTheme.color : Colors.white,
             child: Theme(
               // Quitar bordes de ExpansionTile
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              data:
+                  Theme.of(context).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
                 leading: CircleAvatar(
-                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  child: Text(groupName.substring(0, min(2, groupName.length)), 
-                      style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                  backgroundColor:
+                      theme.colorScheme.primary.withValues(alpha: 0.1),
+                  child: Text(groupName.substring(0, min(2, groupName.length)),
+                      style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold)),
                 ),
                 title: Text(
                   'Grupo $groupName',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 subtitle: Text(
                   '${groupList.length} Alumnos',
                   style: TextStyle(color: theme.textTheme.bodySmall?.color),
                 ),
-                children: groupList.map((student) => _buildStudentTile(student, isActiveList, theme)).toList(),
+                children: groupList
+                    .map((student) =>
+                        _buildStudentTile(student, isActiveList, theme))
+                    .toList(),
               ),
             ),
           ),
@@ -328,23 +379,27 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
 
   int min(int a, int b) => a < b ? a : b;
 
-  Widget _buildStudentTile(Student student, bool isActiveList, ThemeData theme) {
+  Widget _buildStudentTile(
+      Student student, bool isActiveList, ThemeData theme) {
     final isFemale = student.gender.toLowerCase() == 'femenino';
-    
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-      leading: Icon(
-        isFemale ? Icons.woman_rounded : Icons.man_rounded, 
-        color: isFemale ? Colors.pink : Colors.blue, 
-        size: 24
-      ),
-      title: Text(student.fullName, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+      leading: Icon(isFemale ? Icons.woman_rounded : Icons.man_rounded,
+          color: isFemale ? Colors.pink : Colors.blue, size: 24),
+      title: Text(student.fullName,
+          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ID: ${student.studentId}', style: const TextStyle(fontSize: 12)),
+          Text('ID: ${student.studentId}',
+              style: const TextStyle(fontSize: 12)),
           if (!isActiveList && student.deactivationReason != null)
-            Text('Baja: ${student.deactivationReason}', style: const TextStyle(color: Colors.red, fontSize: 11, fontStyle: FontStyle.italic)),
+            Text('Baja: ${student.deactivationReason}',
+                style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic)),
         ],
       ),
       trailing: Row(
@@ -357,13 +412,15 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
           ),
           if (isActiveList)
             IconButton(
-              icon: Icon(Icons.person_remove_outlined, color: theme.colorScheme.error, size: 20),
+              icon: Icon(Icons.person_remove_outlined,
+                  color: theme.colorScheme.error, size: 20),
               onPressed: () => _confirmAndDeleteStudent(student),
               tooltip: 'Dar de Baja',
             )
           else
             IconButton(
-              icon: Icon(Icons.person_add_alt_1_outlined, color: theme.colorScheme.secondary, size: 20),
+              icon: Icon(Icons.person_add_alt_1_outlined,
+                  color: theme.colorScheme.secondary, size: 20),
               onPressed: () => _reactivateStudent(student),
               tooltip: 'Reactivar',
             ),
@@ -374,13 +431,23 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
 
   void _openEditForm(Student student) async {
     if (_campus == null) return;
-    await Navigator.push(context, MaterialPageRoute(builder: (context) => StudentFormScreen(student: student, campusId: _campus!, currentSchoolCycle: _currentSchoolCycle)));
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => StudentFormScreen(
+                student: student,
+                campusId: _campus!,
+                currentSchoolCycle: _currentSchoolCycle)));
   }
 
   Future<void> _reactivateStudent(Student student) async {
-    final confirmed = await UiHelpers.showConfirmationDialog(context, title: 'Reactivar Alumno', content: '¿Deseas dar de alta nuevamente a ${student.fullName}?');
+    final confirmed = await UiHelpers.showConfirmationDialog(context,
+        title: 'Reactivar Alumno',
+        content: '¿Deseas dar de alta nuevamente a ${student.fullName}?');
     if (confirmed && _studentsRef != null) {
-      await _studentsRef!.child(student.studentId).update({'isActive': true, 'deactivationReason': null});
+      await _studentsRef!
+          .child(student.studentId)
+          .update({'isActive': true, 'deactivationReason': null});
       if (mounted) UiHelpers.showSnackBar(context, 'Alumno reactivado.');
     }
   }
@@ -413,17 +480,24 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: reasonController,
-                  decoration: const InputDecoration(labelText: 'Motivo (reprobación, personal, etc.)', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                      labelText: 'Motivo (reprobación, personal, etc.)',
+                      border: OutlineInputBorder()),
                   validator: (value) => value!.isEmpty ? 'Requerido' : null,
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancelar')),
+            TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Cancelar')),
             ElevatedButton(
-              onPressed: () => formKey.currentState!.validate() ? Navigator.pop(dialogContext, true) : null,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+              onPressed: () => formKey.currentState!.validate()
+                  ? Navigator.pop(dialogContext, true)
+                  : null,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red, foregroundColor: Colors.white),
               child: const Text('Dar de Baja'),
             ),
           ],
@@ -432,13 +506,18 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
     );
 
     if (confirmed == true) {
-      await _studentsRef!.child(student.studentId).update({'isActive': false, 'deactivationReason': reasonController.text});
+      await _studentsRef!.child(student.studentId).update(
+          {'isActive': false, 'deactivationReason': reasonController.text});
       if (mounted) UiHelpers.showSnackBar(context, 'Baja registrada.');
     }
   }
 
   void _showAddStudentDialog() async {
     if (_campus == null) return;
-    await Navigator.push(context, MaterialPageRoute(builder: (context) => StudentFormScreen(campusId: _campus!, currentSchoolCycle: _currentSchoolCycle)));
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => StudentFormScreen(
+                campusId: _campus!, currentSchoolCycle: _currentSchoolCycle)));
   }
 }

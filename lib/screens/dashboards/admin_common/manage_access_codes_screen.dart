@@ -13,7 +13,8 @@ class ManageAccessCodesScreen extends StatefulWidget {
   });
 
   @override
-  State<ManageAccessCodesScreen> createState() => _ManageAccessCodesScreenState();
+  State<ManageAccessCodesScreen> createState() =>
+      _ManageAccessCodesScreenState();
 }
 
 class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
@@ -28,7 +29,8 @@ class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline_rounded),
-            onPressed: () => UiHelpers.showSnackBar(context, 'Estos códigos son fijos por ciclo escolar.'),
+            onPressed: () => UiHelpers.showSnackBar(
+                context, 'Estos códigos son fijos por ciclo escolar.'),
           )
         ],
       ),
@@ -38,13 +40,15 @@ class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
 
   // Vista para Admin de Plantel (Solo sus roles)
   Widget _buildCampusView() {
-    if (widget.campus == null) return const Center(child: Text("Identificando plantel..."));
+    if (widget.campus == null)
+      return const Center(child: Text("Identificando plantel..."));
 
     return StreamBuilder<Map<dynamic, dynamic>>(
       stream: _codeService.getCampusCodesStream(widget.campus!),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        
+        if (snapshot.connectionState == ConnectionState.waiting)
+          return const Center(child: CircularProgressIndicator());
+
         final codes = snapshot.data ?? {};
         if (codes.isEmpty) return _buildNoDataPlaceholder();
 
@@ -63,10 +67,11 @@ class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
     return StreamBuilder<Map<dynamic, dynamic>>(
       stream: _codeService.getAllCodesStream(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        
+        if (snapshot.connectionState == ConnectionState.waiting)
+          return const Center(child: CircularProgressIndicator());
+
         final allData = snapshot.data ?? {};
-        
+
         // Convertir a lista y ordenar alfabéticamente
         final sortedKeys = allData.keys.toList()..sort();
 
@@ -76,7 +81,12 @@ class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
             // SECCIÓN ADMINISTRADOR GENERAL (SOLO PARA ADMIN GENERAL)
             _buildGeneralAdminSection(),
             const SizedBox(height: 24),
-            const Text('LLAVES POR PLANTEL', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey, letterSpacing: 1.2)),
+            const Text('LLAVES POR PLANTEL',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: Colors.grey,
+                    letterSpacing: 1.2)),
             const SizedBox(height: 12),
             if (allData.isEmpty) _buildNoDataPlaceholder(),
             ...sortedKeys.map((campusName) {
@@ -93,26 +103,44 @@ class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
     final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [theme.colorScheme.primary, theme.colorScheme.secondary]),
+        gradient: LinearGradient(
+            colors: [theme.colorScheme.primary, theme.colorScheme.secondary]),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+              color: theme.colorScheme.primary.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4))
+        ],
       ),
       child: ExpansionTile(
         initiallyExpanded: true,
         iconColor: Colors.white,
         collapsedIconColor: Colors.white,
-        title: const Text('ADMINISTRACIÓN GENERAL', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        leading: const Icon(Icons.admin_panel_settings_rounded, color: Colors.white),
+        title: const Text('ADMINISTRACIÓN GENERAL',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        leading:
+            const Icon(Icons.admin_panel_settings_rounded, color: Colors.white),
         children: [
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12)),
             child: const ListTile(
               dense: true,
-              title: Text('Acceso Administrador General', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              subtitle: Text('Llave maestra del sistema', style: TextStyle(color: Colors.white70)),
-              trailing: Text('COBACAM_SUPER_2025', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontFamily: 'monospace', fontSize: 14)),
+              title: Text('Acceso Administrador General',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+              subtitle: Text('Llave maestra del sistema',
+                  style: TextStyle(color: Colors.white70)),
+              trailing: Text('COBACAM_SUPER_2025',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'monospace',
+                      fontSize: 14)),
             ),
           )
         ],
@@ -120,9 +148,10 @@ class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
     );
   }
 
-  Widget _buildCampusSection(String campusName, Map codes, {bool isOpen = false}) {
+  Widget _buildCampusSection(String campusName, Map codes,
+      {bool isOpen = false}) {
     final theme = Theme.of(context);
-    
+
     // Preparar lista de widgets
     List<Widget> children = codes.entries.map((e) {
       return Container(
@@ -133,7 +162,8 @@ class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
         ),
         child: ListTile(
           dense: true,
-          title: Text(e.key.toString(), style: const TextStyle(fontWeight: FontWeight.w600)),
+          title: Text(e.key.toString(),
+              style: const TextStyle(fontWeight: FontWeight.w600)),
           subtitle: const Text('Código de acceso oficial'),
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -143,7 +173,10 @@ class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
             ),
             child: Text(
               e.value.toString(),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'monospace'),
             ),
           ),
         ),
@@ -158,16 +191,25 @@ class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4))
+        ],
       ),
       child: ExpansionTile(
         initiallyExpanded: isOpen,
         shape: const Border(),
-        title: Text(campusName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(campusName,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         leading: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.1), shape: BoxShape.circle),
-          child: Icon(Icons.school_rounded, color: theme.colorScheme.primary, size: 20),
+          decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.1),
+              shape: BoxShape.circle),
+          child: Icon(Icons.school_rounded,
+              color: theme.colorScheme.primary, size: 20),
         ),
         children: children,
       ),
@@ -179,9 +221,11 @@ class _ManageAccessCodesScreenState extends State<ManageAccessCodesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.vpn_key_off_outlined, size: 64, color: Colors.grey.shade300),
+          Icon(Icons.vpn_key_off_outlined,
+              size: 64, color: Colors.grey.shade300),
           const SizedBox(height: 16),
-          const Text('No hay llaves registradas en la nube.', style: TextStyle(color: Colors.grey)),
+          const Text('No hay llaves registradas en la nube.',
+              style: TextStyle(color: Colors.grey)),
         ],
       ),
     );

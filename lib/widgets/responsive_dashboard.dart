@@ -39,7 +39,7 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
     _currentTitle = 'Dashboard ${widget.role}';
     _initUserData();
   }
-  
+
   void _initUserData() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -48,7 +48,8 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
       _userRef!.onValue.listen((event) {
         if (event.snapshot.exists && event.snapshot.value != null) {
           try {
-            final data = Map<Object?, Object?>.from(event.snapshot.value as Map);
+            final data =
+                Map<Object?, Object?>.from(event.snapshot.value as Map);
             if (mounted) {
               setState(() {
                 _userName = data['fullName']?.toString() ?? 'Usuario';
@@ -77,19 +78,21 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
         _activeSubScreen = const SettingsScreen(isEmbedded: true);
         _currentTitle = 'Ajustes';
       } else if (route == 'manage_announcements') {
-        Navigator.push(context, SlideRightRoute(
-          page: ManageAnnouncementsScreen(
-            campus: _userCampus,
-            isGeneralAdmin: _userRole.contains('General'),
-          )
-        ));
+        Navigator.push(
+            context,
+            SlideRightRoute(
+                page: ManageAnnouncementsScreen(
+              campus: _userCampus,
+              isGeneralAdmin: _userRole.contains('General'),
+            )));
       } else if (route == 'manage_access_codes') {
-        Navigator.push(context, SlideRightRoute(
-          page: ManageAccessCodesScreen(
-            campus: _userCampus,
-            isGeneralAdmin: _userRole.contains('General'),
-          )
-        ));
+        Navigator.push(
+            context,
+            SlideRightRoute(
+                page: ManageAccessCodesScreen(
+              campus: _userCampus,
+              isGeneralAdmin: _userRole.contains('General'),
+            )));
       }
     });
   }
@@ -123,7 +126,9 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
         onNavigate: _onNavigate,
       ),
       body: FadeInUp(
-        key: ValueKey(_activeSubScreen == null ? 'home' : _activeSubScreen.runtimeType.toString()),
+        key: ValueKey(_activeSubScreen == null
+            ? 'home'
+            : _activeSubScreen.runtimeType.toString()),
         child: _activeSubScreen ?? widget.body,
       ),
     );

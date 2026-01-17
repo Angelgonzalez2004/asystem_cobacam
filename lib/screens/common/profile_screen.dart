@@ -18,7 +18,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final User? _currentUser = FirebaseAuth.instance.currentUser;
   final DatabaseReference _userRef = FirebaseDatabase.instance.ref('users');
-  
+
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isEditing = false;
@@ -55,7 +55,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _userData = data;
           _nameController.text = data['fullName'] ?? '';
-          _phoneController.text = data['phone'] ?? ''; // Assuming phone field exists or adding it
+          _phoneController.text =
+              data['phone'] ?? ''; // Assuming phone field exists or adding it
           _locationController.text = data['location'] ?? '';
           _isLoading = false;
         });
@@ -73,8 +74,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _newProfileImage = image;
       });
-      // Optionally save immediately or wait for "Save" button. 
-      // For UX, let's wait for explicit save to avoid accidental uploads, 
+      // Optionally save immediately or wait for "Save" button.
+      // For UX, let's wait for explicit save to avoid accidental uploads,
       // but showing preview is key.
     }
   }
@@ -91,12 +92,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final storageRef = FirebaseStorage.instance
             .ref()
             .child('profile_pictures/${_currentUser.uid}');
-        
+
         if (kIsWeb) {
-            final bytes = await _newProfileImage!.readAsBytes();
-            await storageRef.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+          final bytes = await _newProfileImage!.readAsBytes();
+          await storageRef.putData(
+              bytes, SettableMetadata(contentType: 'image/jpeg'));
         } else {
-            await storageRef.putFile(File(_newProfileImage!.path));
+          await storageRef.putFile(File(_newProfileImage!.path));
         }
         imageUrl = await storageRef.getDownloadURL();
       }
@@ -108,7 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'location': _locationController.text.trim(),
         'profileImageUrl': imageUrl,
       };
-      
+
       await _userRef.child(_currentUser.uid).update(updateData);
 
       // 3. Update Local State
@@ -122,9 +124,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         UiHelpers.showSnackBar(context, '¡Perfil actualizado con éxito!');
         // Opcional: Podrías forzar un refresh del Drawer aquí si usas un Provider
       }
-
     } catch (e) {
-      if (mounted) UiHelpers.showSnackBar(context, 'Error al actualizar: $e', isError: true);
+      if (mounted)
+        UiHelpers.showSnackBar(context, 'Error al actualizar: $e',
+            isError: true);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -135,7 +138,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final theme = Theme.of(context);
 
     if (_isLoading) {
-      return Scaffold(body: Center(child: CircularProgressIndicator(color: theme.colorScheme.primary)));
+      return Scaffold(
+          body: Center(
+              child:
+                  CircularProgressIndicator(color: theme.colorScheme.primary)));
     }
 
     return Scaffold(
@@ -150,12 +156,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             backgroundColor: theme.colorScheme.primary,
             elevation: 0,
             automaticallyImplyLeading: !widget.isEmbedded,
-            leading: widget.isEmbedded 
-              ? null 
-              : IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
+            leading: widget.isEmbedded
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
             actions: [
               if (!_isEditing)
                 IconButton(
@@ -214,7 +221,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 backgroundColor: Colors.grey[200],
                                 backgroundImage: _getProfileImage(),
                                 child: _getProfileImage() == null
-                                    ? Icon(Icons.person, size: 60, color: Colors.grey[400])
+                                    ? Icon(Icons.person,
+                                        size: 60, color: Colors.grey[400])
                                     : null,
                               ),
                             ),
@@ -229,9 +237,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     decoration: BoxDecoration(
                                       color: theme.colorScheme.secondary,
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2),
+                                      border: Border.all(
+                                          color: Colors.white, width: 2),
                                     ),
-                                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                                    child: const Icon(Icons.camera_alt,
+                                        color: Colors.white, size: 20),
                                   ),
                                 ),
                               ),
@@ -268,9 +278,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Container(
               decoration: BoxDecoration(
                 color: theme.scaffoldBackgroundColor,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(30)),
               ),
-              transform: Matrix4.translationValues(0, -20, 0), // Solape negativo
+              transform:
+                  Matrix4.translationValues(0, -20, 0), // Solape negativo
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,7 +314,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 32),
                   _buildSectionHeader(theme, 'Datos Institucionales'),
                   const SizedBox(height: 16),
-                  
+
                   // Read-only fields
                   _buildReadOnlyField(
                     label: 'Correo Institucional',
@@ -337,10 +349,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   if (_userData['role'] == 'Alumno') ...[
                     const SizedBox(height: 16),
                     _buildReadOnlyField(
-                        label: 'Fecha de Nacimiento',
-                        value: _userData['dateOfBirth'] ?? 'N/A',
-                        icon: Icons.cake_outlined,
-                        theme: theme,
+                      label: 'Fecha de Nacimiento',
+                      value: _userData['dateOfBirth'] ?? 'N/A',
+                      icon: Icons.cake_outlined,
+                      theme: theme,
                     ),
                   ],
 
@@ -355,12 +367,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.colorScheme.primary,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
                           elevation: 4,
                         ),
                         child: _isSaving
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text('GUARDAR CAMBIOS', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+                            ? const CircularProgressIndicator(
+                                color: Colors.white)
+                            : const Text('GUARDAR CAMBIOS',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.0)),
                       ),
                     ),
                   const SizedBox(height: 40),
@@ -380,7 +397,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       return FileImage(File(_newProfileImage!.path));
     }
-    if (_userData['profileImageUrl'] != null && _userData['profileImageUrl'].isNotEmpty) {
+    if (_userData['profileImageUrl'] != null &&
+        _userData['profileImageUrl'].isNotEmpty) {
       return NetworkImage(_userData['profileImageUrl']);
     }
     return null;
@@ -399,7 +417,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             letterSpacing: 1.2,
           ),
         ),
-        Divider(color: theme.colorScheme.primary.withOpacity(0.2), thickness: 1),
+        Divider(
+            color: theme.colorScheme.primary.withOpacity(0.2), thickness: 1),
       ],
     );
   }
@@ -414,28 +433,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: enabled 
-          ? theme.colorScheme.surfaceContainerHighest.withOpacity(0.3) 
-          : theme.scaffoldBackgroundColor,
+        color: enabled
+            ? theme.colorScheme.surfaceContainerHighest.withOpacity(0.3)
+            : theme.scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: enabled 
-          ? Border.all(color: theme.colorScheme.primary.withOpacity(0.5)) 
-          : Border.all(color: Colors.grey.withOpacity(0.2)),
+        border: enabled
+            ? Border.all(color: theme.colorScheme.primary.withOpacity(0.5))
+            : Border.all(color: Colors.grey.withOpacity(0.2)),
       ),
       child: TextField(
         controller: controller,
         enabled: enabled,
         keyboardType: inputType,
         style: TextStyle(
-          color: theme.colorScheme.onSurface, 
-          fontWeight: FontWeight.w500
-        ),
+            color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
-          prefixIcon: Icon(icon, color: enabled ? theme.colorScheme.primary : Colors.grey),
+          labelStyle:
+              TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+          prefixIcon: Icon(icon,
+              color: enabled ? theme.colorScheme.primary : Colors.grey),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       ),
     );
@@ -459,7 +479,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: theme.colorScheme.primary.withOpacity(0.7)),
+              Icon(icon,
+                  size: 16, color: theme.colorScheme.primary.withOpacity(0.7)),
               const SizedBox(width: 8),
               Text(
                 label,

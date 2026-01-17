@@ -134,18 +134,26 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
                   final subjectData = {'name': name, 'code': code};
                   try {
                     if (isEditing) {
-                      await _subjectsRef!.child(subject.key).update(subjectData);
+                      await _subjectsRef!
+                          .child(subject.key)
+                          .update(subjectData);
                     } else {
                       await _subjectsRef!.push().set(subjectData);
                     }
                     if (!mounted) return;
                     Navigator.pop(context);
                     if (mounted) {
-                      UiHelpers.showSnackBar(context, isEditing ? 'Materia actualizada.' : 'Materia añadida.');
+                      UiHelpers.showSnackBar(
+                          context,
+                          isEditing
+                              ? 'Materia actualizada.'
+                              : 'Materia añadida.');
                     }
                   } catch (e) {
                     if (mounted) {
-                      UiHelpers.showSnackBar(context, 'Error al guardar: ${e.toString()}', isError: true);
+                      UiHelpers.showSnackBar(
+                          context, 'Error al guardar: ${e.toString()}',
+                          isError: true);
                     }
                   }
                 }

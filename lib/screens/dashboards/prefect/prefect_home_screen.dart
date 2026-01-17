@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 class PrefectHomeScreen extends StatefulWidget {
   final String? campus;
   final Function(String route)? onNavigate;
-  
+
   const PrefectHomeScreen({super.key, this.campus, this.onNavigate});
 
   @override
@@ -31,13 +31,17 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
   Future<void> _loadUserName() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final snapshot = await FirebaseDatabase.instance.ref('users/${user.uid}/fullName').get();
+      final snapshot = await FirebaseDatabase.instance
+          .ref('users/${user.uid}/fullName')
+          .get();
       if (mounted && snapshot.exists) {
         setState(() {
           _userName = snapshot.value.toString();
         });
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) UiHelpers.showSnackBar(context, 'Módulo de Prefectura Activo. ¡Buen día, $_userName!');
+          if (mounted)
+            UiHelpers.showSnackBar(
+                context, 'Módulo de Prefectura Activo. ¡Buen día, $_userName!');
         });
       }
     }
@@ -52,11 +56,12 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           WelcomeHeader(
-            userName: _userName, 
+            userName: _userName,
             role: 'PREFECTURA',
-            subtitle: widget.campus != null ? 'Supervisando Plantel: ${widget.campus}' : null,
+            subtitle: widget.campus != null
+                ? 'Supervisando Plantel: ${widget.campus}'
+                : null,
           ),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
@@ -68,22 +73,29 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primaryContainer.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: theme.colorScheme.primary.withOpacity(0.1)),
+                    border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.1)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.query_builder_rounded, color: theme.colorScheme.primary, size: 40),
+                      Icon(Icons.query_builder_rounded,
+                          color: theme.colorScheme.primary, size: 40),
                       const SizedBox(width: 16),
                       const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Estado de Operación', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            Text('Registro de asistencia activo', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                            Text('Estado de Operación',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text('Registro de asistencia activo',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey)),
                           ],
                         ),
                       ),
-                      Icon(Icons.check_circle_rounded, color: Colors.green.shade400),
+                      Icon(Icons.check_circle_rounded,
+                          color: Colors.green.shade400),
                     ],
                   ),
                 ),
@@ -91,14 +103,16 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
 
                 Text(
                   'Acciones Rápidas',
-                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                
+
                 GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
+                  crossAxisCount:
+                      MediaQuery.of(context).size.width > 600 ? 4 : 2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                   childAspectRatio: 1.4,
@@ -115,7 +129,8 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
                       icon: Icons.manage_search_rounded,
                       label: 'Consultar Asist.',
                       color: Colors.blue,
-                      onTap: () => widget.onNavigate?.call('consulta_asistencia'),
+                      onTap: () =>
+                          widget.onNavigate?.call('consulta_asistencia'),
                     ),
                     _buildQuickAction(
                       context,
@@ -135,14 +150,15 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
                 ),
 
                 const SizedBox(height: 32),
-                
+
                 Row(
                   children: [
                     Icon(Icons.feed_outlined, color: theme.colorScheme.primary),
                     const SizedBox(width: 8),
                     Text(
                       'Comunicados Recientes',
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -150,22 +166,28 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
               ],
             ),
           ),
-          
           StreamBuilder<List<AnnouncementModel>>(
-            stream: _announcementService.getAnnouncementsStream(widget.campus, false),
+            stream: _announcementService.getAnnouncementsStream(
+                widget.campus, false),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
+                return const Center(
+                    child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: CircularProgressIndicator()));
               }
-              
+
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
               }
 
               final announcements = snapshot.data ?? [];
-              
+
               if (announcements.isEmpty) {
-                return const Center(child: Padding(padding: EdgeInsets.all(24), child: Text("No hay avisos para este plantel.")));
+                return const Center(
+                    child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text("No hay avisos para este plantel.")));
               }
 
               return ListView.builder(
@@ -185,7 +207,11 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
     );
   }
 
-  Widget _buildQuickAction(BuildContext context, {required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+  Widget _buildQuickAction(BuildContext context,
+      {required IconData icon,
+      required String label,
+      required Color color,
+      required VoidCallback onTap}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return FadeInUp(
       child: Material(
@@ -199,7 +225,10 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: color.withOpacity(0.3)),
               boxShadow: [
-                BoxShadow(color: color.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(
+                    color: color.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4)),
               ],
             ),
             child: Column(
@@ -207,7 +236,9 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
               children: [
                 Icon(icon, color: color, size: 32),
                 const SizedBox(height: 8),
-                Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(label,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 13)),
               ],
             ),
           ),

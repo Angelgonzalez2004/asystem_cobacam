@@ -32,47 +32,40 @@ class AttendanceExcelExporter {
       horizontalAlign: HorizontalAlign.Center,
       verticalAlign: VerticalAlign.Center,
     );
-    
-    final warningStyle = CellStyle(backgroundColorHex: ExcelColor.orange, bold: true); // Fixed color
-    final criticalStyle = CellStyle(backgroundColorHex: ExcelColor.red, fontColorHex: ExcelColor.white, bold: true); // Fixed color
+
+    final warningStyle = CellStyle(
+        backgroundColorHex: ExcelColor.orange, bold: true); // Fixed color
+    final criticalStyle = CellStyle(
+        backgroundColorHex: ExcelColor.red,
+        fontColorHex: ExcelColor.white,
+        bold: true); // Fixed color
     final centerStyle = CellStyle(horizontalAlign: HorizontalAlign.Center);
 
     final Set<String> groups = students.map((s) => s.group).toSet();
     final List<String> sortedGroups = groups.toList()..sort();
 
     // --- 1. HOJA GENERAL ---
-    _buildSheet(
-      excel, 
-      generalSheetName, 
-      students, 
-      stats, 
-      headerStyle, 
-      warningStyle, 
-      criticalStyle, 
-      centerStyle, 
-      campus, 
-      rangeLabel, 
-      cycle,
-      isGeneral: true
-    );
+    _buildSheet(excel, generalSheetName, students, stats, headerStyle,
+        warningStyle, criticalStyle, centerStyle, campus, rangeLabel, cycle,
+        isGeneral: true);
 
     // --- 2. HOJAS POR GRUPO (Solo si NO es individual y hay varios grupos) ---
     if (!isIndividual && sortedGroups.length > 1) {
       for (final groupName in sortedGroups) {
-        final groupStudents = students.where((s) => s.group == groupName).toList();
+        final groupStudents =
+            students.where((s) => s.group == groupName).toList();
         _buildSheet(
-          excel, 
-          "Grupo $groupName", 
-          groupStudents, 
-          stats, 
-          headerStyle, 
-          warningStyle, 
-          criticalStyle, 
-          centerStyle, 
-          campus, 
-          rangeLabel, 
-          cycle
-        );
+            excel,
+            "Grupo $groupName",
+            groupStudents,
+            stats,
+            headerStyle,
+            warningStyle,
+            criticalStyle,
+            centerStyle,
+            campus,
+            rangeLabel,
+            cycle);
       }
     }
 
@@ -80,14 +73,15 @@ class AttendanceExcelExporter {
     if (fileBytes == null) return;
 
     // Nombre de Archivo Inteligente
-    final cleanRange = rangeLabel.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
+    final cleanRange =
+        rangeLabel.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
     String fileName;
-    
+
     if (isIndividual && students.isNotEmpty) {
-       final safeName = students.first.fullName.replaceAll(' ', '_');
-       fileName = 'Reporte_Individual_${safeName}_$cleanRange.xlsx';
+      final safeName = students.first.fullName.replaceAll(' ', '_');
+      fileName = 'Reporte_Individual_${safeName}_$cleanRange.xlsx';
     } else {
-       fileName = 'Reporte_Asistencias_$cleanRange.xlsx';
+      fileName = 'Reporte_Asistencias_$cleanRange.xlsx';
     }
 
     if (kIsWeb) {
@@ -97,30 +91,31 @@ class AttendanceExcelExporter {
       final file = File('${directory.path}/$fileName');
       await file.writeAsBytes(fileBytes);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Archivo guardado: $fileName')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Archivo guardado: $fileName')));
       }
     }
   }
 
   static void _buildSheet(
-    Excel excel,
-    String sheetName,
-    List<Student> sheetStudents,
-    Map<String, Map<String, dynamic>> stats,
-    CellStyle headerStyle,
-    CellStyle warningStyle,
-    CellStyle criticalStyle,
-    CellStyle centerStyle,
-    String campus,
-    String range,
-    String cycle,
-    {bool isGeneral = false}
-  ) {
+      Excel excel,
+      String sheetName,
+      List<Student> sheetStudents,
+      Map<String, Map<String, dynamic>> stats,
+      CellStyle headerStyle,
+      CellStyle warningStyle,
+      CellStyle criticalStyle,
+      CellStyle centerStyle,
+      String campus,
+      String range,
+      String cycle,
+      {bool isGeneral = false}) {
     // Si la hoja no existe, la creamos al accederla implícitamente o actualizando una celda
     // En excel 4.0+, updateCell crea la hoja si no existe.
     if (!excel.sheets.keys.contains(sheetName)) {
-       // Fix: updateCell requires CellValue
-       excel.updateCell(sheetName, CellIndex.indexByString("A1"), TextCellValue("")); 
+      // Fix: updateCell requires CellValue
+      excel.updateCell(
+          sheetName, CellIndex.indexByString("A1"), TextCellValue(""));
     }
     final Sheet sheet = excel[sheetName];
 
@@ -128,22 +123,25 @@ class AttendanceExcelExporter {
     sheet.merge(CellIndex.indexByString("A1"), CellIndex.indexByString("J1"));
     var cellTitle = sheet.cell(CellIndex.indexByString("A1"));
     cellTitle.value = TextCellValue("REPORTE DE ASISTENCIAS - $campus");
-    cellTitle.cellStyle = CellStyle(bold: true, fontSize: 14, horizontalAlign: HorizontalAlign.Center);
+    cellTitle.cellStyle = CellStyle(
+        bold: true, fontSize: 14, horizontalAlign: HorizontalAlign.Center);
 
     sheet.merge(CellIndex.indexByString("A2"), CellIndex.indexByString("J2"));
     var cellSub = sheet.cell(CellIndex.indexByString("A2"));
-    cellSub.value = TextCellValue("Periodo: $range | Ciclo: $cycle | ${isGeneral ? 'Vista General' : sheetName}");
-    cellSub.cellStyle = CellStyle(italic: true, horizontalAlign: HorizontalAlign.Center);
+    cellSub.value = TextCellValue(
+        "Periodo: $range | Ciclo: $cycle | ${isGeneral ? 'Vista General' : sheetName}");
+    cellSub.cellStyle =
+        CellStyle(italic: true, horizontalAlign: HorizontalAlign.Center);
 
     // COLUMNAS COMPLETAS (18+ campos)
     final headers = [
-      'Matrícula', 
-      'Nombre Completo', 
-      'Grupo', 
+      'Matrícula',
+      'Nombre Completo',
+      'Grupo',
       'Género',
       'Edad',
-      'NSS', 
-      'Estado General Salud', 
+      'NSS',
+      'Estado General Salud',
       'Alergias',
       'Condiciones Médicas',
       'Tutor',
@@ -154,20 +152,21 @@ class AttendanceExcelExporter {
       'Estado (Activo/Baja)',
       'Motivo de Baja',
       'Alerta Médica Crítica',
-      'Asistencias', 
+      'Asistencias',
       'Retardos',
-      'Faltas', 
+      'Faltas',
       'Estatus de Riesgo'
     ];
 
     for (var i = 0; i < headers.length; i++) {
-      var cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 3));
+      var cell =
+          sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 3));
       cell.value = TextCellValue(headers[i]);
       cell.cellStyle = headerStyle;
     }
 
     int rowIndex = 4;
-    
+
     // Ordenar
     sheetStudents.sort((a, b) {
       int cmp = a.group.compareTo(b.group);
@@ -205,14 +204,17 @@ class AttendanceExcelExporter {
         presences,
         lates,
         faults,
-        alert == 'urgent' ? 'CRÍTICO (3+)' : (alert == 'warning' ? 'ADVERTENCIA (2)' : 'NORMAL')
+        alert == 'urgent'
+            ? 'CRÍTICO (3+)'
+            : (alert == 'warning' ? 'ADVERTENCIA (2)' : 'NORMAL')
       ];
 
       for (var col = 0; col < rowCells.length; col++) {
-        var cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: rowIndex));
+        var cell = sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: col, rowIndex: rowIndex));
         cell.value = _getValue(rowCells[col]);
-        cell.cellStyle = centerStyle; 
-        
+        cell.cellStyle = centerStyle;
+
         // Colorear SOLO la celda de riesgo (Índice 20 ahora)
         if (col == 20) {
           if (alert == 'urgent') {
@@ -224,13 +226,13 @@ class AttendanceExcelExporter {
       }
       rowIndex++;
     }
-    
+
     // AUTO-ANCHO PROFESIONAL (Generoso para lectura fácil)
     sheet.setColumnWidth(0, 18.0); // Matrícula
     sheet.setColumnWidth(1, 55.0); // Nombre Completo (Muy amplio)
     sheet.setColumnWidth(2, 15.0); // Grupo
     sheet.setColumnWidth(3, 12.0); // Género
-    sheet.setColumnWidth(4, 8.0);  // Edad
+    sheet.setColumnWidth(4, 8.0); // Edad
     sheet.setColumnWidth(5, 20.0); // NSS
     sheet.setColumnWidth(6, 30.0); // Estado Salud
     sheet.setColumnWidth(7, 40.0); // Alergias

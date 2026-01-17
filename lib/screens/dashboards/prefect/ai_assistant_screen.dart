@@ -15,24 +15,27 @@ class AIAssistantScreen extends StatefulWidget {
   State<AIAssistantScreen> createState() => _AIAssistantScreenState();
 }
 
-class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTickerProviderStateMixin {
+class _AIAssistantScreenState extends State<AIAssistantScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, dynamic>> _messages = []; // {role, text, time}
-  
+
   bool _isLoading = false;
   bool _isInitializing = true;
-  
+
   AIService? _aiService;
   String? _currentCycle;
-  
+
   // Animaciones
   late AnimationController _typingController;
 
   @override
   void initState() {
     super.initState();
-    _typingController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))..repeat();
+    _typingController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1000))
+      ..repeat();
     _initAI();
   }
 
@@ -46,23 +49,25 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        final snap = await FirebaseDatabase.instance.ref('users/${user.uid}/campus').get();
+        final snap = await FirebaseDatabase.instance
+            .ref('users/${user.uid}/campus')
+            .get();
         final campus = snap.value?.toString();
-        
+
         if (campus != null) {
           _aiService = AIService(campus);
-          
+
           final appSettings = AppSettingsService(
-            Provider.of<HiveService>(context, listen: false), 
-            Provider.of<ConnectivityService>(context, listen: false)
-          );
+              Provider.of<HiveService>(context, listen: false),
+              Provider.of<ConnectivityService>(context, listen: false));
           _currentCycle = await appSettings.getCurrentSchoolCycleId();
-          
+
           if (mounted) {
             setState(() {
               _messages.add({
                 'role': 'bot',
-                'text': '¡Hola! 👋 Soy AsystemBot.\nAnalizo la asistencia y conducta en tiempo real.\n\nPrueba preguntarme:\n👉 "¿Quién faltó hoy?"\n👉 "Haz un reporte de incidencias"',
+                'text':
+                    '¡Hola! 👋 Soy AsystemBot.\nAnalizo la asistencia y conducta en tiempo real.\n\nPrueba preguntarme:\n👉 "¿Quién faltó hoy?"\n👉 "Haz un reporte de incidencias"',
                 'time': DateTime.now(),
               });
             });
@@ -80,25 +85,19 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
     if (text.trim().isEmpty || _aiService == null) return;
 
     setState(() {
-      _messages.add({
-        'role': 'user', 
-        'text': text,
-        'time': DateTime.now()
-      });
+      _messages.add({'role': 'user', 'text': text, 'time': DateTime.now()});
       _isLoading = true;
     });
     _controller.clear();
     _scrollToBottom();
 
     try {
-      final response = await _aiService!.askAssistant(text, cycle: _currentCycle);
+      final response =
+          await _aiService!.askAssistant(text, cycle: _currentCycle);
       if (mounted) {
         setState(() {
-          _messages.add({
-            'role': 'bot', 
-            'text': response,
-            'time': DateTime.now()
-          });
+          _messages
+              .add({'role': 'bot', 'text': response, 'time': DateTime.now()});
         });
         _scrollToBottom();
       }
@@ -106,8 +105,9 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
       if (mounted) {
         setState(() {
           _messages.add({
-            'role': 'bot', 
-            'text': '⚠️ Lo siento, no pude procesar tu solicitud en este momento.',
+            'role': 'bot',
+            'text':
+                '⚠️ Lo siento, no pude procesar tu solicitud en este momento.',
             'time': DateTime.now()
           });
         });
@@ -138,48 +138,49 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F7FA),
       ),
-      child: _isInitializing 
-        ? const Center(child: CircularProgressIndicator())
-        : Column(
-            children: [
-              // MESSAGES LIST
-              Expanded(
-                child: _messages.isEmpty
-                  ? _buildEmptyState(theme)
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                      itemCount: _messages.length + (_isLoading ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == _messages.length) {
-                          return _buildTypingIndicator(theme);
-                        }
-                        final msg = _messages[index];
-                        return _buildMessageBubble(msg, theme, isDark);
-                      },
-                    ),
-              ),
-
-              // SUGGESTIONS CHIPS
-              if (!_isLoading)
-                Container(
-                  height: 50,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      _suggestionChip('📊 Resumen de hoy', theme),
-                      _suggestionChip('⚠️ Alumnos con reportes', theme),
-                      _suggestionChip('🕒 Retardos recientes', theme),
-                      _suggestionChip('📝 Generar reporte breve', theme),
-                    ],
-                  ),
+      child: _isInitializing
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                // MESSAGES LIST
+                Expanded(
+                  child: _messages.isEmpty
+                      ? _buildEmptyState(theme)
+                      : ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 20),
+                          itemCount: _messages.length + (_isLoading ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == _messages.length) {
+                              return _buildTypingIndicator(theme);
+                            }
+                            final msg = _messages[index];
+                            return _buildMessageBubble(msg, theme, isDark);
+                          },
+                        ),
                 ),
 
-              // INPUT AREA
-              _buildInputArea(theme, isDark),
-            ],
-          ),
+                // SUGGESTIONS CHIPS
+                if (!_isLoading)
+                  Container(
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _suggestionChip('📊 Resumen de hoy', theme),
+                        _suggestionChip('⚠️ Alumnos con reportes', theme),
+                        _suggestionChip('🕒 Retardos recientes', theme),
+                        _suggestionChip('📝 Generar reporte breve', theme),
+                      ],
+                    ),
+                  ),
+
+                // INPUT AREA
+                _buildInputArea(theme, isDark),
+              ],
+            ),
     );
   }
 
@@ -190,26 +191,30 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.auto_awesome_mosaic_rounded, size: 80, color: theme.disabledColor),
+            Icon(Icons.auto_awesome_mosaic_rounded,
+                size: 80, color: theme.disabledColor),
             const SizedBox(height: 16),
-            Text('¡Pregúntame lo que necesites!', style: theme.textTheme.titleMedium),
+            Text('¡Pregúntame lo que necesites!',
+                style: theme.textTheme.titleMedium),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMessageBubble(Map<String, dynamic> msg, ThemeData theme, bool isDark) {
+  Widget _buildMessageBubble(
+      Map<String, dynamic> msg, ThemeData theme, bool isDark) {
     final isUser = msg['role'] == 'user';
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
+        constraints:
+            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isUser 
-              ? theme.primaryColor 
+          color: isUser
+              ? theme.primaryColor
               : (isDark ? const Color(0xFF2C2C2C) : Colors.white),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
@@ -230,27 +235,30 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (isUser)
-              Text(
-                msg['text'], 
-                style: const TextStyle(color: Colors.white, fontSize: 15)
-              )
+              Text(msg['text'],
+                  style: const TextStyle(color: Colors.white, fontSize: 15))
             else
               MarkdownBody(
                 data: msg['text'],
                 selectable: true,
                 styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
-                  p: TextStyle(color: isDark ? Colors.grey[200] : const Color(0xFF334155), fontSize: 15),
-                  strong: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold),
+                  p: TextStyle(
+                      color:
+                          isDark ? Colors.grey[200] : const Color(0xFF334155),
+                      fontSize: 15),
+                  strong: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontWeight: FontWeight.bold),
                   listBullet: TextStyle(color: theme.primaryColor),
                 ),
               ),
-            
+
             const SizedBox(height: 4),
             // Timestamp tiny
             // Align(
             //   alignment: Alignment.bottomRight,
             //   child: Text(
-            //     "Justo ahora", 
+            //     "Justo ahora",
             //     style: TextStyle(fontSize: 10, color: isUser ? Colors.white70 : Colors.grey),
             //   )
             // ),
@@ -274,12 +282,13 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: 16, 
-              height: 16, 
-              child: CircularProgressIndicator(strokeWidth: 2, color: theme.primaryColor)
-            ),
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: theme.primaryColor)),
             const SizedBox(width: 8),
-            Text("Analizando datos...", style: TextStyle(color: theme.hintColor, fontSize: 12)),
+            Text("Analizando datos...",
+                style: TextStyle(color: theme.hintColor, fontSize: 12)),
           ],
         ),
       ),
@@ -311,12 +320,15 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
                   hintText: 'Escribe tu consulta...',
                   hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF3F4F6),
+                  fillColor: isDark
+                      ? const Color(0xFF1E1E1E)
+                      : const Color(0xFFF3F4F6),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
                 onSubmitted: _sendMessage,
               ),
@@ -327,7 +339,8 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
               backgroundColor: theme.primaryColor,
               elevation: 2,
               mini: true,
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              child:
+                  const Icon(Icons.send_rounded, color: Colors.white, size: 20),
             ),
           ],
         ),
@@ -346,9 +359,9 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> with SingleTicker
         elevation: 1,
         side: BorderSide(color: theme.dividerColor.withOpacity(0.5)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        labelStyle: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.w500),
+        labelStyle:
+            TextStyle(color: theme.primaryColor, fontWeight: FontWeight.w500),
       ),
     );
   }
 }
-

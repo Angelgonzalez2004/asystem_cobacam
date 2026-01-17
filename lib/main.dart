@@ -1,5 +1,8 @@
-import 'package:asystem_cobacam/providers/theme_provider.dart';
 import 'package:asystem_cobacam/widgets/auth_wrapper.dart';
+import 'package:asystem_cobacam/widgets/inactivity_guard.dart';
+import 'package:asystem_cobacam/providers/theme_provider.dart';
+import 'package:asystem_cobacam/services/lock_service.dart';
+import 'package:asystem_cobacam/widgets/session_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart'; // Importación agregada
@@ -44,7 +47,8 @@ void main() async {
       );
       debugPrint("✅ Firebase inicializado manualmente con opciones.");
     } else {
-      debugPrint("ℹ️ Firebase ya estaba inicializado (Nativo/Automático). Usando instancia existente.");
+      debugPrint(
+          "ℹ️ Firebase ya estaba inicializado (Nativo/Automático). Usando instancia existente.");
     }
 
     // Habilitar persistencia offline
@@ -52,7 +56,8 @@ void main() async {
       FirebaseDatabase.instance.setPersistenceEnabled(true);
       debugPrint("💾 Persistencia de Firebase Database habilitada.");
     } catch (e) {
-      debugPrint("⚠️ No se pudo habilitar persistencia (quizás ya estaba activa): $e");
+      debugPrint(
+          "⚠️ No se pudo habilitar persistencia (quizás ya estaba activa): $e");
     }
 
     debugPrint("✅ Firebase listo.");
@@ -68,6 +73,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => LockService()),
         Provider<HiveService>(create: (_) => _hiveService),
         Provider<ConnectivityService>(create: (_) => _connectivityService),
       ],
@@ -249,7 +255,11 @@ class MyApp extends StatelessWidget {
               iconTheme: IconThemeData(color: Colors.white),
             ),
           ),
-          home: const AuthWrapper(),
+          home: const InactivityGuard(
+            child: SessionGuard(
+              child: AuthWrapper(),
+            ),
+          ),
           debugShowCheckedModeBanner: false,
         );
       },

@@ -6,11 +6,14 @@ import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:image_picker/image_picker.dart';
 
 class AnnouncementService {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref('announcements');
+  final DatabaseReference _dbRef =
+      FirebaseDatabase.instance.ref('announcements');
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Obtener stream de avisos filtrados
-  Stream<List<AnnouncementModel>> getAnnouncementsStream(String? campusId, bool isGeneralAdmin, {bool isManagementMode = false}) {
+  Stream<List<AnnouncementModel>> getAnnouncementsStream(
+      String? campusId, bool isGeneralAdmin,
+      {bool isManagementMode = false}) {
     return _dbRef.onValue.map((event) {
       final List<AnnouncementModel> announcements = [];
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
@@ -18,15 +21,15 @@ class AnnouncementService {
       if (data != null) {
         data.forEach((key, value) {
           final announcement = AnnouncementModel.fromMap(value, key);
-          
+
           // LÓGICA DE FILTRADO ESTRICTA
-          
+
           // 1. Si es Admin General, SOLO ve avisos Generales (no de planteles)
           if (isGeneralAdmin) {
             if (announcement.type == 'General') {
               announcements.add(announcement);
             }
-          } 
+          }
           // 2. Si es usuario de Plantel (Alumno o Admin)
           else {
             if (isManagementMode) {
@@ -37,7 +40,8 @@ class AnnouncementService {
               }
             } else {
               // MODO VISUALIZACIÓN (Home): Ve Generales + Su Plantel
-              if (announcement.type == 'General' || (campusId != null && announcement.campus == campusId)) {
+              if (announcement.type == 'General' ||
+                  (campusId != null && announcement.campus == campusId)) {
                 announcements.add(announcement);
               }
             }
@@ -65,7 +69,8 @@ class AnnouncementService {
     // 1. Subir cada imagen a Storage
     if (images != null && images.isNotEmpty) {
       for (int i = 0; i < images.length; i++) {
-        final String fileName = '${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+        final String fileName =
+            '${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
         final Reference ref = _storage.ref().child('announcements/$fileName');
 
         if (kIsWeb) {
@@ -76,7 +81,7 @@ class AnnouncementService {
           // PARA MÓVIL: Usar putFile
           await ref.putFile(File(images[i].path));
         }
-        
+
         final String url = await ref.getDownloadURL();
         imageUrls.add(url);
       }

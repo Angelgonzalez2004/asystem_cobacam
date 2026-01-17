@@ -146,18 +146,26 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
                   final teacherData = {'name': name, 'subjects': subjects};
                   try {
                     if (isEditing) {
-                      await _teachersRef!.child(teacher.key).update(teacherData);
+                      await _teachersRef!
+                          .child(teacher.key)
+                          .update(teacherData);
                     } else {
                       await _teachersRef!.push().set(teacherData);
                     }
                     if (!mounted) return;
                     Navigator.pop(context);
                     if (mounted) {
-                      UiHelpers.showSnackBar(context, isEditing ? 'Maestro actualizado.' : 'Maestro añadido.');
+                      UiHelpers.showSnackBar(
+                          context,
+                          isEditing
+                              ? 'Maestro actualizado.'
+                              : 'Maestro añadido.');
                     }
                   } catch (e) {
                     if (mounted) {
-                      UiHelpers.showSnackBar(context, 'Error al guardar: ${e.toString()}', isError: true);
+                      UiHelpers.showSnackBar(
+                          context, 'Error al guardar: ${e.toString()}',
+                          isError: true);
                     }
                   }
                 }

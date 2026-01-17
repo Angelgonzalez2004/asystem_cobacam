@@ -13,11 +13,14 @@ class ConnectivityService {
 
   ConnectivityService() {
     // Escucha los cambios de conectividad y los añade al stream
-    Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> results) {
       // Tomamos el último estado de la lista como el estado actual relevante,
       // o .none si la lista está vacía.
-      final result = results.isNotEmpty ? results.last : ConnectivityResult.none;
-      
+      final result =
+          results.isNotEmpty ? results.last : ConnectivityResult.none;
+
       if (kDebugMode) {
         print('Conectividad ha cambiado: $result');
       }

@@ -29,7 +29,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _locationController = TextEditingController();
   final _dobController = TextEditingController();
   final _accessCodeController = TextEditingController();
-  
+
   final FocusNode _accessCodeFocus = FocusNode();
 
   String? _selectedRole;
@@ -81,8 +81,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
           duration: const Duration(seconds: 4), // Un poco más para leer
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.9),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor:
+              Theme.of(context).colorScheme.primary.withOpacity(0.9),
           elevation: 6,
           margin: const EdgeInsets.all(16),
         ),
@@ -276,7 +278,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       color: isDark ? theme.cardColor : Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(32),
-                        side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+                        side: BorderSide(
+                            color: theme.dividerColor.withOpacity(0.1)),
                       ),
                       child: Padding(
                         padding: EdgeInsets.all(isWide ? 40.0 : 24.0),
@@ -296,20 +299,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           border: Border.all(
-                                            color: theme.primaryColor.withOpacity(0.2),
+                                            color: theme.primaryColor
+                                                .withOpacity(0.2),
                                             width: 2,
                                           ),
                                         ),
                                         child: CircleAvatar(
                                           radius: 60,
-                                          backgroundColor: theme.scaffoldBackgroundColor,
+                                          backgroundColor:
+                                              theme.scaffoldBackgroundColor,
                                           backgroundImage: _profileImage != null
                                               ? (kIsWeb
-                                                  ? NetworkImage(_profileImage!.path)
-                                                  : FileImage(File(_profileImage!.path))) as ImageProvider
+                                                      ? NetworkImage(
+                                                          _profileImage!.path)
+                                                      : FileImage(File(
+                                                          _profileImage!.path)))
+                                                  as ImageProvider
                                               : null,
                                           child: _profileImage == null
-                                              ? Icon(Icons.person_add_alt_1_rounded, size: 40, color: theme.primaryColor.withOpacity(0.5))
+                                              ? Icon(
+                                                  Icons
+                                                      .person_add_alt_1_rounded,
+                                                  size: 40,
+                                                  color: theme.primaryColor
+                                                      .withOpacity(0.5))
                                               : null,
                                         ),
                                       ),
@@ -322,9 +335,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         decoration: BoxDecoration(
                                           color: theme.primaryColor,
                                           shape: BoxShape.circle,
-                                          border: Border.all(color: Colors.white, width: 2),
+                                          border: Border.all(
+                                              color: Colors.white, width: 2),
                                         ),
-                                        child: const Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
+                                        child: const Icon(
+                                            Icons.camera_alt_rounded,
+                                            size: 16,
+                                            color: Colors.white),
                                       ),
                                     ),
                                   ],
@@ -338,18 +355,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               const SizedBox(height: 40),
 
                               _isLoading
-                                  ? const Center(child: CircularProgressIndicator())
+                                  ? const Center(
+                                      child: CircularProgressIndicator())
                                   : SizedBox(
                                       height: 56,
                                       child: ElevatedButton(
                                         onPressed: _handleSignUp,
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: theme.colorScheme.primary,
+                                          backgroundColor:
+                                              theme.colorScheme.primary,
                                           foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(16)),
                                           elevation: 2,
                                         ),
-                                        child: const Text('CREAR CUENTA', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+                                        child: const Text('CREAR CUENTA',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 1.0)),
                                       ),
                                     ),
                             ],
@@ -371,25 +395,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
     List<Widget> children = [
       // Info Personal
       _buildSectionTitle(theme, 'Información Personal', Icons.person_outline),
-      _buildStyledField(controller: _nameController, label: 'Nombre Completo', icon: Icons.badge_outlined),
-      
+      _buildStyledField(
+          controller: _nameController,
+          label: 'Nombre Completo',
+          icon: Icons.badge_outlined),
+
       if (isWide)
         Row(
           children: [
             Expanded(child: _buildDateSelector()),
             const SizedBox(width: 16),
-            Expanded(child: _buildStyledField(controller: _locationController, label: 'Lugar de Residencia', icon: Icons.location_on_outlined)),
+            Expanded(
+                child: _buildStyledField(
+                    controller: _locationController,
+                    label: 'Lugar de Residencia',
+                    icon: Icons.location_on_outlined)),
           ],
         )
       else ...[
         _buildDateSelector(),
         const SizedBox(height: 16),
-        _buildStyledField(controller: _locationController, label: 'Lugar de Residencia', icon: Icons.location_on_outlined),
+        _buildStyledField(
+            controller: _locationController,
+            label: 'Lugar de Residencia',
+            icon: Icons.location_on_outlined),
       ],
 
       const SizedBox(height: 24),
       _buildSectionTitle(theme, 'Datos Institucionales', Icons.school_outlined),
-      
+
       _buildStyledDropdown(
         items: _roles,
         label: 'Rol Institucional',
@@ -422,30 +456,55 @@ class _SignUpScreenState extends State<SignUpScreen> {
         keyboardType: TextInputType.emailAddress,
       ),
       const SizedBox(height: 16),
-      
+
       if (isWide)
         Row(
           children: [
-            Expanded(child: _buildStyledField(controller: _passwordController, label: 'Contraseña', icon: Icons.vpn_key_outlined, isPassword: true)),
-            
-            if (isGeneralAdmin || (_selectedRole != null && _selectedCampus != null)) ...[
+            Expanded(
+                child: _buildStyledField(
+                    controller: _passwordController,
+                    label: 'Contraseña',
+                    icon: Icons.vpn_key_outlined,
+                    isPassword: true)),
+            if (isGeneralAdmin ||
+                (_selectedRole != null && _selectedCampus != null)) ...[
               const SizedBox(width: 16),
-              Expanded(child: _buildStyledField(controller: _accessCodeController, label: 'Código de Validación', icon: Icons.security_rounded, focusNode: _accessCodeFocus)),
+              Expanded(
+                  child: _buildStyledField(
+                      controller: _accessCodeController,
+                      label: 'Código de Validación',
+                      icon: Icons.security_rounded,
+                      focusNode: _accessCodeFocus)),
             ]
           ],
         )
       else ...[
-        _buildStyledField(controller: _passwordController, label: 'Contraseña', icon: Icons.vpn_key_outlined, isPassword: true),
-        if (isGeneralAdmin || (_selectedRole != null && _selectedCampus != null)) ...[
+        _buildStyledField(
+            controller: _passwordController,
+            label: 'Contraseña',
+            icon: Icons.vpn_key_outlined,
+            isPassword: true),
+        if (isGeneralAdmin ||
+            (_selectedRole != null && _selectedCampus != null)) ...[
           const SizedBox(height: 16),
-          _buildStyledField(controller: _accessCodeController, label: 'Código de Validación', icon: Icons.security_rounded, focusNode: _accessCodeFocus),
+          _buildStyledField(
+              controller: _accessCodeController,
+              label: 'Código de Validación',
+              icon: Icons.security_rounded,
+              focusNode: _accessCodeFocus),
         ]
       ]
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: children.expand((element) => [element, if (element is! SizedBox && element is! Row) const SizedBox(height: 16)]).toList(),
+      children: children
+          .expand((element) => [
+                element,
+                if (element is! SizedBox && element is! Row)
+                  const SizedBox(height: 16)
+              ])
+          .toList(),
     );
   }
 
@@ -494,16 +553,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
         style: TextStyle(color: theme.colorScheme.onSurface),
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+          prefixIcon:
+              Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.5)),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
-                    _isPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                    _isPasswordObscured
+                        ? Icons.visibility_off
+                        : Icons.visibility,
                     color: theme.colorScheme.onSurface.withOpacity(0.5),
                   ),
-                  onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
+                  onPressed: () => setState(
+                      () => _isPasswordObscured = !_isPasswordObscured),
                 )
               : null,
         ),
@@ -524,11 +588,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
-            Icon(Icons.calendar_today_outlined, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+            Icon(Icons.calendar_today_outlined,
+                color: theme.colorScheme.onSurface.withOpacity(0.5)),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                _dobController.text.isEmpty ? 'Fecha de Nacimiento' : _dobController.text,
+                _dobController.text.isEmpty
+                    ? 'Fecha de Nacimiento'
+                    : _dobController.text,
                 style: TextStyle(
                   color: _dobController.text.isEmpty
                       ? theme.colorScheme.onSurface.withOpacity(0.6)
@@ -560,9 +627,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
         isExpanded: true,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+          prefixIcon:
+              Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.5)),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         ),
         items: items.map((String value) {
           return DropdownMenuItem<String>(
@@ -585,7 +654,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         },
         onChanged: onChanged,
         dropdownColor: theme.cardColor,
-        icon: Icon(Icons.arrow_drop_down_circle_outlined, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+        icon: Icon(Icons.arrow_drop_down_circle_outlined,
+            color: theme.colorScheme.onSurface.withOpacity(0.5)),
       ),
     );
   }

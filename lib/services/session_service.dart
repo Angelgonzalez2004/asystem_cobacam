@@ -24,7 +24,7 @@ class SessionService {
     try {
       final deviceData = await _getDeviceData();
       final String deviceId = _generateDeviceId(deviceData);
-      
+
       // Obtener ubicación aproximada IP
       final locationData = await _getLocationData();
 
@@ -48,7 +48,7 @@ class SessionService {
   Future<void> revokeSession(String deviceId) async {
     final user = _auth.currentUser;
     if (user == null) return;
-    
+
     await _db.child('users/${user.uid}/sessions/$deviceId').remove();
   }
 
@@ -64,13 +64,15 @@ class SessionService {
     try {
       // Usamos ipapi.co que soporta HTTPS en el plan gratuito (limitado a 1000/día).
       // Es más seguro para Web (evita Mixed Content errors).
-      final response = await http.get(Uri.parse('https://ipapi.co/json/')).timeout(const Duration(seconds: 5));
-      
+      final response = await http
+          .get(Uri.parse('https://ipapi.co/json/'))
+          .timeout(const Duration(seconds: 5));
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         // ipapi.co devuelve campos: ip, city, region, country_name
         return {
-          'location': '${data['city']}, ${data['region']}', 
+          'location': '${data['city']}, ${data['region']}',
           'ip': data['ip'] ?? '',
         };
       }
@@ -99,7 +101,8 @@ class SessionService {
         idPart = androidInfo.id;
       } else if (Platform.isIOS) {
         final iosInfo = await _deviceInfo.iosInfo;
-        model = '${iosInfo.name} (${iosInfo.systemName} ${iosInfo.systemVersion})';
+        model =
+            '${iosInfo.name} (${iosInfo.systemName} ${iosInfo.systemVersion})';
         platform = 'iOS';
         idPart = iosInfo.identifierForVendor ?? 'ios_unknown';
       } else if (Platform.isWindows) {

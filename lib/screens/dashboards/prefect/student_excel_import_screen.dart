@@ -34,7 +34,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
   bool _isLoading = false;
   bool _isImporting = false;
   List<Group> _availableGroups = [];
-  
+
   // Cycle Management
   List<SchoolCycle> _availableSchoolCycles = [];
   String? _targetSchoolCycle;
@@ -55,17 +55,17 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
 
   Future<void> _loadData() async {
     try {
-        final cycles = await _appSettingsService.getAllSchoolCycles();
-        if (mounted) {
-            setState(() {
-                _availableSchoolCycles = cycles;
-                _isLoadingCycles = false;
-            });
-            // Cargar grupos del ciclo por defecto
-            _loadAvailableGroups(_targetSchoolCycle!);
-        }
+      final cycles = await _appSettingsService.getAllSchoolCycles();
+      if (mounted) {
+        setState(() {
+          _availableSchoolCycles = cycles;
+          _isLoadingCycles = false;
+        });
+        // Cargar grupos del ciclo por defecto
+        _loadAvailableGroups(_targetSchoolCycle!);
+      }
     } catch (e) {
-        if (mounted) setState(() => _isLoadingCycles = false);
+      if (mounted) setState(() => _isLoadingCycles = false);
     }
   }
 
@@ -76,7 +76,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
           .orderByChild('schoolCycleId') // Filtrar por ciclo
           .equalTo(cycleId)
           .get();
-          
+
       if (groupsSnapshot.exists) {
         final List<Group> fetchedGroups = [];
         for (final child in groupsSnapshot.children) {
@@ -96,20 +96,22 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
 
   Future<void> _pickExcelFile() async {
     if (_targetSchoolCycle == null) return;
-    
+
     // Validación crítica: Deben existir grupos para este ciclo
     if (_availableGroups.isEmpty) {
-        await showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
+      await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
                 title: const Text('Sin Grupos Registrados'),
-                content: Text('No existen grupos registrados para el ciclo escolar $_targetSchoolCycle.\n\nPor favor, ve a "Gestión de Grupos" y crea los grupos (ej. 101, 102) antes de importar alumnos.'),
+                content: Text(
+                    'No existen grupos registrados para el ciclo escolar $_targetSchoolCycle.\n\nPor favor, ve a "Gestión de Grupos" y crea los grupos (ej. 101, 102) antes de importar alumnos.'),
                 actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Entendido'))
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Entendido'))
                 ],
-            )
-        );
-        return;
+              ));
+      return;
     }
 
     setState(() {
@@ -165,24 +167,37 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
 
       for (var table in excel.tables.keys) {
         var sheet = excel.tables[table];
-        if (sheet == null || sheet.maxColumns < expectedHeaders.length) continue;
+        if (sheet == null || sheet.maxColumns < expectedHeaders.length)
+          continue;
 
         // Validar si el nombre de la hoja corresponde a un grupo existente
-        
+
         final groupNameFromSheet = table.trim();
         // Verificar si este grupo existe en el ciclo seleccionado
         if (!_availableGroups.any((g) => g.name == groupNameFromSheet)) {
-            debugPrint("Grupo $groupNameFromSheet no encontrado en ciclo $_targetSchoolCycle. Saltando hoja.");
-            continue;
+          debugPrint(
+              "Grupo $groupNameFromSheet no encontrado en ciclo $_targetSchoolCycle. Saltando hoja.");
+          continue;
         }
 
-        final List<String> headers = sheet.row(0).map((cell) => cell?.value?.toString().toLowerCase().replaceAll(' ', '_') ?? '').toList();
-        
+        final List<String> headers = sheet
+            .row(0)
+            .map((cell) =>
+                cell?.value?.toString().toLowerCase().replaceAll(' ', '_') ??
+                '')
+            .toList();
+
         bool headersMatch = true;
         for (var h in expectedHeaders) {
           if (!headers.contains(h)) {
             // Permitir que las médicas sean opcionales
-            if (!['alergias', 'condiciones_salud', 'estado_salud', 'grupo', 'alerta_medica'].contains(h)) {
+            if (![
+              'alergias',
+              'condiciones_salud',
+              'estado_salud',
+              'grupo',
+              'alerta_medica'
+            ].contains(h)) {
               headersMatch = false;
               break;
             }
@@ -196,55 +211,91 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
 
           try {
             // --- VALIDACIÓN DE CAMPOS OBLIGATORIOS (EXCEL) ---
-            final studentId = row[headers.indexOf('matricula')]?.value?.toString().trim() ?? '';
-            final fullName = row[headers.indexOf('nombre_completo')]?.value?.toString().trim() ?? '';
-            final gender = row[headers.indexOf('genero')]?.value?.toString().trim() ?? '';
-            
+            final studentId =
+                row[headers.indexOf('matricula')]?.value?.toString().trim() ??
+                    '';
+            final fullName = row[headers.indexOf('nombre_completo')]
+                    ?.value
+                    ?.toString()
+                    .trim() ??
+                '';
+            final gender =
+                row[headers.indexOf('genero')]?.value?.toString().trim() ?? '';
+
             // Si falta alguno de los obligatorios, saltamos la fila
             if (studentId.isEmpty || fullName.isEmpty || gender.isEmpty) {
-              debugPrint("Fila $i omitida: Faltan datos obligatorios (Matrícula, Nombre o Género)");
+              debugPrint(
+                  "Fila $i omitida: Faltan datos obligatorios (Matrícula, Nombre o Género)");
               continue;
             }
 
             // Lógica para Alerta Médica
             bool isMedicalAlert = false;
             if (headers.contains('alerta_medica')) {
-               final val = row[headers.indexOf('alerta_medica')]?.value?.toString().toLowerCase().trim();
-               if (val == 'si' || val == '1' || val == 'true') {
-                 isMedicalAlert = true;
-               }
+              final val = row[headers.indexOf('alerta_medica')]
+                  ?.value
+                  ?.toString()
+                  .toLowerCase()
+                  .trim();
+              if (val == 'si' || val == '1' || val == 'true') {
+                isMedicalAlert = true;
+              }
             }
 
             studentsToImport.add(Student(
               id: studentId,
               fullName: fullName,
-              guardianFullName: row[headers.indexOf('tutor')]?.value?.toString() ?? '',
-              age: int.tryParse(row[headers.indexOf('edad')]?.value?.toString() ?? '0') ?? 0,
-              guardianPhone: row[headers.indexOf('telefono_tutor')]?.value?.toString() ?? '',
-              studentPhone: row[headers.indexOf('telefono_alumno')]?.value?.toString(),
+              guardianFullName:
+                  row[headers.indexOf('tutor')]?.value?.toString() ?? '',
+              age: int.tryParse(
+                      row[headers.indexOf('edad')]?.value?.toString() ?? '0') ??
+                  0,
+              guardianPhone:
+                  row[headers.indexOf('telefono_tutor')]?.value?.toString() ??
+                      '',
+              studentPhone:
+                  row[headers.indexOf('telefono_alumno')]?.value?.toString(),
               gender: gender,
-              placeOfResidence: row[headers.indexOf('residencia')]?.value?.toString() ?? '',
-              schoolCycle: _targetSchoolCycle!, // OBLIGATORIO (Seleccionado en UI)
+              placeOfResidence:
+                  row[headers.indexOf('residencia')]?.value?.toString() ?? '',
+              schoolCycle:
+                  _targetSchoolCycle!, // OBLIGATORIO (Seleccionado en UI)
               group: groupNameFromSheet, // OBLIGATORIO (Nombre de la Hoja)
-              institutionalEmail: row[headers.indexOf('email_institucional')]?.value?.toString() ?? '',
+              institutionalEmail: row[headers.indexOf('email_institucional')]
+                      ?.value
+                      ?.toString() ??
+                  '',
               studentId: studentId,
               isActive: true,
-              allergies: headers.contains('alergias') ? row[headers.indexOf('alergias')]?.value?.toString() : null,
-              healthConditions: headers.contains('condiciones_salud') ? row[headers.indexOf('condiciones_salud')]?.value?.toString() : null,
-              generalHealthStatus: headers.contains('estado_salud') ? (row[headers.indexOf('estado_salud')]?.value?.toString() ?? 'Sano') : 'Sano',
+              allergies: headers.contains('alergias')
+                  ? row[headers.indexOf('alergias')]?.value?.toString()
+                  : null,
+              healthConditions: headers.contains('condiciones_salud')
+                  ? row[headers.indexOf('condiciones_salud')]?.value?.toString()
+                  : null,
+              generalHealthStatus: headers.contains('estado_salud')
+                  ? (row[headers.indexOf('estado_salud')]?.value?.toString() ??
+                      'Sano')
+                  : 'Sano',
               medicalAlert: isMedicalAlert,
             ));
-          } catch (e) { continue; }
+          } catch (e) {
+            continue;
+          }
         }
       }
-      
+
       if (studentsToImport.isEmpty) {
-          if (mounted) UiHelpers.showSnackBar(context, 'No se encontraron alumnos válidos o los grupos del Excel no existen en este ciclo.', isError: true);
+        if (mounted)
+          UiHelpers.showSnackBar(context,
+              'No se encontraron alumnos válidos o los grupos del Excel no existen en este ciclo.',
+              isError: true);
       } else {
-          if (mounted) {
-            setState(() => _parsedStudents = studentsToImport);
-            UiHelpers.showSnackBar(context, 'Excel procesado: ${studentsToImport.length} alumnos listos.');
-          }
+        if (mounted) {
+          setState(() => _parsedStudents = studentsToImport);
+          UiHelpers.showSnackBar(context,
+              'Excel procesado: ${studentsToImport.length} alumnos listos.');
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -260,7 +311,8 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
     final confirmed = await UiHelpers.showConfirmationDialog(
       context,
       title: 'Importación Masiva',
-      content: '¿Importar ${_parsedStudents.length} alumnos al ciclo $_targetSchoolCycle?',
+      content:
+          '¿Importar ${_parsedStudents.length} alumnos al ciclo $_targetSchoolCycle?',
     );
 
     if (!confirmed) return;
@@ -269,9 +321,9 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
 
     try {
       // Guardar en el nodo del ciclo seleccionado
-      final dbRef = FirebaseDatabase.instance.ref(
-          'planteles/${widget.campusId}/students/$_targetSchoolCycle');
-          
+      final dbRef = FirebaseDatabase.instance
+          .ref('planteles/${widget.campusId}/students/$_targetSchoolCycle');
+
       for (final student in _parsedStudents) {
         await dbRef.child(student.studentId).set(student.toFirebaseMap());
       }
@@ -313,35 +365,44 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
                           // SELECTOR DE CICLO ESCOLAR
                           FadeInUp(
                             child: Card(
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
-                                child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                    child: DropdownButtonFormField<String>(
-                                        value: _targetSchoolCycle,
-                                        decoration: const InputDecoration(
-                                            labelText: 'Ciclo Escolar de Destino',
-                                            border: InputBorder.none,
-                                            prefixIcon: Icon(Icons.calendar_month),
-                                        ),
-                                        items: _availableSchoolCycles.map((c) => DropdownMenuItem(value: c.id, child: Text(c.id))).toList(),
-                                        onChanged: (val) {
-                                            if (val != null) {
-                                                setState(() {
-                                                    _targetSchoolCycle = val;
-                                                    _parsedStudents = []; // Limpiar previos si cambia el ciclo
-                                                    _filePath = null;
-                                                });
-                                                _loadAvailableGroups(val);
-                                            }
-                                        },
-                                    ),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: BorderSide(
+                                      color:
+                                          Colors.grey.withValues(alpha: 0.2))),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 4),
+                                child: DropdownButtonFormField<String>(
+                                  value: _targetSchoolCycle,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Ciclo Escolar de Destino',
+                                    border: InputBorder.none,
+                                    prefixIcon: Icon(Icons.calendar_month),
+                                  ),
+                                  items: _availableSchoolCycles
+                                      .map((c) => DropdownMenuItem(
+                                          value: c.id, child: Text(c.id)))
+                                      .toList(),
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setState(() {
+                                        _targetSchoolCycle = val;
+                                        _parsedStudents =
+                                            []; // Limpiar previos si cambia el ciclo
+                                        _filePath = null;
+                                      });
+                                      _loadAvailableGroups(val);
+                                    }
+                                  },
                                 ),
+                              ),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 24),
-                          
+
                           FadeInUp(
                             delay: const Duration(milliseconds: 100),
                             child: Card(
@@ -382,8 +443,9 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
                                           padding:
                                               const EdgeInsets.only(top: 16.0),
                                           child: Chip(
-                                              label: Text(
-                                                  _filePath!.split(Platform.pathSeparator).last)),
+                                              label: Text(_filePath!
+                                                  .split(Platform.pathSeparator)
+                                                  .last)),
                                         ),
                                     ],
                                   ),
@@ -419,12 +481,12 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
                                           margin:
                                               const EdgeInsets.only(bottom: 8),
                                           child: ListTile(
-                                            title: Text(s.fullName,
-                                                style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.w600)),
-                                            subtitle: Text(
-                                                'ID: ${s.studentId} • Grupo: ${s.group}')),
+                                              title: Text(s.fullName,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600)),
+                                              subtitle: Text(
+                                                  'ID: ${s.studentId} • Grupo: ${s.group}')),
                                         );
                                       },
                                     ),

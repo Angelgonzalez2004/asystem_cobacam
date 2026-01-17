@@ -4,7 +4,7 @@ class AnnouncementModel {
   final String message;
   final List<String>? imageUrls; // Cambiado de String? a List<String>?
   final String type; // 'General' or 'Campus'
-  final String? campus; 
+  final String? campus;
   final int timestamp;
   final String authorId;
   final String authorName;

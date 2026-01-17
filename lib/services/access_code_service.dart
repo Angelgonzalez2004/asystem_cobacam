@@ -1,7 +1,8 @@
 import 'package:firebase_database/firebase_database.dart';
 
 class AccessCodeService {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref('access_codes');
+  final DatabaseReference _dbRef =
+      FirebaseDatabase.instance.ref('access_codes');
 
   // Obtener todos los códigos (Para Admin General)
   Stream<Map<dynamic, dynamic>> getAllCodesStream() {
@@ -25,7 +26,8 @@ class AccessCodeService {
   }
 
   // Inicializar códigos (Si la base está vacía, subir los locales una vez)
-  Future<void> initializeCodes(Map<String, Map<String, String>> initialData) async {
+  Future<void> initializeCodes(
+      Map<String, Map<String, String>> initialData) async {
     final snapshot = await _dbRef.get();
     if (!snapshot.exists) {
       await _dbRef.set(initialData);

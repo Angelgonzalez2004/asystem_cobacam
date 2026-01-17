@@ -17,7 +17,7 @@ class GeneralAdminHomeScreen extends StatefulWidget {
 class _GeneralAdminHomeScreenState extends State<GeneralAdminHomeScreen> {
   final AnnouncementService _announcementService = AnnouncementService();
   String _userName = 'Admin General';
-  
+
   // Real stats
   int _totalStudents = 0;
   int _totalAcademies = 0;
@@ -33,11 +33,15 @@ class _GeneralAdminHomeScreenState extends State<GeneralAdminHomeScreen> {
   Future<void> _loadData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final snapshot = await FirebaseDatabase.instance.ref('users/${user.uid}/fullName').get();
+      final snapshot = await FirebaseDatabase.instance
+          .ref('users/${user.uid}/fullName')
+          .get();
       if (mounted && snapshot.exists) {
         setState(() => _userName = snapshot.value.toString());
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) UiHelpers.showSnackBar(context, 'Portal de Administración General: ¡Hola, $_userName!');
+          if (mounted)
+            UiHelpers.showSnackBar(context,
+                'Portal de Administración General: ¡Hola, $_userName!');
         });
       }
     }
@@ -51,7 +55,7 @@ class _GeneralAdminHomeScreenState extends State<GeneralAdminHomeScreen> {
         int students = 0;
         int academies = 0;
         final data = usersSnapshot.value as Map<dynamic, dynamic>;
-        
+
         data.forEach((key, value) {
           final role = value['role']?.toString();
           if (role == 'Alumno') students++;
@@ -59,8 +63,10 @@ class _GeneralAdminHomeScreenState extends State<GeneralAdminHomeScreen> {
         });
 
         // Contar planteles únicos
-        final plantelesSnapshot = await FirebaseDatabase.instance.ref('planteles').get();
-        int plants = plantelesSnapshot.exists ? plantelesSnapshot.children.length : 0;
+        final plantelesSnapshot =
+            await FirebaseDatabase.instance.ref('planteles').get();
+        int plants =
+            plantelesSnapshot.exists ? plantelesSnapshot.children.length : 0;
 
         if (mounted) {
           setState(() {
@@ -85,11 +91,10 @@ class _GeneralAdminHomeScreenState extends State<GeneralAdminHomeScreen> {
       child: Column(
         children: [
           WelcomeHeader(
-            userName: _userName, 
+            userName: _userName,
             role: 'ADMINISTRACIÓN GENERAL',
             subtitle: 'Supervisión de todo el Sistema COBACAM',
           ),
-          
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
@@ -97,40 +102,47 @@ class _GeneralAdminHomeScreenState extends State<GeneralAdminHomeScreen> {
               children: [
                 _buildSectionHeader(theme, 'Estado Real del Sistema'),
                 const SizedBox(height: 16),
-                
-                _isLoadingStats 
-                  ? const Center(child: LinearProgressIndicator())
-                  : GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: MediaQuery.of(context).size.width > 900 ? 4 : (MediaQuery.of(context).size.width > 600 ? 2 : 1),
-                      childAspectRatio: 2.5,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      children: [
-                        _buildGlobalStat('Planteles', '$_totalPlants', Icons.account_balance, Colors.indigo),
-                        _buildGlobalStat('Académicas', '$_totalAcademies', Icons.people_alt, Colors.blue),
-                        _buildGlobalStat('Alumnos', '$_totalStudents', Icons.school, Colors.green),
-                        _buildGlobalStat('Actividad', 'Alta', Icons.insights, Colors.orange),
-                      ],
-                    ),
-
+                _isLoadingStats
+                    ? const Center(child: LinearProgressIndicator())
+                    : GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: MediaQuery.of(context).size.width > 900
+                            ? 4
+                            : (MediaQuery.of(context).size.width > 600 ? 2 : 1),
+                        childAspectRatio: 2.5,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        children: [
+                          _buildGlobalStat('Planteles', '$_totalPlants',
+                              Icons.account_balance, Colors.indigo),
+                          _buildGlobalStat('Académicas', '$_totalAcademies',
+                              Icons.people_alt, Colors.blue),
+                          _buildGlobalStat('Alumnos', '$_totalStudents',
+                              Icons.school, Colors.green),
+                          _buildGlobalStat('Actividad', 'Alta', Icons.insights,
+                              Colors.orange),
+                        ],
+                      ),
                 const SizedBox(height: 32),
                 _buildSectionHeader(theme, 'Noticias del Sistema'),
                 const SizedBox(height: 16),
-
                 StreamBuilder<List<AnnouncementModel>>(
-                  stream: _announcementService.getAnnouncementsStream(null, true), 
+                  stream:
+                      _announcementService.getAnnouncementsStream(null, true),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                    if (snapshot.connectionState == ConnectionState.waiting)
+                      return const Center(child: CircularProgressIndicator());
                     final announcements = snapshot.data ?? [];
-                    if (announcements.isEmpty) return const Text("No hay avisos globales.");
+                    if (announcements.isEmpty)
+                      return const Text("No hay avisos globales.");
 
                     return ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: announcements.length,
-                      itemBuilder: (context, index) => AnnouncementCard(announcement: announcements[index]),
+                      itemBuilder: (context, index) =>
+                          AnnouncementCard(announcement: announcements[index]),
                     );
                   },
                 ),
@@ -148,12 +160,15 @@ class _GeneralAdminHomeScreenState extends State<GeneralAdminHomeScreen> {
       children: [
         Icon(Icons.analytics_outlined, color: theme.colorScheme.primary),
         const SizedBox(width: 12),
-        Text(title, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+        Text(title,
+            style: theme.textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold)),
       ],
     );
   }
 
-  Widget _buildGlobalStat(String label, String value, IconData icon, Color color) {
+  Widget _buildGlobalStat(
+      String label, String value, IconData icon, Color color) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
@@ -163,7 +178,8 @@ class _GeneralAdminHomeScreenState extends State<GeneralAdminHomeScreen> {
       ),
       child: ListTile(
         leading: Icon(icon, color: color),
-        title: Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(value,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         subtitle: Text(label, style: const TextStyle(fontSize: 11)),
       ),
     );

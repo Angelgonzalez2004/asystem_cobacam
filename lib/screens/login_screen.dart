@@ -24,7 +24,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _isPasswordObscured = true;
 
@@ -61,7 +61,8 @@ class _LoginScreenState extends State<LoginScreen> {
         // Still locked, update timer
         final remaining = _lockoutTime!.difference(DateTime.now());
         setState(() {
-          _lockoutMessage = 'Espera ${remaining.inSeconds}s para intentar de nuevo';
+          _lockoutMessage =
+              'Espera ${remaining.inSeconds}s para intentar de nuevo';
         });
         _lockoutTimer = Timer(const Duration(seconds: 1), _checkLockoutStatus);
       }
@@ -78,8 +79,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     // 1. Check Lockout
     if (_lockoutTime != null && DateTime.now().isBefore(_lockoutTime!)) {
-       UiHelpers.showSnackBar(context, 'Sistema bloqueado temporalmente por seguridad.', isError: true);
-       return;
+      UiHelpers.showSnackBar(
+          context, 'Sistema bloqueado temporalmente por seguridad.',
+          isError: true);
+      return;
     }
 
     if (_emailController.text.trim().isEmpty ||
@@ -126,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             // Registrar sesión
             try {
-              SessionService().registerCurrentSession(); 
+              SessionService().registerCurrentSession();
             } catch (e) {
               debugPrint("Error registrando sesión: $e");
             }
@@ -134,7 +137,9 @@ class _LoginScreenState extends State<LoginScreen> {
             _navigateToDashboard(role);
           } catch (e) {
             debugPrint("Error processing user data: $e");
-            UiHelpers.showSnackBar(context, 'Error al procesar datos de usuario.', isError: true);
+            UiHelpers.showSnackBar(
+                context, 'Error al procesar datos de usuario.',
+                isError: true);
           }
         } else {
           UiHelpers.showSnackBar(context, 'No se encontraron datos de usuario.',
@@ -144,12 +149,12 @@ class _LoginScreenState extends State<LoginScreen> {
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       debugPrint("Error de Auth: ${e.code}");
-      
+
       String message = 'Credenciales incorrectas.';
-      
+
       // --- LOGIC: FAILED ATTEMPTS ---
       _failedAttempts++;
-      
+
       if (e.code == 'too-many-requests') {
         // Firebase native protection triggered
         message = 'Demasiados intentos. Cuenta bloqueada temporalmente.';
@@ -160,18 +165,18 @@ class _LoginScreenState extends State<LoginScreen> {
           _triggerLockout(60); // 1 minute lockout
           message = 'Demasiados intentos fallidos. Espera 1 minuto.';
         } else if (_failedAttempts >= 3) {
-           _triggerLockout(10); // 10 seconds warning lockout
-           message = 'Credenciales incorrectas. Espera 10 segundos.';
+          _triggerLockout(10); // 10 seconds warning lockout
+          message = 'Credenciales incorrectas. Espera 10 segundos.';
         } else {
-           // Normal error
-           if (e.code == 'user-not-found') message = 'Usuario no encontrado.';
-           if (e.code == 'wrong-password') message = 'Contraseña incorrecta.';
-           if (e.code == 'invalid-credential') message = 'Correo o contraseña inválidos.';
+          // Normal error
+          if (e.code == 'user-not-found') message = 'Usuario no encontrado.';
+          if (e.code == 'wrong-password') message = 'Contraseña incorrecta.';
+          if (e.code == 'invalid-credential')
+            message = 'Correo o contraseña inválidos.';
         }
       }
-      
-      UiHelpers.showSnackBar(context, message, isError: true);
 
+      UiHelpers.showSnackBar(context, message, isError: true);
     } catch (e) {
       if (!mounted) return;
       debugPrint("Error inesperado en Login: $e");
@@ -216,7 +221,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isLocked = _lockoutTime != null && DateTime.now().isBefore(_lockoutTime!);
+    final isLocked =
+        _lockoutTime != null && DateTime.now().isBefore(_lockoutTime!);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -235,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          
+
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -250,9 +256,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(32),
                         side: BorderSide(
-                          color: isLocked 
-                              ? theme.colorScheme.error.withOpacity(0.5) 
-                              : theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                          color: isLocked
+                              ? theme.colorScheme.error.withOpacity(0.5)
+                              : theme.colorScheme.surfaceContainerHighest
+                                  .withOpacity(0.5),
                         ),
                       ),
                       color: isDark ? theme.cardColor : Colors.white,
@@ -266,7 +273,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             Center(
                               child: Hero(
                                 tag: 'app_logo',
-                                child: Image.asset('assets/images/logo1.png', height: 80),
+                                child: Image.asset('assets/images/logo1.png',
+                                    height: 80),
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -275,17 +283,22 @@ class _LoginScreenState extends State<LoginScreen> {
                               textAlign: TextAlign.center,
                               style: theme.textTheme.headlineMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: isLocked ? theme.colorScheme.error : theme.colorScheme.primary,
+                                color: isLocked
+                                    ? theme.colorScheme.error
+                                    : theme.colorScheme.primary,
                               ),
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              isLocked 
-                                  ? 'Se han detectado múltiples intentos fallidos.' 
+                              isLocked
+                                  ? 'Se han detectado múltiples intentos fallidos.'
                                   : 'Inicia sesión para continuar',
                               textAlign: TextAlign.center,
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: isLocked ? theme.colorScheme.error : theme.colorScheme.onSurface.withOpacity(0.6),
+                                color: isLocked
+                                    ? theme.colorScheme.error
+                                    : theme.colorScheme.onSurface
+                                        .withOpacity(0.6),
                               ),
                             ),
                             const SizedBox(height: 32),
@@ -306,19 +319,28 @@ class _LoginScreenState extends State<LoginScreen> {
                               isPassword: true,
                               enabled: !isLocked,
                             ),
-                            
+
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(
-                                onPressed: isLocked ? null : () => Navigator.push(context, SlideRightRoute(page: const ForgotPasswordScreen())),
+                                onPressed: isLocked
+                                    ? null
+                                    : () => Navigator.push(
+                                        context,
+                                        SlideRightRoute(
+                                            page:
+                                                const ForgotPasswordScreen())),
                                 style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 0, vertical: 8),
                                 ),
                                 child: Text(
                                   '¿Olvidaste tu contraseña?',
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: isLocked ? Colors.grey : theme.colorScheme.primary,
+                                    color: isLocked
+                                        ? Colors.grey
+                                        : theme.colorScheme.primary,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -329,17 +351,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             // Botón Login
                             _isLoading
-                                ? const Center(child: CircularProgressIndicator())
+                                ? const Center(
+                                    child: CircularProgressIndicator())
                                 : SizedBox(
                                     height: 52,
                                     child: ElevatedButton(
                                       onPressed: isLocked ? null : _handleLogin,
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: isLocked ? Colors.grey : theme.colorScheme.primary,
+                                        backgroundColor: isLocked
+                                            ? Colors.grey
+                                            : theme.colorScheme.primary,
                                         foregroundColor: Colors.white,
                                         elevation: 2,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(16),
+                                          borderRadius:
+                                              BorderRadius.circular(16),
                                         ),
                                       ),
                                       child: Text(
@@ -354,21 +380,30 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
 
                             const SizedBox(height: 32),
-                            
+
                             // Footer
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
                                   '¿No tienes cuenta? ',
-                                  style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                                  style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.6)),
                                 ),
                                 GestureDetector(
-                                  onTap: isLocked ? null : () => Navigator.push(context, SlideRightRoute(page: const SignUpScreen())),
+                                  onTap: isLocked
+                                      ? null
+                                      : () => Navigator.push(
+                                          context,
+                                          SlideRightRoute(
+                                              page: const SignUpScreen())),
                                   child: Text(
                                     'Regístrate',
                                     style: TextStyle(
-                                      color: isLocked ? Colors.grey : theme.colorScheme.primary,
+                                      color: isLocked
+                                          ? Colors.grey
+                                          : theme.colorScheme.primary,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -384,7 +419,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          
+
           Positioned(
             top: 50,
             left: 20,
@@ -407,11 +442,12 @@ class _LoginScreenState extends State<LoginScreen> {
     bool enabled = true,
   }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       decoration: BoxDecoration(
-        color: enabled 
-            ? (theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceContainerHighest.withOpacity(0.3))
+        color: enabled
+            ? (theme.inputDecorationTheme.fillColor ??
+                theme.colorScheme.surfaceContainerHighest.withOpacity(0.3))
             : Colors.grey.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
       ),
@@ -423,19 +459,25 @@ class _LoginScreenState extends State<LoginScreen> {
         style: TextStyle(color: theme.colorScheme.onSurface),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
-          prefixIcon: Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+          labelStyle:
+              TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+          prefixIcon:
+              Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.5)),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
-                    _isPasswordObscured ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                    _isPasswordObscured
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
                     color: theme.colorScheme.onSurface.withOpacity(0.5),
                   ),
-                  onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
+                  onPressed: () => setState(
+                      () => _isPasswordObscured = !_isPasswordObscured),
                 )
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           floatingLabelBehavior: FloatingLabelBehavior.auto,
         ),
       ),

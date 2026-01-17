@@ -55,5 +55,7 @@
 		<string>Esta aplicación necesita acceso a la cámara para tomar fotos de perfil o documentos.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>Esta aplicación necesita acceso al micrófono para grabar videos.</string>
+		<key>NSFaceIDUsageDescription</key>
+		<string>Esta aplicación requiere acceso a Face ID para desbloquear la aplicación de forma segura.</string>
 	</dict>
 </plist>

@@ -48,7 +48,7 @@ class _SchoolCycleManagementScreenState
         }
         // Ordenar por fecha de inicio descendente (más reciente primero)
         cycles.sort((a, b) => b.startDate.compareTo(a.startDate));
-        
+
         if (mounted) {
           setState(() {
             _schoolCycles = cycles;
@@ -114,9 +114,12 @@ class _SchoolCycleManagementScreenState
                           itemCount: _schoolCycles.length,
                           itemBuilder: (context, index) {
                             final cycle = _schoolCycles[index];
-                            final isActiveSystem = cycle.id == _activeSystemCycleId;
-                            final statusColor = _getStatusColor(cycle.startDate, cycle.endDate);
-                            final statusText = _getStatusText(cycle.startDate, cycle.endDate);
+                            final isActiveSystem =
+                                cycle.id == _activeSystemCycleId;
+                            final statusColor =
+                                _getStatusColor(cycle.startDate, cycle.endDate);
+                            final statusText =
+                                _getStatusText(cycle.startDate, cycle.endDate);
 
                             return FadeInUp(
                               delay: Duration(milliseconds: 50 * index),
@@ -126,34 +129,56 @@ class _SchoolCycleManagementScreenState
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   side: isActiveSystem
-                                      ? BorderSide(color: theme.colorScheme.primary, width: 2)
-                                      : (isDark ? BorderSide.none : BorderSide(color: Colors.grey.shade200)),
+                                      ? BorderSide(
+                                          color: theme.colorScheme.primary,
+                                          width: 2)
+                                      : (isDark
+                                          ? BorderSide.none
+                                          : BorderSide(
+                                              color: Colors.grey.shade200)),
                                 ),
-                                color: isActiveSystem 
-                                    ? theme.colorScheme.primary.withValues(alpha: 0.05)
-                                    : (isDark ? theme.cardTheme.color : Colors.white),
+                                color: isActiveSystem
+                                    ? theme.colorScheme.primary
+                                        .withValues(alpha: 0.05)
+                                    : (isDark
+                                        ? theme.cardTheme.color
+                                        : Colors.white),
                                 child: ListTile(
                                   contentPadding: const EdgeInsets.all(16),
                                   leading: Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                        color: isActiveSystem ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(12)),
+                                        color: isActiveSystem
+                                            ? theme.colorScheme.primary
+                                            : theme.colorScheme.primary
+                                                .withValues(alpha: 0.1),
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
                                     child: Icon(Icons.calendar_month_outlined,
-                                        color: isActiveSystem ? Colors.white : theme.colorScheme.primary),
+                                        color: isActiveSystem
+                                            ? Colors.white
+                                            : theme.colorScheme.primary),
                                   ),
                                   title: Row(
                                     children: [
-                                      Text(cycle.id, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                                      Text(cycle.id,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18)),
                                       if (isActiveSystem) ...[
                                         const SizedBox(width: 8),
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: theme.colorScheme.primary,
-                                            borderRadius: BorderRadius.circular(4)
-                                          ),
-                                          child: const Text('ACTUAL', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                                              color: theme.colorScheme.primary,
+                                              borderRadius:
+                                                  BorderRadius.circular(4)),
+                                          child: const Text('ACTUAL',
+                                              style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold)),
                                         )
                                       ]
                                     ],
@@ -161,15 +186,19 @@ class _SchoolCycleManagementScreenState
                                   subtitle: Padding(
                                     padding: const EdgeInsets.only(top: 8.0),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
-                                            const Icon(Icons.date_range, size: 14, color: Colors.grey),
+                                            const Icon(Icons.date_range,
+                                                size: 14, color: Colors.grey),
                                             const SizedBox(width: 4),
                                             Text(
                                               '${DateFormat('dd/MM/yyyy').format(cycle.startDate)} - ${DateFormat('dd/MM/yyyy').format(cycle.endDate)}',
-                                              style: TextStyle(color: theme.textTheme.bodySmall?.color),
+                                              style: TextStyle(
+                                                  color: theme.textTheme
+                                                      .bodySmall?.color),
                                             ),
                                           ],
                                         ),
@@ -177,21 +206,39 @@ class _SchoolCycleManagementScreenState
                                         Row(
                                           children: [
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2),
                                               decoration: BoxDecoration(
                                                   color: Colors.teal.shade50,
-                                                  borderRadius: BorderRadius.circular(6)),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6)),
                                               child: Text('TIPO ${cycle.type}',
-                                                  style: TextStyle(fontSize: 10, color: Colors.teal.shade700, fontWeight: FontWeight.bold)),
+                                                  style: TextStyle(
+                                                      fontSize: 10,
+                                                      color:
+                                                          Colors.teal.shade700,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
                                             ),
                                             const SizedBox(width: 8),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2),
                                               decoration: BoxDecoration(
-                                                  color: statusColor.withValues(alpha: 0.1),
-                                                  borderRadius: BorderRadius.circular(6)),
+                                                  color: statusColor.withValues(
+                                                      alpha: 0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6)),
                                               child: Text(statusText,
-                                                  style: TextStyle(fontSize: 10, color: statusColor, fontWeight: FontWeight.bold)),
+                                                  style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: statusColor,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
                                             ),
                                           ],
                                         ),
@@ -202,11 +249,14 @@ class _SchoolCycleManagementScreenState
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
-                                        icon: Icon(Icons.edit_outlined, color: theme.colorScheme.primary),
-                                        onPressed: () => _showSchoolCycleDialog(cycle: cycle),
+                                        icon: Icon(Icons.edit_outlined,
+                                            color: theme.colorScheme.primary),
+                                        onPressed: () => _showSchoolCycleDialog(
+                                            cycle: cycle),
                                       ),
                                       IconButton(
-                                        icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                                        icon: Icon(Icons.delete_outline,
+                                            color: theme.colorScheme.error),
                                         onPressed: () async {
                                           final confirm = await UiHelpers
                                               .showConfirmationDialog(context,
@@ -242,7 +292,8 @@ class _SchoolCycleManagementScreenState
 
   void _showSchoolCycleDialog({SchoolCycle? cycle}) {
     DateTime startDate = cycle?.startDate ?? DateTime.now();
-    DateTime endDate = cycle?.endDate ?? DateTime.now().add(const Duration(days: 180));
+    DateTime endDate =
+        cycle?.endDate ?? DateTime.now().add(const Duration(days: 180));
 
     showDialog(
       context: context,
@@ -252,43 +303,45 @@ class _SchoolCycleManagementScreenState
             // Lógica automática de nomenclatura
             String generatedType = '';
             String generatedId = '';
-            
+
             final month = startDate.month;
             final year = startDate.year;
 
             if (month == 8) {
               generatedType = 'Propedéutico';
               generatedId = '$year-P';
-            } else if (month >= 9 || month == 1) { 
+            } else if (month >= 9 || month == 1) {
               // Septiembre a Diciembre (y Enero a veces por retrasos) es B
               // Ajuste: Generalmente B inicia en Sept. Si inicia en Enero es raro, pero asumimos A.
               // Regla estricta basada en solicitud:
               // B: "mediados a principios de septiembre"
               // A: "mediados de febrero"
-              
-              if (month >= 8) { // Agosto tardío o Sept en adelante
-                 generatedType = 'B';
-                 generatedId = '$year-B';
-                 if (month == 8) { // Si es Agosto, prioridad P, pero si ya pasó propedéutico...
-                    // La regla del usuario dice: Agosto = P. Sept = B. Feb = A.
-                    // Respetemos estrictamente el mes de inicio.
-                    generatedType = 'Propedéutico';
-                    generatedId = '$year-P';
-                 }
+
+              if (month >= 8) {
+                // Agosto tardío o Sept en adelante
+                generatedType = 'B';
+                generatedId = '$year-B';
+                if (month == 8) {
+                  // Si es Agosto, prioridad P, pero si ya pasó propedéutico...
+                  // La regla del usuario dice: Agosto = P. Sept = B. Feb = A.
+                  // Respetemos estrictamente el mes de inicio.
+                  generatedType = 'Propedéutico';
+                  generatedId = '$year-P';
+                }
               }
             }
-            
+
             // Simplificación robusta según instrucciones:
             if (month == 8) {
-               generatedType = 'Propedéutico';
-               generatedId = '$year-P';
+              generatedType = 'Propedéutico';
+              generatedId = '$year-P';
             } else if (month >= 9) {
-               generatedType = 'B';
-               generatedId = '$year-B';
+              generatedType = 'B';
+              generatedId = '$year-B';
             } else {
-               // Enero a Julio -> A
-               generatedType = 'A';
-               generatedId = '$year-A';
+              // Enero a Julio -> A
+              generatedType = 'A';
+              generatedId = '$year-A';
             }
 
             return AlertDialog(
@@ -303,25 +356,29 @@ class _SchoolCycleManagementScreenState
                       decoration: BoxDecoration(
                         color: Theme.of(context).primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Theme.of(context).primaryColor),
+                        border:
+                            Border.all(color: Theme.of(context).primaryColor),
                       ),
                       child: Column(
                         children: [
-                          const Text('CICLO DETECTADO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                          const Text('CICLO DETECTADO',
+                              style: TextStyle(
+                                  fontSize: 10, fontWeight: FontWeight.bold)),
                           Text(
                             generatedId,
                             style: TextStyle(
-                              fontSize: 24, 
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).primaryColor
-                            ),
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor),
                           ),
-                          Text('Tipo: $generatedType', style: const TextStyle(fontSize: 12)),
+                          Text('Tipo: $generatedType',
+                              style: const TextStyle(fontSize: 12)),
                         ],
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text('Seleccione las fechas exactas:', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    const Text('Seleccione las fechas exactas:',
+                        style: TextStyle(fontSize: 12, color: Colors.grey)),
                     const SizedBox(height: 8),
                     _buildDatePickerTile('Inicio', startDate,
                         (d) => setState(() => startDate = d)),
@@ -342,7 +399,7 @@ class _SchoolCycleManagementScreenState
                         type: generatedType,
                         startDate: startDate,
                         endDate: endDate);
-                    
+
                     if (cycle == null) {
                       _createSchoolCycle(newCycle);
                     } else {
@@ -352,24 +409,25 @@ class _SchoolCycleManagementScreenState
                       // Pero ciclos activos con datos hijos (grupos) no deberían cambiar de ID.
                       // Asumiremos actualización segura.
                       if (cycle.id != generatedId) {
-                         // Cambio de ID complejo. Mejor avisar o bloquear.
-                         // O simplemente permitir crear nuevo.
-                         // Dado que es "Editar", actualizaremos las fechas pero MANTENEMOS el ID original 
-                         // para no romper integridad referencial, A MENOS que sea un ciclo nuevo sin datos.
-                         // Pero el usuario pidió automatización. 
-                         // Vamos a asumir que si editan, quieren corregir.
-                         // Actualizaremos el objeto pero usando la referencia vieja si es solo update de fechas.
-                         // Pero el ID DEBE coincidir con la fecha.
-                         // Estrategia: Guardar con el ID generado.
-                         if (cycle.id != generatedId) {
-                            _deleteSchoolCycle(cycle.id); // Borrar viejo (Cuidado con datos hijos)
-                            _createSchoolCycle(newCycle); // Crear nuevo
-                         } else {
-                            _updateSchoolCycle(newCycle);
-                         }
-                    } else {
+                        // Cambio de ID complejo. Mejor avisar o bloquear.
+                        // O simplemente permitir crear nuevo.
+                        // Dado que es "Editar", actualizaremos las fechas pero MANTENEMOS el ID original
+                        // para no romper integridad referencial, A MENOS que sea un ciclo nuevo sin datos.
+                        // Pero el usuario pidió automatización.
+                        // Vamos a asumir que si editan, quieren corregir.
+                        // Actualizaremos el objeto pero usando la referencia vieja si es solo update de fechas.
+                        // Pero el ID DEBE coincidir con la fecha.
+                        // Estrategia: Guardar con el ID generado.
+                        if (cycle.id != generatedId) {
+                          _deleteSchoolCycle(cycle
+                              .id); // Borrar viejo (Cuidado con datos hijos)
+                          _createSchoolCycle(newCycle); // Crear nuevo
+                        } else {
+                          _updateSchoolCycle(newCycle);
+                        }
+                      } else {
                         _updateSchoolCycle(newCycle);
-                    }
+                      }
                     }
                     Navigator.pop(context);
                     UiHelpers.showSnackBar(

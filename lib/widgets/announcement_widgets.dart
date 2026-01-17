@@ -36,22 +36,23 @@ class AnnouncementCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final date = DateTime.fromMillisecondsSinceEpoch(announcement.timestamp);
     final formattedDate = DateFormat('dd MMM yyyy, hh:mm a').format(date);
-    
+
     // LÓGICA AVANZADA DE PERMISOS (COLABORATIVA)
     bool canManage = false;
 
     // 1. El autor siempre tiene permiso
     if (currentUserId != null && currentUserId == announcement.authorId) {
       canManage = true;
-    } 
+    }
     // 2. Lógica para Admin General (Puede gestionar cualquier aviso General)
-    else if (currentUserRole == 'Personal Administrativo General' && announcement.type == 'General') {
+    else if (currentUserRole == 'Personal Administrativo General' &&
+        announcement.type == 'General') {
       canManage = true;
     }
     // 3. Lógica para Admin Plantel (Puede gestionar cualquier aviso de SU plantel)
-    else if (currentUserRole == 'Personal Administrativo por Plantel' && 
-             announcement.campus == currentUserCampus && 
-             currentUserCampus != null) {
+    else if (currentUserRole == 'Personal Administrativo por Plantel' &&
+        announcement.campus == currentUserCampus &&
+        currentUserCampus != null) {
       canManage = true;
     }
 
@@ -122,7 +123,7 @@ class AnnouncementCard extends StatelessWidget {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
 
           // GRID DE IMÁGENES MEJORADO
@@ -144,7 +145,8 @@ class AnnouncementCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2), width: 2),
+        border: Border.all(
+            color: theme.colorScheme.primary.withOpacity(0.2), width: 2),
       ),
       child: CircleAvatar(
         radius: 20,
@@ -289,7 +291,7 @@ class SmartImageGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     int count = images.length;
-    
+
     // CASO 1: Una sola imagen (Layout adaptable con fondo desenfocado)
     if (count == 1) {
       return GestureDetector(
@@ -323,7 +325,7 @@ class SmartImageGrid extends StatelessWidget {
                     child: Container(color: Colors.black.withOpacity(0.3)),
                   ),
                 ),
-                
+
                 // Imagen Principal (Completa)
                 Image.network(
                   images[0],
@@ -336,7 +338,9 @@ class SmartImageGrid extends StatelessWidget {
                     return Container(
                       height: 250,
                       color: Colors.transparent,
-                      child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+                      child: const Center(
+                          child:
+                              CircularProgressIndicator(color: Colors.white)),
                     );
                   },
                 ),
@@ -351,16 +355,16 @@ class SmartImageGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         double width = constraints.maxWidth;
-        
+
         // Cálculo de altura optimizado para pantallas grandes
         // En móviles (width ~350), la altura será ~260-350.
         // En Desktop (width ~750), limitamos la altura a 400px máx.
         double multiplier = (count == 2) ? 0.5 : 0.75;
         double calculatedHeight = width * multiplier;
-        
+
         // Tope máximo de altura para evitar grids gigantes
         double height = calculatedHeight > 400 ? 400 : calculatedHeight;
-        
+
         return SizedBox(
           height: height,
           child: _buildGrid(count, context),
@@ -379,19 +383,23 @@ class SmartImageGrid extends StatelessWidget {
         ],
       );
     }
-    
+
     if (count == 3) {
       return Row(
         children: [
-          Expanded(flex: 2, child: _buildImageTile(context, 0, height: double.infinity)),
+          Expanded(
+              flex: 2,
+              child: _buildImageTile(context, 0, height: double.infinity)),
           const SizedBox(width: 4),
           Expanded(
             flex: 1,
             child: Column(
               children: [
-                Expanded(child: _buildImageTile(context, 1, width: double.infinity)),
+                Expanded(
+                    child: _buildImageTile(context, 1, width: double.infinity)),
                 const SizedBox(height: 4),
-                Expanded(child: _buildImageTile(context, 2, width: double.infinity)),
+                Expanded(
+                    child: _buildImageTile(context, 2, width: double.infinity)),
               ],
             ),
           ),
@@ -405,9 +413,11 @@ class SmartImageGrid extends StatelessWidget {
         Expanded(
           child: Row(
             children: [
-              Expanded(child: _buildImageTile(context, 0, height: double.infinity)),
+              Expanded(
+                  child: _buildImageTile(context, 0, height: double.infinity)),
               const SizedBox(width: 4),
-              Expanded(child: _buildImageTile(context, 1, height: double.infinity)),
+              Expanded(
+                  child: _buildImageTile(context, 1, height: double.infinity)),
             ],
           ),
         ),
@@ -415,12 +425,13 @@ class SmartImageGrid extends StatelessWidget {
         Expanded(
           child: Row(
             children: [
-              Expanded(child: _buildImageTile(context, 2, height: double.infinity)),
+              Expanded(
+                  child: _buildImageTile(context, 2, height: double.infinity)),
               const SizedBox(width: 4),
               Expanded(
-                child: count > 4 
-                  ? _buildOverlayTile(context, 3, count - 4) 
-                  : _buildImageTile(context, 3, height: double.infinity),
+                child: count > 4
+                    ? _buildOverlayTile(context, 3, count - 4)
+                    : _buildImageTile(context, 3, height: double.infinity),
               ),
             ],
           ),
@@ -429,7 +440,8 @@ class SmartImageGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildImageTile(BuildContext context, int index, {double? width, double? height}) {
+  Widget _buildImageTile(BuildContext context, int index,
+      {double? width, double? height}) {
     return GestureDetector(
       onTap: () => _openGallery(context, index),
       child: Hero(
@@ -524,11 +536,16 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(children: [
-            SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+            SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white)),
             SizedBox(width: 12),
             Text('Descargando imagen...')
           ]),
-          duration: Duration(seconds: 10), // Duración larga, se ocultará al terminar
+          duration:
+              Duration(seconds: 10), // Duración larga, se ocultará al terminar
         ),
       );
 
@@ -536,12 +553,13 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode != 200) throw Exception("Error al descargar");
       final bytes = response.bodyBytes;
-      
+
       // Ocultar SnackBar de carga
       if (context.mounted) ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
       // 2. Guardar según plataforma
-      if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+      if (!kIsWeb &&
+          (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
         // ESCRITORIO: Usar FilePicker
         String? outputFile = await FilePicker.platform.saveFile(
           dialogTitle: 'Guardar imagen como...',
@@ -554,7 +572,9 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
           await file.writeAsBytes(bytes);
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('✅ Imagen guardada en tu PC'), backgroundColor: Colors.green),
+              const SnackBar(
+                  content: Text('✅ Imagen guardada en tu PC'),
+                  backgroundColor: Colors.green),
             );
           }
         }
@@ -564,19 +584,24 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
         if (!await Gal.hasAccess()) {
           await Gal.requestAccess();
         }
-        
+
         await Gal.putImageBytes(bytes);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✅ Guardada en la Galería'), backgroundColor: Colors.green),
+            const SnackBar(
+                content: Text('✅ Guardada en la Galería'),
+                backgroundColor: Colors.green),
           );
         }
       } else if (kIsWeb) {
         // WEB
-        await downloadImageWeb(bytes, 'cobacam_img_${DateTime.now().millisecondsSinceEpoch}.jpg');
+        await downloadImageWeb(
+            bytes, 'cobacam_img_${DateTime.now().millisecondsSinceEpoch}.jpg');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✅ Descarga iniciada'), backgroundColor: Colors.green),
+            const SnackBar(
+                content: Text('✅ Descarga iniciada'),
+                backgroundColor: Colors.green),
           );
         }
       }
@@ -584,7 +609,9 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Error al guardar: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('❌ Error al guardar: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -592,14 +619,18 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
 
   Future<void> _saveAllImages(BuildContext context) async {
     try {
-      if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+      if (!kIsWeb &&
+          (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
         // ESCRITORIO: Seleccionar CARPETA una sola vez
-        String? dirPath = await FilePicker.platform.getDirectoryPath(dialogTitle: 'Seleccionar carpeta de destino');
-        
+        String? dirPath = await FilePicker.platform
+            .getDirectoryPath(dialogTitle: 'Seleccionar carpeta de destino');
+
         if (dirPath == null) return; // Cancelado por usuario
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Guardando ${widget.imageUrls.length} imágenes...'), duration: const Duration(seconds: 2)),
+          SnackBar(
+              content: Text('Guardando ${widget.imageUrls.length} imágenes...'),
+              duration: const Duration(seconds: 2)),
         );
 
         int count = 0;
@@ -608,9 +639,11 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
           if (response.statusCode == 200) {
             final String separator = Platform.pathSeparator;
             // Limpiar path si no tiene separador al final
-            final String cleanDir = dirPath.endsWith(separator) ? dirPath : '$dirPath$separator';
-            final String filePath = '${cleanDir}cobacam_aviso_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
-            
+            final String cleanDir =
+                dirPath.endsWith(separator) ? dirPath : '$dirPath$separator';
+            final String filePath =
+                '${cleanDir}cobacam_aviso_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+
             final file = File(filePath);
             await file.writeAsBytes(response.bodyBytes);
             count++;
@@ -619,18 +652,21 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('✅ $count imágenes guardadas exitosamente'), backgroundColor: Colors.green),
+            SnackBar(
+                content: Text('✅ $count imágenes guardadas exitosamente'),
+                backgroundColor: Colors.green),
           );
         }
-
       } else if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
         // MÓVIL: Guardar en bucle
         if (!await Gal.hasAccess()) {
-           await Gal.requestAccess();
+          await Gal.requestAccess();
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Iniciando descarga masiva...'), duration: Duration(seconds: 2)),
+          const SnackBar(
+              content: Text('Iniciando descarga masiva...'),
+              duration: Duration(seconds: 2)),
         );
 
         int count = 0;
@@ -648,35 +684,44 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('✅ $count imágenes guardadas en Galería'), backgroundColor: Colors.green),
+            SnackBar(
+                content: Text('✅ $count imágenes guardadas en Galería'),
+                backgroundColor: Colors.green),
           );
         }
       } else if (kIsWeb) {
         // WEB: Descarga masiva (bucle de descargas individuales)
         // Nota: El navegador puede pedir permiso para descargar múltiples archivos
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Procesando descargas...'), duration: Duration(seconds: 2)),
+          const SnackBar(
+              content: Text('Procesando descargas...'),
+              duration: Duration(seconds: 2)),
         );
-        
+
         for (int i = 0; i < widget.imageUrls.length; i++) {
           final response = await http.get(Uri.parse(widget.imageUrls[i]));
           if (response.statusCode == 200) {
-            await downloadImageWeb(response.bodyBytes, 'cobacam_aviso_${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
+            await downloadImageWeb(response.bodyBytes,
+                'cobacam_aviso_${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
             // Pequeña pausa para evitar bloqueo del navegador o bloqueadores de popups agresivos
-            await Future.delayed(const Duration(milliseconds: 500)); 
+            await Future.delayed(const Duration(milliseconds: 500));
           }
         }
-        
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✅ Descargas iniciadas'), backgroundColor: Colors.green),
+            const SnackBar(
+                content: Text('✅ Descargas iniciadas'),
+                backgroundColor: Colors.green),
           );
         }
       }
     } catch (e) {
-       if (context.mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Error en descarga masiva: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('❌ Error en descarga masiva: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -701,7 +746,8 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
             children: [
               Icon(Icons.image_outlined, color: Colors.white70),
               SizedBox(width: 12),
-              Text('Guardar imagen actual', style: TextStyle(color: Colors.white)),
+              Text('Guardar imagen actual',
+                  style: TextStyle(color: Colors.white)),
             ],
           ),
         ),
@@ -711,7 +757,8 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
             children: [
               const Icon(Icons.copy_all_rounded, color: Colors.white70),
               const SizedBox(width: 12),
-              Text('Guardar todas (${widget.imageUrls.length})', style: const TextStyle(color: Colors.white)),
+              Text('Guardar todas (${widget.imageUrls.length})',
+                  style: const TextStyle(color: Colors.white)),
             ],
           ),
         ),
@@ -750,7 +797,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
               });
             },
           ),
-          
+
           // Botón Cerrar (Izquierda)
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
@@ -768,9 +815,11 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
             child: widget.imageUrls.length > 1
                 ? _buildMultiDownloadMenu(context)
                 : IconButton(
-                    icon: const Icon(Icons.download_rounded, color: Colors.white, size: 30),
+                    icon: const Icon(Icons.download_rounded,
+                        color: Colors.white, size: 30),
                     tooltip: 'Guardar Imagen',
-                    onPressed: () => _saveImage(context, widget.imageUrls[_currentIndex]),
+                    onPressed: () =>
+                        _saveImage(context, widget.imageUrls[_currentIndex]),
                   ),
           ),
 
@@ -834,7 +883,8 @@ class PhotoViewGallery extends StatelessWidget {
 
 class PhotoViewGalleryPageOptions extends StatelessWidget {
   final ImageProvider imageProvider;
-  final dynamic initialScale; // No usado en InteractiveViewer simple pero mantenido por compatibilidad de API mental
+  final dynamic
+      initialScale; // No usado en InteractiveViewer simple pero mantenido por compatibilidad de API mental
   final dynamic minScale;
   final dynamic maxScale;
   final PhotoViewHeroAttributes? heroAttributes;
@@ -855,7 +905,8 @@ class PhotoViewGalleryPageOptions extends StatelessWidget {
       fit: BoxFit.contain,
       loadingBuilder: (context, child, loadingProgress) {
         if (loadingProgress == null) return child;
-        return const Center(child: CircularProgressIndicator(color: Colors.white));
+        return const Center(
+            child: CircularProgressIndicator(color: Colors.white));
       },
     );
 

@@ -24,9 +24,9 @@ class _NonAttendanceManagementScreenState
   late final HiveService _hiveService;
   late final ConnectivityService _connectivityService;
   late final AppSettingsService _appSettingsService;
-  
+
   List<_SuspensionGroup> _groupedDays = [];
-  
+
   bool _isLoading = true;
   String? _campusId;
 
@@ -134,9 +134,9 @@ class _NonAttendanceManagementScreenState
     try {
       final days =
           await _appSettingsService.getAllNonAttendanceDays(_campusId!);
-      
+
       if (!mounted) return;
-      
+
       days.sort((a, b) => a.date.compareTo(b.date));
 
       final List<_SuspensionGroup> groups = [];
@@ -150,8 +150,10 @@ class _NonAttendanceManagementScreenState
 
         for (int i = 1; i < days.length; i++) {
           final day = days[i];
-          final isConsecutive = day.date.difference(currentGroup.end).inHours <= 25; 
-          final isSameReason = (day.reason ?? 'Sin motivo') == currentGroup.reason;
+          final isConsecutive =
+              day.date.difference(currentGroup.end).inHours <= 25;
+          final isSameReason =
+              (day.reason ?? 'Sin motivo') == currentGroup.reason;
 
           if (isConsecutive && isSameReason) {
             currentGroup.end = day.date;
@@ -175,17 +177,19 @@ class _NonAttendanceManagementScreenState
       });
     } catch (e) {
       if (mounted) {
-        UiHelpers.showSnackBar(context, 'No se pudieron cargar los datos.', isError: true);
+        UiHelpers.showSnackBar(context, 'No se pudieron cargar los datos.',
+            isError: true);
       }
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _showNonAttendanceDayFormDialog({_SuspensionGroup? group}) async {
+  Future<void> _showNonAttendanceDayFormDialog(
+      {_SuspensionGroup? group}) async {
     final formKey = GlobalKey<FormState>();
     DateTime selectedStartDate = group?.start ?? DateTime.now();
     DateTime selectedEndDate = group?.end ?? DateTime.now();
-    
+
     // Determinar valor inicial del dropdown
     String? initialDropdownValue;
     final existingReason = group?.reason;
@@ -199,9 +203,10 @@ class _NonAttendanceManagementScreenState
 
     String? selectedReason = initialDropdownValue;
     final otherReasonController = TextEditingController(
-      text: (initialDropdownValue == 'Otro (Especificar)') ? existingReason : ''
-    );
-    
+        text: (initialDropdownValue == 'Otro (Especificar)')
+            ? existingReason
+            : '');
+
     bool isRangeSelection = group != null ? (group.ids.length > 1) : false;
 
     await showDialog(
@@ -211,13 +216,18 @@ class _NonAttendanceManagementScreenState
         return StatefulBuilder(
           builder: (dialogContext, setStateInDialog) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
               title: Row(
                 children: [
-                  Icon(group == null ? Icons.add_circle_outline : Icons.edit_calendar_rounded, 
-                       color: Theme.of(context).primaryColor),
+                  Icon(
+                      group == null
+                          ? Icons.add_circle_outline
+                          : Icons.edit_calendar_rounded,
+                      color: Theme.of(context).primaryColor),
                   const SizedBox(width: 12),
-                  Text(group == null ? 'Nueva Suspensión' : 'Modificar Evento', style: const TextStyle(fontSize: 18)),
+                  Text(group == null ? 'Nueva Suspensión' : 'Modificar Evento',
+                      style: const TextStyle(fontSize: 18)),
                 ],
               ),
               content: Form(
@@ -228,16 +238,21 @@ class _NonAttendanceManagementScreenState
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.blue.withOpacity(0.1))
-                        ),
+                            color: Colors.blue.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: Colors.blue.withOpacity(0.1))),
                         child: SwitchListTile(
-                          title: const Text('Periodo de varios días', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                          subtitle: const Text('Activar para puentes o vacaciones', style: TextStyle(fontSize: 12)),
+                          title: const Text('Periodo de varios días',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 14)),
+                          subtitle: const Text(
+                              'Activar para puentes o vacaciones',
+                              style: TextStyle(fontSize: 12)),
                           value: isRangeSelection,
                           activeColor: Theme.of(context).primaryColor,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                           onChanged: (bool value) {
                             setStateInDialog(() {
                               isRangeSelection = value;
@@ -249,66 +264,71 @@ class _NonAttendanceManagementScreenState
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
                       Row(
                         children: [
                           Expanded(
                             child: _buildDateTile(
-                              dialogContext, 
-                              'Inicio', 
-                              selectedStartDate,
-                              (d) {
-                                setStateInDialog(() {
-                                  selectedStartDate = d;
-                                  if (!isRangeSelection || selectedEndDate.isBefore(d)) {
-                                    selectedEndDate = d;
-                                  }
-                                });
-                              }
-                            ),
+                                dialogContext, 'Inicio', selectedStartDate,
+                                (d) {
+                              setStateInDialog(() {
+                                selectedStartDate = d;
+                                if (!isRangeSelection ||
+                                    selectedEndDate.isBefore(d)) {
+                                  selectedEndDate = d;
+                                }
+                              });
+                            }),
                           ),
                           if (isRangeSelection) ...[
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildDateTile(
-                                dialogContext,
-                                'Fin',
-                                selectedEndDate,
-                                (d) => setStateInDialog(() => selectedEndDate = d),
-                                minDate: selectedStartDate
-                              ),
+                                  dialogContext,
+                                  'Fin',
+                                  selectedEndDate,
+                                  (d) => setStateInDialog(
+                                      () => selectedEndDate = d),
+                                  minDate: selectedStartDate),
                             ),
                           ]
                         ],
                       ),
-                      
                       const SizedBox(height: 24),
                       DropdownButtonFormField<String>(
                         value: selectedReason,
                         decoration: InputDecoration(
                           labelText: 'Motivo de Suspensión',
                           prefixIcon: const Icon(Icons.category_outlined),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 16),
                         ),
                         isExpanded: true,
                         items: _presetReasons.map((r) {
-                          final icon = _reasonIcons[r] ?? Icons.event_busy_rounded;
+                          final icon =
+                              _reasonIcons[r] ?? Icons.event_busy_rounded;
                           return DropdownMenuItem(
-                            value: r, 
-                            child: Row(
-                              children: [
-                                Icon(icon, size: 20, color: Theme.of(context).primaryColor),
-                                const SizedBox(width: 12),
-                                Expanded(child: Text(r, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14))),
-                              ],
-                            )
-                          );
+                              value: r,
+                              child: Row(
+                                children: [
+                                  Icon(icon,
+                                      size: 20,
+                                      color: Theme.of(context).primaryColor),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                      child: Text(r,
+                                          overflow: TextOverflow.ellipsis,
+                                          style:
+                                              const TextStyle(fontSize: 14))),
+                                ],
+                              ));
                         }).toList(),
-                        onChanged: (val) => setStateInDialog(() => selectedReason = val),
-                        validator: (val) => val == null ? 'Seleccione un motivo' : null,
+                        onChanged: (val) =>
+                            setStateInDialog(() => selectedReason = val),
+                        validator: (val) =>
+                            val == null ? 'Seleccione un motivo' : null,
                       ),
-
                       if (selectedReason == 'Otro (Especificar)')
                         Padding(
                           padding: const EdgeInsets.only(top: 16),
@@ -319,9 +339,12 @@ class _NonAttendanceManagementScreenState
                               labelText: 'Especifique el motivo',
                               hintText: 'Ej. Desfile Conmemorativo',
                               prefixIcon: const Icon(Icons.edit_note_rounded),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12)),
                             ),
-                            validator: (value) => value!.trim().isEmpty ? 'Es necesario especificar' : null,
+                            validator: (value) => value!.trim().isEmpty
+                                ? 'Es necesario especificar'
+                                : null,
                           ),
                         ),
                     ],
@@ -332,15 +355,16 @@ class _NonAttendanceManagementScreenState
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                  child: const Text('Cancelar',
+                      style: TextStyle(color: Colors.grey)),
                 ),
                 ElevatedButton(
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
                     if (_campusId == null) return;
 
-                    final finalReason = (selectedReason == 'Otro (Especificar)') 
-                        ? otherReasonController.text.trim() 
+                    final finalReason = (selectedReason == 'Otro (Especificar)')
+                        ? otherReasonController.text.trim()
                         : selectedReason!;
 
                     try {
@@ -352,16 +376,23 @@ class _NonAttendanceManagementScreenState
 
                       // Si es Edición: Borrar anteriores
                       if (group != null) {
-                         for (final id in group.ids) {
-                            await _appSettingsService.deleteNonAttendanceDay(_campusId!, id);
-                         }
+                        for (final id in group.ids) {
+                          await _appSettingsService.deleteNonAttendanceDay(
+                              _campusId!, id);
+                        }
                       }
 
                       List<NonAttendanceDay> daysToSave = [];
                       DateTime current = selectedStartDate;
-                      
-                      final end = DateTime(selectedEndDate.year, selectedEndDate.month, selectedEndDate.day, 23, 59, 59);
-                      
+
+                      final end = DateTime(
+                          selectedEndDate.year,
+                          selectedEndDate.month,
+                          selectedEndDate.day,
+                          23,
+                          59,
+                          59);
+
                       while (current.isBefore(end)) {
                         daysToSave.add(NonAttendanceDay(
                             id: DateFormat('yyyy-MM-dd').format(current),
@@ -370,32 +401,38 @@ class _NonAttendanceManagementScreenState
                             reason: finalReason));
                         current = current.add(const Duration(days: 1));
                       }
-                      
+
                       for (final d in daysToSave) {
                         await _appSettingsService.addNonAttendanceDay(d);
                       }
-                      
+
                       if (mounted) {
                         UiHelpers.showSnackBar(
-                            context, 
-                            group == null ? 'Suspensión registrada exitosamente.' : 'Cambios guardados correctamente.',
+                            context,
+                            group == null
+                                ? 'Suspensión registrada exitosamente.'
+                                : 'Cambios guardados correctamente.',
                             isError: false); // Green snackbar
                       }
                       _loadNonAttendanceDays();
                     } catch (e) {
                       setState(() => _isLoading = false);
                       if (mounted) {
-                        UiHelpers.showSnackBar(context, 'Error al guardar: intente nuevamente.', isError: true);
+                        UiHelpers.showSnackBar(
+                            context, 'Error al guardar: intente nuevamente.',
+                            isError: true);
                       }
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)
-                  ),
-                  child: Text(group == null ? 'Registrar Evento' : 'Guardar Cambios'),
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12)),
+                  child: Text(
+                      group == null ? 'Registrar Evento' : 'Guardar Cambios'),
                 ),
               ],
             );
@@ -428,16 +465,23 @@ class _NonAttendanceManagementScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+            Text(label.toUpperCase(),
+                style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey)),
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.calendar_today, size: 16, color: Colors.blueGrey),
+                const Icon(Icons.calendar_today,
+                    size: 16, color: Colors.blueGrey),
                 const SizedBox(width: 8),
                 Text(
-                  DateFormat('dd/MMM/yyyy', 'es_MX').format(date).toUpperCase(),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)
-                ),
+                    DateFormat('dd/MMM/yyyy', 'es_MX')
+                        .format(date)
+                        .toUpperCase(),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 13)),
               ],
             ),
           ],
@@ -458,7 +502,8 @@ class _NonAttendanceManagementScreenState
         backgroundColor: theme.colorScheme.primary,
         elevation: 4,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('Nueva Suspensión', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text('Nueva Suspensión',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -476,15 +521,24 @@ class _NonAttendanceManagementScreenState
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: isDark 
-                                ? [const Color(0xFF424242), const Color(0xFF303030)]
-                                : [const Color(0xFFFFF3E0), const Color(0xFFFFE0B2)],
+                              colors: isDark
+                                  ? [
+                                      const Color(0xFF424242),
+                                      const Color(0xFF303030)
+                                    ]
+                                  : [
+                                      const Color(0xFFFFF3E0),
+                                      const Color(0xFFFFE0B2)
+                                    ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
-                              BoxShadow(color: Colors.orange.withOpacity(0.1), blurRadius: 15, offset: const Offset(0, 8))
+                              BoxShadow(
+                                  color: Colors.orange.withOpacity(0.1),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 8))
                             ],
                           ),
                           child: Row(
@@ -492,20 +546,31 @@ class _NonAttendanceManagementScreenState
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: isDark ? Colors.grey[800] : Colors.white,
+                                  color:
+                                      isDark ? Colors.grey[800] : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: const Icon(Icons.event_busy_rounded, color: Colors.deepOrange, size: 32),
+                                child: const Icon(Icons.event_busy_rounded,
+                                    color: Colors.deepOrange, size: 32),
                               ),
                               const SizedBox(width: 20),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('Calendario de Suspensiones', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.deepOrange)),
+                                    const Text('Calendario de Suspensiones',
+                                        style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.deepOrange)),
                                     const SizedBox(height: 4),
-                                    Text('Días inhábiles donde el sistema bloqueará automáticamente la toma de asistencia.', 
-                                      style: TextStyle(fontSize: 13, color: isDark ? Colors.grey[300] : Colors.brown)),
+                                    Text(
+                                        'Días inhábiles donde el sistema bloqueará automáticamente la toma de asistencia.',
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            color: isDark
+                                                ? Colors.grey[300]
+                                                : Colors.brown)),
                                   ],
                                 ),
                               ),
@@ -523,79 +588,141 @@ class _NonAttendanceManagementScreenState
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.check_circle_outline_rounded, size: 80, color: Colors.green),
+                                      Icon(Icons.check_circle_outline_rounded,
+                                          size: 80, color: Colors.green),
                                       SizedBox(height: 16),
                                       Text('Sin suspensiones activas',
-                                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold)),
                                       SizedBox(height: 8),
-                                      Text('Todos los días son lectivos actualmente.', style: TextStyle(fontSize: 14)),
+                                      Text(
+                                          'Todos los días son lectivos actualmente.',
+                                          style: TextStyle(fontSize: 14)),
                                     ],
                                   ),
                                 ),
                               )
                             : ListView.builder(
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 10),
                                 itemCount: _groupedDays.length,
                                 itemBuilder: (context, index) {
                                   final group = _groupedDays[index];
                                   final isRange = group.ids.length > 1;
-                                  
+
                                   return FadeInUp(
-                                    delay: Duration(milliseconds: 50 * (index > 6 ? 6 : index)),
+                                    delay: Duration(
+                                        milliseconds:
+                                            50 * (index > 6 ? 6 : index)),
                                     child: Container(
                                       margin: const EdgeInsets.only(bottom: 16),
                                       decoration: BoxDecoration(
-                                        color: isDark ? theme.cardTheme.color : Colors.white,
+                                        color: isDark
+                                            ? theme.cardTheme.color
+                                            : Colors.white,
                                         borderRadius: BorderRadius.circular(20),
-                                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
-                                        border: Border(left: BorderSide(color: Colors.orange.shade400, width: 6)),
+                                        boxShadow: [
+                                          BoxShadow(
+                                              color: Colors.black
+                                                  .withOpacity(0.03),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 4))
+                                        ],
+                                        border: Border(
+                                            left: BorderSide(
+                                                color: Colors.orange.shade400,
+                                                width: 6)),
                                       ),
                                       child: Material(
                                         color: Colors.transparent,
                                         child: InkWell(
-                                          borderRadius: BorderRadius.circular(20),
-                                          onTap: () => _showNonAttendanceDayFormDialog(group: group),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          onTap: () =>
+                                              _showNonAttendanceDayFormDialog(
+                                                  group: group),
                                           child: Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 20, vertical: 16),
                                             child: Row(
                                               children: [
                                                 // FECHA BADGE
                                                 Container(
                                                   width: 60,
-                                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(vertical: 10),
                                                   decoration: BoxDecoration(
-                                                    color: isDark ? Colors.orange.withOpacity(0.2) : Colors.orange.shade50,
-                                                    borderRadius: BorderRadius.circular(14),
+                                                    color: isDark
+                                                        ? Colors.orange
+                                                            .withOpacity(0.2)
+                                                        : Colors.orange.shade50,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            14),
                                                   ),
                                                   child: Column(
                                                     children: [
                                                       Text(
-                                                        DateFormat('d', 'es_MX').format(group.start),
-                                                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.orange.shade800, height: 1.0),
+                                                        DateFormat('d', 'es_MX')
+                                                            .format(
+                                                                group.start),
+                                                        style: TextStyle(
+                                                            fontSize: 22,
+                                                            fontWeight:
+                                                                FontWeight.w900,
+                                                            color: Colors.orange
+                                                                .shade800,
+                                                            height: 1.0),
                                                       ),
                                                       Text(
-                                                        DateFormat('MMM', 'es_MX').format(group.start).toUpperCase(),
-                                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange.shade700),
+                                                        DateFormat(
+                                                                'MMM', 'es_MX')
+                                                            .format(group.start)
+                                                            .toUpperCase(),
+                                                        style: TextStyle(
+                                                            fontSize: 11,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors.orange
+                                                                .shade700),
                                                       ),
                                                     ],
                                                   ),
                                                 ),
                                                 const SizedBox(width: 20),
-                                                
+
                                                 // INFO
                                                 Expanded(
                                                   child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
                                                       Row(
                                                         children: [
-                                                          Icon(_reasonIcons[group.reason] ?? Icons.event_note_rounded, size: 18, color: Colors.orange.shade800),
-                                                          const SizedBox(width: 8),
+                                                          Icon(
+                                                              _reasonIcons[group
+                                                                      .reason] ??
+                                                                  Icons
+                                                                      .event_note_rounded,
+                                                              size: 18,
+                                                              color: Colors
+                                                                  .orange
+                                                                  .shade800),
+                                                          const SizedBox(
+                                                              width: 8),
                                                           Expanded(
                                                             child: Text(
                                                               group.reason,
-                                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                                              overflow: TextOverflow.ellipsis,
+                                                              style: const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  fontSize: 16),
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
                                                             ),
                                                           ),
                                                         ],
@@ -603,13 +730,33 @@ class _NonAttendanceManagementScreenState
                                                       const SizedBox(height: 6),
                                                       Row(
                                                         children: [
-                                                          Icon(isRange ? Icons.date_range : Icons.today, size: 14, color: Colors.grey),
-                                                          const SizedBox(width: 6),
+                                                          Icon(
+                                                              isRange
+                                                                  ? Icons
+                                                                      .date_range
+                                                                  : Icons.today,
+                                                              size: 14,
+                                                              color:
+                                                                  Colors.grey),
+                                                          const SizedBox(
+                                                              width: 6),
                                                           Text(
-                                                            isRange 
-                                                              ? 'Hasta el ${DateFormat('d ' 'MMMM', 'es_MX').format(group.end)} (${group.ids.length} días)'
-                                                              : DateFormat('EEEE', 'es_MX').format(group.start).toUpperCase(),
-                                                            style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w500),
+                                                            isRange
+                                                                ? 'Hasta el ${DateFormat('d ' 'MMMM', 'es_MX').format(group.end)} (${group.ids.length} días)'
+                                                                : DateFormat(
+                                                                        'EEEE',
+                                                                        'es_MX')
+                                                                    .format(group
+                                                                        .start)
+                                                                    .toUpperCase(),
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .grey
+                                                                    .shade600,
+                                                                fontSize: 13,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500),
                                                           ),
                                                         ],
                                                       ),
@@ -619,18 +766,27 @@ class _NonAttendanceManagementScreenState
 
                                                 // ACTIONS
                                                 Row(
-                                                  mainAxisSize: MainAxisSize.min,
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
                                                   children: [
                                                     IconButton(
-                                                      icon: const Icon(Icons.edit_outlined, size: 20),
+                                                      icon: const Icon(
+                                                          Icons.edit_outlined,
+                                                          size: 20),
                                                       tooltip: 'Editar',
-                                                      onPressed: () => _showNonAttendanceDayFormDialog(group: group),
+                                                      onPressed: () =>
+                                                          _showNonAttendanceDayFormDialog(
+                                                              group: group),
                                                       color: Colors.blue,
                                                     ),
                                                     IconButton(
-                                                      icon: const Icon(Icons.delete_outline, size: 20),
+                                                      icon: const Icon(
+                                                          Icons.delete_outline,
+                                                          size: 20),
                                                       tooltip: 'Eliminar',
-                                                      onPressed: () => _confirmDeleteGroup(group),
+                                                      onPressed: () =>
+                                                          _confirmDeleteGroup(
+                                                              group),
                                                       color: Colors.red,
                                                     ),
                                                   ],
@@ -666,12 +822,13 @@ class _NonAttendanceManagementScreenState
           ],
         ),
         content: Text(
-          group.ids.length > 1 
-            ? '¿Estás seguro de eliminar este periodo de ${group.ids.length} días? \n\nEsto rehabilitará la toma de asistencia para esas fechas.' 
-            : '¿Estás seguro de eliminar este día de suspensión? \n\nLa asistencia se reactivará para esta fecha.',
+          group.ids.length > 1
+              ? '¿Estás seguro de eliminar este periodo de ${group.ids.length} días? \n\nEsto rehabilitará la toma de asistencia para esas fechas.'
+              : '¿Estás seguro de eliminar este día de suspensión? \n\nLa asistencia se reactivará para esta fecha.',
           style: const TextStyle(fontSize: 14),
         ),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        actionsPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -680,23 +837,24 @@ class _NonAttendanceManagementScreenState
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
-            ),
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10))),
             child: const Text('Sí, Eliminar'),
           ),
         ],
       ),
     );
-        
+
     if (confirm == true && _campusId != null) {
       setState(() => _isLoading = true);
       // Eliminar uno por uno
       for (final id in group.ids) {
-         await _appSettingsService.deleteNonAttendanceDay(_campusId!, id);
+        await _appSettingsService.deleteNonAttendanceDay(_campusId!, id);
       }
-      if (mounted) UiHelpers.showSnackBar(context, 'Suspensión eliminada correctamente.');
+      if (mounted)
+        UiHelpers.showSnackBar(context, 'Suspensión eliminada correctamente.');
       _loadNonAttendanceDays();
     }
   }

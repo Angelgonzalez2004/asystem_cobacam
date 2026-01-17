@@ -27,10 +27,11 @@ class AppSettingsService {
       // 1. Buscar ciclo ACTIVO (hoy dentro del rango)
       try {
         final activeCycle = cycles.firstWhere((c) {
-          final start = DateTime(c.startDate.year, c.startDate.month, c.startDate.day);
+          final start =
+              DateTime(c.startDate.year, c.startDate.month, c.startDate.day);
           final end = DateTime(c.endDate.year, c.endDate.month, c.endDate.day);
-          return (today.isAfter(start) || today.isAtSameMomentAs(start)) && 
-                 (today.isBefore(end) || today.isAtSameMomentAs(end));
+          return (today.isAfter(start) || today.isAtSameMomentAs(start)) &&
+              (today.isBefore(end) || today.isAtSameMomentAs(end));
         });
         return activeCycle.id;
       } catch (e) {
@@ -39,10 +40,11 @@ class AppSettingsService {
 
       // 2. Buscar ciclo PRÓXIMO más cercano
       final upcomingCycles = cycles.where((c) {
-        final start = DateTime(c.startDate.year, c.startDate.month, c.startDate.day);
+        final start =
+            DateTime(c.startDate.year, c.startDate.month, c.startDate.day);
         return start.isAfter(today);
       }).toList();
-      
+
       if (upcomingCycles.isNotEmpty) {
         upcomingCycles.sort((a, b) => a.startDate.compareTo(b.startDate));
         return upcomingCycles.first.id;
@@ -55,7 +57,8 @@ class AppSettingsService {
       }).toList();
 
       if (pastCycles.isNotEmpty) {
-        pastCycles.sort((a, b) => b.endDate.compareTo(a.endDate)); // Descendente
+        pastCycles
+            .sort((a, b) => b.endDate.compareTo(a.endDate)); // Descendente
         return pastCycles.first.id;
       }
 

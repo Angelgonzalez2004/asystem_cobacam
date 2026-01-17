@@ -59,7 +59,7 @@ class AttendanceRecord {
   // Getter for unique key for Hive, combining studentId and date
   // This ensures uniqueness per student per day
   String get uniqueKey => '${studentId}_$date';
-  
+
   // Getter alias for generic usage
   String get id => uniqueKey;
 

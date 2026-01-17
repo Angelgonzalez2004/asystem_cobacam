@@ -95,7 +95,9 @@ class Incidence {
       status: data['status'] ?? 'Activo',
       resolutionReason: data['resolutionReason'],
       resolutionDetails: data['resolutionDetails'],
-      resolutionDate: data['resolutionDate'] != null ? DateTime.tryParse(data['resolutionDate']) : null,
+      resolutionDate: data['resolutionDate'] != null
+          ? DateTime.tryParse(data['resolutionDate'])
+          : null,
     );
   }
 }

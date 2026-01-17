@@ -117,8 +117,8 @@ class _ScheduleBuilderScreenState extends State<ScheduleBuilderScreen> {
                 .any((entry) => entry.value.groupId == selectedGroupId)) {
               conflictFound = true;
             }
-            if (existingConflicts
-                .any((entry) => entry.value.classroomId == selectedClassroomId)) {
+            if (existingConflicts.any(
+                (entry) => entry.value.classroomId == selectedClassroomId)) {
               conflictFound = true;
             }
 

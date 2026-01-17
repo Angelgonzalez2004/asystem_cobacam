@@ -35,7 +35,8 @@ class AppDrawer extends StatelessWidget {
             decoration: BoxDecoration(
               color: theme.colorScheme.primary,
               image: const DecorationImage(
-                image: AssetImage('assets/images/logo2.jpg'), // Fallback/Background pattern
+                image: AssetImage(
+                    'assets/images/logo2.jpg'), // Fallback/Background pattern
                 fit: BoxFit.cover,
                 opacity: 0.1,
               ),
@@ -54,11 +55,13 @@ class AppDrawer extends StatelessWidget {
                         width: 90,
                         height: 90,
                         fit: BoxFit.cover,
-                        errorBuilder: (c, e, s) => Icon(Icons.person, size: 40, color: theme.colorScheme.primary),
+                        errorBuilder: (c, e, s) => Icon(Icons.person,
+                            size: 40, color: theme.colorScheme.primary),
                       )
                     : Text(
                         userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-                        style: TextStyle(fontSize: 24, color: theme.colorScheme.primary),
+                        style: TextStyle(
+                            fontSize: 24, color: theme.colorScheme.primary),
                       ),
               ),
             ),
@@ -78,31 +81,67 @@ class AppDrawer extends StatelessWidget {
                     onNavigate?.call('home'); // Reset to home index
                   },
                 ),
-                
+
                 // --- PREFECTA SPECIFIC TOOLS ---
                 if (role == 'Prefecta') ...[
                   const Divider(),
                   Padding(
                     padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
-                    child: Text('HERRAMIENTAS', style: theme.textTheme.labelSmall?.copyWith(color: Colors.grey)),
+                    child: Text('HERRAMIENTAS',
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: Colors.grey)),
                   ),
-                  _buildDrawerItem(context, icon: Icons.checklist_rounded, title: 'Pase de Lista', onTap: () => onNavigate?.call('lista')),
-                  _buildDrawerItem(context, icon: Icons.history_edu_rounded, title: 'Consulta de Asistencias', onTap: () => onNavigate?.call('consulta_asistencia')),
-                  _buildDrawerItem(context, icon: Icons.badge_outlined, title: 'Generador de Credenciales', onTap: () => onNavigate?.call('credenciales')),
-                  _buildDrawerItem(context, icon: Icons.warning_amber_rounded, title: 'Reporte de Incidencias', onTap: () => onNavigate?.call('incidencia')),
-                  _buildDrawerItem(context, icon: Icons.bar_chart_rounded, title: 'Estadísticas y Métricas', onTap: () => onNavigate?.call('stats')),
-                  _buildDrawerItem(context, icon: Icons.auto_awesome_rounded, title: 'Asistente IA', iconColor: Colors.amber, onTap: () => onNavigate?.call('ia')),
-                  _buildDrawerItem(context, icon: Icons.people_outline_rounded, title: 'Alumnos', onTap: () => onNavigate?.call('alumnos')),
-                  _buildDrawerItem(context, icon: Icons.schedule_rounded, title: 'Horarios', onTap: () => onNavigate?.call('horarios')),
-                  _buildDrawerItem(context, icon: Icons.calendar_today_rounded, title: 'Ciclos Escolares', onTap: () => onNavigate?.call('ciclos')),
-                  _buildDrawerItem(context, icon: Icons.event_busy_rounded, title: 'Días No Lectivos', onTap: () => onNavigate?.call('no_lectivos')),
-                  _buildDrawerItem(context, icon: Icons.help_outline_rounded, title: 'Manual Operativo (FAQ)', onTap: () => onNavigate?.call('faq')),
+                  _buildDrawerItem(context,
+                      icon: Icons.checklist_rounded,
+                      title: 'Pase de Lista',
+                      onTap: () => onNavigate?.call('lista')),
+                  _buildDrawerItem(context,
+                      icon: Icons.history_edu_rounded,
+                      title: 'Consulta de Asistencias',
+                      onTap: () => onNavigate?.call('consulta_asistencia')),
+                  _buildDrawerItem(context,
+                      icon: Icons.badge_outlined,
+                      title: 'Generador de Credenciales',
+                      onTap: () => onNavigate?.call('credenciales')),
+                  _buildDrawerItem(context,
+                      icon: Icons.warning_amber_rounded,
+                      title: 'Reporte de Incidencias',
+                      onTap: () => onNavigate?.call('incidencia')),
+                  _buildDrawerItem(context,
+                      icon: Icons.bar_chart_rounded,
+                      title: 'Estadísticas y Métricas',
+                      onTap: () => onNavigate?.call('stats')),
+                  _buildDrawerItem(context,
+                      icon: Icons.auto_awesome_rounded,
+                      title: 'Asistente IA',
+                      iconColor: Colors.amber,
+                      onTap: () => onNavigate?.call('ia')),
+                  _buildDrawerItem(context,
+                      icon: Icons.people_outline_rounded,
+                      title: 'Alumnos',
+                      onTap: () => onNavigate?.call('alumnos')),
+                  _buildDrawerItem(context,
+                      icon: Icons.schedule_rounded,
+                      title: 'Horarios',
+                      onTap: () => onNavigate?.call('horarios')),
+                  _buildDrawerItem(context,
+                      icon: Icons.calendar_today_rounded,
+                      title: 'Ciclos Escolares',
+                      onTap: () => onNavigate?.call('ciclos')),
+                  _buildDrawerItem(context,
+                      icon: Icons.event_busy_rounded,
+                      title: 'Días No Lectivos',
+                      onTap: () => onNavigate?.call('no_lectivos')),
+                  _buildDrawerItem(context,
+                      icon: Icons.help_outline_rounded,
+                      title: 'Manual Operativo (FAQ)',
+                      onTap: () => onNavigate?.call('faq')),
                   const Divider(),
                 ],
 
                 // --- ADMIN SPECIFIC TOOLS ---
                 if (role.contains('Administrativo')) ...[
-                   _buildDrawerItem(
+                  _buildDrawerItem(
                     context,
                     icon: Icons.campaign_rounded,
                     title: 'Gestionar Avisos',
@@ -118,8 +157,8 @@ class AppDrawer extends StatelessWidget {
 
                 // Académica puede ver llaves si se considera necesario (opcional)
                 if (role == 'Academica') ...[
-                   const Divider(),
-                   _buildDrawerItem(
+                  const Divider(),
+                  _buildDrawerItem(
                     context,
                     icon: Icons.vpn_key_rounded,
                     title: 'Llaves de Registro',
@@ -137,7 +176,8 @@ class AppDrawer extends StatelessWidget {
                     if (onNavigate != null) {
                       onNavigate!.call('profile');
                     } else {
-                      Navigator.push(context, SlideRightRoute(page: const ProfileScreen()));
+                      Navigator.push(context,
+                          SlideRightRoute(page: const ProfileScreen()));
                     }
                   },
                 ),
@@ -150,7 +190,8 @@ class AppDrawer extends StatelessWidget {
                     if (onNavigate != null) {
                       onNavigate!.call('settings');
                     } else {
-                      Navigator.push(context, SlideRightRoute(page: const SettingsScreen()));
+                      Navigator.push(context,
+                          SlideRightRoute(page: const SettingsScreen()));
                     }
                   },
                 ),
@@ -172,7 +213,8 @@ class AppDrawer extends StatelessWidget {
                   context: context,
                   builder: (context) => AlertDialog(
                     title: const Text('Cerrar Sesión'),
-                    content: const Text('¿Estás seguro de que deseas salir del sistema?'),
+                    content: const Text(
+                        '¿Estás seguro de que deseas salir del sistema?'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
@@ -180,7 +222,9 @@ class AppDrawer extends StatelessWidget {
                       ),
                       ElevatedButton(
                         onPressed: () => Navigator.pop(context, true),
-                        style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.error, foregroundColor: Colors.white),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.error,
+                            foregroundColor: Colors.white),
                         child: const Text('Salir'),
                       ),
                     ],
@@ -191,7 +235,8 @@ class AppDrawer extends StatelessWidget {
                   await FirebaseAuth.instance.signOut();
                   if (context.mounted) {
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const LoginScreen()),
                       (route) => false,
                     );
                   }
@@ -204,7 +249,8 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerItem(BuildContext context, {
+  Widget _buildDrawerItem(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required VoidCallback onTap,

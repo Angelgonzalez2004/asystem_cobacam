@@ -45,9 +45,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
       }
 
       // Registrar sesión
-      SessionService().registerCurrentSession().catchError((e) => debugPrint("Session error: $e"));
+      SessionService()
+          .registerCurrentSession()
+          .catchError((e) => debugPrint("Session error: $e"));
 
-      final snapshot = await FirebaseDatabase.instance.ref('users/${user.uid}').get();
+      final snapshot =
+          await FirebaseDatabase.instance.ref('users/${user.uid}').get();
 
       if (!mounted) return;
 
@@ -94,12 +97,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
       default:
         dashboard = const WelcomeScreen();
     }
-    
+
     if (role != null) {
       dashboard = SessionGuard(child: dashboard);
     }
 
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => dashboard));
+    Navigator.of(context)
+        .pushReplacement(MaterialPageRoute(builder: (context) => dashboard));
   }
 
   @override

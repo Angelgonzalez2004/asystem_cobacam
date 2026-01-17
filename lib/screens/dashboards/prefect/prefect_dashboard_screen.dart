@@ -1,7 +1,7 @@
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_home_screen.dart';
-import 'package:asystem_cobacam/screens/common/profile_screen.dart'; 
-import 'package:asystem_cobacam/screens/common/settings_screen.dart'; 
+import 'package:asystem_cobacam/screens/common/profile_screen.dart';
+import 'package:asystem_cobacam/screens/common/settings_screen.dart';
 import 'package:asystem_cobacam/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -16,7 +16,7 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/non_attendance_manage
 import 'package:asystem_cobacam/screens/dashboards/prefect/credential_generator_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/incidence_report_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/ai_assistant_screen.dart';
-import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_faq_screen.dart'; 
+import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_faq_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/statistics_screen.dart'; // Importado
 import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
 
@@ -50,8 +50,8 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
   void _initScreens() {
     _screens = [
       PrefectHomeScreen(campus: _userCampus, onNavigate: _onNavigate),
-      const ProfileScreen(isEmbedded: true), 
-      const SettingsScreen(isEmbedded: true), 
+      const ProfileScreen(isEmbedded: true),
+      const SettingsScreen(isEmbedded: true),
       const GroupManagementScreen(),
       const SchoolCycleManagementScreen(),
       const StudentManagementScreen(),
@@ -60,8 +60,8 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       const NonAttendanceManagementScreen(),
       const AttendanceQueryScreen(),
       const CredentialGeneratorScreen(),
-      const Center(child: Text("Scanner QR (Próximamente)")), 
-      const IncidenceReportScreen(), 
+      const Center(child: Text("Scanner QR (Próximamente)")),
+      const IncidenceReportScreen(),
       const StatisticsScreen(), // Opción 13
       const AIAssistantScreen(), // Opción 14
       const PrefectFaqScreen(), // Opción 15
@@ -98,9 +98,9 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         _userRole = prefs.getString('cached_userRole') ?? _userRole;
         _userCampus = prefs.getString('cached_campus') ?? _userCampus;
         _userPhotoUrl = prefs.getString('cached_userPhotoUrl');
-        
+
         if (user != null) _userEmail = user.email ?? '';
-        
+
         // Re-init screens with cached data
         _initScreens();
       });
@@ -111,13 +111,18 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       _userRef!.onValue.listen((event) {
         if (event.snapshot.exists && event.snapshot.value != null) {
           try {
-            final userData = Map<String, dynamic>.from(event.snapshot.value as Map);
-            
+            final userData =
+                Map<String, dynamic>.from(event.snapshot.value as Map);
+
             // Guardar en caché para la próxima vez
-            prefs.setString('cached_userName', userData['fullName'] ?? 'Usuario');
+            prefs.setString(
+                'cached_userName', userData['fullName'] ?? 'Usuario');
             prefs.setString('cached_userRole', userData['role'] ?? 'Prefecta');
-            if (userData['campus'] != null) prefs.setString('cached_campus', userData['campus']);
-            if (userData['profileImageUrl'] != null) prefs.setString('cached_userPhotoUrl', userData['profileImageUrl']);
+            if (userData['campus'] != null)
+              prefs.setString('cached_campus', userData['campus']);
+            if (userData['profileImageUrl'] != null)
+              prefs.setString(
+                  'cached_userPhotoUrl', userData['profileImageUrl']);
 
             if (mounted) {
               setState(() {
@@ -125,7 +130,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
                 _userRole = userData['role'] ?? 'Prefecta';
                 _userPhotoUrl = userData['profileImageUrl'];
                 _userCampus = userData['campus'];
-                
+
                 // Re-init screens to pass the updated campus
                 _initScreens();
               });
@@ -189,7 +194,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       default:
         index = 0;
     }
-    
+
     setState(() {
       _selectedIndex = index;
     });
@@ -198,9 +203,9 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
-    final safeIndex = (_selectedIndex >= 0 && _selectedIndex < _screens.length) 
-        ? _selectedIndex 
+
+    final safeIndex = (_selectedIndex >= 0 && _selectedIndex < _screens.length)
+        ? _selectedIndex
         : 0;
 
     return Scaffold(
@@ -211,7 +216,8 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
             if (safeIndex == 14) // Si es el asistente IA
               const Padding(
                 padding: EdgeInsets.only(right: 10),
-                child: Icon(Icons.psychology, color: Color(0xFFF59E0B)), // Color Tertiary (Amber)
+                child: Icon(Icons.psychology,
+                    color: Color(0xFFF59E0B)), // Color Tertiary (Amber)
               ),
             Text(_screenTitles[safeIndex]),
           ],
@@ -239,7 +245,8 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
               onPressed: () => _onNavigate('ia'),
               backgroundColor: theme.colorScheme.tertiary,
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.psychology_rounded), // Psychology icon looks more "AI"
+              icon: const Icon(
+                  Icons.psychology_rounded), // Psychology icon looks more "AI"
               label: const Text(
                 'Asistente IA',
                 style: TextStyle(fontWeight: FontWeight.bold),

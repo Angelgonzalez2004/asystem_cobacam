@@ -81,7 +81,10 @@ class _WelcomeHeaderState extends State<WelcomeHeader> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDark
-              ? [theme.colorScheme.primary.withOpacity(0.5), theme.colorScheme.surface]
+              ? [
+                  theme.colorScheme.primary.withOpacity(0.5),
+                  theme.colorScheme.surface
+                ]
               : [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -107,7 +110,8 @@ class _WelcomeHeaderState extends State<WelcomeHeader> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -131,7 +135,8 @@ class _WelcomeHeaderState extends State<WelcomeHeader> {
                 ),
                 // RELOJ PROFESIONAL
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.black26,
                     borderRadius: BorderRadius.circular(12),
@@ -139,13 +144,15 @@ class _WelcomeHeaderState extends State<WelcomeHeader> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.access_time_rounded, color: Colors.white70, size: 14),
+                      const Icon(Icons.access_time_rounded,
+                          color: Colors.white70, size: 14),
                       const SizedBox(width: 8),
                       Text(
                         _currentTime,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontFamily: 'monospace', // Para que los números no salten
+                          fontFamily:
+                              'monospace', // Para que los números no salten
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -176,14 +183,18 @@ class _WelcomeHeaderState extends State<WelcomeHeader> {
             if (widget.subtitle != null) ...[
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.black12,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   widget.subtitle!,
-                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500),
                 ),
               ),
             ],

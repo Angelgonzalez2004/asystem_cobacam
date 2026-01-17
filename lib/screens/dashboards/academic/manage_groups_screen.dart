@@ -156,79 +156,95 @@ class _ManageGroupsScreenState extends State<ManageGroupsScreen>
                 };
                 if (data['name']!.toString().isNotEmpty && _groupsRef != null) {
                   try {
-                                        if (!mounted) return;
-                                        Navigator.pop(context);
-                                        if (mounted) {
-                                          UiHelpers.showSnackBar(context, isEditing ? 'Grupo actualizado.' : 'Grupo añadido.');
-                                        }
-                                      } catch (e) {
-                                        if (mounted) {
-                                          UiHelpers.showSnackBar(context, 'Error al guardar: ${e.toString()}', isError: true);
-                                        }
-                                      }
-                                    }
-                                  },
-                                  child: const Text('Guardar'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      }
-                    
-                      // --- Dialogs and CRUD for Classrooms ---
-                      void _showClassroomDialog({Classroom? classroom}) {
-                        final nameController = TextEditingController(text: classroom?.name);
-                        final capacityController = TextEditingController(text: classroom?.capacity.toString());
-                        final isEditing = classroom != null;
-                    
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: Text(isEditing ? 'Editar Aula' : 'Añadir Aula'),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Nombre del Aula (e.g., Aula 5)')),
-                                  const SizedBox(height: 12),
-                                  TextField(controller: capacityController, decoration: const InputDecoration(labelText: 'Capacidad'), keyboardType: TextInputType.number),
-                                ],
-                              ),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    final data = {
-                                      'name': nameController.text,
-                                      'capacity': int.tryParse(capacityController.text) ?? 0,
-                                    };
-                                    if (data['name']!.toString().isNotEmpty && _classroomsRef != null) {
-                                      try {
-                                        if (isEditing) {
-                                          await _classroomsRef!.child(classroom.key).update(data);
-                                        } else {
-                                          await _classroomsRef!.push().set(data);
-                                        }
-                                        if (!mounted) return;
-                                        Navigator.pop(context);
-                                        if (mounted) {
-                                          UiHelpers.showSnackBar(context, isEditing ? 'Aula actualizada.' : 'Aula añadida.');
-                                        }
-                                      } catch (e) {
-                                        if (mounted) {
-                                          UiHelpers.showSnackBar(context, 'Error al guardar: ${e.toString()}', isError: true);
-                                        }
-                                      }
-                                    }
-                                  },
-                                  child: const Text('Guardar'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      }
+                    if (!mounted) return;
+                    Navigator.pop(context);
+                    if (mounted) {
+                      UiHelpers.showSnackBar(context,
+                          isEditing ? 'Grupo actualizado.' : 'Grupo añadido.');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      UiHelpers.showSnackBar(
+                          context, 'Error al guardar: ${e.toString()}',
+                          isError: true);
+                    }
+                  }
+                }
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- Dialogs and CRUD for Classrooms ---
+  void _showClassroomDialog({Classroom? classroom}) {
+    final nameController = TextEditingController(text: classroom?.name);
+    final capacityController =
+        TextEditingController(text: classroom?.capacity.toString());
+    final isEditing = classroom != null;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(isEditing ? 'Editar Aula' : 'Añadir Aula'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                      labelText: 'Nombre del Aula (e.g., Aula 5)')),
+              const SizedBox(height: 12),
+              TextField(
+                  controller: capacityController,
+                  decoration: const InputDecoration(labelText: 'Capacidad'),
+                  keyboardType: TextInputType.number),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar')),
+            ElevatedButton(
+              onPressed: () async {
+                final data = {
+                  'name': nameController.text,
+                  'capacity': int.tryParse(capacityController.text) ?? 0,
+                };
+                if (data['name']!.toString().isNotEmpty &&
+                    _classroomsRef != null) {
+                  try {
+                    if (isEditing) {
+                      await _classroomsRef!.child(classroom.key).update(data);
+                    } else {
+                      await _classroomsRef!.push().set(data);
+                    }
+                    if (!mounted) return;
+                    Navigator.pop(context);
+                    if (mounted) {
+                      UiHelpers.showSnackBar(context,
+                          isEditing ? 'Aula actualizada.' : 'Aula añadida.');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      UiHelpers.showSnackBar(
+                          context, 'Error al guardar: ${e.toString()}',
+                          isError: true);
+                    }
+                  }
+                }
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
