@@ -20,6 +20,7 @@ class AppSettingsService {
   /// This method is synchronous and safe to call on app startup.
   String getActiveSchoolCycleIdFromCache() {
     try {
+      debugPrint('AppSettingsService: Accediendo a schoolCyclesBox (cache).');
       final cycles = _hiveService.schoolCyclesBox.values.toList();
       return _calculateCurrentCycle(cycles);
     } catch (e) {
@@ -81,7 +82,9 @@ class AppSettingsService {
           final firebaseCycles = snapshot.children
               .map((child) => SchoolCycle.fromSnapshot(child))
               .toList();
+          debugPrint('AppSettingsService: Limpiando schoolCyclesBox (online).');
           await _hiveService.schoolCyclesBox.clear();
+          debugPrint('AppSettingsService: Agregando ciclos a schoolCyclesBox (online).');
           await _hiveService.schoolCyclesBox.addAll(firebaseCycles);
           return firebaseCycles;
         }
@@ -90,6 +93,7 @@ class AppSettingsService {
             'Error fetching SchoolCycles from Firebase, using cache: $e');
       }
     }
+    debugPrint('AppSettingsService: Accediendo a schoolCyclesBox (offline fallback).');
     return _hiveService.schoolCyclesBox.values.toList();
   }
 
@@ -106,12 +110,14 @@ class AppSettingsService {
           final firebaseDays = snapshot.children
               .map((child) => NonAttendanceDay.fromSnapshot(child))
               .toList();
-          // More efficient cache update: clear only this campus's days
+          debugPrint('AppSettingsService: Accediendo a nonAttendanceDaysBox (online).');
           final allCachedDays =
               _hiveService.nonAttendanceDaysBox.values.toList();
           final otherCampusDays =
               allCachedDays.where((day) => day.campusId != campusId);
+          debugPrint('AppSettingsService: Limpiando nonAttendanceDaysBox (online).');
           await _hiveService.nonAttendanceDaysBox.clear();
+          debugPrint('AppSettingsService: Agregando días a nonAttendanceDaysBox (online).');
           await _hiveService.nonAttendanceDaysBox
               .addAll([...otherCampusDays, ...firebaseDays]);
           return firebaseDays;
@@ -121,6 +127,7 @@ class AppSettingsService {
             'Error fetching NonAttendanceDays from Firebase, using cache: $e');
       }
     }
+    debugPrint('AppSettingsService: Accediendo a nonAttendanceDaysBox (offline fallback).');
     return _hiveService.nonAttendanceDaysBox.values
         .where((day) => day.campusId == campusId)
         .toList();
@@ -138,16 +145,19 @@ class AppSettingsService {
 
   Future<void> addSchoolCycle(SchoolCycle cycle) async {
     await _schoolCyclesRef.child(cycle.id).set(cycle.toFirebaseMap());
+    debugPrint('AppSettingsService: Agregando ciclo a schoolCyclesBox.');
     await _hiveService.schoolCyclesBox.put(cycle.id, cycle);
   }
 
   Future<void> updateSchoolCycle(SchoolCycle cycle) async {
     await _schoolCyclesRef.child(cycle.id).update(cycle.toFirebaseMap());
+    debugPrint('AppSettingsService: Actualizando ciclo en schoolCyclesBox.');
     await _hiveService.schoolCyclesBox.put(cycle.id, cycle);
   }
 
   Future<void> deleteSchoolCycle(String cycleId) async {
     await _schoolCyclesRef.child(cycleId).remove();
+    debugPrint('AppSettingsService: Eliminando ciclo de schoolCyclesBox.');
     await _hiveService.schoolCyclesBox.delete(cycleId);
   }
 
@@ -160,6 +170,7 @@ class AppSettingsService {
     await _getNonAttendanceDaysRef(day.campusId)
         .child(day.id)
         .set(day.toFirebaseMap());
+    debugPrint('AppSettingsService: Agregando día a nonAttendanceDaysBox.');
     await _hiveService.nonAttendanceDaysBox.put(day.id, day);
   }
 
@@ -167,11 +178,13 @@ class AppSettingsService {
     await _getNonAttendanceDaysRef(day.campusId)
         .child(day.id)
         .update(day.toFirebaseMap());
+    debugPrint('AppSettingsService: Actualizando día en nonAttendanceDaysBox.');
     await _hiveService.nonAttendanceDaysBox.put(day.id, day);
   }
 
   Future<void> deleteNonAttendanceDay(String campusId, String dayId) async {
     await _getNonAttendanceDaysRef(campusId).child(dayId).remove();
+    debugPrint('AppSettingsService: Eliminando día de nonAttendanceDaysBox.');
     await _hiveService.nonAttendanceDaysBox.delete(dayId);
   }
 }

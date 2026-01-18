@@ -11,7 +11,14 @@ Un vistazo a las capacidades que hacen de Asystem una herramienta indispensable.
 ### 🌟 Seguridad Avanzada y Acceso Flexible
 *   **Bloqueo de Aplicación Local:** Protege la aplicación con un PIN de 4 dígitos o mediante datos biométricos (huella/rostro), permitiendo asegurar la sesión sin necesidad de cerrar la cuenta. Ideal para mantener el acceso offline.
 *   **Gestión de Sesiones Activas:** Los usuarios pueden ver y revocar el acceso en otros dispositivos directamente desde los ajustes.
-*   **Autenticación por Roles:** Sistema robusto que dirige a cada usuario (Alumno, Prefecto, Administrador) a su panel de control correspondiente.
+*   **Autenticación por Roles:** Sistema robusto que dirige a cada usuario a su panel de control correspondiente.
+
+### 👤 Roles de Usuario
+El sistema está diseñado con una arquitectura de roles específica para cada tipo de usuario:
+*   **Alumno:** Puede consultar su horario, calificaciones (próximamente), y ver anuncios. Su credencial con código QR es la llave para el registro de asistencia.
+*   **Prefecto:** El rol operativo central. Gestiona el pase de lista, registra incidencias, visualiza horarios de grupos y profesores, y utiliza el asistente de IA para consultas.
+*   **Administrador de Plantel:** Gestiona los datos académicos de su plantel, como los ciclos escolares, los grupos y la asignación de materias.
+*   **Administrador General:** Tiene control total sobre la plataforma, incluyendo la gestión de planteles y los códigos de acceso para los registros de nuevos usuarios.
 
 ### 📡 Modo Offline Nativo (Sin Internet)
 *   **Asistencia sin Conexión:** Permite registrar la asistencia de los alumnos incluso sin conexión a internet.
@@ -40,8 +47,8 @@ Un vistazo a las capacidades que hacen de Asystem una herramienta indispensable.
 
 El proyecto está construido con un enfoque moderno, priorizando el rendimiento, la escalabilidad y la mantenibilidad.
 
-*   **Framework Principal:** [Flutter](https://flutter.dev/) 3.38+
-*   **Lenguaje:** [Dart](https://dart.dev/) 3.10+
+*   **Framework Principal:** [Flutter](https://flutter.dev/)
+*   **Lenguaje:** [Dart](https://dart.dev/)
 *   **Backend y Base de Datos:**
     *   **Firebase Realtime Database:** Para la sincronización de datos en tiempo real.
     *   **Firebase Authentication:** Para la gestión de usuarios y roles.
@@ -50,24 +57,20 @@ El proyecto está construido con un enfoque moderno, priorizando el rendimiento,
 *   **Almacenamiento Local:** [Hive](https://pub.dev/packages/hive) para una persistencia de datos offline rápida y eficiente.
 *   **Gestión de Estado:** [Provider](https://pub.dev/packages/provider) para un manejo de estado simple y reactivo.
 *   **Inteligencia Artificial:** [Google AI SDK (Gemini)](https://pub.dev/packages/google_generative_ai) para las funcionalidades del Asistente IA.
-*   **Seguridad Local:** [local_auth](https://pub.dev/packages/local_auth) y [flutter_secure_storage](https://pub.dev/packages/flutter_secure_storage) para el bloqueo con PIN/Biometría.
-*   **Funcionalidades Adicionales:**
-    *   `dropdown_search`: Para selectores con búsqueda en las pantallas de visualización de horarios.
-    *   `screenshot`: Para la captura de widgets y exportación a imagen.
-    *   `pdf`: Para la generación de documentos PDF.
+*   **Seguridad Local:** `local_auth` y `flutter_secure_storage` para el bloqueo con PIN/Biometría.
 
 ---
 
-## ⚙️ Primeros Pasos (Para Desarrolladores)
+## ⚙️ Despliegue y Desarrollo
 
 Sigue estos pasos para configurar el entorno de desarrollo y ejecutar el proyecto.
 
 ### **1. Prerrequisitos**
-*   Tener [Flutter SDK](https://flutter.dev/docs/get-started/install) instalado (versión 3.38 o superior).
+*   Tener [Flutter SDK](https://flutter.dev/docs/get-started/install) instalado.
 *   Un editor de código como [Visual Studio Code](https://code.visualstudio.com/) o [Android Studio](https://developer.android.com/studio).
-*   Tener una cuenta de [Firebase](https://firebase.google.com/) y un proyecto creado.
+*   Tener una cuenta de [Firebase](https://firebase.google.com/) y el [Firebase CLI](https://firebase.google.com/docs/cli) instalado.
 
-### **2. Configuración**
+### **2. Configuración del Proyecto**
 
 ```bash
 # Clona el repositorio
@@ -82,17 +85,25 @@ flutter pub get
 
 ### **3. Configuración de Firebase**
 
-Para que el proyecto se conecte a Firebase, necesitas los archivos de configuración correspondientes. **Estos archivos no deben ser subidos al repositorio por seguridad.**
-
 *   **Android:** Coloca tu archivo `google-services.json` en la carpeta `android/app/`.
 *   **iOS:** Abre el proyecto de iOS en Xcode y añade tu archivo `GoogleService-Info.plist` a la carpeta `Runner`.
-*   **Web:** La configuración de Firebase para la web ya está integrada en el código y se inicializa en `main.dart` utilizando `firebase_options.dart`.
+*   **Web:** La configuración de Firebase para la web se inicializa en `main.dart` utilizando `firebase_options.dart`.
 
 ### **4. Ejecutar la Aplicación**
 
 ```bash
 # Ejecuta la app en el dispositivo o emulador seleccionado
 flutter run
+```
+
+### **5. Compilar y Desplegar en Firebase Hosting**
+
+```bash
+# Compila la versión de producción para la web
+flutter build web
+
+# Despliega la aplicación en Firebase
+firebase deploy --only hosting
 ```
 
 ---

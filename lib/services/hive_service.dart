@@ -38,13 +38,29 @@ class HiveService {
     Hive.registerAdapter(AttendanceRecordAdapter());
 
     // Abrir las cajas (boxes) que se van a utilizar
+    debugPrint('Hive: Abriendo StudentsBox...');
     await Hive.openBox<Student>(_studentsBox);
+    debugPrint('Hive: StudentsBox abierta.');
+
+    debugPrint('Hive: Abriendo GroupsBox...');
     await Hive.openBox<Group>(_groupsBox);
+    debugPrint('Hive: GroupsBox abierta.');
+
+    debugPrint('Hive: Abriendo GroupSchedulesBox...');
     await Hive.openBox<GroupSchedule>(_groupSchedulesBox);
+    debugPrint('Hive: GroupSchedulesBox abierta.');
+
+    debugPrint('Hive: Abriendo NonAttendanceDaysBox...');
     await Hive.openBox<NonAttendanceDay>(_nonAttendanceDaysBox);
+    debugPrint('Hive: NonAttendanceDaysBox abierta.');
+
+    debugPrint('Hive: Abriendo SchoolCyclesBox...');
     await Hive.openBox<SchoolCycle>(_schoolCyclesBox);
-    await Hive.openBox<AttendanceRecord>(
-        _attendanceRecordsBox); // For offline records
+    debugPrint('Hive: SchoolCyclesBox abierta.');
+
+    debugPrint('Hive: Abriendo AttendanceRecordsBox...');
+    await Hive.openBox<AttendanceRecord>(_attendanceRecordsBox);
+    debugPrint('Hive: AttendanceRecordsBox abierta.');
   }
 
   // Métodos de utilidad para acceder a las cajas

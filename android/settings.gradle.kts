@@ -21,7 +21,7 @@ plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
 
     // Versión del plugin de Android (AGP). 8.6.0 es correcta y reciente.
-    id("com.android.application") version "8.6.0" apply false
+    id("com.android.application") version "8.9.1" apply false
 
     // Servicios de Google (Firebase, etc.). 4.4.2 es correcta.
     id("com.google.gms.google-services") version "4.4.2" apply false
