@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:asystem_cobacam/models/incidence_model.dart';
 import 'package:asystem_cobacam/models/student_model.dart';
-import 'package:asystem_cobacam/utils/web_downloader.dart';
+
 import 'package:excel/excel.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:asystem_cobacam/utils/web_downloader.dart';
 
 class IncidenceExcelExporter {
   /// Exporta incidencias a Excel.
@@ -117,7 +118,7 @@ class IncidenceExcelExporter {
         'Incidencias_${specificGroupName ?? "General"}_${campus}_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.xlsx';
 
     if (kIsWeb) {
-      await downloadImageWeb(Uint8List.fromList(fileBytes), fileName);
+      await WebDownloader.downloadFile(Uint8List.fromList(fileBytes), fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       return 'Descarga iniciada';
     } else {
       if (Platform.isWindows ||

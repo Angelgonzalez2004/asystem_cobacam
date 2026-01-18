@@ -40,8 +40,7 @@ class HiveService {
     // Abrir las cajas (boxes) que se van a utilizar
     await Hive.openBox<Student>(_studentsBox);
     await Hive.openBox<Group>(_groupsBox);
-    await Hive.openBox<List<GroupSchedule>>(
-        _groupSchedulesBox); // Group schedules might be list per group
+    await Hive.openBox<GroupSchedule>(_groupSchedulesBox);
     await Hive.openBox<NonAttendanceDay>(_nonAttendanceDaysBox);
     await Hive.openBox<SchoolCycle>(_schoolCyclesBox);
     await Hive.openBox<AttendanceRecord>(
@@ -51,8 +50,8 @@ class HiveService {
   // Métodos de utilidad para acceder a las cajas
   Box<Student> get studentsBox => Hive.box<Student>(_studentsBox);
   Box<Group> get groupsBox => Hive.box<Group>(_groupsBox);
-  Box<List<GroupSchedule>> get groupSchedulesBox =>
-      Hive.box<List<GroupSchedule>>(_groupSchedulesBox);
+  Box<GroupSchedule> get groupSchedulesBox =>
+      Hive.box<GroupSchedule>(_groupSchedulesBox);
   Box<NonAttendanceDay> get nonAttendanceDaysBox =>
       Hive.box<NonAttendanceDay>(_nonAttendanceDaysBox);
   Box<SchoolCycle> get schoolCyclesBox =>

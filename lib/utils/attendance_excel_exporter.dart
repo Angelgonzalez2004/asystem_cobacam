@@ -6,6 +6,7 @@ import 'package:asystem_cobacam/models/student_model.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import 'package:asystem_cobacam/utils/web_downloader.dart';
 
+
 class AttendanceExcelExporter {
   static Future<void> exportAdvancedReport({
     required BuildContext context,
@@ -85,7 +86,7 @@ class AttendanceExcelExporter {
     }
 
     if (kIsWeb) {
-      await downloadImageWeb(Uint8List.fromList(fileBytes), fileName);
+      await WebDownloader.downloadFile(Uint8List.fromList(fileBytes), fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     } else {
       final directory = await getApplicationDocumentsDirectory();
       final file = File('${directory.path}/$fileName');

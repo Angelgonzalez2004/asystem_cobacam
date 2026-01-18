@@ -1,42 +1,38 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'group_schedule_model.dart';
+part of 'subject_model.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class GroupScheduleAdapter extends TypeAdapter<GroupSchedule> {
+class SubjectAdapter extends TypeAdapter<Subject> {
   @override
-  final int typeId = 2;
+  final int typeId = 10;
 
   @override
-  GroupSchedule read(BinaryReader reader) {
+  Subject read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return GroupSchedule(
+    return Subject(
       id: fields[0] as String,
-      groupId: fields[1] as String,
-      schoolCycle: fields[2] as String,
-      dailySchedules: (fields[3] as Map).map((dynamic k, dynamic v) =>
-          MapEntry(k as String, (v as List).cast<ClassSession>())),
+      name: fields[1] as String,
+      semester: fields[2] as int,
     );
   }
 
   @override
-  void write(BinaryWriter writer, GroupSchedule obj) {
+  void write(BinaryWriter writer, Subject obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(3)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.groupId)
+      ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.schoolCycle)
-      ..writeByte(3)
-      ..write(obj.dailySchedules);
+      ..write(obj.semester);
   }
 
   @override
@@ -45,7 +41,7 @@ class GroupScheduleAdapter extends TypeAdapter<GroupSchedule> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is GroupScheduleAdapter &&
+      other is SubjectAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

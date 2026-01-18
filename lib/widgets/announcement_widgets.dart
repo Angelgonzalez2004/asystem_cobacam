@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:asystem_cobacam/models/announcement_model.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/web_downloader.dart';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -595,8 +596,8 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
         }
       } else if (kIsWeb) {
         // WEB
-        await downloadImageWeb(
-            bytes, 'cobacam_img_${DateTime.now().millisecondsSinceEpoch}.jpg');
+        await WebDownloader.downloadFile(
+            bytes, 'cobacam_img_${DateTime.now().millisecondsSinceEpoch}.jpg', 'image/jpeg');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -701,8 +702,8 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
         for (int i = 0; i < widget.imageUrls.length; i++) {
           final response = await http.get(Uri.parse(widget.imageUrls[i]));
           if (response.statusCode == 200) {
-            await downloadImageWeb(response.bodyBytes,
-                'cobacam_aviso_${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
+            await WebDownloader.downloadFile(response.bodyBytes,
+                'cobacam_aviso_${DateTime.now().millisecondsSinceEpoch}_$i.jpg', 'image/jpeg');
             // Pequeña pausa para evitar bloqueo del navegador o bloqueadores de popups agresivos
             await Future.delayed(const Duration(milliseconds: 500));
           }

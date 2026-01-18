@@ -3,12 +3,12 @@ import 'package:asystem_cobacam/models/group_model.dart';
 import 'package:asystem_cobacam/models/school_cycle_model.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 class GroupManagementScreen extends StatefulWidget {
-  const GroupManagementScreen({super.key});
+  final Function(String route)? onNavigate;
+  const GroupManagementScreen({super.key, this.onNavigate});
 
   @override
   _GroupManagementScreenState createState() => _GroupManagementScreenState();
@@ -16,89 +16,17 @@ class GroupManagementScreen extends StatefulWidget {
 
 class _GroupManagementScreenState extends State<GroupManagementScreen> {
   DatabaseReference? _groupsRef;
-  final DatabaseReference _schoolCyclesRef =
-      FirebaseDatabase.instance.ref('school_cycles');
 
-  StreamSubscription<DatabaseEvent>? _schoolCyclesSubscription;
+
+
   StreamSubscription<DatabaseEvent>? _groupsSubscription;
 
   List<Group> _groups = [];
-  List<SchoolCycle> _schoolCycles = [];
+  final List<SchoolCycle> _schoolCycles = [];
   SchoolCycle? _selectedSchoolCycle;
   String? _campusId;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _initData();
-  }
-
-  Future<void> _initData() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final snap =
-            await FirebaseDatabase.instance.ref('users/${user.uid}').get();
-        if (snap.exists) {
-          final userData = Map<String, dynamic>.from(snap.value as Map);
-          _campusId = userData['campus'];
-          if (_campusId != null) {
-            _groupsRef =
-                FirebaseDatabase.instance.ref('planteles/$_campusId/groups');
-          }
-        }
-      }
-      _loadSchoolCycles();
-    } catch (e) {
-      debugPrint('Error en _initData: $e');
-    }
-  }
-
-  void _loadSchoolCycles() {
-    _schoolCyclesSubscription?.cancel();
-    _schoolCyclesSubscription = _schoolCyclesRef.onValue.listen((event) {
-      if (!mounted) return;
-      if (event.snapshot.exists) {
-        final cycles = <SchoolCycle>[];
-        for (final child in event.snapshot.children) {
-          cycles.add(SchoolCycle.fromSnapshot(child));
-        }
-        setState(() {
-          _schoolCycles = cycles;
-          if (_schoolCycles.isNotEmpty && _selectedSchoolCycle == null) {
-            _selectedSchoolCycle = _schoolCycles.first;
-            _loadGroups();
-          }
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
-      }
-    });
-  }
-
-  void _loadGroups() {
-    if (_selectedSchoolCycle == null || _groupsRef == null) return;
-    _groupsSubscription?.cancel();
-    _groupsSubscription = _groupsRef!
-        .orderByChild('schoolCycleId')
-        .equalTo(_selectedSchoolCycle!.id)
-        .onValue
-        .listen((event) {
-      if (!mounted) return;
-      if (event.snapshot.exists) {
-        final groups = <Group>[];
-        for (final child in event.snapshot.children) {
-          groups.add(Group.fromSnapshot(child));
-        }
-        setState(() => _groups = groups);
-      } else {
-        setState(() => _groups = []);
-      }
-    });
-  }
-
+  final bool _isLoading = true;
+//...
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -106,11 +34,9 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      // AppBar eliminado para evitar duplicación con el Dashboard
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : LayoutBuilder(builder: (context, constraints) {
-              // Responsive Grid Logic
               int crossAxisCount = 1;
               if (constraints.maxWidth > 600) crossAxisCount = 2;
               if (constraints.maxWidth > 900) crossAxisCount = 3;
@@ -121,9 +47,31 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
                   constraints: const BoxConstraints(maxWidth: 1200),
                   child: Column(
                     children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            if (widget.onNavigate != null)
+                              IconButton(
+                                icon: const Icon(Icons.arrow_back_rounded),
+                                onPressed: () => widget.onNavigate!('home'),
+                                tooltip: 'Volver a Inicio',
+                              ),
+                            Expanded(
+                              child: Text(
+                                'Gestión de Grupos',
+                                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            // Spacer for alignment if back button exists
+                            if (widget.onNavigate != null) const SizedBox(width: 48),
+                          ],
+                        ),
+                      ),
                       if (_campusId != null)
                         Padding(
-                          padding: const EdgeInsets.only(top: 24.0, bottom: 8),
+                          padding: const EdgeInsets.only(top: 8.0, bottom: 8),
                           child: Text('PLANTEL $_campusId',
                               style: TextStyle(
                                   color: theme.colorScheme.primary,
@@ -373,6 +321,29 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
       _groupsRef!.child(group.key).remove();
       if (mounted) UiHelpers.showSnackBar(context, 'Grupo eliminado.');
     }
+  }
+
+
+
+  void _loadGroups() {
+    if (_selectedSchoolCycle == null || _groupsRef == null) return;
+    _groupsSubscription?.cancel();
+    _groupsSubscription = _groupsRef!
+        .orderByChild('schoolCycleId')
+        .equalTo(_selectedSchoolCycle!.id)
+        .onValue
+        .listen((event) {
+      if (!mounted) return;
+      if (event.snapshot.exists) {
+        final groups = <Group>[];
+        for (final child in event.snapshot.children) {
+          groups.add(Group.fromSnapshot(child));
+        }
+        setState(() => _groups = groups);
+      } else {
+        setState(() => _groups = []);
+      }
+    });
   }
 
   void _showGroupDialog({Group? group}) {

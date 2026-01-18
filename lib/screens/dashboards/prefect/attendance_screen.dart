@@ -9,6 +9,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:asystem_cobacam/models/student_model.dart';
 import 'package:asystem_cobacam/models/group_model.dart';
 import 'package:asystem_cobacam/models/group_schedule_model.dart';
+import 'package:asystem_cobacam/models/class_session_model.dart'; // NEW IMPORT
 import 'package:asystem_cobacam/services/app_settings_service.dart';
 import 'package:asystem_cobacam/models/non_attendance_day_model.dart';
 import 'package:intl/intl.dart';
@@ -33,10 +34,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     torchEnabled: false,
     formats: [BarcodeFormat.code128, BarcodeFormat.qrCode],
   );
-
+  
   late final AppSettingsService _appSettingsService;
-  // REMOVIDO: final TextEditingController _manualStudentIdController...
-  // Ahora usaremos el controller interno del Autocomplete
 
   late final HiveService _hiveService;
   late final ConnectivityService _connectivityService;
@@ -55,7 +54,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   List<Map<String, dynamic>> _todayAttendance = [];
   Map<String, Student> _studentsMap = {};
-  Map<String, List<GroupSchedule>> _groupSchedulesMap = {};
+  Map<String, GroupSchedule> _groupSchedulesMap = {}; // Corrected type
   List<Group> _groups = [];
   List<NonAttendanceDay> _nonAttendanceDays = [];
 
@@ -63,17 +62,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   String? _campus;
   String _currentSchoolCycle = '';
   String _todayDate = '';
-
+  
   // Logic Control
   String? _lastProcessedStudentId;
   bool _isProcessing = true;
   bool _isManualInputMode = false;
   int _offlineRecordsCount = 0;
-
+  
   // Visual Feedback State
-  Color _scannerBorderColor = Colors.transparent;
+  Color _scannerBorderColor = Colors.transparent; // Made non-final for setState
   bool _isFlashOn = false;
   CameraFacing _cameraFacing = CameraFacing.back;
+
+
 
   final List<String> _tardyReasons = [
     'Enfermedad',
@@ -92,59 +93,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     'Otro (especificar)',
   ];
 
-  final List<String> _incidenceTypes = [
-    'Uniforme Incompleto',
-    'Cabello/Corte no permitido',
-    'Uso de Celular sin autorización',
-    'Falta de Respeto a Autoridad',
-    'Daño a Mobiliario o Instalaciones',
-    'Salida del Plantel sin Pase',
-    'Retardo injustificado',
-    'Incumplimiento de Tareas/Material',
-    'Agresión Física o Verbal',
-    'Robo o Extorsión',
-    'Vandalismo o Grafiti',
-    'Consumo de Sustancias Prohibidas',
-    'Acoso Escolar (Bullying)',
-    'Falsificación de Firmas/Documentos',
-    'Interrupción de la Labor Docente',
-    'Lenguaje Obsceno o Inapropiado',
-    'Consumo de Alimentos en Aula',
-    'Desobediencia a Instrucciones',
-    'Copia en Examen o Plagio',
-    'Riña o Connatos de Violencia',
-    'Portación de Objetos Peligrosos',
-    'Inasistencia Injustificada (Saltarse clases)',
-    'Uso de Gorras o Lentes de Sol en Aula',
-    'Otro'
-  ];
 
-  final Map<String, IconData> _incidenceIcons = {
-    'Uniforme Incompleto': Icons.checkroom,
-    'Cabello/Corte no permitido': Icons.face,
-    'Uso de Celular sin autorización': Icons.phonelink_ring,
-    'Falta de Respeto a Autoridad': Icons.sentiment_very_dissatisfied,
-    'Daño a Mobiliario o Instalaciones': Icons.chair,
-    'Salida del Plantel sin Pase': Icons.door_back_door,
-    'Retardo injustificado': Icons.access_time,
-    'Incumplimiento de Tareas/Material': Icons.assignment_late,
-    'Agresión Física o Verbal': Icons.back_hand,
-    'Robo o Extorsión': Icons.security,
-    'Vandalismo o Grafiti': Icons.brush,
-    'Consumo de Sustancias Prohibidas': Icons.smoke_free,
-    'Acoso Escolar (Bullying)': Icons.groups_outlined,
-    'Falsificación de Firmas/Documentos': Icons.description,
-    'Interrupción de la Labor Docente': Icons.volume_up,
-    'Lenguaje Obsceno o Inapropiado': Icons.record_voice_over,
-    'Consumo de Alimentos en Aula': Icons.restaurant,
-    'Desobediencia a Instrucciones': Icons.gavel,
-    'Copia en Examen o Plagio': Icons.auto_fix_normal,
-    'Riña o Connatos de Violencia': Icons.sports_kabaddi,
-    'Portación de Objetos Peligrosos': Icons.priority_high,
-    'Inasistencia Injustificada (Saltarse clases)': Icons.event_busy,
-    'Uso de Gorras o Lentes de Sol en Aula': Icons.accessibility,
-    'Otro': Icons.more_horiz,
-  };
 
   @override
   void initState() {
@@ -155,7 +104,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     _appSettingsService =
         AppSettingsService(_hiveService, _connectivityService);
 
-    _initOfflineFirstData();
+    _initData();
 
     _connectivitySubscription =
         _connectivityService.connectivityStream.listen((result) {
@@ -164,16 +113,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         setState(() {
           _connectivityResult = result;
         });
-        if (result != ConnectivityResult.none) {
+        if (_connectivityResult != ConnectivityResult.none) {
           _syncOfflineAttendance();
           if (!wasOnline) {
-            _syncFirebaseData(); // Sync all data now that we are online
+            // Re-load data from Firebase when online again
+            _syncFirebaseData(); 
             if (mounted) {
               UiHelpers.showSnackBar(
                   context, '¡Conexión restablecida! Sincronizando datos...');
             }
           }
         } else {
+          // No internet, ensure data is loaded from Hive for offline mode
+          _loadStudentsAndSchedules(online: false);
           if (mounted) {
             UiHelpers.showSnackBar(context, 'Modo Offline activado.',
                 isError: true);
@@ -185,51 +137,61 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   /// Initializes the screen with data available locally (offline-first).
-  Future<void> _initOfflineFirstData() async {
+  Future<void> _initData() async {
     setState(() => _isLoading = true);
     try {
-      // 1. Load campus from SharedPreferences (very fast)
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('No hay usuario autenticado.');
+      
       final prefs = await SharedPreferences.getInstance();
-      final cachedCampus = prefs.getString('cached_campus');
-      if (cachedCampus == null) {
-        // If there is no campus, we can't proceed. This might happen on first ever launch without internet.
-        throw Exception(
-            'El plantel no está configurado. Se requiere conexión a internet la primera vez.');
+
+      String? campus;
+      try {
+        final userProfileSnapshot = await FirebaseDatabase.instance.ref('users/${user.uid}').get();
+        if (userProfileSnapshot.exists) {
+          final userData = Map<String, dynamic>.from(userProfileSnapshot.value as Map);
+          campus = userData['campus'];
+          if (campus != null) await prefs.setString('cached_campus', campus);
+        }
+      } catch (e) {
+        debugPrint('Error obteniendo perfil online: $e');
       }
-      _campus = cachedCampus;
 
-      // 2. Load school cycle and non-attendance days from Hive (very fast)
-      final cycleId = _appSettingsService.getActiveSchoolCycleIdFromCache();
-      final nonAttendance = _hiveService.nonAttendanceDaysBox.values
-          .where((d) => d.campusId == _campus)
-          .toList();
+      // Si falló Firebase (sin red), usar caché
+      campus ??= prefs.getString('cached_campus');
 
-      // 3. Set initial state and build UI
+      if (campus == null) {
+        throw Exception('El usuario no tiene un plantel asignado o requiere conexión para la primera configuración.');
+      }
+
+      final dynamicSchoolCycle = await _appSettingsService.getCurrentSchoolCycleId();
+      final fetchedNonAttendanceDays = await _appSettingsService.getAllNonAttendanceDays(campus);
+
+      if (!mounted) return;
       setState(() {
-        _currentSchoolCycle = cycleId;
-        _nonAttendanceDays = nonAttendance;
+        _campus = campus;
+        _currentSchoolCycle = dynamicSchoolCycle;
+        _nonAttendanceDays = fetchedNonAttendanceDays;
         _todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-        _isLoading = false;
       });
 
-      // 4. Load all other data from cache
-      await _loadStudentsAndSchedules(online: false);
-      _loadOfflineAttendanceCount();
+      _attendanceRef = FirebaseDatabase.instance.ref('planteles/$_campus/attendance/$_currentSchoolCycle/$_todayDate');
+      _studentsRef = FirebaseDatabase.instance.ref('planteles/$_campus/students/$_currentSchoolCycle');
+      _groupSchedulesRef = FirebaseDatabase.instance.ref('planteles/$_campus/schedules/$_currentSchoolCycle'); // Corrected path
+      _groupsRef = FirebaseDatabase.instance.ref('planteles/$_campus/groups');
 
-      // 5. Setup Firebase refs now that we have campus and cycle
-      _setupFirebaseRefs();
-
-      // 6. Start listening to Firebase (will use cache first) and combine with Hive attendance
-      _setupFirebaseListeners();
-
-      // 7. Trigger background sync with Firebase (don't await it)
-      _syncFirebaseData();
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        UiHelpers.showSnackBar(context, 'Error de inicio: ${e.toString()}',
-            isError: true);
+      _connectivityResult = await _connectivityService.checkConnectivity();
+      
+      if (_connectivityResult == ConnectivityResult.none) {
+         _loadStudentsAndSchedules(online: false);
       }
+
+      _setupFirebaseListeners();
+      _loadOfflineAttendanceCount();
+    } catch (e) {
+      if (mounted) UiHelpers.showSnackBar(context, 'Error inicializando: ${e.toString()}', isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -317,76 +279,44 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           newStudentsMap[student.studentId] = student;
         }
       }
-
-      // Update Hive for Offline Mode
-      _hiveService.studentsBox.putAll(newStudentsMap);
-
       if (mounted) setState(() => _studentsMap = newStudentsMap);
     });
 
     _groupSchedulesSubscription?.cancel();
     _groupSchedulesSubscription = _groupSchedulesRef!.onValue.listen((event) {
-      final newGroupSchedulesMap = <String, List<GroupSchedule>>{};
+      final newGroupSchedulesMap = <String, GroupSchedule>{}; // Corrected type
       if (event.snapshot.exists) {
         for (final groupChild in event.snapshot.children) {
           final groupId = groupChild.key!;
-          final List<GroupSchedule> schedulesForGroup = [];
-          for (final dayChild in groupChild.children) {
-            final data = Map<String, dynamic>.from(dayChild.value as Map);
-            schedulesForGroup.add(GroupSchedule(
-              id: dayChild.key!,
-              groupId: groupId,
-              schoolCycle: _currentSchoolCycle,
-              dayOfWeek: dayChild.key!,
-              entryTime: data['entryTime'] ?? '',
-              exitTime: data['exitTime'] ?? '',
-            ));
-          }
-          newGroupSchedulesMap[groupId] = schedulesForGroup;
+          newGroupSchedulesMap[groupId] = GroupSchedule.fromSnapshot(groupChild);
         }
       }
-
-      // Update Hive for Offline Mode
-      _hiveService.groupSchedulesBox.putAll(newGroupSchedulesMap);
-
+      _hiveService.groupSchedulesBox.putAll(newGroupSchedulesMap); // Use putAll for Map
       if (mounted) setState(() => _groupSchedulesMap = newGroupSchedulesMap);
     });
 
     _groupsSubscription?.cancel();
-    _groupsSubscription = _groupsRef!
-        .orderByChild('schoolCycleId')
-        .equalTo(_currentSchoolCycle)
-        .onValue
-        .listen((event) {
-      final List<Group> fetchedGroups = [];
-      if (event.snapshot.exists) {
-        for (final child in event.snapshot.children) {
-          fetchedGroups.add(Group.fromSnapshot(child));
+    _groupsSubscription = _groupsRef!.orderByChild('schoolCycleId').equalTo(_currentSchoolCycle).onValue.listen((event) {
+        final List<Group> fetchedGroups = [];
+        if (event.snapshot.exists) {
+            for (final child in event.snapshot.children) {
+              fetchedGroups.add(Group.fromSnapshot(child));
+            }
         }
-      }
-
-      // Update Hive for Offline Mode
-      _hiveService.groupsBox.clear().then((_) {
-        _hiveService.groupsBox.addAll(fetchedGroups);
-      });
-
-      if (mounted) setState(() => _groups = fetchedGroups);
+        if (mounted) setState(() => _groups = fetchedGroups);
     });
   }
 
-  void _combineFirebaseAndHiveAttendance(
-      List<Map<String, dynamic>> firebaseAttendance) {
+  void _combineFirebaseAndHiveAttendance(List<Map<String, dynamic>> firebaseAttendance) {
     final attendanceRecordsBox = _hiveService.attendanceRecordsBox;
 
-    final List<Map<String, dynamic>> hiveAttendance = attendanceRecordsBox
-        .values
+    final List<Map<String, dynamic>> hiveAttendance = attendanceRecordsBox.values
         .where((record) =>
             record.date == _todayDate &&
             record.campusId == _campus &&
             record.schoolCycle == _currentSchoolCycle &&
             !record.isSynced)
-        .map((record) =>
-            record.toFirebaseMap()..['studentId'] = record.studentId)
+        .map((record) => record.toFirebaseMap()..['studentId'] = record.studentId)
         .toList();
 
     final Map<String, Map<String, dynamic>> combinedAttendance = {};
@@ -400,19 +330,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         combinedAttendance[record['studentId']] = record;
       } else {
         final existing = combinedAttendance[record['studentId']]!;
-        if (record.containsKey('entryTime')) {
-          existing['entryTime'] = record['entryTime'];
-        }
-        if (record.containsKey('exitTime')) {
-          existing['exitTime'] = record['exitTime'];
-        }
+        if (record.containsKey('entryTime')) existing['entryTime'] = record['entryTime'];
+        if (record.containsKey('exitTime')) existing['exitTime'] = record['exitTime'];
         if (record.containsKey('status')) existing['status'] = record['status'];
-        if (record.containsKey('reasonTardy')) {
-          existing['reasonTardy'] = record['reasonTardy'];
-        }
-        if (record.containsKey('reasonEarlyExit')) {
-          existing['reasonEarlyExit'] = record['reasonEarlyExit'];
-        }
+        if (record.containsKey('reasonTardy')) existing['reasonTardy'] = record['reasonTardy'];
+        if (record.containsKey('reasonEarlyExit')) existing['reasonEarlyExit'] = record['reasonEarlyExit'];
       }
     }
 
@@ -420,41 +342,35 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       setState(() {
         _todayAttendance = combinedAttendance.values.toList();
         _todayAttendance.sort((a, b) {
-          final aTime = a['exitTime'] ?? a['entryTime'] ?? '';
-          final bTime = b['exitTime'] ?? b['entryTime'] ?? '';
-          return bTime.compareTo(aTime);
+           final aTime = a['exitTime'] ?? a['entryTime'] ?? '';
+           final bTime = b['exitTime'] ?? b['entryTime'] ?? '';
+           return bTime.compareTo(aTime);
         });
       });
     }
   }
 
   Future<void> _loadStudentsAndSchedules({required bool online}) async {
-    if (!online) {
-      final studentsBox = _hiveService.studentsBox;
-      final groupSchedulesBox = _hiveService.groupSchedulesBox;
-      final groupsBox = _hiveService.groupsBox;
-
-      if (studentsBox.isNotEmpty) {
-        final newStudentsMap = <String, Student>{};
-        for (var student in studentsBox.values) {
-          newStudentsMap[student.studentId] = student;
+     if (!online) {
+        final studentsBox = _hiveService.studentsBox;
+        final groupSchedulesBox = _hiveService.groupSchedulesBox;
+        
+        if (studentsBox.isNotEmpty) {
+           final newStudentsMap = <String, Student>{};
+           for (var student in studentsBox.values) {
+              newStudentsMap[student.studentId] = student;
+           }
+           if (mounted) setState(() => _studentsMap = newStudentsMap);
         }
-        if (mounted) setState(() => _studentsMap = newStudentsMap);
-      }
-
-      if (groupSchedulesBox.isNotEmpty) {
-        final newGroupSchedulesMap = <String, List<GroupSchedule>>{};
-        for (var entry in groupSchedulesBox.toMap().entries) {
-          newGroupSchedulesMap[entry.key as String] =
-              List<GroupSchedule>.from(entry.value);
+        
+        if (groupSchedulesBox.isNotEmpty) {
+           final newGroupSchedulesMap = <String, GroupSchedule>{}; // Corrected type
+           groupSchedulesBox.toMap().forEach((key, value) {
+             newGroupSchedulesMap[key.toString()] = value; // Removed unnecessary 'if (value is GroupSchedule)'
+           });
+           if (mounted) setState(() => _groupSchedulesMap = newGroupSchedulesMap);
         }
-        if (mounted) setState(() => _groupSchedulesMap = newGroupSchedulesMap);
-      }
-
-      if (groupsBox.isNotEmpty) {
-        if (mounted) setState(() => _groups = groupsBox.values.toList());
-      }
-    }
+     }
   }
 
   @override
@@ -472,7 +388,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (!_isProcessing) {
       return;
     }
-
+    
     // Si hay un borde activo (cooldown visual), ignorar escaneos
     if (_scannerBorderColor != Colors.transparent) {
       return;
@@ -486,27 +402,27 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   bool _isDayValidForAttendance(Function(String) onError) {
-    if (_currentSchoolCycle.isEmpty) {
-      onError('Error: No hay ciclo escolar activo.');
-      return false;
+    if (_currentSchoolCycle.isEmpty) { 
+      onError('Error: No hay ciclo escolar activo.'); 
+      return false; 
     }
-
-    final now = DateTime.now();
+    
+    final now = DateTime.now(); // Declare now here
     final dayOfWeek = now.weekday;
-    if (dayOfWeek == DateTime.saturday || dayOfWeek == DateTime.sunday) {
-      onError('Hoy es fin de semana (No hay asistencia).');
-      return false;
+    if (dayOfWeek == DateTime.saturday || dayOfWeek == DateTime.sunday) { 
+      onError('Hoy es fin de semana (No hay asistencia).'); 
+      return false; 
     }
-
+    
     // Normalizar fecha de hoy y de la lista para comparar solo YYYY-MM-DD
     final todayStr = DateFormat('yyyy-MM-dd').format(now);
-
+    
     if (_nonAttendanceDays.any((day) {
-      final dayStr = DateFormat('yyyy-MM-dd').format(day.date);
-      return dayStr == todayStr;
-    })) {
-      onError('Hoy está marcado como día no lectivo.');
-      return false;
+        final dayStr = DateFormat('yyyy-MM-dd').format(day.date);
+        return dayStr == todayStr;
+    })) { 
+      onError('Hoy está marcado como día no lectivo.'); 
+      return false; 
     }
 
     return true;
@@ -531,15 +447,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (!_isDayValidForAttendance(triggerError)) return;
 
     final Student? student = _studentsMap[studentId];
-    if (student == null) {
-      triggerError('Matrícula "$studentId" no encontrada.');
-      return;
-    }
-
-    if (!student.isActive) {
-      triggerError('ALUMNO DADO DE BAJA.');
-      return;
-    }
+    if (student == null) { triggerError('Matrícula "$studentId" no encontrada.'); return; }
+    
+    if (!student.isActive) { triggerError('ALUMNO DADO DE BAJA.'); return; }
 
     Map<String, dynamic> record = _todayAttendance.firstWhere(
       (rec) => rec['studentId'] == studentId,
@@ -551,12 +461,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       scanType = 'entry';
     } else if (!record.containsKey('exitTime')) {
       if (!_isManualInputMode) {
-        final entryTimeStr = record['entryTime'] as String;
-        final entryTime = _parseTime(entryTimeStr);
-        if (DateTime.now().difference(entryTime).inMinutes < 2) {
-          triggerError('Ya se registró la entrada hace un momento.');
-          return;
-        }
+         final entryTimeStr = record['entryTime'] as String;
+         final entryTime = _parseTime(entryTimeStr);
+         if (DateTime.now().difference(entryTime).inMinutes < 2) {
+            triggerError('Ya se registró la entrada hace un momento.');
+            return;
+         }
       }
       scanType = 'exit';
     } else {
@@ -568,45 +478,51 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     _resumeProcessingAfterDelay();
   }
 
-  Future<void> _registerAttendance(Student student, String scanType,
-      Map<String, dynamic> existingRecord) async {
-    final String todayDayOfWeek =
-        DateFormat('EEEE', 'es_MX').format(DateTime.now()).toLowerCase();
-
-    // RESOLUCIÓN DE GRUPO: Nombre (Estudiante) -> ID (Firebase/Horario)
+  Future<void> _registerAttendance(Student student, String scanType, Map<String, dynamic> existingRecord) async {
+    final DateTime now = DateTime.now(); // Declare now here
+    final String todayDayOfWeek = DateFormat('EEEE', 'es_MX').format(now).toLowerCase();
+    
     String targetGroupId = student.group;
     try {
       final groupObj = _groups.firstWhere((g) => g.name == student.group);
       targetGroupId = groupObj.key;
     } catch (_) {
-      // Si no encontramos el grupo por nombre, usamos el valor directo (fallback)
+      // Fallback: If group not found by name, assume student.group is the ID
     }
 
-    final List<GroupSchedule>? schedules = _groupSchedulesMap[targetGroupId];
+    final GroupSchedule? groupSchedule = _groupSchedulesMap[targetGroupId];
 
-    final GroupSchedule? currentDaySchedule = schedules?.firstWhere(
-      (s) => s.dayOfWeek.toLowerCase() == todayDayOfWeek,
-      orElse: () => GroupSchedule(
-          id: '',
-          groupId: '',
-          schoolCycle: '',
-          dayOfWeek: '',
-          entryTime: '',
-          exitTime: ''),
-    );
+    // Initialize with default values for compilation
+    DateTime scheduledEntry = DateTime(now.year, now.month, now.day, 7, 0); // Default 7:00 AM
+    DateTime scheduledExit = DateTime(now.year, now.month, now.day, 14, 0); // Default 2:00 PM
 
-    if (currentDaySchedule == null || currentDaySchedule.entryTime.isEmpty) {
+    // Try to derive actual entry/exit from ClassSessions
+    if (groupSchedule != null && groupSchedule.dailySchedules.containsKey(todayDayOfWeek)) {
+      final List<ClassSession> todaySessions = groupSchedule.dailySchedules[todayDayOfWeek]!;
+      if (todaySessions.isNotEmpty) {
+        // Find the earliest entry and latest exit from today's ClassSessions
+        final earliestSession = todaySessions.reduce((a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
+        final latestSession = todaySessions.reduce((a, b) => a.endTime.compareTo(b.endTime) > 0 ? a : b);
+
+        try {
+          final entryParts = earliestSession.startTime.split(':');
+          scheduledEntry = DateTime(now.year, now.month, now.day, int.parse(entryParts[0]), int.parse(entryParts[1]));
+        } catch (_) {}
+        try {
+          final exitParts = latestSession.endTime.split(':');
+          scheduledExit = DateTime(now.year, now.month, now.day, int.parse(exitParts[0]), int.parse(exitParts[1]));
+        } catch (_) {}
+      }
+    } else {
+      // If no schedule for group or day, treat as no schedule for today.
       _triggerFeedback(false);
-      UiHelpers.showSnackBar(context, 'Grupo ${student.group} sin horario hoy.',
-          isError: true);
+      UiHelpers.showSnackBar(context, 'Grupo ${student.group} sin horario hoy.', isError: true);
       return;
     }
 
-    final DateTime now = DateTime.now();
+    // Original logic continues from here, now using the derived scheduledEntry and scheduledExit
     final String currentTime = DateFormat('HH:mm').format(now);
-    final DateTime scheduledEntry = _parseTime(currentDaySchedule.entryTime);
-    final DateTime scheduledExit = _parseTime(currentDaySchedule.exitTime);
-
+    
     final Map<String, dynamic> record =
         Map<String, dynamic>.from(existingRecord);
     record['studentFullName'] = student.fullName;
@@ -633,7 +549,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       } else {
         record['status'] = 'presente';
       }
-    } else {
+    } else { // scanType is 'exit'
       record['exitTime'] = currentTime;
       if (now.isBefore(scheduledExit)) {
         needsReason = true;
@@ -701,40 +617,32 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     // Vibración de advertencia fuerte
     HapticFeedback.heavyImpact();
-
+    
     showDialog(
       context: context,
       barrierDismissible: false, // Obliga a leer y cerrar
       builder: (context) => AlertDialog(
         backgroundColor: Colors.red.shade50,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Colors.red, width: 2)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Colors.red, width: 2)),
         title: const Row(
           children: [
             Icon(Icons.medical_services_outlined, color: Colors.red, size: 32),
             SizedBox(width: 12),
-            Expanded(
-                child: Text('ALERTA MÉDICA',
-                    style: TextStyle(
-                        color: Colors.red, fontWeight: FontWeight.bold))),
+            Expanded(child: Text('ALERTA MÉDICA', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('El alumno ${student.fullName} requiere atención especial:',
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text('El alumno ${student.fullName} requiere atención especial:', style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 16),
-            _buildMedicalInfoBox('ESTADO GENERAL',
-                cleanStatus.isNotEmpty ? cleanStatus : 'No especificado'),
-            if (cleanConditions.isNotEmpty &&
-                cleanConditions.toLowerCase() != 'ninguna')
-              _buildMedicalInfoBox('CONDICIONES', cleanConditions),
-            if (cleanAllergies.isNotEmpty &&
-                cleanAllergies.toLowerCase() != 'ninguna')
-              _buildMedicalInfoBox('ALERGIAS', cleanAllergies),
+            
+            _buildMedicalInfoBox('ESTADO GENERAL', cleanStatus.isNotEmpty ? cleanStatus : 'No especificado'),
+            if (cleanConditions.isNotEmpty && cleanConditions.toLowerCase() != 'ninguna')
+               _buildMedicalInfoBox('CONDICIONES', cleanConditions),
+            if (cleanAllergies.isNotEmpty && cleanAllergies.toLowerCase() != 'ninguna')
+               _buildMedicalInfoBox('ALERGIAS', cleanAllergies),
           ],
         ),
         actions: [
@@ -743,12 +651,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             child: ElevatedButton.icon(
               onPressed: () => Navigator.pop(context),
               icon: const Icon(Icons.check_circle_outline),
-              label: const Text('ENTENDIDO',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16)),
+              label: const Text('ENTENDIDO', style: TextStyle(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16)),
             ),
           )
         ],
@@ -760,22 +664,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: Colors.brown)),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.brown)),
         Container(
           width: double.infinity,
           margin: const EdgeInsets.only(top: 4, bottom: 12),
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.shade200)),
-          child: Text(value,
-              style:
-                  const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.red.shade200)),
+          child: Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
         )
       ],
     );
@@ -811,15 +706,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     try {
       final parts = time.split(':');
       final now = DateTime.now();
-      return DateTime(now.year, now.month, now.day, int.parse(parts[0]),
-          int.parse(parts[1]));
+      return DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
     } catch (e) {
       return DateTime.now();
     }
   }
 
-  Future<String?> _showReasonDialog(
-      String title, List<String> predefinedReasons) async {
+  Future<String?> _showReasonDialog(String title, List<String> predefinedReasons) async {
     String? selectedReason;
     final customReasonController = TextEditingController();
 
@@ -828,54 +721,39 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, stfSetState) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(title,
-              style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 ...predefinedReasons.map((reason) => RadioListTile<String>(
-                      title: Text(reason),
-                      value: reason,
-                      groupValue: selectedReason,
-                      onChanged: (val) =>
-                          stfSetState(() => selectedReason = val),
-                      activeColor: Theme.of(context).primaryColor,
-                    )),
+                  title: Text(reason),
+                  value: reason,
+                  groupValue: selectedReason,
+                  onChanged: (val) => stfSetState(() => selectedReason = val),
+                  activeColor: Theme.of(context).primaryColor,
+                )),
                 if (selectedReason == 'Otro (especificar)')
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: TextField(
                       controller: customReasonController,
                       autofocus: true,
-                      decoration: const InputDecoration(
-                          labelText: 'Especifica el motivo',
-                          border: OutlineInputBorder()),
+                      decoration: const InputDecoration(labelText: 'Especifica el motivo', border: OutlineInputBorder()),
                     ),
                   ),
               ],
             ),
           ),
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancelar')),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
             ElevatedButton(
-              onPressed: selectedReason == null
-                  ? null
-                  : () {
-                      final result = selectedReason == 'Otro (especificar)'
-                          ? customReasonController.text.trim()
-                          : selectedReason;
-                      if (selectedReason == 'Otro (especificar)' &&
-                          result!.isEmpty) {
-                        return;
-                      }
-                      Navigator.pop(context, result);
-                    },
+              onPressed: selectedReason == null ? null : () {
+                final result = selectedReason == 'Otro (especificar)' ? customReasonController.text.trim() : selectedReason;
+                if (selectedReason == 'Otro (especificar)' && result!.isEmpty) return;
+                Navigator.pop(context, result);
+              },
               child: const Text('Confirmar'),
             ),
           ],
@@ -885,68 +763,88 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   // --- NUEVA LÓGICA DE INCIDENCIA RÁPIDA ---
-  void _showQuickIncidenceModal(
-      String studentId, String studentName, String group) {
-    final theme = Theme.of(context);
-    showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: theme.scaffoldBackgroundColor,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(32)),
-              ),
-              height: MediaQuery.of(context).size.height * 0.7,
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        margin: const EdgeInsets.only(bottom: 20),
-                        decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(2)),
-                      ),
-                    ),
-                    Text('Reportar Incidencia: $studentName',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 18),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 4),
-                    Text('Grupo: $group',
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 14)),
-                    const SizedBox(height: 20),
-                    Expanded(
-                      child: GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 0.9,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                        ),
-                        itemCount: _incidenceTypes.length,
-                        itemBuilder: (context, index) {
-                          final type = _incidenceTypes[index];
-                          final icon = _incidenceIcons[type] ?? Icons.warning;
-                          return _quickIncidenceBtn(studentId, studentName,
-                              group, type, icon, theme.colorScheme.primary);
-                        },
-                      ),
-                    )
-                  ]),
-            ));
+  final List<String> _incidenceTypesFull = [ // Renamed for clarity vs local
+    'Uniforme Incompleto', 'Cabello/Corte no permitido', 'Uso de Celular sin autorización',
+    'Falta de Respeto a Autoridad', 'Daño a Mobiliario o Instalaciones', 'Salida del Plantel sin Pase',
+    'Retardo injustificado', 'Incumplimiento de Tareas/Material', 'Agresión Física o Verbal',
+    'Robo o Extorsión', 'Vandalismo o Grafiti', 'Consumo de Sustancias Prohibidas',
+    'Acoso Escolar (Bullying)', 'Falsificación de Firmas/Documentos', 'Interrupción de la Labor Docente',
+    'Lenguaje Obsceno o Inapropiado', 'Consumo de Alimentos en Aula', 'Desobediencia a Instrucciones',
+    'Copia en Examen o Plagio', 'Riña o Connatos de Violencia', 'Portación de Objetos Peligrosos',
+    'Inasistencia Injustificada (Saltarse clases)', 'Uso de Gorras o Lentes de Sol en Aula', 'Otro'
+  ];
+
+  final Map<String, IconData> _incidenceIconsFull = { // Renamed for clarity
+    'Uniforme Incompleto': Icons.checkroom, 'Cabello/Corte no permitido': Icons.face, 'Uso de Celular sin autorización': Icons.phonelink_ring,
+    'Falta de Respeto a Autoridad': Icons.sentiment_very_dissatisfied, 'Daño a Mobiliario o Instalaciones': Icons.chair, 'Salida del Plantel sin Pase': Icons.door_back_door, // Fixed typo
+    'Retardo injustificado': Icons.access_time, 'Incumplimiento de Tareas/Material': Icons.assignment_late, 'Agresión Física o Verbal': Icons.back_hand,
+    'Robo o Extorsión': Icons.security, 'Vandalismo o Grafiti': Icons.brush, 'Consumo de Sustancias Prohibidas': Icons.smoke_free,
+    'Acoso Escolar (Bullying)': Icons.groups_outlined, 'Falsificación de Firmas/Documentos': Icons.description, 'Interrupción de la Labor Docente': Icons.volume_up,
+    'Lenguaje Obsceno o Inapropiado': Icons.record_voice_over, 'Consumo de Alimentos en Aula': Icons.restaurant, 'Desobediencia a Instrucciones': Icons.gavel,
+    'Copia en Examen o Plagio': Icons.auto_fix_normal, 'Riña o Connatos de Violencia': Icons.sports_kabaddi, 'Portación de Objetos Peligrosos': Icons.priority_high,
+    'Inasistencia Injustificada (Saltarse clases)': Icons.event_busy, 'Uso de Gorras o Lentes de Sol en Aula': Icons.accessibility, 'Otro': Icons.more_horiz,
+  };
+
+  void _showQuickIncidenceModal(String studentId, String studentName, String group) {
+     final theme = Theme.of(context);
+     showModalBottomSheet(
+       context: context,
+       isScrollControlled: true,
+       backgroundColor: Colors.transparent,
+       builder: (context) => Container(
+             padding: const EdgeInsets.all(24),
+             decoration: BoxDecoration(
+               color: theme.scaffoldBackgroundColor,
+               borderRadius:
+                   const BorderRadius.vertical(top: Radius.circular(32)),
+             ),
+             height: MediaQuery.of(context).size.height * 0.7,
+             child: Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                   Center(
+                     child: Container(
+                       width: 40,
+                       height: 4,
+                       margin: const EdgeInsets.only(bottom: 20),
+                       decoration: BoxDecoration(
+                           color: Colors.grey.shade300,
+                           borderRadius: BorderRadius.circular(2)),
+                     ),
+                   ),
+                   Text('Reportar Incidencia: $studentName',
+                       style: const TextStyle(
+                           fontWeight: FontWeight.bold, fontSize: 18),
+                       maxLines: 1,
+                       overflow: TextOverflow.ellipsis),
+                   const SizedBox(height: 4),
+                   Text('Grupo: $group',
+                       style:
+                           const TextStyle(color: Colors.grey, fontSize: 14)),
+                   const SizedBox(height: 20),
+                   Expanded(
+                     child: GridView.builder(
+                       gridDelegate:
+                           const SliverGridDelegateWithFixedCrossAxisCount(
+                         crossAxisCount: 3,
+                         childAspectRatio: 0.9,
+                         mainAxisSpacing: 12,
+                         crossAxisSpacing: 12,
+                       ),
+                       itemCount: _incidenceTypesFull.length, // Use full list
+                       itemBuilder: (context, index) {
+                         final type = _incidenceTypesFull[index]; // Use full list
+                         final icon = _incidenceIconsFull[type] ?? Icons.warning; // Use full list
+                         return _quickIncidenceBtn(studentId, studentName,
+                             group, type, icon, theme.colorScheme.primary);
+                       },
+                     ),
+                   )
+                 ]),
+           ));
   }
 
-  Widget _quickIncidenceBtn(String sid, String sName, String grp, String type,
-      IconData icon, Color color) {
+  Widget _quickIncidenceBtn(String sid, String sName, String grp, String type, IconData icon, Color color) {
     return InkWell(
       onTap: () async {
         Navigator.pop(context); // Cerrar modal rápido
@@ -973,16 +871,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           children: [
             Icon(icon, color: color, size: 28),
             const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: Text(
-                type,
-                style: TextStyle(
-                    color: color, fontWeight: FontWeight.bold, fontSize: 10),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+            Text(
+              type,
+              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -990,11 +884,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  Future<void> _saveQuickIncidence(
-      String sid, String sName, String grp, String type) async {
+  Future<void> _saveQuickIncidence(String sid, String sName, String grp, String type) async {
     try {
-      final newRef =
-          FirebaseDatabase.instance.ref('planteles/$_campus/incidents').push();
+      final newRef = FirebaseDatabase.instance.ref('planteles/$_campus/incidents').push();
       final incidence = Incidence(
         id: newRef.key!,
         studentId: sid,
@@ -1009,25 +901,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       );
       // Guardar (Si no hay red, la persistencia de Firebase lo maneja, no necesitamos Hive manual crítico para esto ahora)
       await newRef.set(incidence.toFirebaseMap());
-      if (mounted) {
-        UiHelpers.showSnackBar(context, '⚠️ Incidencia "$type" registrada.');
-      }
+      if (mounted) UiHelpers.showSnackBar(context, '⚠️ Incidencia "$type" registrada.');
     } catch (e) {
-      if (mounted) {
-        UiHelpers.showSnackBar(context, 'Error al guardar reporte.',
-            isError: true);
-      }
+      if (mounted) UiHelpers.showSnackBar(context, 'Error al guardar reporte.', isError: true);
     }
   }
 
   // --- DASHBOARD WIDGETS ---
-
+  
   Widget _buildStatsDashboard(ThemeData theme) {
     int total = _todayAttendance.length;
-    int entradas =
-        _todayAttendance.where((r) => r.containsKey('entryTime')).length;
-    int salidas =
-        _todayAttendance.where((r) => r.containsKey('exitTime')).length;
+    int entradas = _todayAttendance.where((r) => r.containsKey('entryTime')).length;
+    int salidas = _todayAttendance.where((r) => r.containsKey('exitTime')).length;
     int tardes = _todayAttendance.where((r) => r['status'] == 'tarde').length;
 
     return Container(
@@ -1036,12 +921,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1049,8 +929,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           _statItem(total.toString(), 'Total', Colors.blue, Icons.list_alt),
           _statItem(entradas.toString(), 'Entradas', Colors.green, Icons.login),
           _statItem(salidas.toString(), 'Salidas', Colors.purple, Icons.logout),
-          _statItem(tardes.toString(), 'Tardes', Colors.orange,
-              Icons.access_time_filled),
+          _statItem(tardes.toString(), 'Tardes', Colors.orange, Icons.access_time_filled),
         ],
       ),
     );
@@ -1061,14 +940,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       children: [
         Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-              color: color.withOpacity(0.1), shape: BoxShape.circle),
+          decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
           child: Icon(icon, color: color, size: 18),
         ),
         const SizedBox(height: 4),
-        Text(value,
-            style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+        Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
         Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
       ],
     );
@@ -1085,370 +961,267 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showMassAttendanceDialog,
         icon: const Icon(Icons.groups_rounded),
-        label: Text(
-            'Masiva ${_offlineRecordsCount > 0 ? "($_offlineRecordsCount)" : ""}'),
+        label: Text('Masiva ${_offlineRecordsCount > 0 ? "($_offlineRecordsCount)" : ""}'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: Colors.white,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // 1. STATS DASHBOARD
-                _buildStatsDashboard(theme),
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
+            children: [
+              // 1. STATS DASHBOARD
+              _buildStatsDashboard(theme),
 
-                // 2. SCANNER / INPUT
-                Expanded(
-                  flex: 4,
-                  child: Container(
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                          color: _scannerBorderColor,
-                          width: _scannerBorderColor == Colors.transparent
-                              ? 0
-                              : 6),
-                      boxShadow: const [
-                        BoxShadow(color: Colors.black26, blurRadius: 10)
+              // 2. SCANNER / INPUT
+              Expanded(
+                flex: 4,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: _scannerBorderColor, 
+                      width: _scannerBorderColor == Colors.transparent ? 0 : 6
+                    ),
+                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(_scannerBorderColor == Colors.transparent ? 24 : 18),
+                    child: Stack(
+                      children: [
+                        if (!_isManualInputMode)
+                          MobileScanner(
+                            controller: _scannerController,
+                            onDetect: _onDetect,
+                          )
+                        else
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.keyboard_rounded, size: 64, color: theme.colorScheme.primary.withOpacity(0.5)),
+                                const SizedBox(height: 16),
+                                const Text('Modo Manual Activado', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                              ],
+                            ),
+                          ),
+                        
+                        // Botones Flotantes (Flash y Cámara)
+                        if (!_isManualInputMode)
+                          Positioned(
+                            bottom: 16, left: 0, right: 0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                IconButton.filled(
+                                  onPressed: () {
+                                    _scannerController.toggleTorch();
+                                    setState(() => _isFlashOn = !_isFlashOn);
+                                  },
+                                  icon: Icon(_isFlashOn ? Icons.flash_on : Icons.flash_off),
+                                  style: IconButton.styleFrom(backgroundColor: Colors.white24, foregroundColor: Colors.white),
+                                ),
+                                const SizedBox(width: 24),
+                                IconButton.filled(
+                                  onPressed: () {
+                                    _scannerController.switchCamera();
+                                    setState(() => _cameraFacing = (_cameraFacing == CameraFacing.back ? CameraFacing.front : CameraFacing.back));
+                                  },
+                                  icon: const Icon(Icons.cameraswitch_rounded),
+                                  style: IconButton.styleFrom(backgroundColor: Colors.white24, foregroundColor: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ),
+                        
+                        // Badge de Ciclo
+                        Positioned(
+                          top: 16, left: 16,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.calendar_today_rounded, color: Colors.white, size: 12),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Ciclo: $_currentSchoolCycle',
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Botón Switch Modo
+                        Positioned(
+                          top: 16, right: 16,
+                          child: IconButton.filled(
+                            onPressed: () => setState(() => _isManualInputMode = !_isManualInputMode),
+                            icon: Icon(_isManualInputMode ? Icons.qr_code_scanner_rounded : Icons.keyboard_rounded),
+                            style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black87),
+                          ),
+                        ),
+
+                         if (!_isProcessing && _scannerBorderColor == Colors.transparent)
+                            const Center(child: CircularProgressIndicator(color: Colors.white)),
                       ],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(
-                          _scannerBorderColor == Colors.transparent ? 24 : 18),
-                      child: Stack(
-                        children: [
-                          if (!_isManualInputMode)
-                            MobileScanner(
-                              controller: _scannerController,
-                              onDetect: _onDetect,
-                            )
-                          else
-                            Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.keyboard_rounded,
-                                      size: 64,
-                                      color: theme.colorScheme.primary
-                                          .withOpacity(0.5)),
-                                  const SizedBox(height: 16),
-                                  const Text('Modo Manual Activado',
-                                      style: TextStyle(
-                                          color: Colors.white70, fontSize: 16)),
-                                ],
-                              ),
-                            ),
-
-                          // Botones Flotantes (Flash y Cámara)
-                          if (!_isManualInputMode)
-                            Positioned(
-                              bottom: 16,
-                              left: 0,
-                              right: 0,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  IconButton.filled(
-                                    onPressed: () {
-                                      _scannerController.toggleTorch();
-                                      setState(() => _isFlashOn = !_isFlashOn);
-                                    },
-                                    icon: Icon(_isFlashOn
-                                        ? Icons.flash_on
-                                        : Icons.flash_off),
-                                    style: IconButton.styleFrom(
-                                        backgroundColor: Colors.white24,
-                                        foregroundColor: Colors.white),
-                                  ),
-                                  const SizedBox(width: 24),
-                                  IconButton.filled(
-                                    onPressed: () {
-                                      _scannerController.switchCamera();
-                                      setState(() => _cameraFacing =
-                                          (_cameraFacing == CameraFacing.back
-                                              ? CameraFacing.front
-                                              : CameraFacing.back));
-                                    },
-                                    icon:
-                                        const Icon(Icons.cameraswitch_rounded),
-                                    style: IconButton.styleFrom(
-                                        backgroundColor: Colors.white24,
-                                        foregroundColor: Colors.white),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                          // Badge de Ciclo
-                          Positioned(
-                            top: 16,
-                            left: 16,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.calendar_today_rounded,
-                                      color: Colors.white, size: 12),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Ciclo: $_currentSchoolCycle',
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 11),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          // Botón Switch Modo
-                          Positioned(
-                            top: 16,
-                            right: 16,
-                            child: IconButton.filled(
-                              onPressed: () => setState(() =>
-                                  _isManualInputMode = !_isManualInputMode),
-                              icon: Icon(_isManualInputMode
-                                  ? Icons.qr_code_scanner_rounded
-                                  : Icons.keyboard_rounded),
-                              style: IconButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.black87),
-                            ),
-                          ),
-
-                          if (!_isProcessing &&
-                              _scannerBorderColor == Colors.transparent)
-                            const Center(
-                                child: CircularProgressIndicator(
-                                    color: Colors.white)),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
+              ),
 
-                // 3. MANUAL ENTRY (Buscador Predictivo Mejorado)
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-                  child: Autocomplete<Student>(
-                    displayStringForOption: (Student option) => option.fullName,
-                    optionsBuilder: (TextEditingValue textEditingValue) {
-                      if (textEditingValue.text.isEmpty) {
-                        return const Iterable<Student>.empty();
-                      }
-                      return _studentsMap.values.where((Student option) {
-                        final input = textEditingValue.text.toLowerCase();
-                        return option.fullName.toLowerCase().contains(input) ||
-                            option.studentId.contains(input);
-                      });
-                    },
-                    onSelected: (Student selection) {
-                      _processStudentId(selection.studentId);
-                    },
-                    // VISTA PERSONALIZADA DE RESULTADOS
-                    optionsViewBuilder: (context, onSelected, options) {
-                      return Align(
-                        alignment: Alignment.topLeft,
-                        child: Material(
-                          elevation: 8.0,
-                          borderRadius: BorderRadius.circular(16),
-                          color: theme.cardColor,
-                          child: Container(
-                            width: MediaQuery.of(context).size.width - 32,
-                            constraints: const BoxConstraints(maxHeight: 250),
-                            child: ListView.builder(
-                              padding: EdgeInsets.zero,
-                              itemCount: options.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                final Student option = options.elementAt(index);
-                                return ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor:
-                                        theme.colorScheme.primaryContainer,
-                                    child: Text(
-                                      option.fullName.isNotEmpty
-                                          ? option.fullName[0]
-                                          : '?',
-                                      style: TextStyle(
-                                          color: theme
-                                              .colorScheme.onPrimaryContainer,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  title: Text(option.fullName,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  subtitle: Text(
-                                      'Matrícula: ${option.studentId} • Grupo: ${option.group}'),
-                                  onTap: () => onSelected(option),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    fieldViewBuilder: (context, textEditingController,
-                        focusNode, onFieldSubmitted) {
-                      return TextField(
-                        controller: textEditingController,
-                        focusNode: focusNode,
-                        decoration: InputDecoration(
-                          hintText: 'Buscar por Nombre o Matrícula...',
-                          prefixIcon: const Icon(Icons.search_rounded),
-                          filled: true,
-                          fillColor: isDark ? Colors.white10 : Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 14),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                // 4. HISTORIAL
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                  child: Row(
-                    children: [
-                      Text('Actividad Reciente',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold, color: Colors.grey)),
-                      const Spacer(),
-                    ],
-                  ),
-                ),
-
-                Expanded(
-                  flex: 3,
-                  child: _todayAttendance.isEmpty
-                      ? Center(
-                          child: Text('Sin registros hoy',
-                              style: TextStyle(color: theme.hintColor)))
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _todayAttendance.length,
-                          itemBuilder: (context, index) {
-                            final record = _todayAttendance[index];
-                            final studentId = record['studentId'] as String;
-                            final studentName =
-                                record['studentFullName'] as String;
-                            final group = record['group'] as String;
-
-                            return Card(
-                              elevation: 0,
-                              margin: const EdgeInsets.only(bottom: 8),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                      color: Colors.grey.withOpacity(0.1))),
-                              child: ListTile(
-                                dense: true,
+              // 3. MANUAL ENTRY (Buscador Predictivo Mejorado)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                child: Autocomplete<Student>(
+                  displayStringForOption: (Student option) => option.fullName,
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty) {
+                      return const Iterable<Student>.empty();
+                    }
+                    return _studentsMap.values.where((Student option) {
+                      final input = textEditingValue.text.toLowerCase();
+                      return option.fullName.toLowerCase().contains(input) ||
+                             option.studentId.contains(input);
+                    });
+                  },
+                  onSelected: (Student selection) {
+                    _processStudentId(selection.studentId);
+                  },
+                  // VISTA PERSONALIZADA DE RESULTADOS
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 8.0,
+                        borderRadius: BorderRadius.circular(16),
+                        color: theme.cardColor,
+                        child: Container(
+                          width: MediaQuery.of(context).size.width - 32,
+                          constraints: const BoxConstraints(maxHeight: 250),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: options.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              final Student option = options.elementAt(index);
+                              return ListTile(
                                 leading: CircleAvatar(
-                                  radius: 18,
-                                  backgroundColor: theme.colorScheme.primary
-                                      .withOpacity(0.1),
+                                  backgroundColor: theme.colorScheme.primaryContainer,
                                   child: Text(
-                                      studentName.isNotEmpty
-                                          ? studentName[0]
-                                          : '?',
-                                      style: TextStyle(
-                                          color: theme.colorScheme.primary,
-                                          fontSize: 14)),
+                                    option.fullName.isNotEmpty ? option.fullName[0] : '?',
+                                    style: TextStyle(color: theme.colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold),
+                                  ),
                                 ),
-                                title: Text(studentName,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis),
-                                subtitle: Text('$studentId • $group',
-                                    style: const TextStyle(fontSize: 11)),
-                                // TRAILING ACTIONS: Hora + Botón de Reporte
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            if (record['status'] == 'tarde')
-                                              const Icon(
-                                                  Icons.access_time_filled,
-                                                  color: Colors.orange,
-                                                  size: 14),
-                                            if (record['entryTime'] !=
-                                                null) ...[
-                                              const SizedBox(width: 4),
-                                              Text(record['entryTime'],
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 12,
-                                                      color: Colors.green))
-                                            ],
-                                            if (record['exitTime'] != null) ...[
-                                              const Text(' - ',
-                                                  style:
-                                                      TextStyle(fontSize: 10)),
-                                              Text(record['exitTime'],
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 12,
-                                                      color: Colors.purple))
-                                            ],
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(width: 8),
-                                    // BOTÓN DE REPORTE RÁPIDO
-                                    IconButton(
-                                      icon: const Icon(
-                                          Icons.warning_amber_rounded,
-                                          color: Colors.redAccent),
-                                      onPressed: () => _showQuickIncidenceModal(
-                                          studentId, studentName, group),
-                                      tooltip: 'Reportar Incidencia',
-                                    )
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
+                                title: Text(option.fullName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: Text('Matrícula: ${option.studentId} • Grupo: ${option.group}'),
+                                onTap: () => onSelected(option),
+                              );
+                            },
+                          ),
                         ),
+                      ),
+                    );
+                  },
+                  fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                    return TextField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por Nombre o Matrícula...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        filled: true,
+                        fillColor: isDark ? Colors.white10 : Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+
+              // 4. HISTORIAL
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                child: Row(
+                  children: [
+                    Text('Actividad Reciente', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey)),
+                    const Spacer(),
+                  ],
+                ),
+              ),
+
+              Expanded(
+                flex: 3,
+                child: _todayAttendance.isEmpty
+                  ? Center(child: Text('Sin registros hoy', style: TextStyle(color: theme.hintColor)))
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _todayAttendance.length,
+                      itemBuilder: (context, index) {
+                        final record = _todayAttendance[index];
+                        final studentId = record['studentId'] as String;
+                        final studentName = record['studentFullName'] as String;
+                        final group = record['group'] as String;
+
+                        return Card(
+                          elevation: 0,
+                          margin: const EdgeInsets.only(bottom: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.withOpacity(0.1))),
+                          child: ListTile(
+                            dense: true,
+                            leading: CircleAvatar(
+                              radius: 18,
+                              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                              child: Text(studentName.isNotEmpty ? studentName[0] : '?', style: TextStyle(color: theme.colorScheme.primary, fontSize: 14)),
+                            ),
+                            title: Text(studentName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            subtitle: Text('$studentId • $group', style: const TextStyle(fontSize: 11)),
+                            // TRAILING ACTIONS: Hora + Botón de Reporte
+                            trailing: Row(
+                               mainAxisSize: MainAxisSize.min,
+                               children: [
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                           if (record['status'] == 'tarde') const Icon(Icons.access_time_filled, color: Colors.orange, size: 14),
+                                           if (record['entryTime'] != null) ...[const SizedBox(width: 4), Text(record['entryTime'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.green))],
+                                           if (record['exitTime'] != null) ...[const Text(' - ', style: TextStyle(fontSize: 10)), Text(record['exitTime'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.purple))],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 8),
+                                  // BOTÓN DE REPORTE RÁPIDO
+                                  IconButton(
+                                    icon: const Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+                                    onPressed: () => _showQuickIncidenceModal(studentId, studentName, group),
+                                    tooltip: 'Reportar Incidencia',
+                                  )
+                               ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+              ),
+            ],
+          ),
     );
   }
 
   void _showMassAttendanceDialog() {
     // Validar día antes de abrir
-    if (!_isDayValidForAttendance(
-        (msg) => UiHelpers.showSnackBar(context, msg, isError: true))) {
+    if (!_isDayValidForAttendance((msg) => UiHelpers.showSnackBar(context, msg, isError: true))) {
       return;
     }
 
@@ -1472,28 +1245,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                    'Esta acción registrará la salida de los alumnos que ingresaron hoy y aún no han salido.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const Text('Esta acción registrará la salida de los alumnos que ingresaron hoy y aún no han salido.', style: TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(height: 20),
-                const Text('Seleccionar Alcance:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Seleccionar Alcance:', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(
-                        child: ChoiceChip(
-                            label: const Text('Todo el Plantel'),
-                            selected: scope == 'all',
-                            onSelected: (v) =>
-                                stfSetState(() => scope = 'all'))),
+                    Expanded(child: ChoiceChip(label: const Text('Todo el Plantel'), selected: scope == 'all', onSelected: (v) => stfSetState(() => scope = 'all'))),
                     const SizedBox(width: 8),
-                    Expanded(
-                        child: ChoiceChip(
-                            label: const Text('Por Grupo'),
-                            selected: scope == 'group',
-                            onSelected: (v) =>
-                                stfSetState(() => scope = 'group'))),
+                    Expanded(child: ChoiceChip(label: const Text('Por Grupo'), selected: scope == 'group', onSelected: (v) => stfSetState(() => scope = 'group'))),
                   ],
                 ),
                 if (scope == 'group') ...[
@@ -1503,23 +1263,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         'No hay grupos registrados en este ciclo ($_currentSchoolCycle).',
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                            fontSize: 12),
+                        style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
                         textAlign: TextAlign.center,
                       ),
                     )
                   else
                     DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(
-                          labelText: 'Selecciona Grupo',
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                          prefixIcon: Icon(Icons.groups)),
+                      decoration: const InputDecoration(labelText: 'Selecciona Grupo', border: OutlineInputBorder(), isDense: true, prefixIcon: Icon(Icons.groups)),
                       value: groupId,
                       items: _groups
-                          .map((group) => DropdownMenuItem(
-                              value: group.name, child: Text(group.name)))
+                          .map((group) => DropdownMenuItem(value: group.name, child: Text(group.name)))
                           .toList(),
                       onChanged: (val) => stfSetState(() => groupId = val),
                     ),
@@ -1527,20 +1280,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               ],
             ),
             actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancelar')),
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple,
-                    foregroundColor: Colors.white),
-                onPressed:
-                    (scope == null || (scope == 'group' && groupId == null))
-                        ? null
-                        : () {
-                            Navigator.pop(context);
-                            _performMassiveAttendance(type, scope!, groupId);
-                          },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.purple, foregroundColor: Colors.white),
+                onPressed: (scope == null || (scope == 'group' && groupId == null)) ? null : () {
+                  Navigator.pop(context);
+                  _performMassiveAttendance(type, scope!, groupId);
+                },
                 child: const Text('Confirmar Salida'),
               ),
             ],
@@ -1550,73 +1296,69 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  Future<void> _performMassiveAttendance(
-      String type, String scope, String? gId) async {
+  Future<void> _performMassiveAttendance(String type, String scope, String? gId) async {
     final students = _studentsMap.values.where((s) {
-      if (!s.isActive) return false;
-      if (scope == 'group') return s.group == gId;
-      return true;
+       if (!s.isActive) return false;
+       if (scope == 'group') return s.group == gId;
+       return true;
     }).toList();
 
     if (students.isEmpty) {
-      UiHelpers.showSnackBar(context, 'No hay alumnos para registrar.',
-          isError: true);
+      UiHelpers.showSnackBar(context, 'No hay alumnos para registrar.', isError: true);
       return;
     }
 
     // Preguntar por motivo general
     final String? reason = await _showReasonDialog(
-        'Motivo General para Registro Masivo ($type)',
-        type == 'entry' ? _tardyReasons : _earlyExitReasons);
-
+      'Motivo General para Registro Masivo ($type)', 
+      type == 'entry' ? _tardyReasons : _earlyExitReasons
+    );
+    
     if (reason == null) return;
 
     setState(() => _isLoading = true);
-    final currentTime = DateFormat('HH:mm').format(DateTime.now());
-
+    final DateTime now = DateTime.now(); // Declare now here
+    final currentTime = DateFormat('HH:mm').format(now);
+    
     int successCount = 0;
-
+    
     try {
       final Map<String, dynamic> updates = {};
       for (var s in students) {
         final path = s.studentId;
-        final existing = _todayAttendance.firstWhere(
-            (rec) => rec['studentId'] == s.studentId,
-            orElse: () => <String, dynamic>{});
-
+        final existing = _todayAttendance.firstWhere((rec) => rec['studentId'] == s.studentId, orElse: () => <String, dynamic>{});
+        
         final Map<String, dynamic> record = Map<String, dynamic>.from(existing);
-
+        
         // --- LOGICA AVANZADA DE FILTRADO ---
         bool shouldUpdate = false;
 
         if (type == 'entry') {
           // Solo registrar si NO tiene entrada previa
           if (!record.containsKey('entryTime')) {
-            record['entryTime'] = currentTime;
-            record['status'] = 'presente_masivo';
-            record['reasonTardy'] = reason;
-            shouldUpdate = true;
+             record['entryTime'] = currentTime;
+             record['status'] = 'presente_masivo';
+             record['reasonTardy'] = reason;
+             shouldUpdate = true;
           }
-        } else {
-          // type == 'exit'
+        } else { // type == 'exit'
           // Solo registrar si TIENE entrada Y NO TIENE salida
-          if (record.containsKey('entryTime') &&
-              !record.containsKey('exitTime')) {
-            record['exitTime'] = currentTime;
-            record['reasonEarlyExit'] = reason;
-            shouldUpdate = true;
+          if (record.containsKey('entryTime') && !record.containsKey('exitTime')) {
+             record['exitTime'] = currentTime;
+             record['reasonEarlyExit'] = reason;
+             shouldUpdate = true;
           }
         }
 
         if (shouldUpdate) {
           // Asegurar campos base si es un registro nuevo (solo relevante para entry)
           if (!record.containsKey('studentId')) {
-            record['studentFullName'] = s.fullName;
-            record['group'] = s.group;
-            record['campusId'] = _campus;
-            record['schoolCycle'] = _currentSchoolCycle;
-            record['date'] = _todayDate;
-            record['studentId'] = s.studentId;
+             record['studentFullName'] = s.fullName;
+             record['group'] = s.group;
+             record['campusId'] = _campus;
+             record['schoolCycle'] = _currentSchoolCycle;
+             record['date'] = _todayDate;
+             record['studentId'] = s.studentId;
           }
           updates[path] = record;
           successCount++;
@@ -1625,16 +1367,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
       if (updates.isNotEmpty) {
         await _attendanceRef!.update(updates);
-        UiHelpers.showSnackBar(context,
-            'Asistencia masiva de $type aplicada a $successCount alumnos (se omitieron ${students.length - successCount}).');
+        UiHelpers.showSnackBar(context, 'Asistencia masiva de $type aplicada a $successCount alumnos (se omitieron ${students.length - successCount}).');
       } else {
-        UiHelpers.showSnackBar(
-            context, 'Ningún alumno requería actualización de $type.',
-            isError: true);
+        UiHelpers.showSnackBar(context, 'Ningún alumno requería actualización de $type.', isError: true);
       }
     } catch (e) {
-      UiHelpers.showSnackBar(context, 'Error en registro masivo.',
-          isError: true);
+      UiHelpers.showSnackBar(context, 'Error en registro masivo.', isError: true);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -1647,8 +1385,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     for (var r in unsynced) {
       try {
-        final ref = FirebaseDatabase.instance.ref(
-            'planteles/${r.campusId}/attendance/${r.schoolCycle}/${r.date}/${r.studentId}');
+        final ref = FirebaseDatabase.instance.ref('planteles/${r.campusId}/attendance/${r.schoolCycle}/${r.date}/${r.studentId}');
         await ref.set(r.toFirebaseMap());
         await box.delete(r.uniqueKey);
       } catch (e) {
@@ -1659,9 +1396,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   Future<void> _loadOfflineAttendanceCount() async {
-    final count = _hiveService.attendanceRecordsBox.values
-        .where((r) => !r.isSynced)
-        .length;
+    final count = _hiveService.attendanceRecordsBox.values.where((r) => !r.isSynced).length;
     if (mounted) setState(() => _offlineRecordsCount = count);
   }
 }

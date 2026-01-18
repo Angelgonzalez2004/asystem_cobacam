@@ -19,6 +19,8 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/ai_assistant_screen.d
 import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_faq_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/statistics_screen.dart'; // Importado
 import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
+import 'package:asystem_cobacam/screens/dashboards/prefect/group_schedule_viewer_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/prefect/teacher_schedule_viewer_screen.dart';
 
 class PrefectDashboardScreen extends StatefulWidget {
   const PrefectDashboardScreen({super.key});
@@ -52,7 +54,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       PrefectHomeScreen(campus: _userCampus, onNavigate: _onNavigate),
       const ProfileScreen(isEmbedded: true),
       const SettingsScreen(isEmbedded: true),
-      const GroupManagementScreen(),
+      GroupManagementScreen(onNavigate: _onNavigate),
       const SchoolCycleManagementScreen(),
       const StudentManagementScreen(),
       const GroupScheduleManagementScreen(),
@@ -65,6 +67,8 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       const StatisticsScreen(), // Opción 13
       const AIAssistantScreen(), // Opción 14
       const PrefectFaqScreen(), // Opción 15
+      const GroupScheduleViewerScreen(), // Opción 16
+      const TeacherScheduleViewerScreen(), // Opción 17
     ];
 
     _screenTitles = [
@@ -84,6 +88,8 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       'Estadísticas y Métricas',
       'Asistente IA',
       'Manual Operativo (FAQ)',
+      'Visor de Horarios (Grupo)',
+      'Visor de Horarios (Maestro)',
     ];
   }
 
@@ -192,6 +198,12 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         break;
       case 'faq':
         index = 15;
+        break;
+      case 'visor_grupo':
+        index = 16;
+        break;
+      case 'visor_maestro':
+        index = 17;
         break;
       default:
         index = 0;

@@ -1,7 +1,7 @@
 import 'dart:io' show Platform, File;
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:asystem_cobacam/utils/web_downloader.dart';
+
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:asystem_cobacam/utils/credential_pdf_generator.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
@@ -21,6 +21,7 @@ import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:provider/provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:archive/archive.dart';
+import 'package:asystem_cobacam/utils/web_downloader.dart';
 
 class CredentialGeneratorScreen extends StatefulWidget {
   const CredentialGeneratorScreen({super.key});
@@ -298,7 +299,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
         final fileName = 'Credenciales_$_selectedCycle$groupSuffix.pdf';
 
         if (kIsWeb) {
-          await downloadImageWeb(pdfBytes, fileName);
+          await WebDownloader.downloadFile(pdfBytes, fileName, 'application/pdf');
         } else {
           final dir = await getApplicationDocumentsDirectory();
           final file = File('${dir.path}/$fileName');
@@ -315,7 +316,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
       if (generatedImages.length == 1) {
         final entry = generatedImages.entries.first;
         if (kIsWeb) {
-          await downloadImageWeb(entry.value, entry.key);
+          await WebDownloader.downloadFile(entry.value, entry.key, 'image/${_exportFormat.toLowerCase()}');
         } else {
           await Gal.putImageBytes(entry.value, name: entry.key);
         }
@@ -334,7 +335,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
           final zipName = 'Credenciales_$_selectedCycle$groupSuffix.zip';
 
           if (kIsWeb) {
-            await downloadImageWeb(Uint8List.fromList(zipBytes), zipName);
+            await WebDownloader.downloadFile(Uint8List.fromList(zipBytes), zipName, 'application/zip');
           } else {
             final dir = await getApplicationDocumentsDirectory();
             final file = File('${dir.path}/$zipName');
@@ -383,7 +384,7 @@ class _CredentialGeneratorScreenState extends State<CredentialGeneratorScreen> {
         '${student.studentId}_${student.fullName.replaceAll(" ", "_")}$extension';
 
     if (kIsWeb) {
-      await downloadImageWeb(imageBytes, fileName);
+      await WebDownloader.downloadFile(imageBytes, fileName, 'image/${_exportFormat.toLowerCase()}');
     } else {
       try {
         await Gal.putImageBytes(imageBytes, name: fileName);

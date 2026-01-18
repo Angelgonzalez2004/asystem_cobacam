@@ -27,8 +27,9 @@ Un vistazo a las capacidades que hacen de Asystem una herramienta indispensable.
 *   **Protocolo de Seguridad:** Al escanear la credencial de un alumno con una condición médica registrada, el sistema emite una alerta visual y vibratoria inmediata para el prefecto, mostrando la información relevante para una posible intervención.
 
 ### 🛠️ Gestión y Operaciones
-*   **Pase de Lista con QR:** Registro de entradas y salidas mediante el escaneo de credenciales con códigos QR o Code128.
+*   **Pase de Lista con QR:** Registro de entradas y salidas mediante el escaneo de credenciales con códigos QR o Code128, incluyendo la gestión de retardos y salidas anticipadas con motivos.
 *   **Registro Manual y Masivo:** Opciones para registrar asistencia de forma manual con un buscador predictivo o aplicar registros masivos a grupos completos.
+*   **Visualización y Exportación de Horarios:** Los prefectos pueden visualizar horarios detallados de grupos y profesores, con la opción de exportarlos como imágenes o documentos PDF.
 *   **Generación de Reportes:** Exportación de listas de asistencia e incidencias a formato Excel.
 *   **Generación de Credenciales:** Creación de credenciales en formato PDF listas para imprimir.
 *   **Gestión de Incidencias:** Módulo completo para reportar y dar seguimiento a las incidencias de los alumnos.
@@ -50,6 +51,10 @@ El proyecto está construido con un enfoque moderno, priorizando el rendimiento,
 *   **Gestión de Estado:** [Provider](https://pub.dev/packages/provider) para un manejo de estado simple y reactivo.
 *   **Inteligencia Artificial:** [Google AI SDK (Gemini)](https://pub.dev/packages/google_generative_ai) para las funcionalidades del Asistente IA.
 *   **Seguridad Local:** [local_auth](https://pub.dev/packages/local_auth) y [flutter_secure_storage](https://pub.dev/packages/flutter_secure_storage) para el bloqueo con PIN/Biometría.
+*   **Funcionalidades Adicionales:**
+    *   `dropdown_search`: Para selectores con búsqueda en las pantallas de visualización de horarios.
+    *   `screenshot`: Para la captura de widgets y exportación a imagen.
+    *   `pdf`: Para la generación de documentos PDF.
 
 ---
 
@@ -81,7 +86,7 @@ Para que el proyecto se conecte a Firebase, necesitas los archivos de configurac
 
 *   **Android:** Coloca tu archivo `google-services.json` en la carpeta `android/app/`.
 *   **iOS:** Abre el proyecto de iOS en Xcode y añade tu archivo `GoogleService-Info.plist` a la carpeta `Runner`.
-*   **Web:** La configuración de Firebase para la web ya está integrada en el código y se inicializa en `main.dart`. Asegúrate de que las credenciales en `firebase_options.dart` sean las correctas.
+*   **Web:** La configuración de Firebase para la web ya está integrada en el código y se inicializa en `main.dart` utilizando `firebase_options.dart`.
 
 ### **4. Ejecutar la Aplicación**
 
