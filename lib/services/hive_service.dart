@@ -9,8 +9,10 @@ import 'package:asystem_cobacam/models/group_schedule_model.dart';
 import 'package:asystem_cobacam/models/non_attendance_day_model.dart';
 import 'package:asystem_cobacam/models/school_cycle_model.dart';
 import 'package:asystem_cobacam/models/attendance_record_model.dart';
+import 'package:asystem_cobacam/models/teacher_model.dart';
 
 class HiveService {
+  static const String _teachersBox = 'teachersBox';
   static const String _studentsBox = 'studentsBox';
   static const String _groupsBox = 'groupsBox';
   static const String _groupSchedulesBox = 'groupSchedulesBox';
@@ -30,6 +32,7 @@ class HiveService {
     }
 
     // Registrar todos los adaptadores generados
+    Hive.registerAdapter(TeacherAdapter());
     Hive.registerAdapter(StudentAdapter());
     Hive.registerAdapter(GroupAdapter());
     Hive.registerAdapter(GroupScheduleAdapter());
@@ -61,6 +64,10 @@ class HiveService {
     debugPrint('Hive: Abriendo AttendanceRecordsBox...');
     await Hive.openBox<AttendanceRecord>(_attendanceRecordsBox);
     debugPrint('Hive: AttendanceRecordsBox abierta.');
+
+    debugPrint('Hive: Abriendo TeachersBox...');
+    await Hive.openBox<Teacher>(_teachersBox);
+    debugPrint('Hive: TeachersBox abierta.');
   }
 
   // Métodos de utilidad para acceder a las cajas
@@ -74,6 +81,7 @@ class HiveService {
       Hive.box<SchoolCycle>(_schoolCyclesBox);
   Box<AttendanceRecord> get attendanceRecordsBox =>
       Hive.box<AttendanceRecord>(_attendanceRecordsBox);
+  Box<Teacher> get teachersBox => Hive.box<Teacher>(_teachersBox);
 
   // Limpiar todas las cajas (útil para cerrar sesión o resetear)
   Future<void> clearAllBoxes() async {
@@ -83,6 +91,7 @@ class HiveService {
     await nonAttendanceDaysBox.clear();
     await schoolCyclesBox.clear();
     await attendanceRecordsBox.clear();
+    await teachersBox.clear();
   }
 
   // Cerrar todas las cajas

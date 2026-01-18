@@ -143,7 +143,7 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Visor de Horario por Grupo')),
+      appBar: AppBar(),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),

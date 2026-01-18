@@ -167,7 +167,7 @@ class _TeacherScheduleViewerScreenState extends State<TeacherScheduleViewerScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Visor de Horario por Maestro')),
+      appBar: AppBar(),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
