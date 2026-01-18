@@ -33,6 +33,11 @@ El sistema está diseñado con una arquitectura de roles específica para cada t
 ### 🚑 Sistema de Alerta Médica Crítica
 *   **Protocolo de Seguridad:** Al escanear la credencial de un alumno con una condición médica registrada, el sistema emite una alerta visual y vibratoria inmediata para el prefecto, mostrando la información relevante para una posible intervención.
 
+### ✨ Gestión Académica Avanzada (Prefectura)
+*   **Gestión de Grupos Dinámica:** Creación y edición de grupos directamente desde la plataforma, con asignación a ciclos escolares específicos. La interfaz permite una gestión rápida y centralizada de todos los grupos del plantel.
+*   **Constructor de Horarios Interactivo:** Una interfaz visual para construir y modificar los horarios de cada grupo. Permite asignar materias y profesores a bloques de horas específicos para cada día de la semana. Los cambios se guardan en tiempo real en la base de datos de Firebase.
+*   **Diálogos de Edición Mejorados:** Los cuadros de diálogo para la edición de horarios y la gestión de grupos han sido optimizados para una experiencia de usuario más fluida e intuitiva, incluyendo la adición de iconos de cierre rápido y una disposición de elementos mejorada.
+
 ### 🛠️ Gestión y Operaciones
 *   **Pase de Lista con QR:** Registro de entradas y salidas mediante el escaneo de credenciales con códigos QR o Code128, incluyendo la gestión de retardos y salidas anticipadas con motivos.
 *   **Registro Manual y Masivo:** Opciones para registrar asistencia de forma manual con un buscador predictivo o aplicar registros masivos a grupos completos.

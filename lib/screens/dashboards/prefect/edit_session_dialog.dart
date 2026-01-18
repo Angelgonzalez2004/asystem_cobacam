@@ -1,6 +1,7 @@
 import 'package:asystem_cobacam/models/class_session_model.dart';
 import 'package:asystem_cobacam/models/subject_model.dart';
 import 'package:asystem_cobacam/models/teacher_model.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 
 class EditSessionDialog extends StatefulWidget {
@@ -53,58 +54,80 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return AlertDialog(
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Editar Bloque Horario'),
-          Text(
-            '${widget.session.startTime} - ${widget.session.endTime}',
-            style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Editar Bloque Horario'),
+              Text(
+                '${widget.session.startTime} - ${widget.session.endTime}',
+                style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey),
+              ),
+            ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(context).pop(),
           ),
         ],
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          DropdownButtonFormField<Subject>(
-            value: _selectedSubject,
-            items: _filteredSubjects.map((Subject subject) {
-              return DropdownMenuItem<Subject>(
-                value: subject,
-                child: Text(subject.name),
-              );
-            }).toList(),
+          DropdownSearch<Subject>(
+            selectedItem: _selectedSubject,
+            items: _filteredSubjects,
+            itemAsString: (Subject? s) => s?.name ?? 'Sin materia',
             onChanged: (Subject? newValue) {
               setState(() {
                 _selectedSubject = newValue;
               });
             },
-            decoration: const InputDecoration(
-              labelText: 'Materia',
-              border: OutlineInputBorder(),
+            dropdownDecoratorProps: const DropDownDecoratorProps(
+              dropdownSearchDecoration: InputDecoration(
+                labelText: 'Materia',
+                border: OutlineInputBorder(),
+              ),
             ),
-            isExpanded: true,
+            popupProps: const PopupProps.menu(
+              showSearchBox: true,
+              searchFieldProps: TextFieldProps(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  hintText: "Buscar materia...",
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 16),
-          DropdownButtonFormField<Teacher>(
-            value: _selectedTeacher,
-            hint: const Text('Sin asignar'),
-            items: widget.availableTeachers.map((Teacher teacher) {
-              return DropdownMenuItem<Teacher>(
-                value: teacher,
-                child: Text(teacher.name),
-              );
-            }).toList(),
+          DropdownSearch<Teacher>(
+            selectedItem: _selectedTeacher,
+            items: widget.availableTeachers,
+            itemAsString: (Teacher? t) => t?.name ?? 'Sin asignar',
             onChanged: (Teacher? newValue) {
               setState(() {
                 _selectedTeacher = newValue;
               });
             },
-            decoration: const InputDecoration(
-              labelText: 'Maestro (Opcional)',
-              border: OutlineInputBorder(),
+            dropdownDecoratorProps: const DropDownDecoratorProps(
+              dropdownSearchDecoration: InputDecoration(
+                labelText: 'Maestro (Opcional)',
+                border: OutlineInputBorder(),
+              ),
             ),
-            isExpanded: true,
+            popupProps: const PopupProps.menu(
+              showSearchBox: true,
+              searchFieldProps: TextFieldProps(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  hintText: "Buscar maestro...",
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -143,7 +166,7 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
             icon: const Icon(Icons.delete_outline, color: Colors.red),
             label: const Text('Quitar', style: TextStyle(color: Colors.red)),
           ),
-        const Spacer(),
+        
         TextButton(
           onPressed: () {
             Navigator.of(context).pop();

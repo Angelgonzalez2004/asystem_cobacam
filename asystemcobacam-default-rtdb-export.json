@@ -109,7 +109,9 @@
               "campusId": "Atasta",
               "date": "2026-01-13",
               "entryTime": "06:04",
+              "exitTime": "22:00",
               "group": "101",
+              "reasonEarlyExit": "Emergencia",
               "schoolCycle": "2025-B",
               "status": "presente",
               "studentFullName": "Luis Fernando Chan",
@@ -119,7 +121,9 @@
               "campusId": "Atasta",
               "date": "2026-01-13",
               "entryTime": "17:09",
+              "exitTime": "22:00",
               "group": "101",
+              "reasonEarlyExit": "Emergencia",
               "reasonTardy": "Tráfico",
               "schoolCycle": "2025-B",
               "status": "tarde",
@@ -130,7 +134,9 @@
               "campusId": "Atasta",
               "date": "2026-01-13",
               "entryTime": "06:04",
+              "exitTime": "22:00",
               "group": "101",
+              "reasonEarlyExit": "Emergencia",
               "schoolCycle": "2025-B",
               "status": "presente",
               "studentFullName": "Jorge Pech",
@@ -140,7 +146,9 @@
               "campusId": "Atasta",
               "date": "2026-01-13",
               "entryTime": "06:03",
+              "exitTime": "22:00",
               "group": "101",
+              "reasonEarlyExit": "Emergencia",
               "schoolCycle": "2025-B",
               "status": "presente",
               "studentFullName": "Lucía Canché",
@@ -150,7 +158,9 @@
               "campusId": "Atasta",
               "date": "2026-01-13",
               "entryTime": "06:03",
+              "exitTime": "22:00",
               "group": "102",
+              "reasonEarlyExit": "Emergencia",
               "schoolCycle": "2025-B",
               "status": "presente",
               "studentFullName": "Julia Dzib",
@@ -170,19 +180,30 @@
             "4222010298": {
               "campusId": "Atasta",
               "date": "2026-01-13",
-              "entryTime": "06:02",
-              "exitTime": "06:05",
+              "entryTime": "22:03",
               "group": "103",
-              "reasonEarlyExit": "Emergencia",
+              "reasonTardy": "Tráfico",
               "schoolCycle": "2025-B",
-              "status": "presente",
-              "studentFullName": "Carmen Gonzalez",
-              "studentId": "4222010298"
+              "status": "tarde",
+              "studentFullName": "Carmen Gonzalez"
+            },
+            "4222010299": {
+              "campusId": "Atasta",
+              "date": "2026-01-13",
+              "entryTime": "18:14",
+              "exitTime": "18:18",
+              "group": "103",
+              "reasonTardy": "Cita médica",
+              "schoolCycle": "2025-B",
+              "status": "tarde",
+              "studentFullName": "Angel Perez Rodriguez",
+              "studentId": "4222010299"
             },
             "4222010469": {
               "campusId": "Atasta",
               "date": "2026-01-13",
               "entryTime": "12:57",
+              "exitTime": "17:34",
               "group": "103",
               "reasonTardy": "cagalera",
               "schoolCycle": "2025-B",
@@ -190,10 +211,70 @@
               "studentFullName": "Gustavo Vera",
               "studentId": "4222010469"
             }
+          },
+          "2026-01-14": {
+            "23010102": {
+              "campusId": "Atasta",
+              "date": "2026-01-14",
+              "entryTime": "08:21",
+              "group": "101",
+              "reasonTardy": "Transporte público",
+              "schoolCycle": "2025-B",
+              "status": "tarde",
+              "studentFullName": "Juan Pérez López",
+              "studentId": "23010102"
+            },
+            "23010103": {
+              "campusId": "Atasta",
+              "date": "2026-01-14",
+              "entryTime": "08:22",
+              "group": "101",
+              "reasonTardy": "Tráfico",
+              "schoolCycle": "2025-B",
+              "status": "tarde",
+              "studentFullName": "Sofía Martínez Ruiz",
+              "studentId": "23010103"
+            },
+            "23010108": {
+              "campusId": "Atasta",
+              "date": "2026-01-14",
+              "entryTime": "08:25",
+              "group": "101",
+              "schoolCycle": "2025-B",
+              "status": "presente",
+              "studentFullName": "Roberto Hernández",
+              "studentId": "23010108"
+            },
+            "23010109": {
+              "campusId": "Atasta",
+              "date": "2026-01-14",
+              "entryTime": "08:25",
+              "group": "101",
+              "schoolCycle": "2025-B",
+              "status": "presente",
+              "studentFullName": "Elena Gómez",
+              "studentId": "23010109"
+            },
+            "4222010297": {
+              "campusId": "Atasta",
+              "date": "2026-01-14",
+              "entryTime": "06:06",
+              "group": "101",
+              "schoolCycle": "2025-B",
+              "status": "presente",
+              "studentFullName": "Angel Del Carmen Gonzalez Alcocer",
+              "studentId": "4222010297"
+            }
           }
         }
       },
       "groups": {
+        "-Oiwp7J1x6hDDRh1Asek": {
+          "name": "104",
+          "schoolCycleId": "2025-B",
+          "semester": 1,
+          "studentCount": 0
+        },
         "grp_at_101": {
           "name": "101",
           "schoolCycleId": "2025-B",
@@ -210,7 +291,7 @@
           "name": "103",
           "schoolCycleId": "2025-B",
           "semester": 1,
-          "studentCount": 10
+          "studentCount": 11
         },
         "grp_at_201_26A": {
           "name": "201",
@@ -408,6 +489,72 @@
           "studentName": "Mariana Ek",
           "type": "Retardo"
         },
+        "-Oitl_BdqbUryp_xcx9z": {
+          "campusId": "Atasta",
+          "date": "2026-01-13T17:52:18.588",
+          "description": "Reporte Rápido desde Pase de Lista",
+          "group": "103",
+          "schoolCycle": "2025-B",
+          "status": "Activo",
+          "studentId": "4222010469",
+          "studentName": "Gustavo Vera",
+          "type": "Otro"
+        },
+        "-OiuNoHO1H7cob5nzLp6": {
+          "campusId": "Atasta",
+          "date": "2026-01-13T20:43:44.639",
+          "description": "Reporte Rápido desde Pase de Lista",
+          "group": "103",
+          "schoolCycle": "2025-B",
+          "status": "Activo",
+          "studentId": "4222010299",
+          "studentName": "Angel Perez Rodriguez",
+          "type": "Uso de Gorras o Lentes de Sol en Aula"
+        },
+        "-OiufMhHpR7Lz_XW6oBf": {
+          "campusId": "Atasta",
+          "date": "2026-01-13T22:04:50.668",
+          "description": "Reporte Rápido desde Pase de Lista",
+          "group": "103",
+          "schoolCycle": "2025-B",
+          "status": "Activo",
+          "studentId": "4222010298",
+          "studentName": "Carmen Gonzalez",
+          "type": "Uniforme Incompleto"
+        },
+        "-OiufNNfQthGoA_EqX0g": {
+          "campusId": "Atasta",
+          "date": "2026-01-13T22:04:53.444",
+          "description": "Reporte Rápido desde Pase de Lista",
+          "group": "101",
+          "schoolCycle": "2025-B",
+          "status": "Activo",
+          "studentId": "23010104",
+          "studentName": "Luis Fernando Chan",
+          "type": "Salida del Plantel sin Pase"
+        },
+        "-Oiwl6-EIQvOVVPnMsla": {
+          "campusId": "Atasta",
+          "date": "2026-01-14T07:49:00.000",
+          "description": "alumno agresivo",
+          "group": "101",
+          "schoolCycle": "2025-B",
+          "status": "Activo",
+          "studentId": "4222010297",
+          "studentName": "Angel Del Carmen Gonzalez Alcocer",
+          "type": "Otro: Golpeo a un profe..."
+        },
+        "-OiwoVT7pNByY7_3Sak8": {
+          "campusId": "Atasta",
+          "date": "2026-01-14T08:04:00.483",
+          "description": "Reporte Rápido desde Pase de Lista",
+          "group": "101",
+          "schoolCycle": "2025-B",
+          "status": "Activo",
+          "studentId": "4222010297",
+          "studentName": "Angel Del Carmen Gonzalez Alcocer",
+          "type": "Otro: uniforme de color inapropiado"
+        },
         "-Ojj1A2B3C4D5E6F7G8H": {
           "campusId": "Atasta",
           "date": "2026-01-09T08:15:00.000",
@@ -518,10 +665,20 @@
         }
       },
       "nonAttendanceDays": {
+        "2026-01-01": {
+          "campusId": "Atasta",
+          "date": "2026-01-01",
+          "reason": "clima pesimo"
+        },
         "2026-01-06": {
           "campusId": "Atasta",
           "date": "2026-01-06",
           "reason": "mal clima"
+        },
+        "2026-01-18": {
+          "campusId": "Atasta",
+          "date": "2026-01-18",
+          "reason": "Vacaciones de Verano"
         },
         "2026-01-20": {
           "campusId": "Atasta",
@@ -531,6 +688,15 @@
       },
       "schedules": {
         "2025-B": {
+          "-Oiwp7J1x6hDDRh1Asek": {
+            "Miércoles": {
+              "dayOfWeek": "Miércoles",
+              "entryTime": "7:00",
+              "exitTime": "12:20",
+              "groupId": "-Oiwp7J1x6hDDRh1Asek",
+              "schoolCycle": "2025-B"
+            }
+          },
           "grp_at_101": {
             "Jueves": {
               "dayOfWeek": "Jueves",
@@ -555,7 +721,7 @@
             },
             "Miércoles": {
               "dayOfWeek": "Miércoles",
-              "entryTime": "8:00",
+              "entryTime": "8:40",
               "exitTime": "13:00",
               "groupId": "grp_at_101",
               "schoolCycle": "2025-B"
@@ -2286,6 +2452,23 @@
             "studentId": "4222010298",
             "studentPhone": "33434334"
           },
+          "4222010299": {
+            "age": 15,
+            "allergies": "Mariscos",
+            "fullName": "Angel Perez Rodriguez",
+            "gender": "Masculino",
+            "generalHealthStatus": "Bajo peso",
+            "group": "103",
+            "guardianFullName": "",
+            "guardianPhone": "",
+            "healthConditions": "Problemas Cardíacos",
+            "institutionalEmail": "",
+            "isActive": true,
+            "medicalAlert": true,
+            "placeOfResidence": "",
+            "schoolCycle": "2025-B",
+            "studentId": "4222010299"
+          },
           "4222010469": {
             "age": 28,
             "allergies": "no",
@@ -2618,8 +2801,8 @@
   },
   "school_cycles": {
     "2025-A": {
-      "endDate": "2025-07-18",
-      "startDate": "2025-02-16",
+      "endDate": "2025-07-25",
+      "startDate": "2025-03-03",
       "type": "A"
     },
     "2025-B": {
@@ -2628,9 +2811,14 @@
       "type": "B"
     },
     "2026-A": {
-      "endDate": "2026-07-17",
-      "startDate": "2026-02-16",
+      "endDate": "2026-07-24",
+      "startDate": "2026-03-02",
       "type": "A"
+    },
+    "2026-P": {
+      "endDate": "2026-08-21",
+      "startDate": "2026-08-03",
+      "type": "Propedéutico"
     }
   },
   "users": {
@@ -2641,7 +2829,18 @@
       "fullName": "Carmen Gonzalez",
       "location": "Carmen",
       "profileImageUrl": "https://firebasestorage.googleapis.com/v0/b/asystemcobacam.firebasestorage.app/o/profile_pictures%2F0RNc6MDq6Mh7DHFoYKDCT7AFTH72?alt=media&token=e8a73ff3-d985-4ebb-ba79-715e20df0a30",
-      "role": "Personal Administrativo General"
+      "role": "Personal Administrativo General",
+      "sessions": {
+        "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Mobile Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Mobile Safari_537_36",
+          "ip": "189.238.241.151",
+          "isWeb": true,
+          "lastActive": 1768392498699,
+          "location": "Centro Municipality, Tabasco",
+          "model": "chrome on Linux armv81",
+          "platform": "Web"
+        }
+      }
     },
     "BTdahGQjzFYrYvKHJ7LbTDP7Xaq1": {
       "campus": "Atasta",
@@ -2650,7 +2849,55 @@
       "fullName": "Carmen Alcocer",
       "location": "Atasta",
       "profileImageUrl": "https://firebasestorage.googleapis.com/v0/b/asystemcobacam.firebasestorage.app/o/profile_pictures%2FBTdahGQjzFYrYvKHJ7LbTDP7Xaq1?alt=media&token=10d3a05d-c133-41d8-86f1-7527980cab4d",
-      "role": "Personal Administrativo por Plantel"
+      "role": "Personal Administrativo por Plantel",
+      "sessions": {
+        "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Mobile Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Mobile Safari_537_36",
+          "ip": "189.238.241.151",
+          "isWeb": true,
+          "lastActive": 1768392549135,
+          "location": "Centro Municipality, Tabasco",
+          "model": "chrome on Linux armv81",
+          "platform": "Web"
+        },
+        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Safari_537_36",
+          "ip": "187.154.103.50",
+          "isWeb": true,
+          "lastActive": 1768397850707,
+          "location": "Centro Municipality, Tabasco",
+          "model": "chrome on Win32",
+          "platform": "Web"
+        },
+        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Safari_537_36",
+          "ip": "187.154.124.15",
+          "isWeb": true,
+          "lastActive": 1768619680224,
+          "location": "Centro Municipality, Tabasco",
+          "model": "chrome on Win32",
+          "platform": "Web"
+        }
+      }
+    },
+    "NOQCVRCtd9SjH8eMcith9tkYuqf1": {
+      "campus": "Atasta",
+      "dateOfBirth": "1977-01-07",
+      "email": "epapelfx16@gmail.com",
+      "fullName": "sergio gutierrez perez",
+      "location": "cd del carmen",
+      "role": "Prefecta",
+      "sessions": {
+        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Safari_537_36 Edg_143_0_0_0": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Safari_537_36 Edg_143_0_0_0",
+          "ip": "187.175.164.90",
+          "isWeb": true,
+          "lastActive": 1768400377957,
+          "location": "Mérida, Yucatán",
+          "model": "edge on Win32",
+          "platform": "Web"
+        }
+      }
     },
     "lf3QV0oFDATlVVK50lgvPna66Wq2": {
       "campus": "Atasta",
@@ -2662,40 +2909,22 @@
       "profileImageUrl": "https://firebasestorage.googleapis.com/v0/b/asystemcobacam.firebasestorage.app/o/profile_pictures%2Flf3QV0oFDATlVVK50lgvPna66Wq2?alt=media&token=3c2f5d93-0048-49dc-8ece-a1bd10538947",
       "role": "Prefecta",
       "sessions": {
-        "Android_AP3A_240905_015_A2": {
-          "deviceId": "Android_AP3A_240905_015_A2",
-          "ip": "200.68.172.150",
-          "isWeb": false,
-          "lastActive": 1768225289420,
-          "location": "Puerto Juárez, Quintana Roo",
-          "model": "Xiaomi 24040RN64Y",
-          "platform": "Android"
-        },
         "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Mobile Safari_537_36": {
           "deviceId": "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Mobile Safari_537_36",
-          "ip": "187.157.162.142",
+          "ip": "2806:370:8260:aa23:1:0:8a28:1ef3",
           "isWeb": true,
-          "lastActive": 1768332048149,
-          "location": "Mexico City, Mexico City",
+          "lastActive": 1768654903611,
+          "location": "Mérida, Yucatán",
           "model": "chrome on Linux armv81",
           "platform": "Web"
         },
-        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Safari_537_36": {
-          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Safari_537_36",
-          "ip": "189.238.241.151",
+        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Safari_537_36",
+          "ip": "2806:10a6:28:97dc:4d50:eb1e:27e5:adf4",
           "isWeb": true,
-          "lastActive": 1768345063703,
+          "lastActive": 1768739976669,
           "location": "Centro Municipality, Tabasco",
           "model": "chrome on Win32",
-          "platform": "Web"
-        },
-        "Web_Google Inc__Mozilla_5_0 (X11; Linux x86_64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Safari_537_36": {
-          "deviceId": "Web_Google Inc__Mozilla_5_0 (X11; Linux x86_64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Safari_537_36",
-          "ip": "187.157.162.142",
-          "isWeb": true,
-          "lastActive": 1768330722560,
-          "location": "Mexico City, Mexico City",
-          "model": "chrome on Linux armv81",
           "platform": "Web"
         }
       }

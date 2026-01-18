@@ -536,6 +536,7 @@ class _GroupScheduleManagementScreenState
                       isFree ? Icons.add_circle_outline : Icons.edit,
                       color: isFree ? theme.colorScheme.primary : Colors.grey.shade500,
                     ),
+                    tooltip: isFree ? 'Asignar clase' : 'Editar clase',
                     onPressed: isBreak ? null : () {
                       final sessionToEdit = session ?? ClassSession(startTime: startTime, endTime: slot['end']!);
                       _editClassSession(group, day, sessionToEdit);

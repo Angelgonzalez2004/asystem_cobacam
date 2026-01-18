@@ -6,6 +6,11 @@ import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:asystem_cobacam/services/app_settings_service.dart';
+import 'package:asystem_cobacam/services/connectivity_service.dart';
+import 'package:asystem_cobacam/services/hive_service.dart';
+import 'package:provider/provider.dart';
 class GroupManagementScreen extends StatefulWidget {
   final Function(String route)? onNavigate;
   const GroupManagementScreen({super.key, this.onNavigate});
@@ -25,7 +30,68 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
   final List<SchoolCycle> _schoolCycles = [];
   SchoolCycle? _selectedSchoolCycle;
   String? _campusId;
-  final bool _isLoading = true;
+  bool _isLoading = true;
+
+  late final AppSettingsService _appSettingsService;
+  late final HiveService _hiveService;
+  late final ConnectivityService _connectivityService;
+
+
+  @override
+  void initState() {
+    super.initState();
+    _hiveService = Provider.of<HiveService>(context, listen: false);
+    _connectivityService =
+        Provider.of<ConnectivityService>(context, listen: false);
+    _appSettingsService =
+        AppSettingsService(_hiveService, _connectivityService);
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('No hay usuario autenticado.');
+      }
+      final userProfileSnapshot = await FirebaseDatabase.instance.ref('users/${user.uid}').get();
+      if (!userProfileSnapshot.exists) {
+        throw Exception('No se encontró el perfil del usuario.');
+      }
+      final userData = Map<String, dynamic>.from(userProfileSnapshot.value as Map);
+      final campusId = userData['campus'] as String?;
+
+      if (campusId == null) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          UiHelpers.showSnackBar(context, 'Error: No se pudo obtener el plantel.', isError: true);
+        }
+        return;
+      }
+
+      final cycles = await _appSettingsService.getAllSchoolCycles();
+      if (!mounted) return;
+
+      setState(() {
+        _campusId = campusId;
+        _groupsRef = FirebaseDatabase.instance.ref('planteles/$campusId/groups');
+        _schoolCycles.addAll(cycles);
+        if (cycles.isNotEmpty) {
+          _selectedSchoolCycle = cycles.first;
+        }
+        _isLoading = false;
+      });
+
+      if (_selectedSchoolCycle != null) {
+        _loadGroups();
+      }
+    } catch (e) {
+      if(mounted) {
+        setState(() => _isLoading = false);
+        UiHelpers.showSnackBar(context, 'Error al cargar datos iniciales: ${e.toString()}', isError: true);
+      }
+    }
+  }
 //...
   @override
   Widget build(BuildContext context) {
@@ -326,7 +392,12 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
 
 
   void _loadGroups() {
-    if (_selectedSchoolCycle == null || _groupsRef == null) return;
+    if (_selectedSchoolCycle == null || _groupsRef == null) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
     _groupsSubscription?.cancel();
     _groupsSubscription = _groupsRef!
         .orderByChild('schoolCycleId')
@@ -339,9 +410,20 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
         for (final child in event.snapshot.children) {
           groups.add(Group.fromSnapshot(child));
         }
-        setState(() => _groups = groups);
+        setState(() {
+          _groups = groups;
+          _isLoading = false;
+        });
       } else {
-        setState(() => _groups = []);
+        setState(() {
+          _groups = [];
+          _isLoading = false;
+        });
+      }
+    }, onError: (error) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        UiHelpers.showSnackBar(context, 'Error al cargar los grupos.', isError: true);
       }
     });
   }
@@ -355,7 +437,16 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(isEditing ? 'Editar Grupo' : 'Crear Grupos'),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(isEditing ? 'Editar Grupo' : 'Crear Grupos'),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -457,6 +548,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
       },
     );
   }
+
 
   void _createGroup(String name, int semester) {
     if (_groupsRef == null) return;
