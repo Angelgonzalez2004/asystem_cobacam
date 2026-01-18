@@ -34,9 +34,10 @@ El sistema está diseñado con una arquitectura de roles específica para cada t
 *   **Protocolo de Seguridad:** Al escanear la credencial de un alumno con una condición médica registrada, el sistema emite una alerta visual y vibratoria inmediata para el prefecto, mostrando la información relevante para una posible intervención.
 
 ### ✨ Gestión Académica Avanzada (Prefectura)
-*   **Gestión de Grupos Dinámica:** Creación y edición de grupos directamente desde la plataforma, con asignación a ciclos escolares específicos. La interfaz permite una gestión rápida y centralizada de todos los grupos del plantel.
-*   **Constructor de Horarios Interactivo:** Una interfaz visual para construir y modificar los horarios de cada grupo. Permite asignar materias y profesores a bloques de horas específicos para cada día de la semana. Los cambios se guardan en tiempo real en la base de datos de Firebase.
-*   **Diálogos de Edición Mejorados:** Los cuadros de diálogo para la edición de horarios y la gestión de grupos han sido optimizados para una experiencia de usuario más fluida e intuitiva, incluyendo la adición de iconos de cierre rápido y una disposición de elementos mejorada.
+*   **Gestión de Horarios Inteligente:** Una interfaz de horarios rediseñada, más profesional y responsiva. Permite construir y modificar los horarios de cada grupo de forma visual e interactiva.
+*   **Modelo de Datos Centrado en el Docente:** La gestión de materias ahora está lógicamente vinculada a cada maestro. Se registra un maestro y se le asigna una lista de las materias que imparte, todo dentro del contexto de un ciclo escolar específico.
+*   **Asignación de Clases Dependiente:** Al editar un bloque de horario, el sistema ahora utiliza una lógica de selección dependiente: primero se elige al maestro y, a continuación, el campo de materia se filtra automáticamente para mostrar únicamente las materias que ese maestro tiene asignadas. Esto agiliza el proceso y previene errores.
+*   **UI de Gestión Mejorada:** Se ha mejorado la interfaz para gestionar al personal docente y sus materias, utilizando diálogos claros, íconos profesionales y un diseño más limpio y moderno.
 
 ### 🛠️ Gestión y Operaciones
 *   **Pase de Lista con QR:** Registro de entradas y salidas mediante el escaneo de credenciales con códigos QR o Code128, incluyendo la gestión de retardos y salidas anticipadas con motivos.

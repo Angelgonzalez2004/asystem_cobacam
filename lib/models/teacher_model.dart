@@ -10,32 +10,36 @@ class Teacher {
   @HiveField(1)
   String name;
   @HiveField(2)
-  String? email;
-  @HiveField(3)
-  String? specialty;
+  List<String> subjects;
 
   Teacher({
     required this.id,
     required this.name,
-    this.email,
-    this.specialty,
+    this.subjects = const [],
   });
 
   factory Teacher.fromSnapshot(DataSnapshot snapshot) {
     final data = Map<String, dynamic>.from(snapshot.value as Map);
+    final subjectsFromDb = data['subjects'];
+    List<String> subjectsList = [];
+    if (subjectsFromDb is List) {
+      subjectsList = List<String>.from(subjectsFromDb.map((item) => item.toString()));
+    } else if (subjectsFromDb is Map) {
+      // Handle cases where Firebase might store a list as a map with integer keys
+      subjectsList = List<String>.from(subjectsFromDb.values.map((item) => item.toString()));
+    }
+    
     return Teacher(
       id: snapshot.key!,
       name: data['name'] ?? '',
-      email: data['email'],
-      specialty: data['specialty'],
+      subjects: subjectsList,
     );
   }
 
   Map<String, dynamic> toFirebaseMap() {
     return {
       'name': name,
-      'email': email,
-      'specialty': specialty,
+      'subjects': subjects,
     };
   }
 }

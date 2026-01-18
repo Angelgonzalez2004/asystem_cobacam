@@ -143,7 +143,10 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: const Text('Visor de Horarios de Grupo'),
+        centerTitle: true,
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
@@ -211,12 +214,19 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
               dropdownDecoratorProps: const DropDownDecoratorProps(
                 dropdownSearchDecoration: InputDecoration(
                   labelText: 'Seleccionar Grupo',
+                  prefixIcon: Icon(Icons.groups),
                   border: OutlineInputBorder(),
                 ),
               ),
-              popupProps: const PopupProps.menu(
+              popupProps: PopupProps.menu(
                 showSearchBox: true,
-                searchFieldProps: TextFieldProps(
+                emptyBuilder: (context, search) => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text("No se encontraron grupos"),
+                  ),
+                ),
+                searchFieldProps: const TextFieldProps(
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),

@@ -9,16 +9,10 @@ class Subject {
   String id;
   @HiveField(1)
   String name;
-  @HiveField(2)
-  int semester;
-  @HiveField(3)
-  String code;
 
   Subject({
     required this.id,
     required this.name,
-    required this.semester,
-    required this.code,
   });
 
   factory Subject.fromSnapshot(DataSnapshot snapshot) {
@@ -26,16 +20,12 @@ class Subject {
     return Subject(
       id: snapshot.key!,
       name: data['name'] ?? '',
-      semester: data['semester'] ?? 0,
-      code: data['code'] ?? '',
     );
   }
 
   Map<String, dynamic> toFirebaseMap() {
     return {
       'name': name,
-      'semester': semester,
-      'code': code,
     };
   }
 }

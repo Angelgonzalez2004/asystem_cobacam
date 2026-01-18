@@ -167,7 +167,10 @@ class _TeacherScheduleViewerScreenState extends State<TeacherScheduleViewerScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: const Text('Visor de Horarios de Maestro'),
+        centerTitle: true,
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
@@ -236,12 +239,19 @@ class _TeacherScheduleViewerScreenState extends State<TeacherScheduleViewerScree
               dropdownDecoratorProps: const DropDownDecoratorProps(
                 dropdownSearchDecoration: InputDecoration(
                   labelText: 'Seleccionar Maestro',
+                  prefixIcon: Icon(Icons.person),
                   border: OutlineInputBorder(),
                 ),
               ),
-              popupProps: const PopupProps.menu(
+              popupProps: PopupProps.menu(
                 showSearchBox: true,
-                searchFieldProps: TextFieldProps(
+                emptyBuilder: (context, search) => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text("No se encontraron maestros"),
+                  ),
+                ),
+                searchFieldProps: const TextFieldProps(
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:asystem_cobacam/models/class_session_model.dart';
-import 'package:asystem_cobacam/models/subject_model.dart';
 import 'package:asystem_cobacam/models/teacher_model.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/edit_session_dialog.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
@@ -14,7 +13,6 @@ import 'package:asystem_cobacam/models/school_cycle_model.dart';
 import 'package:asystem_cobacam/services/app_settings_service.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
-import 'package:asystem_cobacam/screens/dashboards/prefect/manage_cycle_subjects_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/manage_cycle_teachers_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -34,7 +32,6 @@ class _GroupScheduleManagementScreenState
 
   DatabaseReference? _groupsRef;
   DatabaseReference? _groupSchedulesRef;
-  DatabaseReference? _subjectsRef;
   DatabaseReference? _teachersRef;
 
   StreamSubscription<DatabaseEvent>? _groupsSubscription;
@@ -43,7 +40,6 @@ class _GroupScheduleManagementScreenState
   List<Group> _allGroups = [];
   List<Group> _filteredGroups = [];
   Map<String, GroupSchedule> _groupSchedules = {};
-  List<Subject> _subjects = [];
   List<Teacher> _teachers = [];
 
   List<SchoolCycle> _availableSchoolCycles = [];
@@ -140,21 +136,7 @@ class _GroupScheduleManagementScreenState
     setState(() {});
   }
 
-  Future<void> _loadSubjects() async {
-    if (_subjectsRef == null) return;
-    final snapshot = await _subjectsRef!.get();
-    if (snapshot.exists) {
-      final newSubjects = <Subject>[];
-      for (final child in snapshot.children) {
-        newSubjects.add(Subject.fromSnapshot(child));
-      }
-      if (mounted) {
-        setState(() {
-          _subjects = newSubjects;
-        });
-      }
-    }
-  }
+
 
   Future<void> _loadTeachers() async {
     if (_teachersRef == null) return;
@@ -180,7 +162,6 @@ class _GroupScheduleManagementScreenState
       _allGroups = [];
       _filteredGroups = [];
       _groupSchedules = {};
-      _subjects = [];
       _teachers = [];
     });
 
@@ -188,12 +169,9 @@ class _GroupScheduleManagementScreenState
     _groupsRef = FirebaseDatabase.instance.ref('planteles/$_campus/groups');
     _groupSchedulesRef =
         FirebaseDatabase.instance.ref('planteles/$_campus/schedules/$cycleId');
-    _subjectsRef = FirebaseDatabase.instance
-        .ref('planteles/$_campus/school_cycles/$cycleId/subjects');
     _teachersRef = FirebaseDatabase.instance
         .ref('planteles/$_campus/school_cycles/$cycleId/teachers');
     
-    await _loadSubjects();
     await _loadTeachers();
 
     _groupsSubscription?.cancel();
@@ -267,9 +245,7 @@ class _GroupScheduleManagementScreenState
       context: context,
       builder: (context) => EditSessionDialog(
         session: session,
-        availableSubjects: _subjects,
         availableTeachers: _teachers,
-        groupSemester: group.semester,
       ),
     );
 
@@ -345,51 +321,25 @@ class _GroupScheduleManagementScreenState
       }),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FloatingActionButton.small(
-              heroTag: 'manage_subjects',
-              onPressed: () {
-                if (_campus != null && _selectedSchoolCycle != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ManageCycleSubjectsScreen(
-                        campusId: _campus!,
-                        schoolCycleId: _selectedSchoolCycle!,
-                      ),
-                    ),
-                  );
-                } else {
-                  UiHelpers.showSnackBar(context, 'Selecciona un ciclo escolar primero.', isError: true);
-                }
-              },
-              tooltip: 'Gestionar Materias del Ciclo',
-              child: const Icon(Icons.book),
-            ),
-            const SizedBox(height: 16),
-            FloatingActionButton.small(
-              heroTag: 'manage_teachers',
-              onPressed: () {
-                if (_campus != null && _selectedSchoolCycle != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ManageCycleTeachersScreen(
-                        campusId: _campus!,
-                        schoolCycleId: _selectedSchoolCycle!,
-                      ),
-                    ),
-                  );
-                } else {
-                  UiHelpers.showSnackBar(context, 'Selecciona un ciclo escolar primero.', isError: true);
-                }
-              },
-              tooltip: 'Gestionar Maestros del Ciclo',
-              child: const Icon(Icons.person),
-            ),
-          ],
+        child: FloatingActionButton.small(
+          heroTag: 'manage_teachers',
+          onPressed: () {
+            if (_campus != null && _selectedSchoolCycle != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ManageCycleTeachersScreen(
+                    campusId: _campus!,
+                    schoolCycleId: _selectedSchoolCycle!,
+                  ),
+                ),
+              );
+            } else {
+              UiHelpers.showSnackBar(context, 'Selecciona un ciclo escolar primero.', isError: true);
+            }
+          },
+          tooltip: 'Gestionar Personal Docente',
+          child: const Icon(Icons.person),
         ),
       ),
     );

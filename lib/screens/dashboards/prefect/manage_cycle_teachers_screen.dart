@@ -61,8 +61,7 @@ class _ManageCycleTeachersScreenState extends State<ManageCycleTeachersScreen> {
 
   void _showTeacherDialog({Teacher? teacher}) {
     final nameController = TextEditingController(text: teacher?.name);
-    final emailController = TextEditingController(text: teacher?.email);
-    final specialtyController = TextEditingController(text: teacher?.specialty);
+    final subjectsController = TextEditingController(text: teacher?.subjects.join(', '));
     final isEditing = teacher != null;
 
     showDialog(
@@ -82,17 +81,9 @@ class _ManageCycleTeachersScreenState extends State<ManageCycleTeachersScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: subjectsController,
                   decoration: const InputDecoration(
-                      labelText: 'Email (Opcional)',
-                      border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: specialtyController,
-                  decoration: const InputDecoration(
-                      labelText: 'Especialidad (Opcional)',
+                      labelText: 'Materias (separadas por coma)',
                       border: OutlineInputBorder()),
                 ),
               ],
@@ -106,12 +97,17 @@ class _ManageCycleTeachersScreenState extends State<ManageCycleTeachersScreen> {
             ElevatedButton(
               onPressed: () {
                 final name = nameController.text.trim();
+                final subjects = subjectsController.text
+                    .split(',')
+                    .map((s) => s.trim())
+                    .where((s) => s.isNotEmpty)
+                    .toList();
+
                 if (name.isNotEmpty) {
                   final newTeacher = Teacher(
                     id: teacher?.id ?? '',
                     name: name,
-                    email: emailController.text.trim(),
-                    specialty: specialtyController.text.trim(),
+                    subjects: subjects,
                   );
 
                   if (isEditing) {
@@ -148,7 +144,7 @@ class _ManageCycleTeachersScreenState extends State<ManageCycleTeachersScreen> {
       appBar: AppBar(
         title: Column(
           children: [
-            const Text('Gestionar Maestros'),
+            const Text('Gestionar Personal Docente'),
             Text(
               widget.schoolCycleId,
               style: Theme.of(context)
@@ -165,6 +161,7 @@ class _ManageCycleTeachersScreenState extends State<ManageCycleTeachersScreen> {
           : _buildTeacherList(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showTeacherDialog(),
+        tooltip: 'Añadir Maestro',
         child: const Icon(Icons.add),
       ),
     );
@@ -195,13 +192,27 @@ class _ManageCycleTeachersScreenState extends State<ManageCycleTeachersScreen> {
                 child: Text(teacher.name.isNotEmpty ? teacher.name[0] : '?'),
               ),
               title: Text(teacher.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(teacher.specialty ?? 'Sin especialidad'),
+              subtitle: teacher.subjects.isEmpty
+                  ? const Text('Sin materias asignadas', style: TextStyle(fontStyle: FontStyle.italic))
+                  : Wrap(
+                      spacing: 6.0,
+                      runSpacing: 4.0,
+                      children: teacher.subjects
+                          .map((subject) => Chip(
+                                label: Text(subject),
+                                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                visualDensity: VisualDensity.compact,
+                                labelStyle: const TextStyle(fontSize: 10),
+                              ))
+                          .toList(),
+                    ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
                     icon: Icon(Icons.edit, color: theme.colorScheme.primary),
                     onPressed: () => _showTeacherDialog(teacher: teacher),
+                    tooltip: 'Editar Maestro',
                   ),
                   IconButton(
                     icon: Icon(Icons.delete, color: theme.colorScheme.error),
@@ -215,6 +226,7 @@ class _ManageCycleTeachersScreenState extends State<ManageCycleTeachersScreen> {
                         _teachersRef.child(teacher.id).remove();
                       }
                     },
+                    tooltip: 'Eliminar Maestro',
                   ),
                 ],
               ),
