@@ -9,6 +9,9 @@ import 'package:asystem_cobacam/models/group_schedule_model.dart';
 import 'package:asystem_cobacam/models/non_attendance_day_model.dart';
 import 'package:asystem_cobacam/models/school_cycle_model.dart';
 import 'package:asystem_cobacam/models/attendance_record_model.dart';
+import 'package:asystem_cobacam/models/class_session_model.dart';
+import 'package:asystem_cobacam/models/incidence_model.dart';
+import 'package:asystem_cobacam/models/subject_model.dart';
 import 'package:asystem_cobacam/models/teacher_model.dart';
 
 class HiveService {
@@ -20,6 +23,10 @@ class HiveService {
   static const String _schoolCyclesBox = 'schoolCyclesBox';
   static const String _attendanceRecordsBox =
       'attendanceRecordsBox'; // For offline queue
+  static const String _subjectsBox = 'subjectsBox';
+  static const String _incidencesBox = 'incidencesBox';
+  static const String _classSessionsBox =
+      'classSessionsBox'; // Although HiveObject, might not need a top-level box
 
   Future<void> initHive() async {
     // Inicializar Hive en la ruta correcta del dispositivo
@@ -39,6 +46,9 @@ class HiveService {
     Hive.registerAdapter(NonAttendanceDayAdapter());
     Hive.registerAdapter(SchoolCycleAdapter());
     Hive.registerAdapter(AttendanceRecordAdapter());
+    Hive.registerAdapter(SubjectAdapter());
+    Hive.registerAdapter(IncidenceAdapter());
+    Hive.registerAdapter(ClassSessionAdapter());
 
     // Abrir las cajas (boxes) que se van a utilizar
     debugPrint('Hive: Abriendo StudentsBox...');
@@ -68,6 +78,19 @@ class HiveService {
     debugPrint('Hive: Abriendo TeachersBox...');
     await Hive.openBox<Teacher>(_teachersBox);
     debugPrint('Hive: TeachersBox abierta.');
+
+    debugPrint('Hive: Abriendo SubjectsBox...');
+    await Hive.openBox<Subject>(_subjectsBox);
+    debugPrint('Hive: SubjectsBox abierta.');
+
+    debugPrint('Hive: Abriendo IncidencesBox...');
+    await Hive.openBox<Incidence>(_incidencesBox);
+    debugPrint('Hive: IncidencesBox abierta.');
+
+    // ClassSession is a HiveObject but might be embedded, opening a box is safe
+    debugPrint('Hive: Abriendo ClassSessionsBox...');
+    await Hive.openBox<ClassSession>(_classSessionsBox);
+    debugPrint('Hive: ClassSessionsBox abierta.');
   }
 
   // Métodos de utilidad para acceder a las cajas
@@ -82,6 +105,10 @@ class HiveService {
   Box<AttendanceRecord> get attendanceRecordsBox =>
       Hive.box<AttendanceRecord>(_attendanceRecordsBox);
   Box<Teacher> get teachersBox => Hive.box<Teacher>(_teachersBox);
+  Box<Subject> get subjectsBox => Hive.box<Subject>(_subjectsBox);
+  Box<Incidence> get incidencesBox => Hive.box<Incidence>(_incidencesBox);
+  Box<ClassSession> get classSessionsBox =>
+      Hive.box<ClassSession>(_classSessionsBox);
 
   // Limpiar todas las cajas (útil para cerrar sesión o resetear)
   Future<void> clearAllBoxes() async {
@@ -92,6 +119,9 @@ class HiveService {
     await schoolCyclesBox.clear();
     await attendanceRecordsBox.clear();
     await teachersBox.clear();
+    await subjectsBox.clear();
+    await incidencesBox.clear();
+    await classSessionsBox.clear();
   }
 
   // Cerrar todas las cajas
