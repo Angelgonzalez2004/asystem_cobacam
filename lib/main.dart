@@ -23,13 +23,9 @@ void main() async {
   // ---------------------------------------------------------
   // 1. INICIAR HIVE
   // ---------------------------------------------------------
-  try {
-    debugPrint("📦 Iniciando Hive...");
-    await _hiveService.initHive();
-    debugPrint("✅ Hive iniciado correctamente.");
-  } catch (e) {
-    debugPrint("⚠️ Error al iniciar Hive (La app continuará): $e");
-  }
+  debugPrint("📦 Iniciando Hive...");
+  await _hiveService.initHive();
+  debugPrint("✅ Hive iniciado correctamente.");
 
   // Inicializar Connectivity
   _connectivityService;

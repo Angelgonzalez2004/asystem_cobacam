@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 part 'class_session_model.g.dart';
 
 @HiveType(typeId: 12) // New unique typeId
-class ClassSession extends HiveObject {
+class ClassSession {
   @HiveField(0)
   String startTime;
   @HiveField(1)
