@@ -100,6 +100,16 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(
+          'Gestión de Grupos',
+          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: 0,
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : LayoutBuilder(builder: (context, constraints) {
@@ -113,28 +123,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
                   constraints: const BoxConstraints(maxWidth: 1200),
                   child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            if (widget.onNavigate != null)
-                              IconButton(
-                                icon: const Icon(Icons.arrow_back_rounded),
-                                onPressed: () => widget.onNavigate!('home'),
-                                tooltip: 'Volver a Inicio',
-                              ),
-                            Expanded(
-                              child: Text(
-                                'Gestión de Grupos',
-                                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            // Spacer for alignment if back button exists
-                            if (widget.onNavigate != null) const SizedBox(width: 48),
-                          ],
-                        ),
-                      ),
+
                       if (_campusId != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0, bottom: 8),
