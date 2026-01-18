@@ -14,6 +14,8 @@ import 'package:asystem_cobacam/models/school_cycle_model.dart';
 import 'package:asystem_cobacam/services/app_settings_service.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
+import 'package:asystem_cobacam/screens/dashboards/prefect/manage_cycle_subjects_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/prefect/manage_cycle_teachers_screen.dart';
 import 'package:provider/provider.dart';
 
 class GroupScheduleManagementScreen extends StatefulWidget {
@@ -103,9 +105,6 @@ class _GroupScheduleManagementScreenState
       if (_campus == null) {
         throw Exception('El usuario no tiene un plantel asignado.');
       }
-      
-      _subjectsRef = FirebaseDatabase.instance.ref('subjects');
-      _teachersRef = FirebaseDatabase.instance.ref('teachers');
 
       final cycles = await _appSettingsService.getAllSchoolCycles();
       final currentCycleId =
@@ -118,8 +117,6 @@ class _GroupScheduleManagementScreenState
       });
 
       _checkCycleStatus();
-      await _loadSubjects();
-      await _loadTeachers();
       await _loadDataForCycle(_selectedSchoolCycle!);
     } catch (e) {
       if (mounted) {
@@ -183,11 +180,21 @@ class _GroupScheduleManagementScreenState
       _allGroups = [];
       _filteredGroups = [];
       _groupSchedules = {};
+      _subjects = [];
+      _teachers = [];
     });
 
+    // Update refs to point to the correct cycle
     _groupsRef = FirebaseDatabase.instance.ref('planteles/$_campus/groups');
     _groupSchedulesRef =
         FirebaseDatabase.instance.ref('planteles/$_campus/schedules/$cycleId');
+    _subjectsRef = FirebaseDatabase.instance
+        .ref('planteles/$_campus/school_cycles/$cycleId/subjects');
+    _teachersRef = FirebaseDatabase.instance
+        .ref('planteles/$_campus/school_cycles/$cycleId/teachers');
+    
+    await _loadSubjects();
+    await _loadTeachers();
 
     _groupsSubscription?.cancel();
     _groupsSubscription = _groupsRef!
@@ -206,7 +213,7 @@ class _GroupScheduleManagementScreenState
           _allGroups = newGroups;
           _filterGroups(); // Initial filter
         });
-        _loadSchedules();
+        _loadSchedules(); // This will set _isLoading to false when done
       }
     });
   }
@@ -336,6 +343,55 @@ class _GroupScheduleManagementScreenState
           ),
         );
       }),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton.small(
+              heroTag: 'manage_subjects',
+              onPressed: () {
+                if (_campus != null && _selectedSchoolCycle != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ManageCycleSubjectsScreen(
+                        campusId: _campus!,
+                        schoolCycleId: _selectedSchoolCycle!,
+                      ),
+                    ),
+                  );
+                } else {
+                  UiHelpers.showSnackBar(context, 'Selecciona un ciclo escolar primero.', isError: true);
+                }
+              },
+              tooltip: 'Gestionar Materias del Ciclo',
+              child: const Icon(Icons.book),
+            ),
+            const SizedBox(height: 16),
+            FloatingActionButton.small(
+              heroTag: 'manage_teachers',
+              onPressed: () {
+                if (_campus != null && _selectedSchoolCycle != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ManageCycleTeachersScreen(
+                        campusId: _campus!,
+                        schoolCycleId: _selectedSchoolCycle!,
+                      ),
+                    ),
+                  );
+                } else {
+                  UiHelpers.showSnackBar(context, 'Selecciona un ciclo escolar primero.', isError: true);
+                }
+              },
+              tooltip: 'Gestionar Maestros del Ciclo',
+              child: const Icon(Icons.person),
+            ),
+          ],
+        ),
+      ),
     );
   }
   
@@ -437,7 +493,7 @@ class _GroupScheduleManagementScreenState
 
   Widget _buildGroupList(ThemeData theme) {
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: _filteredGroups.length,
       itemBuilder: (context, index) {
         final group = _filteredGroups[index];
@@ -445,40 +501,43 @@ class _GroupScheduleManagementScreenState
 
         return FadeInUp(
           delay: Duration(milliseconds: 50 * index),
-          child: DefaultTabController(
-            length: _weekdays.length,
-            child: Card(
-              elevation: 0,
-              margin: const EdgeInsets.only(bottom: 24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+          child: Card(
+            elevation: 2.0,
+            shadowColor: Colors.black.withOpacity(0.1),
+            margin: const EdgeInsets.only(bottom: 20),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: ExpansionTile(
+              tilePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              title: Text(
+                group.name,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(group.name, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text("Semestre: ${group.semester}", style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
-                    const SizedBox(height: 16),
-                    TabBar(
-                      isScrollable: true,
-                      tabs: _weekdays.map((day) => Tab(text: day)).toList(),
-                    ),
-                    SizedBox(
-                      height: 450, // Fixed height for the schedule view
-                      child: TabBarView(
-                        children: _weekdays.map((day) {
-                          final dailySessions = schedule?.dailySchedules[day] ?? [];
-                          return _buildDaySchedule(group, day, dailySessions, theme);
-                        }).toList(),
+              subtitle: Text(
+                "Semestre: ${group.semester}",
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+              children: [
+                DefaultTabController(
+                  length: _weekdays.length,
+                  child: Column(
+                    children: [
+                      TabBar(
+                        isScrollable: true,
+                        tabs: _weekdays.map((day) => Tab(text: day)).toList(),
                       ),
-                    ),
-                  ],
-                ),
-              ),
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 450),
+                        child: TabBarView(
+                          children: _weekdays.map((day) {
+                            final dailySessions = schedule?.dailySchedules[day] ?? [];
+                            return _buildDaySchedule(group, day, dailySessions, theme);
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              ],
             ),
           ),
         );
@@ -487,8 +546,10 @@ class _GroupScheduleManagementScreenState
   }
 
   Widget _buildDaySchedule(Group group, String day, List<ClassSession> sessions, ThemeData theme) {
-    return ListView.builder(
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
       itemCount: _timeSlots.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final slot = _timeSlots[index];
         final startTime = slot['start']!;
@@ -501,42 +562,55 @@ class _GroupScheduleManagementScreenState
         }
 
         final isBreak = startTime == '09:30';
-        final isFree = session == null && !isBreak;
+        final teacherName = session?.teacherName;
+        
+        Color cardColor = isBreak 
+            ? Colors.teal.shade50 
+            : (session == null ? Colors.grey.shade100 : theme.cardColor);
+        
+        IconData actionIcon = session == null ? Icons.add_circle_outline : Icons.edit_outlined;
 
         return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          elevation: 0,
-          color: isBreak ? Colors.cyan.shade50 : (isFree ? Colors.grey.shade100 : theme.colorScheme.surface),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: EdgeInsets.zero,
+          elevation: session == null ? 0 : 1,
+          shadowColor: Colors.black.withOpacity(0.1),
+          color: cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: session == null && !isBreak ? BorderSide(color: Colors.grey.shade300, width: 1) : BorderSide.none,
+          ),
           child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: SizedBox(
-              width: 80,
+              width: 70,
               child: Text(
                 "${slot['start']!}\n${slot['end']!}",
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: isBreak ? Colors.cyan.shade800 : theme.textTheme.bodySmall?.color,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: isBreak ? Colors.teal.shade700 : theme.textTheme.bodySmall?.color,
+                  fontSize: 12,
                 ),
               ),
             ),
             title: Text(
-              isBreak ? "Receso" : (isFree ? "Libre" : session!.subjectName),
+              isBreak ? "Receso" : (session == null ? "Libre" : session.subjectName),
               style: TextStyle(
-                fontWeight: isFree ? FontWeight.normal : FontWeight.bold,
-                color: isFree ? Colors.grey.shade700 : theme.textTheme.bodyLarge?.color,
+                fontWeight: session == null ? FontWeight.w500 : FontWeight.bold,
+                color: session == null ? Colors.grey.shade700 : theme.textTheme.bodyLarge?.color,
               ),
             ),
-            subtitle: (isFree || isBreak || session?.teacherName == null)
+            subtitle: (teacherName == null || teacherName.isEmpty)
                 ? null
-                : Text(session!.teacherName!, style: TextStyle(color: Colors.grey.shade600)),
+                : Text(
+                    teacherName,
+                    style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w500)
+                  ),
             trailing: _isReadOnly
                 ? null
                 : IconButton(
-                    icon: Icon(
-                      isFree ? Icons.add_circle_outline : Icons.edit,
-                      color: isFree ? theme.colorScheme.primary : Colors.grey.shade500,
-                    ),
-                    tooltip: isFree ? 'Asignar clase' : 'Editar clase',
+                    icon: Icon(actionIcon, color: theme.colorScheme.primary),
+                    tooltip: session == null ? 'Asignar clase' : 'Editar clase',
                     onPressed: isBreak ? null : () {
                       final sessionToEdit = session ?? ClassSession(startTime: startTime, endTime: slot['end']!);
                       _editClassSession(group, day, sessionToEdit);

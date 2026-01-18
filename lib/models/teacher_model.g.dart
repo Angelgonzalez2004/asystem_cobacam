@@ -20,19 +20,22 @@ class TeacherAdapter extends TypeAdapter<Teacher> {
       id: fields[0] as String,
       name: fields[1] as String,
       email: fields[2] as String?,
+      specialty: fields[3] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Teacher obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.email);
+      ..write(obj.email)
+      ..writeByte(3)
+      ..write(obj.specialty);
   }
 
   @override

@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 
 part 'subject_model.g.dart';
 
-@HiveType(typeId: 10) // New unique typeId
+@HiveType(typeId: 10)
 class Subject {
   @HiveField(0)
   String id;
@@ -11,11 +11,14 @@ class Subject {
   String name;
   @HiveField(2)
   int semester;
+  @HiveField(3)
+  String code;
 
   Subject({
     required this.id,
     required this.name,
     required this.semester,
+    required this.code,
   });
 
   factory Subject.fromSnapshot(DataSnapshot snapshot) {
@@ -24,6 +27,7 @@ class Subject {
       id: snapshot.key!,
       name: data['name'] ?? '',
       semester: data['semester'] ?? 0,
+      code: data['code'] ?? '',
     );
   }
 
@@ -31,6 +35,7 @@ class Subject {
     return {
       'name': name,
       'semester': semester,
+      'code': code,
     };
   }
 }

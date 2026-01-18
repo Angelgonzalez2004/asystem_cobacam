@@ -91,9 +91,15 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                 border: OutlineInputBorder(),
               ),
             ),
-            popupProps: const PopupProps.menu(
+            popupProps: PopupProps.menu(
               showSearchBox: true,
-              searchFieldProps: TextFieldProps(
+              emptyBuilder: (context, search) => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text("No se encontraron datos"),
+                ),
+              ),
+              searchFieldProps: const TextFieldProps(
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -118,9 +124,15 @@ class _EditSessionDialogState extends State<EditSessionDialog> {
                 border: OutlineInputBorder(),
               ),
             ),
-            popupProps: const PopupProps.menu(
+            popupProps: PopupProps.menu(
               showSearchBox: true,
-              searchFieldProps: TextFieldProps(
+              emptyBuilder: (context, search) => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text("No se encontraron datos"),
+                ),
+              ),
+              searchFieldProps: const TextFieldProps(
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
