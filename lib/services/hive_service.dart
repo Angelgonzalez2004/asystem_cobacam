@@ -31,66 +31,78 @@ class HiveService {
   Future<void> initHive() async {
     // Inicializar Hive en la ruta correcta del dispositivo
     if (!kIsWeb) {
-      // Hive for Flutter doesn't require path_provider on web
       final appDocumentDirectory = await getApplicationDocumentsDirectory();
       Hive.init(appDocumentDirectory.path);
     } else {
       Hive.initFlutter(); // Initialize for web
     }
+    debugPrint("✅ Hive.init complete.");
 
-    // Registrar todos los adaptadores generados
-    Hive.registerAdapter(TeacherAdapter());
+    // --- REGISTRO DE ADAPTADORES (DE SIMPLE A COMPLEJO) ---
+    debugPrint("➡️ Registrando StudentAdapter...");
     Hive.registerAdapter(StudentAdapter());
-    Hive.registerAdapter(GroupAdapter());
-    Hive.registerAdapter(GroupScheduleAdapter());
-    Hive.registerAdapter(NonAttendanceDayAdapter());
-    Hive.registerAdapter(SchoolCycleAdapter());
-    Hive.registerAdapter(AttendanceRecordAdapter());
+    debugPrint("➡️ Registrando TeacherAdapter...");
+    Hive.registerAdapter(TeacherAdapter());
+    debugPrint("➡️ Registrando SubjectAdapter...");
     Hive.registerAdapter(SubjectAdapter());
+    debugPrint("➡️ Registrando SchoolCycleAdapter...");
+    Hive.registerAdapter(SchoolCycleAdapter());
+    debugPrint("➡️ Registrando NonAttendanceDayAdapter...");
+    Hive.registerAdapter(NonAttendanceDayAdapter());
+    debugPrint("➡️ Registrando IncidenceAdapter...");
     Hive.registerAdapter(IncidenceAdapter());
+    debugPrint("➡️ Registrando GroupAdapter...");
+    Hive.registerAdapter(GroupAdapter());
+    debugPrint("➡️ Registrando AttendanceRecordAdapter...");
+    Hive.registerAdapter(AttendanceRecordAdapter());
+    debugPrint("➡️ Registrando ClassSessionAdapter (dependencia)...");
     Hive.registerAdapter(ClassSessionAdapter());
+    debugPrint("➡️ Registrando GroupScheduleAdapter (complejo)...");
+    Hive.registerAdapter(GroupScheduleAdapter());
+    debugPrint("✅ Todos los adaptadores registrados.");
 
-    // Abrir las cajas (boxes) que se van a utilizar
-    debugPrint('Hive: Abriendo StudentsBox...');
-    await Hive.openBox<Student>(_studentsBox);
-    debugPrint('Hive: StudentsBox abierta.');
-
-    debugPrint('Hive: Abriendo GroupsBox...');
-    await Hive.openBox<Group>(_groupsBox);
-    debugPrint('Hive: GroupsBox abierta.');
-
-    debugPrint('Hive: Abriendo GroupSchedulesBox...');
-    await Hive.openBox<GroupSchedule>(_groupSchedulesBox);
-    debugPrint('Hive: GroupSchedulesBox abierta.');
-
-    debugPrint('Hive: Abriendo NonAttendanceDaysBox...');
-    await Hive.openBox<NonAttendanceDay>(_nonAttendanceDaysBox);
-    debugPrint('Hive: NonAttendanceDaysBox abierta.');
-
-    debugPrint('Hive: Abriendo SchoolCyclesBox...');
+    // --- APERTURA DE CAJAS (DE SIMPLE A COMPLEJO) ---
+    debugPrint("➡️ Abriendo SchoolCyclesBox...");
     await Hive.openBox<SchoolCycle>(_schoolCyclesBox);
-    debugPrint('Hive: SchoolCyclesBox abierta.');
+    debugPrint("✅ SchoolCyclesBox abierta.");
 
-    debugPrint('Hive: Abriendo AttendanceRecordsBox...');
-    await Hive.openBox<AttendanceRecord>(_attendanceRecordsBox);
-    debugPrint('Hive: AttendanceRecordsBox abierta.');
-
-    debugPrint('Hive: Abriendo TeachersBox...');
-    await Hive.openBox<Teacher>(_teachersBox);
-    debugPrint('Hive: TeachersBox abierta.');
-
-    debugPrint('Hive: Abriendo SubjectsBox...');
+    debugPrint("➡️ Abriendo SubjectsBox...");
     await Hive.openBox<Subject>(_subjectsBox);
-    debugPrint('Hive: SubjectsBox abierta.');
+    debugPrint("✅ SubjectsBox abierta.");
 
-    debugPrint('Hive: Abriendo IncidencesBox...');
+    debugPrint("➡️ Abriendo TeachersBox...");
+    await Hive.openBox<Teacher>(_teachersBox);
+    debugPrint("✅ TeachersBox abierta.");
+
+    debugPrint("➡️ Abriendo StudentsBox...");
+    await Hive.openBox<Student>(_studentsBox);
+    debugPrint("✅ StudentsBox abierta.");
+
+    debugPrint("➡️ Abriendo NonAttendanceDaysBox...");
+    await Hive.openBox<NonAttendanceDay>(_nonAttendanceDaysBox);
+    debugPrint("✅ NonAttendanceDaysBox abierta.");
+
+    debugPrint("➡️ Abriendo IncidencesBox...");
     await Hive.openBox<Incidence>(_incidencesBox);
-    debugPrint('Hive: IncidencesBox abierta.');
+    debugPrint("✅ IncidencesBox abierta.");
 
-    // ClassSession is a HiveObject but might be embedded, opening a box is safe
-    debugPrint('Hive: Abriendo ClassSessionsBox...');
+    debugPrint("➡️ Abriendo GroupsBox...");
+    await Hive.openBox<Group>(_groupsBox);
+    debugPrint("✅ GroupsBox abierta.");
+
+    debugPrint("➡️ Abriendo AttendanceRecordsBox...");
+    await Hive.openBox<AttendanceRecord>(_attendanceRecordsBox);
+    debugPrint("✅ AttendanceRecordsBox abierta.");
+
+    debugPrint("➡️ Abriendo ClassSessionsBox...");
     await Hive.openBox<ClassSession>(_classSessionsBox);
-    debugPrint('Hive: ClassSessionsBox abierta.');
+    debugPrint("✅ ClassSessionsBox abierta.");
+
+    debugPrint("➡️ Abriendo GroupSchedulesBox...");
+    await Hive.openBox<GroupSchedule>(_groupSchedulesBox);
+    debugPrint("✅ GroupSchedulesBox abierta.");
+    
+    debugPrint("✅ Todas las cajas han sido abiertas.");
   }
 
   // Métodos de utilidad para acceder a las cajas
