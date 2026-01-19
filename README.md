@@ -42,7 +42,14 @@ El sistema está diseñado con una arquitectura de roles específica para cada t
 ### 🛠️ Gestión y Operaciones
 *   **Pase de Lista con QR:** Registro de entradas y salidas mediante el escaneo de credenciales con códigos QR o Code128, incluyendo la gestión de retardos y salidas anticipadas con motivos.
 *   **Registro Manual y Masivo:** Opciones para registrar asistencia de forma manual con un buscador predictivo o aplicar registros masivos a grupos completos.
-*   **Visualización y Exportación de Horarios:** Los prefectos pueden visualizar horarios detallados de grupos y profesores, con la opción de exportarlos como imágenes o documentos PDF.
+*   **Visualización y Exportación de Horarios Avanzada:** Los prefectos pueden ahora visualizar horarios detallados de grupos y profesores con funcionalidades avanzadas:
+    *   **Selección por Ciclo Escolar, Grupo y Maestro:** Filtra y selecciona fácilmente los horarios deseados.
+    *   **Visualización de Horario Individual:** Muestra el horario completo de Lunes a Viernes, incluyendo materias, profesores (para grupos) o grupos (para maestros), y el receso de 9:30-9:50.
+    *   **Visualización Multi-Horario en Pantalla:** Selecciona dos o más grupos/maestros, o todos, para ver sus horarios simultáneamente en una sola pantalla, facilitando comparaciones y revisiones rápidas.
+    *   **Opciones de Exportación Flexibles:** Exporta horarios individuales o múltiples en lote, con opciones de formato JPG/PNG o PDF.
+    *   **Exportación PDF Optimizada:** Para exportaciones de múltiples horarios a PDF, el sistema organiza eficientemente dos horarios por cada página, optimizando el espacio y la impresión.
+    *   **Branding Institucional:** Todos los horarios visualizados y exportados incluyen el título de COBACAM, el nombre dinámico del Plantel y el logo institucional, asegurando un formato profesional y consistente.
+    *   **Datos en Tiempo Real:** Todas las visualizaciones y exportaciones operan con datos actualizados en tiempo real directamente desde la base de datos de Firebase, reflejando cualquier cambio al instante.
 *   **Generación de Reportes:** Exportación de listas de asistencia e incidencias a formato Excel.
 *   **Generación de Credenciales:** Creación de credenciales en formato PDF listas para imprimir.
 *   **Gestión de Incidencias:** Módulo completo para reportar y dar seguimiento a las incidencias de los alumnos.

@@ -212,3 +212,25 @@ Map<String, String> getEducationalCenterInfo(String campusName) {
     };
   }
 }
+
+/// Retrieves the details of an educational center by a partial match in its name.
+/// Returns a map containing 'name', 'municipio', and 'clave' if found,
+/// otherwise returns a map with default 'N/A' values.
+Map<String, String> getEducationalCenterInfoByPartialName(String partialName) {
+  try {
+    return educationalCenters.firstWhere(
+      (center) => center['name']!.toLowerCase().contains(partialName.toLowerCase()),
+      orElse: () => {
+        'name': 'N/A',
+        'municipio': 'N/A',
+        'clave': 'N/A',
+      },
+    );
+  } catch (e) {
+    return {
+      'name': 'N/A',
+      'municipio': 'N/A',
+      'clave': 'N/A',
+    };
+  }
+}

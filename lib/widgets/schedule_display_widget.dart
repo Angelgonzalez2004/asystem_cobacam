@@ -6,6 +6,9 @@ class ScheduleDisplayWidget extends StatelessWidget {
   final String subtitle;
   final Map<String, List<ClassSession>> scheduleData;
   final String viewType; // 'group' or 'teacher'
+  final String mainTitle; // Added
+  final String campusName; // Added
+  final String logoPath; // Added
 
   const ScheduleDisplayWidget({
     super.key,
@@ -13,6 +16,9 @@ class ScheduleDisplayWidget extends StatelessWidget {
     required this.subtitle,
     required this.scheduleData,
     this.viewType = 'group',
+    required this.mainTitle, // Added
+    required this.campusName, // Added
+    required this.logoPath, // Added
   });
 
   final List<String> _weekdays = const [
@@ -48,12 +54,33 @@ class ScheduleDisplayWidget extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
+          // New Header for institutional branding
           Container(
             padding: const EdgeInsets.all(16),
             color: theme.primaryColor,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                Image.asset(
+                  logoPath,
+                  height: 60,
+                  fit: BoxFit.contain,
+                  colorBlendMode: BlendMode.srcIn, // Ensures logo respects theme color if needed
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  mainTitle,
+                  style: theme.textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Horario del Plantel: $campusName',
+                  style: theme.textTheme.titleMedium?.copyWith(color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16), // Separator before specific schedule title
+                // Existing specific schedule title and subtitle
                 Text(
                   title,
                   style: theme.textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
@@ -68,6 +95,7 @@ class ScheduleDisplayWidget extends StatelessWidget {
               ],
             ),
           ),
+          // Existing Table
           Table(
             border: TableBorder.all(color: theme.dividerColor, width: 1),
             columnWidths: const {
@@ -153,8 +181,21 @@ class ScheduleDisplayWidget extends StatelessWidget {
         ),
       );
     }
-    if (session == null || session.isFree) {
-      return Container(); // Empty cell
+    if (session == null) { // If no session exists for this slot, it's free
+      return Container(
+        padding: const EdgeInsets.all(4.0),
+        child: Center(
+          child: Text(
+            'Libre',
+            style: TextStyle(
+              fontSize: 10,
+              color: style?.color?.withOpacity(0.6) ?? Colors.grey,
+              fontStyle: FontStyle.italic,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
     }
 
     String topText = session.subjectName;

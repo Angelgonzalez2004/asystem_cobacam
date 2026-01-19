@@ -105,77 +105,144 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
 
   void _showTeacherDialog({Teacher? teacher}) {
     final nameController = TextEditingController(text: teacher?.name);
-    final subjectsController =
-        TextEditingController(text: teacher?.subjects.join(', '));
     final isEditing = teacher != null;
+
+    // Initialize subject controllers
+    final List<TextEditingController> subjectControllers = (teacher?.subjects ?? [''])
+        .map((subject) => TextEditingController(text: subject))
+        .toList();
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(isEditing ? 'Editar Maestro' : 'Añadir Maestro'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                  controller: nameController,
-                  decoration:
-                      const InputDecoration(labelText: 'Nombre del Maestro')),
-              const SizedBox(height: 12),
-              TextField(
-                  controller: subjectsController,
-                  decoration: const InputDecoration(
-                      labelText: 'Materias (separadas por coma)')),
-            ],
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancelar')),
-            ElevatedButton(
-              onPressed: () async {
-                final name = nameController.text;
-                final subjects = subjectsController.text
-                    .split(',')
-                    .map((s) => s.trim())
-                    .toList();
-
-                if (name.isNotEmpty &&
-                    subjects.isNotEmpty &&
-                    _teachersRef != null) {
-                  final teacherData = {'name': name, 'subjects': subjects};
-                  try {
-                    if (isEditing) {
-                      await _teachersRef!
-                          .child(teacher.key)
-                          .update(teacherData);
-                    } else {
-                      await _teachersRef!.push().set(teacherData);
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(isEditing ? 'Editar Maestro' : 'Añadir Maestro'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Nombre del Maestro'),
+                    ),
+                    const SizedBox(height: 20),
+                    Column(
+                      children: [
+                        ...subjectControllers.asMap().entries.map((entry) {
+                          int idx = entry.key;
+                          TextEditingController controller = entry.value;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: controller,
+                                    decoration: InputDecoration(
+                                      labelText: 'Materia ${idx + 1}',
+                                      border: const OutlineInputBorder(),
+                                    ),
+                                  ),
+                                ),
+                                if (subjectControllers.length > 1) // Allow removing if more than one
+                                  IconButton(
+                                    icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                                    onPressed: () {
+                                      setDialogState(() {
+                                        subjectControllers[idx].dispose();
+                                        subjectControllers.removeAt(idx);
+                                      });
+                                    },
+                                  ),
+                              ],
+                            ),
+                          );
+                        }),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            icon: const Icon(Icons.add_circle_outline),
+                            label: const Text('Añadir Materia'),
+                            onPressed: () {
+                              setDialogState(() {
+                                subjectControllers.add(TextEditingController());
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    for (var controller in subjectControllers) {
+                      controller.dispose();
                     }
-                    if (!mounted) return;
                     Navigator.pop(context);
-                    if (mounted) {
-                      UiHelpers.showSnackBar(
-                          context,
-                          isEditing
-                              ? 'Maestro actualizado.'
-                              : 'Maestro añadido.');
+                  },
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final name = nameController.text.trim();
+                    final subjects = subjectControllers
+                        .map((c) => c.text.trim())
+                        .where((s) => s.isNotEmpty)
+                        .toList();
+
+                    if (name.isNotEmpty && _teachersRef != null) {
+                      final teacherData = {'name': name, 'subjects': subjects};
+                      try {
+                        if (isEditing) {
+                          await _teachersRef!
+                              .child(teacher.key)
+                              .update(teacherData);
+                        } else {
+                          await _teachersRef!.push().set(teacherData);
+                        }
+                        if (!mounted) return;
+                        for (var controller in subjectControllers) {
+                          controller.dispose();
+                        }
+                        Navigator.pop(context);
+                        if (mounted) {
+                          UiHelpers.showSnackBar(
+                              context,
+                              isEditing
+                                  ? 'Maestro actualizado.'
+                                  : 'Maestro añadido.');
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          UiHelpers.showSnackBar(
+                              context, 'Error al guardar: ${e.toString()}',
+                              isError: true);
+                        }
+                      }
+                    } else {
+                      if (mounted) {
+                        UiHelpers.showSnackBar(
+                            context, 'Por favor, introduce el nombre del maestro y al menos una materia.',
+                            isError: true);
+                      }
                     }
-                  } catch (e) {
-                    if (mounted) {
-                      UiHelpers.showSnackBar(
-                          context, 'Error al guardar: ${e.toString()}',
-                          isError: true);
-                    }
-                  }
-                }
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
+                  },
+                  child: const Text('Guardar'),
+                ),
+              ],
+            );
+          },
         );
       },
-    );
+    ).then((_) {
+      // Dispose nameController after dialog is dismissed
+      nameController.dispose();
+    });
   }
 
   @override
