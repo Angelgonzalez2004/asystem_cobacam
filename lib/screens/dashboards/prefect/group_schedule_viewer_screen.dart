@@ -610,6 +610,7 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
       mainTitle: exportData.mainTitle,
       campusName: exportData.campusName,
       logoPath: exportData.logoPath,
+      isExporting: true,
     ));
 
     if (imageBytes != null) {
@@ -637,6 +638,7 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
       mainTitle: exportData.mainTitle,
       campusName: exportData.campusName,
       logoPath: exportData.logoPath,
+      isExporting: true,
     ));
 
     if (imageBytes != null) {
@@ -661,6 +663,7 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
         mainTitle: exportData.mainTitle,
         campusName: exportData.campusName,
         logoPath: exportData.logoPath,
+        isExporting: true,
       ));
       if (imageBytes != null) {
         images['${exportData.name}_Horario.png'] = imageBytes;
@@ -689,6 +692,7 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
         mainTitle: exportData.mainTitle,
         campusName: exportData.campusName,
         logoPath: exportData.logoPath,
+        isExporting: true,
       ));
       if (imageBytes != null) {
         pdfPages.add(imageBytes);

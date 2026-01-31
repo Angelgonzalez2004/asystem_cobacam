@@ -10,6 +10,7 @@ class ScheduleDisplayWidget extends StatelessWidget {
   final String campusName;
   final String logoPath;
   final Function(ClassSession? session, String day, String startTime, String endTime)? onSessionTap;
+  final bool isExporting; // New parameter
 
   const ScheduleDisplayWidget({
     super.key,
@@ -21,6 +22,7 @@ class ScheduleDisplayWidget extends StatelessWidget {
     required this.campusName,
     required this.logoPath,
     this.onSessionTap,
+    this.isExporting = false, // Default to false
   });
 
   final List<String> _weekdays = const [
@@ -96,24 +98,40 @@ class ScheduleDisplayWidget extends StatelessWidget {
               ],
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Table(
-              border: TableBorder.all(color: theme.dividerColor.withOpacity(0.5), width: 1), // Softer borders
-              columnWidths: const {
-                0: IntrinsicColumnWidth(), // Time column
-                1: FixedColumnWidth(160), // Lunes
-                2: FixedColumnWidth(160), // Martes
-                3: FixedColumnWidth(160), // Miércoles
-                4: FixedColumnWidth(160), // Jueves
-                5: FixedColumnWidth(160), // Viernes
-              },
-              children: [
-                _buildHeaderRow(theme),
-                ..._buildScheduleRows(theme),
-              ],
-            ),
-          ),
+          isExporting
+              ? Table(
+                  border: TableBorder.all(color: theme.dividerColor.withOpacity(0.5), width: 1),
+                  columnWidths: const {
+                    0: IntrinsicColumnWidth(), // Time column
+                    1: FixedColumnWidth(160), // Lunes
+                    2: FixedColumnWidth(160), // Martes
+                    3: FixedColumnWidth(160), // Miércoles
+                    4: FixedColumnWidth(160), // Jueves
+                    5: FixedColumnWidth(160), // Viernes
+                  },
+                  children: [
+                    _buildHeaderRow(theme),
+                    ..._buildScheduleRows(theme),
+                  ],
+                )
+              : SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Table(
+                    border: TableBorder.all(color: theme.dividerColor.withOpacity(0.5), width: 1),
+                    columnWidths: const {
+                      0: IntrinsicColumnWidth(), // Time column
+                      1: FixedColumnWidth(160), // Lunes
+                      2: FixedColumnWidth(160), // Martes
+                      3: FixedColumnWidth(160), // Miércoles
+                      4: FixedColumnWidth(160), // Jueves
+                      5: FixedColumnWidth(160), // Viernes
+                    },
+                    children: [
+                      _buildHeaderRow(theme),
+                      ..._buildScheduleRows(theme),
+                    ],
+                  ),
+                ),
         ],
       ),
     );

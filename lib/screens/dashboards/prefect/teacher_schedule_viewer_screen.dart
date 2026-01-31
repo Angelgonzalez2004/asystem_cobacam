@@ -668,6 +668,7 @@ class _TeacherScheduleViewerScreenState
       mainTitle: exportData.mainTitle,
       campusName: exportData.campusName,
       logoPath: exportData.logoPath,
+      isExporting: true,
     ));
 
     if (imageBytes != null) {
@@ -695,6 +696,7 @@ class _TeacherScheduleViewerScreenState
       mainTitle: exportData.mainTitle,
       campusName: exportData.campusName,
       logoPath: exportData.logoPath,
+      isExporting: true,
     ));
 
     if (imageBytes != null) {
@@ -719,6 +721,7 @@ class _TeacherScheduleViewerScreenState
         mainTitle: exportData.mainTitle,
         campusName: exportData.campusName,
         logoPath: exportData.logoPath,
+        isExporting: true,
       ));
       if (imageBytes != null) {
         images['${exportData.name}_Horario.png'] = imageBytes;
@@ -747,6 +750,7 @@ class _TeacherScheduleViewerScreenState
         mainTitle: exportData.mainTitle,
         campusName: exportData.campusName,
         logoPath: exportData.logoPath,
+        isExporting: true,
       ));
       if (imageBytes != null) {
         pdfPages.add(imageBytes);
