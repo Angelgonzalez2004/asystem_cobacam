@@ -441,134 +441,214 @@ class _GroupScheduleManagementScreenState
     );
   }
 
-  Widget _buildGroupList(ThemeData theme) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: _filteredGroups.length,
-      itemBuilder: (context, index) {
-        final group = _filteredGroups[index];
-        final schedule = _groupSchedules[group.key];
+    Widget _buildGroupList(ThemeData theme) {
 
-        return FadeInUp(
-          delay: Duration(milliseconds: 50 * index),
-          child: Card(
-            elevation: 2.0,
-            shadowColor: Colors.black.withOpacity(0.1),
-            margin: const EdgeInsets.only(bottom: 20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: ExpansionTile(
-              tilePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              title: Text(
-                group.name,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      return ListView.builder(
+
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+
+        itemCount: _filteredGroups.length,
+
+        itemBuilder: (context, index) {
+
+          final group = _filteredGroups[index];
+
+          final schedule = _groupSchedules[group.key];
+
+  
+
+          return FadeInUp(
+
+            delay: Duration(milliseconds: 50 * index),
+
+            child: Card(
+
+              elevation: 2.0,
+
+              shadowColor: Colors.black.withOpacity(0.1),
+
+              margin: const EdgeInsets.only(bottom: 20),
+
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+
+              child: ExpansionTile(
+
+                tilePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+
+                title: Text(
+
+                  group.name,
+
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+
+                ),
+
+                subtitle: Text(
+
+                  "Semestre: ${group.semester}",
+
+                  style: TextStyle(color: Colors.grey.shade600),
+
+                ),
+
+                children: [
+
+                   if (schedule == null && _isLoading)
+
+                    const Padding(
+
+                      padding: EdgeInsets.all(32.0),
+
+                      child: Center(child: CircularProgressIndicator()),
+
+                    )
+
+                  else
+
+                    _buildScheduleGrid(group, schedule, theme),
+
+                ],
+
               ),
-              subtitle: Text(
-                "Semestre: ${group.semester}",
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-              children: [
-                DefaultTabController(
-                  length: _weekdays.length,
-                  child: Column(
-                    children: [
-                      TabBar(
-                        isScrollable: true,
-                        tabs: _weekdays.map((day) => Tab(text: day)).toList(),
-                      ),
-                      Container(
-                        constraints: const BoxConstraints(maxHeight: 450),
-                        child: TabBarView(
-                          children: _weekdays.map((day) {
-                            final dailySessions = schedule?.dailySchedules[day] ?? [];
-                            return _buildDaySchedule(group, day, dailySessions, theme);
-                          }).toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              ],
+
             ),
-          ),
-        );
-      },
-    );
-  }
 
-  Widget _buildDaySchedule(Group group, String day, List<ClassSession> sessions, ThemeData theme) {
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: _timeSlots.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
-      itemBuilder: (context, index) {
-        final slot = _timeSlots[index];
-        final startTime = slot['start']!;
-        
-        ClassSession? session;
-        try {
-          session = sessions.firstWhere((s) => s.startTime == startTime);
-        } catch (e) {
-          session = null;
-        }
+          );
 
-        final isBreak = startTime == '09:30';
-        final teacherName = session?.teacherName;
-        
-        Color cardColor = isBreak 
-            ? Colors.teal.shade50 
-            : (session == null ? Colors.grey.shade100 : theme.cardColor);
-        
-        IconData actionIcon = session == null ? Icons.add_circle_outline : Icons.edit_outlined;
+        },
 
-        return Card(
-          margin: EdgeInsets.zero,
-          elevation: session == null ? 0 : 1,
-          shadowColor: Colors.black.withOpacity(0.1),
-          color: cardColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: session == null && !isBreak ? BorderSide(color: Colors.grey.shade300, width: 1) : BorderSide.none,
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: SizedBox(
-              width: 70,
-              child: Text(
-                "${slot['start']!}\n${slot['end']!}",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: isBreak ? Colors.teal.shade700 : theme.textTheme.bodySmall?.color,
-                  fontSize: 12,
+      );
+
+    }
+
+  
+
+    Widget _buildScheduleGrid(Group group, GroupSchedule? schedule, ThemeData theme) {
+      final double headerHeight = 40.0;
+      final double rowHeight = 80.0;
+      final double timeColumnWidth = 80.0;
+      
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.all(12.0),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width * 1.5),
+          child: Column(
+            children: [
+              // Header Row
+              Container(
+                height: headerHeight,
+                decoration: BoxDecoration(
+                  color: theme.primaryColor.withOpacity(0.1),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  )
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(width: timeColumnWidth),
+                    ..._weekdays.map((day) => Expanded(
+                          child: Center(
+                            child: Text(
+                              day,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        )),
+                  ],
                 ),
               ),
-            ),
-            title: Text(
-              isBreak ? "Receso" : (session == null ? "Libre" : session.subjectName),
-              style: TextStyle(
-                fontWeight: session == null ? FontWeight.w500 : FontWeight.bold,
-                color: session == null ? Colors.grey.shade700 : theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            subtitle: (teacherName == null || teacherName.isEmpty)
-                ? null
-                : Text(
-                    teacherName,
-                    style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w500)
+              // Schedule Rows
+              ..._timeSlots.map((slot) {
+                final startTime = slot['start']!;
+                final isBreak = startTime == '09:30';
+  
+                return Container(
+                  height: rowHeight,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+                    ),
                   ),
-            trailing: _isReadOnly
-                ? null
-                : IconButton(
-                    icon: Icon(actionIcon, color: theme.colorScheme.primary),
-                    tooltip: session == null ? 'Asignar clase' : 'Editar clase',
-                    onPressed: isBreak ? null : () {
-                      final sessionToEdit = session ?? ClassSession(startTime: startTime, endTime: slot['end']!);
-                      _editClassSession(group, day, sessionToEdit);
-                    },
+                  child: Row(
+                    children: [
+                      // Time Column
+                      SizedBox(
+                        width: timeColumnWidth,
+                        child: Center(
+                          child: Text(
+                            "${slot['start']!}\n${slot['end']!}",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: theme.textTheme.bodySmall?.color,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Day Cells
+                      ..._weekdays.map((day) {
+                        final dailySessions = schedule?.dailySchedules[day] ?? [];
+                         ClassSession? session;
+                        try {
+                          session = dailySessions.firstWhere((s) => s.startTime == startTime);
+                        } catch(e) {
+                          session = null;
+                        }
+  
+                        if (isBreak) {
+                          return Expanded(child: Container(color: Colors.teal.withOpacity(0.1), child: const Center(child: Text("Receso", style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 12)))));
+                        }
+  
+                        return Expanded(
+                          child: InkWell(
+                            onTap: _isReadOnly ? null : () {
+                              final sessionToEdit = session ?? ClassSession(startTime: startTime, endTime: slot['end']!);
+                              _editClassSession(group, day, sessionToEdit);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(4.0),
+                              alignment: Alignment.center,
+                              child: (session == null)
+                                  ? Icon(Icons.add_circle_outline, color: Colors.grey.shade400)
+                                  : FittedBox(
+                                    child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            session.subjectName,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                          ),
+                                          if (session.teacherName?.isNotEmpty ?? false)
+                                          Text(
+                                            session.teacherName!,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(color: theme.colorScheme.primary, fontSize: 10),
+                                          ),
+                                          if (!_isReadOnly)
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 4.0),
+                                              child: Icon(Icons.edit_outlined, size: 14, color: Colors.grey.shade500),
+                                            )
+                                        ],
+                                      ),
+                                  ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
                   ),
+                );
+              }),
+            ],
           ),
-        );
-      },
-    );
+        ),
+      );
+    }
   }
-}
+
+  

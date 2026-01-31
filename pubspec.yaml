@@ -54,6 +54,7 @@ dependencies:
   local_auth: ^3.0.0
   flutter_secure_storage: ^10.0.0
   dropdown_search: ^5.0.6
+  async: ^2.13.0
 
 dev_dependencies:
   flutter_test:

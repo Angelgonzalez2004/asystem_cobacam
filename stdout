@@ -1,0 +1,12 @@
+Entendido. Para aclarar bien los próximos pasos, necesito una precisión sobre la parte de "si selecciono todos los grupos, pues debería mostrar todos los grupos en pantallas".
+
+Actualmente, la aplicación funciona así:
+*   Cuando seleccionas un solo grupo o maestro de la lista, su horario individual se muestra en la pantalla principal, con el nuevo encabezado (logo, título COBACAM y nombre del plantel). Esto es como "estaba antes" pero con la marca añadida.
+*   Las nuevas casillas de verificación de "Seleccionar todos" o la selección individual se usan para elegir qué horarios quieres **exportar** (a ZIP de imágenes o PDF de varias páginas), no para mostrarlos todos a la vez en la pantalla de la aplicación.
+
+**Mi pregunta es:**
+¿Necesitas que, además de poder exportar varios horarios, la aplicación también **muestre en pantalla al mismo tiempo** (por ejemplo, en una lista que se pueda desplazar) todos los horarios que selecciones (o todos los disponibles), *antes* de que los exportes?
+
+Por favor, confírmame esto.
+
+Mientras tanto, la otra solicitud sobre "acomodar dos horarios por hoja en PDF" sí es una mejora de la funcionalidad de exportación que está clara. Podría trabajar en eso una vez que se aclare lo de la visualización en pantalla.
