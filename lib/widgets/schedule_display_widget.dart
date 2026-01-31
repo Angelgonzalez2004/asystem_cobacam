@@ -6,9 +6,10 @@ class ScheduleDisplayWidget extends StatelessWidget {
   final String subtitle;
   final Map<String, List<ClassSession>> scheduleData;
   final String viewType; // 'group' or 'teacher'
-  final String mainTitle; // Added
-  final String campusName; // Added
-  final String logoPath; // Added
+  final String mainTitle;
+  final String campusName;
+  final String logoPath;
+  final Function(ClassSession? session, String day, String startTime, String endTime)? onSessionTap;
 
   const ScheduleDisplayWidget({
     super.key,
@@ -16,9 +17,10 @@ class ScheduleDisplayWidget extends StatelessWidget {
     required this.subtitle,
     required this.scheduleData,
     this.viewType = 'group',
-    required this.mainTitle, // Added
-    required this.campusName, // Added
-    required this.logoPath, // Added
+    required this.mainTitle,
+    required this.campusName,
+    required this.logoPath,
+    this.onSessionTap,
   });
 
   final List<String> _weekdays = const [
@@ -28,7 +30,7 @@ class ScheduleDisplayWidget extends StatelessWidget {
     'Jueves',
     'Viernes'
   ];
-  
+
   final List<Map<String, String>> _timeSlots = const [
     {'start': '07:00', 'end': '07:50'},
     {'start': '07:50', 'end': '08:40'},
@@ -44,92 +46,102 @@ class ScheduleDisplayWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final headerStyle = theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold);
-    final cellStyle = theme.textTheme.bodySmall;
 
     return Card(
-      elevation: 4,
+      elevation: 6, // Slightly more elevation
       margin: const EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), // More rounded corners
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           // New Header for institutional branding
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             color: theme.primaryColor,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center, // Ensure overall column is centered
               children: [
                 Image.asset(
                   logoPath,
                   height: 60,
                   fit: BoxFit.contain,
-                  colorBlendMode: BlendMode.srcIn, // Ensures logo respects theme color if needed
+                  colorBlendMode: BlendMode.srcIn,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   mainTitle,
                   style: theme.textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.center, // Center text within its own space
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Horario del Plantel: $campusName',
-                  style: theme.textTheme.titleMedium?.copyWith(color: Colors.white70),
-                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleMedium?.copyWith(color: Colors.white70, fontSize: 14),
+                  textAlign: TextAlign.center, // Center text within its own space
                 ),
-                const SizedBox(height: 16), // Separator before specific schedule title
-                // Existing specific schedule title and subtitle
+                const SizedBox(height: 16),
+                const Icon(Icons.calendar_month, color: Colors.white, size: 30),
+                const SizedBox(height: 8),
                 Text(
                   title,
-                  style: theme.textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22),
+                  textAlign: TextAlign.center, // Center text within its own space
                 ),
                 if (subtitle.isNotEmpty)
                   Text(
                     subtitle,
-                    style: theme.textTheme.titleMedium?.copyWith(color: Colors.white70),
-                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium?.copyWith(color: Colors.white70, fontSize: 16),
+                    textAlign: TextAlign.center, // Center text within its own space
                   ),
               ],
             ),
           ),
-          // Existing Table
-          Table(
-            border: TableBorder.all(color: theme.dividerColor, width: 1),
-            columnWidths: const {
-              0: IntrinsicColumnWidth(),
-              ...{1: FlexColumnWidth(), 2: FlexColumnWidth(), 3: FlexColumnWidth(), 4: FlexColumnWidth(), 5: FlexColumnWidth()}
-            },
-            children: [
-              _buildHeaderRow(headerStyle),
-              ..._buildScheduleRows(cellStyle),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Table(
+              border: TableBorder.all(color: theme.dividerColor.withOpacity(0.5), width: 1), // Softer borders
+              columnWidths: const {
+                0: IntrinsicColumnWidth(), // Time column
+                1: FixedColumnWidth(160), // Lunes
+                2: FixedColumnWidth(160), // Martes
+                3: FixedColumnWidth(160), // Miércoles
+                4: FixedColumnWidth(160), // Jueves
+                5: FixedColumnWidth(160), // Viernes
+              },
+              children: [
+                _buildHeaderRow(theme),
+                ..._buildScheduleRows(theme),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  TableRow _buildHeaderRow(TextStyle? style) {
+  TableRow _buildHeaderRow(ThemeData theme) {
     return TableRow(
-      decoration: BoxDecoration(color: Colors.grey.shade200),
+      decoration: BoxDecoration(color: theme.primaryColorLight.withOpacity(0.2)), // Lighter primary color
       children: [
-        _buildHeaderCell('Hora'),
-        ..._weekdays.map((day) => _buildHeaderCell(day)),
+        _buildHeaderCell('Hora', theme),
+        ..._weekdays.map((day) => _buildHeaderCell(day, theme)),
       ],
     );
   }
 
-  List<TableRow> _buildScheduleRows(TextStyle? style) {
+  List<TableRow> _buildScheduleRows(ThemeData theme) {
     return _timeSlots.map((slot) {
       final startTime = slot['start']!;
+      final endTime = slot['end']!;
       final isBreak = startTime == '09:30';
+      final isEvenRow = _timeSlots.indexOf(slot) % 2 == 0;
 
       return TableRow(
+        decoration: BoxDecoration(
+          color: isEvenRow ? theme.colorScheme.surface : theme.colorScheme.surface.withOpacity(0.8), // Alternate row colors
+        ),
         children: [
-          _buildTimeCell(slot),
+          _buildTimeCell(slot, theme),
           ..._weekdays.map((day) {
             final sessions = scheduleData[day] ?? [];
             ClassSession? session;
@@ -138,96 +150,136 @@ class ScheduleDisplayWidget extends StatelessWidget {
             } catch (e) {
               session = null;
             }
-            return _buildSessionCell(session, isBreak, style);
+            return _buildSessionCell(session, day, startTime, endTime, isBreak, theme);
           }),
         ],
       );
     }).toList();
   }
 
-  Widget _buildHeaderCell(String text) {
+  Widget _buildHeaderCell(String text, ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(10.0),
       child: Center(
         child: Text(
           text,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
           textAlign: TextAlign.center,
         ),
       ),
     );
   }
 
-  Widget _buildTimeCell(Map<String, String> slot) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
+  Widget _buildTimeCell(Map<String, String> slot, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 6.0),
+      color: theme.primaryColor.withOpacity(0.1), // Distinct background for time cells
       child: Center(
         child: Text(
           "${slot['start']!}\n-\n${slot['end']!}",
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
+          style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, fontSize: 11),
           textAlign: TextAlign.center,
         ),
       ),
     );
   }
 
-  Widget _buildSessionCell(ClassSession? session, bool isBreak, TextStyle? style) {
-    if (isBreak) {
-      return Container(
-        color: Colors.cyan.shade50,
-        padding: const EdgeInsets.all(4.0),
-        child: const Center(
-          child: Text('Receso', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11), textAlign: TextAlign.center),
-        ),
+  Widget _buildSessionCell(ClassSession? session, String day, String startTime, String endTime, bool isBreak, ThemeData theme) {
+    final cellContent = _buildCellContent(session, isBreak, theme);
+
+    if (onSessionTap != null) {
+      return InkWell(
+        onTap: () {
+          final sessionToEdit = session ?? ClassSession(startTime: startTime, endTime: endTime);
+          onSessionTap!(sessionToEdit, day, startTime, endTime);
+        },
+        child: cellContent,
       );
     }
-    if (session == null) { // If no session exists for this slot, it's free
+    return cellContent;
+  }
+  
+  Widget _buildCellContent(ClassSession? session, bool isBreak, ThemeData theme) {
+    if (isBreak) {
       return Container(
+        color: theme.colorScheme.secondary.withOpacity(0.1), // Different color for break
         padding: const EdgeInsets.all(4.0),
         child: Center(
           child: Text(
-            'Libre',
-            style: TextStyle(
-              fontSize: 10,
-              color: style?.color?.withOpacity(0.6) ?? Colors.grey,
-              fontStyle: FontStyle.italic,
-            ),
+            'Receso',
+            style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 12, color: theme.colorScheme.secondary),
             textAlign: TextAlign.center,
           ),
         ),
       );
     }
 
-    String topText = session.subjectName;
-    String bottomText = '';
-
-    if (viewType == 'group') {
-      bottomText = session.teacherName ?? '';
-    } else { // teacher view
-      bottomText = session.groupName ?? '';
+    Widget content;
+    if (session == null) {
+      content = Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Libre',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontSize: 11,
+                color: Colors.grey.shade500,
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (onSessionTap != null) // If editable, show add icon
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Icon(Icons.add_circle_outline, color: Colors.grey.shade400, size: 20),
+              ),
+          ],
+        ),
+      );
+    } else {
+      String topText = session.subjectName;
+      String bottomText =
+          viewType == 'group' ? session.teacherName ?? '' : session.groupName ?? '';
+      
+      content = Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2.0),
+          child: RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface),
+              children: [
+                TextSpan(
+                  text: topText,
+                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                if (bottomText.isNotEmpty)
+                  TextSpan(
+                    text: "\n$bottomText",
+                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 10, color: theme.colorScheme.primary), // Use primary color for group/teacher name
+                  ),
+                if (onSessionTap != null && !isBreak)
+                  WidgetSpan(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Icon(
+                        session.subjectId == null ? Icons.add_circle : Icons.edit,
+                        size: 14,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
     return Container(
       padding: const EdgeInsets.all(4.0),
-      child: Center(
-        child: RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: style,
-            children: [
-              TextSpan(
-                text: topText,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-              ),
-              if (bottomText.isNotEmpty)
-                TextSpan(
-                  text: "\n$bottomText",
-                  style: const TextStyle(fontSize: 9, color: Colors.grey),
-                ),
-            ],
-          ),
-        ),
-      ),
+      child: content,
     );
   }
 }

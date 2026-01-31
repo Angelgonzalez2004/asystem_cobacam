@@ -40,7 +40,7 @@ class GroupSchedule {
 
     return GroupSchedule(
       id: snapshot.key!,
-      groupId: data['groupId'] ?? '',
+      groupId: snapshot.key!, // Corrected
       schoolCycle: data['schoolCycle'] ?? '',
       dailySchedules: schedules,
     );

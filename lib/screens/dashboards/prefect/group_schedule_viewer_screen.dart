@@ -1,5 +1,6 @@
+// Imports
 import 'dart:async';
-import 'package:asystem_cobacam/models/class_session_model.dart';
+import 'dart:typed_data'; // For Uint8List
 import 'package:asystem_cobacam/models/group_model.dart';
 import 'package:asystem_cobacam/models/group_schedule_model.dart';
 import 'package:asystem_cobacam/models/school_cycle_model.dart';
@@ -8,10 +9,17 @@ import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
+import 'package:asystem_cobacam/widgets/schedule_display_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:screenshot/screenshot.dart'; // For capturing widgets
+import 'package:asystem_cobacam/utils/schedule_exporter.dart' as exporter; // Alias to avoid name conflicts
+import 'package:dropdown_search/dropdown_search.dart'; // For group selection
+import 'package:asystem_cobacam/data/educational_centers.dart' as edu_centers; // For campus name lookup
+
+// ... (existing class definition)
 
 class GroupScheduleViewerScreen extends StatefulWidget {
   const GroupScheduleViewerScreen({super.key});
@@ -41,28 +49,22 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
 
   bool _isLoading = true;
   String? _campus;
+  String? _campusName; // Added for ScheduleDisplayWidget
 
   final TextEditingController _searchController = TextEditingController();
 
-  final List<String> _weekdays = const [
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes'
-  ];
+  // Export related state and controllers
+  final exporter.FileExporter _fileExporter = exporter.FileExporter();
+  final ScreenshotController _screenshotController = ScreenshotController(); // For single schedule view capture
+  final ScreenshotController _multiViewScreenshotController = ScreenshotController(); // For multi-schedule view capture
 
-  final List<Map<String, String>> _timeSlots = const [
-    {'start': '07:00', 'end': '07:50'},
-    {'start': '07:50', 'end': '08:40'},
-    {'start': '08:40', 'end': '09:30'},
-    {'start': '09:30', 'end': '09:50'}, // Receso
-    {'start': '09:50', 'end': '10:40'},
-    {'start': '10:40', 'end': '11:30'},
-    {'start': '11:30', 'end': '12:20'},
-    {'start': '12:20', 'end': '13:10'},
-    {'start': '13:10', 'end': '14:00'},
-  ];
+  Group? _selectedGroup; // For single schedule display
+  final Map<String, bool> _selectedGroupsForExport = {}; // For batch export selection
+  bool _selectAllGroups = false; // For batch export selection
+  bool _isMultiScheduleView = false; // Toggle between single and multi-schedule view
+  List<exporter.ScheduleExportData> _multiDisplaySchedules = []; // Schedules to display in multi-view
+  bool _isExporting = false; // To show loading state during export
+
 
   @override
   void initState() {
@@ -103,6 +105,10 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
       if (_campus == null) {
         throw Exception('El usuario no tiene un plantel asignado.');
       }
+
+      // Use educationalCenters data to get the campus name
+      final campusInfo = edu_centers.getEducationalCenterInfoByPartialName(_campus!);
+      _campusName = campusInfo['name']; // Use the name from the lookup
 
       final cycles = await _appSettingsService.getAllSchoolCycles();
       final currentCycleId =
@@ -157,6 +163,7 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
       if (mounted) {
         setState(() {
           _allGroups = newGroups;
+          _selectedGroupsForExport.addEntries(newGroups.map((group) => MapEntry(group.key, false))); // Initialize selection
           _filterGroups();
         });
         _loadSchedules();
@@ -213,6 +220,17 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
         centerTitle: true,
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
+        leading: _isMultiScheduleView // Show back button only in multi-schedule view
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  setState(() {
+                    _isMultiScheduleView = false;
+                    _multiDisplaySchedules.clear();
+                  });
+                },
+              )
+            : null,
       ),
       body: LayoutBuilder(builder: (context, constraints) {
         return Center(
@@ -221,20 +239,10 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
             child: Column(
               children: [
                 _buildHeader(theme, isDark),
-                Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _filteredGroups.isEmpty
-                          ? Center(
-                              child: Text(
-                                _allGroups.isEmpty
-                                    ? "No hay grupos para el ciclo seleccionado."
-                                    : "No se encontraron grupos con ese nombre.",
-                                style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-                              ),
-                            )
-                          : _buildGroupList(theme),
-                ),
+                if (_isMultiScheduleView)
+                  Expanded(child: _buildMultiScheduleView())
+                else
+                  Expanded(child: _buildSingleScheduleView()),
               ],
             ),
           ),
@@ -319,159 +327,441 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
     );
   }
 
-  Widget _buildGroupList(ThemeData theme) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: _filteredGroups.length,
-      itemBuilder: (context, index) {
-        final group = _filteredGroups[index];
-        final schedule = _groupSchedules[group.key];
+  Widget _buildSingleScheduleView() {
+    return _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
+            children: [
+              _buildGroupSelectionCard(), // Card for group selection and export buttons
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Builder(builder: (context) {
+                    List<Widget> scheduleWidgets = [];
 
-        return FadeInUp(
-          delay: Duration(milliseconds: 50 * index),
-          child: Card(
-            elevation: 2.0,
-            shadowColor: Colors.black.withOpacity(0.1),
-            margin: const EdgeInsets.only(bottom: 20),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
-            child: ExpansionTile(
-              tilePadding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              title: Text(
-                group.name,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                "Semestre: ${group.semester}",
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-              children: [
-                if (schedule == null)
-                  const Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Text('Este grupo no tiene un horario asignado.',
-                    style: TextStyle(color: Colors.grey)))
-                else
-                  _buildScheduleGrid(schedule, theme),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildScheduleGrid(GroupSchedule schedule, ThemeData theme) {
-    final double headerHeight = 40.0;
-    final double rowHeight = 70.0;
-    final double timeColumnWidth = 80.0;
-    
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.all(12.0),
-      child: ConstrainedBox(
-         constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width * 1.5),
-        child: Column(
-          children: [
-            // Header Row
-            Container(
-              height: headerHeight,
-              decoration: BoxDecoration(
-                color: theme.primaryColor.withOpacity(0.1),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                )
-              ),
-              child: Row(
-                children: [
-                  SizedBox(width: timeColumnWidth),
-                  ..._weekdays.map((day) => Expanded(
-                        child: Center(
-                          child: Text(
-                            day,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                    if (_selectedGroup == null) {
+                      scheduleWidgets.add(_buildEmptyState('Selecciona un grupo para ver su horario.'));
+                    } else if (_groupSchedules[_selectedGroup!.key] == null) {
+                      scheduleWidgets.add(_buildEmptyState('Este grupo no tiene un horario asignado.'));
+                    } else {
+                      scheduleWidgets.add(
+                        Screenshot(
+                          controller: _screenshotController,
+                          child: ScheduleDisplayWidget(
+                            title: 'Horario: ${_selectedGroup!.name}',
+                            subtitle: 'Ciclo Escolar: $_selectedSchoolCycle',
+                            scheduleData: _groupSchedules[_selectedGroup!.key]!.dailySchedules,
+                            viewType: 'group',
+                            mainTitle: 'COLEGIO DE BACHILLERES DEL ESTADO DE CAMPECHE',
+                            campusName: _campusName ?? 'N/A',
+                            logoPath: 'assets/images/logo1.png',
                           ),
                         ),
-                      )),
+                      );
+                    }
+
+                    if (_selectedGroup != null) {
+                      scheduleWidgets.add(_buildSingleExportButtons());
+                    }
+                    
+                    scheduleWidgets.add(const SizedBox(height: 20)); // Add spacing at the end
+
+                    return Column(
+                      children: scheduleWidgets,
+                    );
+                  }),
+                ),
+              ),
+            ],
+          );
+  }
+
+  Widget _buildMultiScheduleView() {
+    if (_multiDisplaySchedules.isEmpty) {
+      return _buildEmptyState('No hay horarios seleccionados para mostrar.');
+    }
+    return Column(
+      children: [
+        Expanded(
+          child: Screenshot(
+            controller: _multiViewScreenshotController,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  ..._multiDisplaySchedules.map((scheduleData) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: ScheduleDisplayWidget(
+                        title: scheduleData.title,
+                        subtitle: scheduleData.subtitle,
+                        scheduleData: scheduleData.scheduleData,
+                        viewType: scheduleData.viewType,
+                        mainTitle: scheduleData.mainTitle,
+                        campusName: scheduleData.campusName,
+                        logoPath: scheduleData.logoPath,
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
-            // Schedule Rows
-            ..._timeSlots.map((slot) {
-              final startTime = slot['start']!;
-              final isBreak = startTime == '09:30';
-              return Container(
-                height: rowHeight,
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+          ),
+        ),
+        _buildBatchExportButtons(),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildGroupSelectionCard() {
+    return Card(
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            DropdownSearch<Group>(
+              items: _allGroups,
+              selectedItem: _selectedGroup,
+              itemAsString: (Group g) => g.name,
+              onChanged: (Group? data) {
+                if (data != null) {
+                  setState(() => _selectedGroup = data);
+                }
+              },
+              dropdownDecoratorProps: const DropDownDecoratorProps(
+                dropdownSearchDecoration: InputDecoration(
+                  labelText: 'Seleccionar Grupo',
+                  prefixIcon: Icon(Icons.groups),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              popupProps: PopupProps.menu(
+                showSearchBox: true,
+                emptyBuilder: (context, search) => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text("No se encontraron grupos"),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    // Time Column
-                    SizedBox(
-                      width: timeColumnWidth,
-                      child: Center(
-                        child: Text(
-                          "${slot['start']!}\n${slot['end']!}",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: theme.textTheme.bodySmall?.color,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Day Cells
-                    ..._weekdays.map((day) {
-                      final dailySessions = schedule.dailySchedules[day] ?? [];
-                       ClassSession? session;
-                      try {
-                        session = dailySessions.firstWhere((s) => s.startTime == startTime);
-                      } catch(e) {
-                        session = null;
-                      }
-
-                      if (isBreak) {
-                        return Expanded(child: Container(color: Colors.teal.withOpacity(0.1), child: const Center(child: Text("Receso", style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 12)))));
-                      }
-
-                      return Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(4.0),
-                          alignment: Alignment.center,
-                          child: (session == null)
-                              ? const Text('') // Empty for "Libre"
-                              : FittedBox(
-                                child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        session.subjectName,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                                      ),
-                                      if (session.teacherName?.isNotEmpty ?? false)
-                                      Text(
-                                        session.teacherName!,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(color: theme.colorScheme.primary, fontSize: 10),
-                                      ),
-                                    ],
-                                  ),
-                              ),
-                        ),
-                      );
-                    }),
-                  ],
+                searchFieldProps: const TextFieldProps(
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    hintText: "Buscar grupo...",
+                  ),
                 ),
-              );
-            }),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Multi-export section
+            if (_allGroups.isNotEmpty && !_isLoading) ...[
+              const Divider(),
+              const SizedBox(height: 10),
+              Text(
+                'Opciones de exportación y visualización',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 10),
+              CheckboxListTile(
+                title: const Text('Seleccionar todos los grupos'),
+                value: _selectAllGroups,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _selectAllGroups = value ?? false;
+                    for (var group in _allGroups) { // Use _allGroups here
+                      _selectedGroupsForExport[group.key] = _selectAllGroups;
+                    }
+                  });
+                },
+              ),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 150), // Limit height to avoid overflow
+                child: Scrollbar(
+                  child: ListView.builder(
+                    shrinkWrap: true, // Make ListView take only necessary space
+                    itemCount: _filteredGroups.length,
+                    itemBuilder: (context, index) {
+                      final group = _filteredGroups[index];
+                      return CheckboxListTile(
+                        title: Text(group.name),
+                        value: _selectedGroupsForExport[group.key] ?? false,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            _selectedGroupsForExport[group.key] = value ?? false;
+                            // If any is unchecked, "Select all" should be unchecked
+                            if (!(_selectedGroupsForExport[group.key] ?? false)) {
+                              _selectAllGroups = false;
+                            } else if (_selectedGroupsForExport.values.every((element) => element)) {
+                              _selectAllGroups = true;
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _selectedGroupsForExport.values.any((e) => e)
+                    ? () async {
+                        setState(() => _isExporting = true); // Use _isExporting for feedback
+                        final List<Group> groupsToView = _allGroups.where((group) => _selectedGroupsForExport[group.key] ?? false).toList();
+                        final List<exporter.ScheduleExportData> schedules = [];
+                        for (var group in groupsToView) {
+                          final data = await _getScheduleExportDataForGroup(group);
+                          if (data != null) {
+                            schedules.add(data);
+                          }
+                        }
+                        setState(() {
+                          _multiDisplaySchedules = schedules;
+                          _isMultiScheduleView = true;
+                          _isExporting = false; // Reset exporting state
+                          _selectedGroup = null; // Clear single selection
+                        });
+                      }
+                    : null,
+                icon: const Icon(Icons.remove_red_eye),
+                label: const Text('Ver Seleccionados en Pantalla'),
+              ),
+              const SizedBox(height: 10),
+              _buildBatchExportButtons(),
+            ],
+            // Removed the misplaced const SizedBox(height: 20),
+            // The previous "Ver todos los horarios" button logic was replaced by multi-export section
+            // if (_allGroups.isNotEmpty)
+            //   ElevatedButton.icon(
+            //     onPressed: () {
+            //       setState(() {
+            //         _isMultiScheduleView = true;
+            //         _multiDisplaySchedules = _allGroups.where((group) => true).map((group) { // Select all by default
+            //           final schedule = _groupSchedules[group.key];
+            //           return exporter.ScheduleExportData(
+            //             id: group.key,
+            //             name: group.name,
+            //             title: 'Horario: ${group.name}',
+            //             subtitle: 'Ciclo Escolar: $_selectedSchoolCycle',
+            //             scheduleData: schedule?.dailySchedules ?? {},
+            //             viewType: 'group',
+            //             mainTitle: 'COLEGIO DE BACHILLERES DEL ESTADO DE CAMPECHE',
+            //             campusName: _campusName ?? 'N/A',
+            //             logoPath: 'assets/images/logo1.png',
+            //           );
+            //         }).toList();
+            //       });
+            //     },
+            //     icon: const Icon(Icons.view_carousel),
+            //     label: const Text('Ver todos los horarios'),
+            //   ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBatchExportButtons() {
+    final bool anyDisplayed = _multiDisplaySchedules.isNotEmpty;
+    if (_isExporting) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
+      alignment: WrapAlignment.center,
+      children: [
+        ElevatedButton.icon(
+          onPressed: anyDisplayed ? _exportMultiScheduleAsImageZip : null,
+          icon: const Icon(Icons.image),
+          label: const Text('Exportar todo JPG (ZIP)'),
+        ),
+        ElevatedButton.icon(
+          onPressed: anyDisplayed ? _exportMultiScheduleAsPdf : null,
+          icon: const Icon(Icons.picture_as_pdf),
+          label: const Text('Exportar todo PDF'),
+        ),
+      ],
+    );
+  }
+
+  Future<Uint8List?> _captureWidgetImage(ScreenshotController controller, Widget widgetToCapture) async {
+    return await controller.captureFromWidget(
+      widgetToCapture,
+      delay: const Duration(milliseconds: 100),
+      pixelRatio: 2.0,
+      targetSize: const Size(800, 1000), // Approximate size for landscape
+    );
+  }
+
+  Future<exporter.ScheduleExportData?> _getScheduleExportDataForGroup(Group group) async {
+    if (_campus == null || _selectedSchoolCycle == null || _campusName == null) return null;
+
+    final schedule = _groupSchedules[group.key];
+    return exporter.ScheduleExportData(
+      id: group.key,
+      name: group.name,
+      title: 'Horario: ${group.name}',
+      subtitle: 'Ciclo Escolar: $_selectedSchoolCycle',
+      scheduleData: schedule?.dailySchedules ?? {},
+      viewType: 'group',
+      mainTitle: 'COLEGIO DE BACHILLERES DEL ESTADO DE CAMPECHE',
+      campusName: _campusName!,
+      logoPath: 'assets/images/logo1.png',
+    );
+  }
+
+  Future<void> _exportSingleScheduleAsImage() async {
+    if (_selectedGroup == null || _groupSchedules[_selectedGroup!.key] == null) return;
+    setState(() => _isExporting = true);
+
+    final exportData = await _getScheduleExportDataForGroup(_selectedGroup!);
+    if (exportData == null) return;
+
+    final imageBytes = await _captureWidgetImage(_screenshotController, ScheduleDisplayWidget(
+      title: exportData.title,
+      subtitle: exportData.subtitle,
+      scheduleData: exportData.scheduleData,
+      viewType: exportData.viewType,
+      mainTitle: exportData.mainTitle,
+      campusName: exportData.campusName,
+      logoPath: exportData.logoPath,
+    ));
+
+    if (imageBytes != null) {
+      final fileName = 'Horario_${_selectedGroup!.name}_${_selectedSchoolCycle!.replaceAll("/", "-")}';
+      final success = await _fileExporter.exportImage(imageBytes, fileName);
+      if (mounted) UiHelpers.showSnackBar(context, success ? 'Horario guardado en la galería.' : 'Error al exportar imagen.');
+    } else {
+      if (mounted) UiHelpers.showSnackBar(context, 'Error al capturar la imagen.', isError: true);
+    }
+    setState(() => _isExporting = false);
+  }
+
+  Future<void> _exportSingleScheduleAsPdf() async {
+    if (_selectedGroup == null || _groupSchedules[_selectedGroup!.key] == null) return;
+    setState(() => _isExporting = true);
+
+    final exportData = await _getScheduleExportDataForGroup(_selectedGroup!);
+    if (exportData == null) return;
+
+    final imageBytes = await _captureWidgetImage(_screenshotController, ScheduleDisplayWidget(
+      title: exportData.title,
+      subtitle: exportData.subtitle,
+      scheduleData: exportData.scheduleData,
+      viewType: exportData.viewType,
+      mainTitle: exportData.mainTitle,
+      campusName: exportData.campusName,
+      logoPath: exportData.logoPath,
+    ));
+
+    if (imageBytes != null) {
+      final fileName = 'Horario_${_selectedGroup!.name}_${_selectedSchoolCycle!.replaceAll("/", "-")}';
+      final success = await _fileExporter.exportPdfSingle(imageBytes, fileName);
+      if (mounted) UiHelpers.showSnackBar(context, success ? 'PDF generado con éxito.' : 'Error al exportar PDF.');
+    } else {
+      if (mounted) UiHelpers.showSnackBar(context, 'Error al capturar la imagen para PDF.', isError: true);
+    }
+    setState(() => _isExporting = false);
+  }
+
+  Future<void> _exportMultiScheduleAsImageZip() async {
+    setState(() => _isExporting = true);
+    final Map<String, Uint8List> images = {};
+    for (var exportData in _multiDisplaySchedules) {
+      final imageBytes = await _captureWidgetImage(_multiViewScreenshotController, ScheduleDisplayWidget(
+        title: exportData.title,
+        subtitle: exportData.subtitle,
+        scheduleData: exportData.scheduleData,
+        viewType: exportData.viewType,
+        mainTitle: exportData.mainTitle,
+        campusName: exportData.campusName,
+        logoPath: exportData.logoPath,
+      ));
+      if (imageBytes != null) {
+        images['${exportData.name}_Horario.png'] = imageBytes;
+      }
+    }
+
+    if (images.isNotEmpty) {
+      final fileName = 'Horarios_Grupos_${_selectedSchoolCycle!.replaceAll("/", "-")}';
+      final success = await _fileExporter.exportImagesToZip(images, fileName);
+      if (mounted) UiHelpers.showSnackBar(context, success ? 'Horarios exportados en ZIP.' : 'Error al exportar ZIP.');
+    } else {
+      if (mounted) UiHelpers.showSnackBar(context, 'No hay horarios para exportar.', isError: true);
+    }
+    setState(() => _isExporting = false);
+  }
+
+  Future<void> _exportMultiScheduleAsPdf() async {
+    setState(() => _isExporting = true);
+    final List<Uint8List> pdfPages = [];
+    for (var exportData in _multiDisplaySchedules) {
+      final imageBytes = await _captureWidgetImage(_multiViewScreenshotController, ScheduleDisplayWidget(
+        title: exportData.title,
+        subtitle: exportData.subtitle,
+        scheduleData: exportData.scheduleData,
+        viewType: exportData.viewType,
+        mainTitle: exportData.mainTitle,
+        campusName: exportData.campusName,
+        logoPath: exportData.logoPath,
+      ));
+      if (imageBytes != null) {
+        pdfPages.add(imageBytes);
+      }
+      await Future.delayed(const Duration(milliseconds: 50)); // Small delay to prevent UI freezing
+    }
+
+    if (pdfPages.isNotEmpty) {
+      final fileName = 'Horarios_Grupos_${_selectedSchoolCycle!.replaceAll("/", "-")}';
+      final success = await _fileExporter.exportPdfMulti(pdfPages, fileName);
+      if (mounted) UiHelpers.showSnackBar(context, success ? 'PDF generado con éxito.' : 'Error al exportar PDF.');
+    } else {
+      if (mounted) UiHelpers.showSnackBar(context, 'No hay horarios para exportar.', isError: true);
+    }
+    setState(() => _isExporting = false);
+  }
+
+  Widget _buildSingleExportButtons() {
+    return _isExporting
+        ? const Center(child: CircularProgressIndicator())
+        : Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            alignment: WrapAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: (_selectedGroup != null && _groupSchedules[_selectedGroup!.key] != null)
+                    ? _exportSingleScheduleAsImage
+                    : null,
+                icon: const Icon(Icons.image),
+                label: const Text('Exportar como Imagen'),
+              ),
+              ElevatedButton.icon(
+                onPressed: (_selectedGroup != null && _groupSchedules[_selectedGroup!.key] != null)
+                    ? _exportSingleScheduleAsPdf
+                    : null,
+                icon: const Icon(Icons.picture_as_pdf),
+                label: const Text('Exportar como PDF'),
+              ),
+            ],
+          );
+  }
+
+  Widget _buildEmptyState(String message) {
+    return Expanded(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.info_outline, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
           ],
         ),
       ),

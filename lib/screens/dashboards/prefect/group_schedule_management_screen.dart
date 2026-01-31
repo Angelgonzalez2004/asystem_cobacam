@@ -4,6 +4,7 @@ import 'package:asystem_cobacam/models/teacher_model.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/edit_session_dialog.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
+import 'package:asystem_cobacam/widgets/schedule_display_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -50,26 +51,6 @@ class _GroupScheduleManagementScreenState
   String? _campus;
 
   final TextEditingController _searchController = TextEditingController();
-
-  final List<String> _weekdays = const [
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes'
-  ];
-  
-  final List<Map<String, String>> _timeSlots = const [
-    {'start': '07:00', 'end': '07:50'},
-    {'start': '07:50', 'end': '08:40'},
-    {'start': '08:40', 'end': '09:30'},
-    {'start': '09:30', 'end': '09:50'}, // Receso
-    {'start': '09:50', 'end': '10:40'},
-    {'start': '10:40', 'end': '11:30'},
-    {'start': '11:30', 'end': '12:20'},
-    {'start': '12:20', 'end': '13:10'},
-    {'start': '13:10', 'end': '14:00'},
-  ];
 
   @override
   void initState() {
@@ -441,214 +422,67 @@ class _GroupScheduleManagementScreenState
     );
   }
 
-    Widget _buildGroupList(ThemeData theme) {
+  Widget _buildGroupList(ThemeData theme) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: _filteredGroups.length,
+      itemBuilder: (context, index) {
+        final group = _filteredGroups[index];
+        final schedule = _groupSchedules[group.key];
 
-      return ListView.builder(
-
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-
-        itemCount: _filteredGroups.length,
-
-        itemBuilder: (context, index) {
-
-          final group = _filteredGroups[index];
-
-          final schedule = _groupSchedules[group.key];
-
-  
-
-          return FadeInUp(
-
-            delay: Duration(milliseconds: 50 * index),
-
-            child: Card(
-
-              elevation: 2.0,
-
-              shadowColor: Colors.black.withOpacity(0.1),
-
-              margin: const EdgeInsets.only(bottom: 20),
-
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-
-              child: ExpansionTile(
-
-                tilePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-
-                title: Text(
-
-                  group.name,
-
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-
-                ),
-
-                subtitle: Text(
-
-                  "Semestre: ${group.semester}",
-
-                  style: TextStyle(color: Colors.grey.shade600),
-
-                ),
-
+        return FadeInUp(
+          delay: Duration(milliseconds: 50 * index),
+          child: Card(
+            elevation: 2.0,
+            shadowColor: Colors.black.withOpacity(0.1),
+            margin: const EdgeInsets.only(bottom: 20),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-                   if (schedule == null && _isLoading)
-
+                  Text(
+                    group.name,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    "Semestre: ${group.semester}",
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 16),
+                  if (schedule == null && _isLoading)
                     const Padding(
-
                       padding: EdgeInsets.all(32.0),
-
                       child: Center(child: CircularProgressIndicator()),
-
                     )
-
                   else
-
-                    _buildScheduleGrid(group, schedule, theme),
-
-                ],
-
-              ),
-
-            ),
-
-          );
-
-        },
-
-      );
-
-    }
-
-  
-
-    Widget _buildScheduleGrid(Group group, GroupSchedule? schedule, ThemeData theme) {
-      final double headerHeight = 40.0;
-      final double rowHeight = 80.0;
-      final double timeColumnWidth = 80.0;
-      
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.all(12.0),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width * 1.5),
-          child: Column(
-            children: [
-              // Header Row
-              Container(
-                height: headerHeight,
-                decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.1),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    topRight: Radius.circular(12),
-                  )
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(width: timeColumnWidth),
-                    ..._weekdays.map((day) => Expanded(
-                          child: Center(
-                            child: Text(
-                              day,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        )),
-                  ],
-                ),
-              ),
-              // Schedule Rows
-              ..._timeSlots.map((slot) {
-                final startTime = slot['start']!;
-                final isBreak = startTime == '09:30';
-  
-                return Container(
-                  height: rowHeight,
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+                    ScheduleDisplayWidget(
+                      title: group.name,
+                      subtitle: "Semestre: ${group.semester}",
+                      scheduleData: schedule?.dailySchedules ?? {},
+                      viewType: 'group',
+                      mainTitle: 'Gestión de Horario',
+                      campusName: _campus ?? 'N/A',
+                      logoPath: 'assets/images/logo1.png',
+                      onSessionTap: (session, day, startTime, endTime) {
+                        if (_isReadOnly) {
+                          UiHelpers.showSnackBar(context,
+                              'Ciclo cerrado. No se pueden modificar horarios.',
+                              isError: true);
+                          return;
+                        }
+                        _editClassSession(group, day, session!);
+                      },
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      // Time Column
-                      SizedBox(
-                        width: timeColumnWidth,
-                        child: Center(
-                          child: Text(
-                            "${slot['start']!}\n${slot['end']!}",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: theme.textTheme.bodySmall?.color,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Day Cells
-                      ..._weekdays.map((day) {
-                        final dailySessions = schedule?.dailySchedules[day] ?? [];
-                         ClassSession? session;
-                        try {
-                          session = dailySessions.firstWhere((s) => s.startTime == startTime);
-                        } catch(e) {
-                          session = null;
-                        }
-  
-                        if (isBreak) {
-                          return Expanded(child: Container(color: Colors.teal.withOpacity(0.1), child: const Center(child: Text("Receso", style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 12)))));
-                        }
-  
-                        return Expanded(
-                          child: InkWell(
-                            onTap: _isReadOnly ? null : () {
-                              final sessionToEdit = session ?? ClassSession(startTime: startTime, endTime: slot['end']!);
-                              _editClassSession(group, day, sessionToEdit);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(4.0),
-                              alignment: Alignment.center,
-                              child: (session == null)
-                                  ? Icon(Icons.add_circle_outline, color: Colors.grey.shade400)
-                                  : FittedBox(
-                                    child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            session.subjectName,
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                                          ),
-                                          if (session.teacherName?.isNotEmpty ?? false)
-                                          Text(
-                                            session.teacherName!,
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(color: theme.colorScheme.primary, fontSize: 10),
-                                          ),
-                                          if (!_isReadOnly)
-                                            Padding(
-                                              padding: const EdgeInsets.only(top: 4.0),
-                                              child: Icon(Icons.edit_outlined, size: 14, color: Colors.grey.shade500),
-                                            )
-                                        ],
-                                      ),
-                                  ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                );
-              }),
-            ],
+                ],
+              ),
+            ),
           ),
-        ),
-      );
-    }
+        );
+      },
+    );
   }
-
-  
+}

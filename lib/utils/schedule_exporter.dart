@@ -44,7 +44,7 @@ class FileExporter {
         final granted = await Gal.requestAccess();
         if (!granted) return false;
       }
-      
+
       await Gal.putImageBytes(imageBytes, name: fileName);
       return true;
     } catch (e) {
@@ -61,6 +61,7 @@ class FileExporter {
 
       pdf.addPage(
         pw.Page(
+          pageFormat: PdfPageFormat.a4.landscape, // Set to landscape
           build: (pw.Context context) {
             return pw.Center(
               child: pw.Image(image),
@@ -71,7 +72,7 @@ class FileExporter {
 
       final Uint8List pdfBytes = await pdf.save();
       await WebDownloader.downloadFile(pdfBytes, '$fileName.pdf', 'application/pdf');
-      
+
       return true;
     } catch (e) {
       debugPrint('Error exporting single PDF: $e');
@@ -83,7 +84,7 @@ class FileExporter {
   Future<bool> exportPdfMulti(List<Uint8List> imagePages, String fileName) async {
     try {
       final pdf = pw.Document();
-      
+
       for (int i = 0; i < imagePages.length; i += 2) {
         final image1 = pw.MemoryImage(imagePages[i]);
         pw.MemoryImage? image2;
@@ -93,7 +94,7 @@ class FileExporter {
 
         pdf.addPage(
           pw.Page(
-            pageFormat: PdfPageFormat.a4, // Standard A4 size
+            pageFormat: PdfPageFormat.a4.landscape, // Standard A4 size, now landscape
             build: (pw.Context context) {
               if (image2 != null) {
                 return pw.Row(

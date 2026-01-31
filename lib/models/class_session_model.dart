@@ -58,4 +58,24 @@ class ClassSession {
 
   // Helper to check if the slot is free
   bool get isFree => subjectId == null && !isBreak;
+
+  ClassSession copyWith({
+    String? startTime,
+    String? endTime,
+    String? subjectId,
+    String? teacherId,
+    String? subjectName,
+    String? teacherName,
+    String? groupName,
+  }) {
+    return ClassSession(
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      subjectId: subjectId ?? this.subjectId,
+      teacherId: teacherId ?? this.teacherId,
+      subjectName: subjectName ?? this.subjectName,
+      teacherName: teacherName ?? this.teacherName,
+      groupName: groupName ?? this.groupName,
+    );
+  }
 }

@@ -4,6 +4,13 @@
 
 ---
 
+## ✨ Novedades y Mejoras Recientes
+
+*   **Estabilidad y Corrección de Errores:** Se han resuelto varios errores de sintaxis y referencias de métodos, mejorando la robustez general de la aplicación.
+*   **Exportación de Horarios Mejorada:** Se ha optimizado la lógica de exportación de horarios individuales y múltiples (tanto para grupos como para maestros) en formatos PDF e imagen (ZIP), asegurando su correcto funcionamiento y la visibilidad de los botones de exportación en todas las condiciones.
+
+---
+
 ## 🚀 Funcionalidades Principales
 
 Un vistazo a las capacidades que hacen de Asystem una herramienta indispensable.
@@ -34,6 +41,7 @@ Un vistazo a las capacidades que hacen de Asystem una herramienta indispensable.
 *   **Interfaz de Cuadrícula Profesional:** Se ha rediseñado completamente la visualización de horarios a una **cuadrícula o tabla de estilo tradicional**. Esta vista muestra las horas como filas y los días de la semana como columnas, ofreciendo una lectura mucho más clara e intuitiva.
 *   **Gestión Interactiva:** En la pantalla de **gestión de horarios**, los prefectos pueden hacer clic directamente sobre cualquier celda de la cuadrícula para **añadir, editar o eliminar** una sesión de clase, haciendo el proceso más rápido y visual.
 *   **Visores Claros y Concisos:** Las pantallas de **"Visor por Grupo"** y **"Visor por Maestro"** utilizan la misma interfaz de cuadrícula en modo de solo lectura para una consulta rápida y sin distracciones.
+*   **Exportación Integrada:** Posibilidad de exportar horarios individuales o múltiples a formatos PDF e imagen (ZIP) para facilitar la distribución y archivo.
 *   **Lógica de Negocio Respetada:** Todos los cambios son puramente visuales. Se mantiene intacta la lógica de negocio, incluyendo la validación de ciclos cerrados (modo solo lectura) y el manejo de recesos no modificables.
 *   **Filtrado y Búsqueda:** Todas las pantallas de horarios permiten filtrar por ciclo escolar y cuentan con una barra de búsqueda para localizar rápidamente el grupo o maestro deseado.
 
