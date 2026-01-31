@@ -276,8 +276,6 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
                 Expanded(child: _buildCycleSelector()),
               ],
             ),
-            const SizedBox(height: 16),
-            _buildSearchBar(),
           ],
         ),
       ),
@@ -310,22 +308,7 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
     );
   }
 
-  Widget _buildSearchBar() {
-    return TextField(
-      controller: _searchController,
-      decoration: InputDecoration(
-        hintText: 'Buscar grupo por nombre...',
-        prefixIcon: const Icon(Icons.search),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        filled: true,
-        fillColor: Theme.of(context).scaffoldBackgroundColor,
-        contentPadding: EdgeInsets.zero,
-      ),
-    );
-  }
+
 
   Widget _buildSingleScheduleView() {
     return _isLoading
@@ -591,7 +574,7 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
       widgetToCapture,
       delay: const Duration(milliseconds: 100),
       pixelRatio: 2.0,
-      targetSize: const Size(800, 1000), // Approximate size for landscape
+      targetSize: const Size(1500, 1200), // Increased size for better capture and landscape orientation
     );
   }
 
