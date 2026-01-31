@@ -16,10 +16,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:screenshot/screenshot.dart'; // For capturing widgets
 import 'package:asystem_cobacam/utils/schedule_exporter.dart' as exporter; // Alias to avoid name conflicts
-import 'package:dropdown_search/dropdown_search.dart'; // For group selection
+import 'package:collection/collection.dart'; // Import for firstWhereOrNull
+
 import 'package:asystem_cobacam/data/educational_centers.dart' as edu_centers; // For campus name lookup
 
-// ... (existing class definition)
 
 class GroupScheduleViewerScreen extends StatefulWidget {
   const GroupScheduleViewerScreen({super.key});
@@ -308,52 +308,14 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
     );
   }
 
-
-
   Widget _buildSingleScheduleView() {
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
         : Column(
             children: [
-              _buildGroupSelectionCard(), // Card for group selection and export buttons
+              _buildGroupSelectionCard(), // Now only contains multi-selection and export buttons
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Builder(builder: (context) {
-                    List<Widget> scheduleWidgets = [];
-
-                    if (_selectedGroup == null) {
-                      scheduleWidgets.add(_buildEmptyState('Selecciona un grupo para ver su horario.'));
-                    } else if (_groupSchedules[_selectedGroup!.key] == null) {
-                      scheduleWidgets.add(_buildEmptyState('Este grupo no tiene un horario asignado.'));
-                    } else {
-                      scheduleWidgets.add(
-                        Screenshot(
-                          controller: _screenshotController,
-                          child: ScheduleDisplayWidget(
-                            title: 'Horario: ${_selectedGroup!.name}',
-                            subtitle: 'Ciclo Escolar: $_selectedSchoolCycle',
-                            scheduleData: _groupSchedules[_selectedGroup!.key]!.dailySchedules,
-                            viewType: 'group',
-                            mainTitle: 'COLEGIO DE BACHILLERES DEL ESTADO DE CAMPECHE',
-                            campusName: _campusName ?? 'N/A',
-                            logoPath: 'assets/images/logo1.png',
-                          ),
-                        ),
-                      );
-                    }
-
-                    if (_selectedGroup != null) {
-                      scheduleWidgets.add(_buildSingleExportButtons());
-                    }
-                    
-                    scheduleWidgets.add(const SizedBox(height: 20)); // Add spacing at the end
-
-                    return Column(
-                      children: scheduleWidgets,
-                    );
-                  }),
-                ),
+                child: _buildEmptyState('Utiliza las casillas de selección para elegir grupos a visualizar o exportar.'),
               ),
             ],
           );
@@ -404,46 +366,11 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            DropdownSearch<Group>(
-              items: _allGroups,
-              selectedItem: _selectedGroup,
-              itemAsString: (Group g) => g.name,
-              onChanged: (Group? data) {
-                if (data != null) {
-                  setState(() => _selectedGroup = data);
-                }
-              },
-              dropdownDecoratorProps: const DropDownDecoratorProps(
-                dropdownSearchDecoration: InputDecoration(
-                  labelText: 'Seleccionar Grupo',
-                  prefixIcon: Icon(Icons.groups),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              popupProps: PopupProps.menu(
-                showSearchBox: true,
-                emptyBuilder: (context, search) => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text("No se encontraron grupos"),
-                  ),
-                ),
-                searchFieldProps: const TextFieldProps(
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    hintText: "Buscar grupo...",
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+
             // Multi-export section
             if (_allGroups.isNotEmpty && !_isLoading) ...[
-              const Divider(),
-              const SizedBox(height: 10),
               Text(
-                'Opciones de exportación y visualización',
+                'Seleccionar Grupos para Visualizar/Exportar',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 10),
@@ -453,17 +380,18 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
                 onChanged: (bool? value) {
                   setState(() {
                     _selectAllGroups = value ?? false;
-                    for (var group in _allGroups) { // Use _allGroups here
+                    for (var group in _allGroups) {
                       _selectedGroupsForExport[group.key] = _selectAllGroups;
                     }
+                    _updateSelectedGroupFromCheckboxes(); // Update _selectedGroup based on new selection
                   });
                 },
               ),
               Container(
-                constraints: const BoxConstraints(maxHeight: 150), // Limit height to avoid overflow
+                constraints: const BoxConstraints(maxHeight: 150),
                 child: Scrollbar(
                   child: ListView.builder(
-                    shrinkWrap: true, // Make ListView take only necessary space
+                    shrinkWrap: true,
                     itemCount: _filteredGroups.length,
                     itemBuilder: (context, index) {
                       final group = _filteredGroups[index];
@@ -473,12 +401,12 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
                         onChanged: (bool? value) {
                           setState(() {
                             _selectedGroupsForExport[group.key] = value ?? false;
-                            // If any is unchecked, "Select all" should be unchecked
                             if (!(_selectedGroupsForExport[group.key] ?? false)) {
                               _selectAllGroups = false;
                             } else if (_selectedGroupsForExport.values.every((element) => element)) {
                               _selectAllGroups = true;
                             }
+                            _updateSelectedGroupFromCheckboxes(); // Update _selectedGroup based on new selection
                           });
                         },
                       );
@@ -487,62 +415,75 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: _selectedGroupsForExport.values.any((e) => e)
-                    ? () async {
-                        setState(() => _isExporting = true); // Use _isExporting for feedback
-                        final List<Group> groupsToView = _allGroups.where((group) => _selectedGroupsForExport[group.key] ?? false).toList();
-                        final List<exporter.ScheduleExportData> schedules = [];
-                        for (var group in groupsToView) {
-                          final data = await _getScheduleExportDataForGroup(group);
-                          if (data != null) {
-                            schedules.add(data);
-                          }
-                        }
-                        setState(() {
-                          _multiDisplaySchedules = schedules;
-                          _isMultiScheduleView = true;
-                          _isExporting = false; // Reset exporting state
-                          _selectedGroup = null; // Clear single selection
-                        });
-                      }
-                    : null,
-                icon: const Icon(Icons.remove_red_eye),
-                label: const Text('Ver Seleccionados en Pantalla'),
+              // Moved "Opciones de exportación y visualización" here to be closer to buttons
+              Text(
+                'Opciones:',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 10),
-              _buildBatchExportButtons(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _selectedGroupsForExport.values.any((e) => e)
+                        ? () async {
+                            setState(() => _isExporting = true);
+                            final List<Group> groupsToView = _allGroups.where((group) => _selectedGroupsForExport[group.key] ?? false).toList();
+                            final List<exporter.ScheduleExportData> schedules = [];
+                            for (var group in groupsToView) {
+                              final data = await _getScheduleExportDataForGroup(group);
+                              if (data != null) {
+                                schedules.add(data);
+                              }
+                            }
+                            setState(() {
+                              _multiDisplaySchedules = schedules;
+                              _isMultiScheduleView = true;
+                              _isExporting = false;
+                              _selectedGroup = null; // Clear _selectedGroup as we are now in multi-view
+                            });
+                          }
+                        : null,
+                    icon: const Icon(Icons.remove_red_eye),
+                    label: const Text('Ver Seleccionados'),
+                  ),
+                  _buildBatchExportButtons(), // Batch export buttons
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Single export buttons now appear here if exactly one group is selected
+              if (_selectedGroup != null) _buildSingleExportButtons(),
             ],
-            // Removed the misplaced const SizedBox(height: 20),
-            // The previous "Ver todos los horarios" button logic was replaced by multi-export section
-            // if (_allGroups.isNotEmpty)
-            //   ElevatedButton.icon(
-            //     onPressed: () {
-            //       setState(() {
-            //         _isMultiScheduleView = true;
-            //         _multiDisplaySchedules = _allGroups.where((group) => true).map((group) { // Select all by default
-            //           final schedule = _groupSchedules[group.key];
-            //           return exporter.ScheduleExportData(
-            //             id: group.key,
-            //             name: group.name,
-            //             title: 'Horario: ${group.name}',
-            //             subtitle: 'Ciclo Escolar: $_selectedSchoolCycle',
-            //             scheduleData: schedule?.dailySchedules ?? {},
-            //             viewType: 'group',
-            //             mainTitle: 'COLEGIO DE BACHILLERES DEL ESTADO DE CAMPECHE',
-            //             campusName: _campusName ?? 'N/A',
-            //             logoPath: 'assets/images/logo1.png',
-            //           );
-            //         }).toList();
-            //       });
-            //     },
-            //     icon: const Icon(Icons.view_carousel),
-            //     label: const Text('Ver todos los horarios'),
-            //   ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildSingleExportButtons() {
+    return _isExporting
+        ? const Center(child: CircularProgressIndicator())
+        : Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            alignment: WrapAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: (_selectedGroup != null && _groupSchedules[_selectedGroup!.key] != null)
+                    ? _exportSingleScheduleAsImage
+                    : null,
+                icon: const Icon(Icons.image),
+                label: const Text('Exportar como Imagen'),
+              ),
+              ElevatedButton.icon(
+                onPressed: (_selectedGroup != null && _groupSchedules[_selectedGroup!.key] != null)
+                    ? _exportSingleScheduleAsPdf
+                    : null,
+                icon: const Icon(Icons.picture_as_pdf),
+                label: const Text('Exportar como PDF'),
+              ),
+            ],
+          );
   }
 
   Widget _buildBatchExportButtons() {
@@ -710,30 +651,23 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
     setState(() => _isExporting = false);
   }
 
-  Widget _buildSingleExportButtons() {
-    return _isExporting
-        ? const Center(child: CircularProgressIndicator())
-        : Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            alignment: WrapAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: (_selectedGroup != null && _groupSchedules[_selectedGroup!.key] != null)
-                    ? _exportSingleScheduleAsImage
-                    : null,
-                icon: const Icon(Icons.image),
-                label: const Text('Exportar como Imagen'),
-              ),
-              ElevatedButton.icon(
-                onPressed: (_selectedGroup != null && _groupSchedules[_selectedGroup!.key] != null)
-                    ? _exportSingleScheduleAsPdf
-                    : null,
-                icon: const Icon(Icons.picture_as_pdf),
-                label: const Text('Exportar como PDF'),
-              ),
-            ],
-          );
+  void _updateSelectedGroupFromCheckboxes() {
+    final selectedGroupKeys = _selectedGroupsForExport.entries
+        .where((entry) => entry.value)
+        .map((entry) => entry.key)
+        .toList();
+
+    if (selectedGroupKeys.length == 1) {
+      setState(() {
+        _selectedGroup = _allGroups.firstWhereOrNull(
+          (group) => group.key == selectedGroupKeys.first,
+        );
+      });
+    } else {
+      setState(() {
+        _selectedGroup = null;
+      });
+    }
   }
 
   Widget _buildEmptyState(String message) {

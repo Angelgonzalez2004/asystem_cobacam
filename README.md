@@ -1,13 +1,18 @@
 # 🎓 Asystem Cobacam - Suite de Gestión Académica Integral
 
-**Asystem Cobacam** es una plataforma digital de vanguardia desarrollada para el **Colegio de Bachilleres del Estado de Campeche (COBACAM)**. Su objetivo es modernizar, centralizar y optimizar todos los procesos académicos y administrativos, conectando a alumnos, docentes, prefectos y personal directivo en un ecosistema seguro y eficiente.
+**Asystem Cobacam** es una plataforma digital de vanguardia en **constante evolución y mejora**, desarrollada para el **Colegio de Bachilleres del Estado de Campeche (COBACAM)**. Su objetivo es modernizar, centralizar y optimizar continuamente todos los procesos académicos y administrativos, conectando a alumnos, docentes, prefectos y personal directivo en un ecosistema seguro y eficiente.
 
 ---
 
 ## ✨ Novedades y Mejoras Recientes
 
-*   **Estabilidad y Corrección de Errores:** Se han resuelto varios errores de sintaxis y referencias de métodos, mejorando la robustez general de la aplicación.
-*   **Exportación de Horarios Mejorada:** Se ha optimizado la lógica de exportación de horarios individuales y múltiples (tanto para grupos como para maestros) en formatos PDF e imagen (ZIP), asegurando su correcto funcionamiento y la visibilidad de los botones de exportación en todas las condiciones.
+Nos dedicamos a la mejora continua de Asystem Cobacam, incorporando nuevas funcionalidades y optimizando las existentes basándonos en las necesidades de nuestros usuarios y los avances tecnológicos.
+
+*   **Últimas Actualizaciones:**
+    *   **Estabilidad y Corrección de Errores:** Se han resuelto varios errores de sintaxis y referencias de métodos, mejorando la robustez general de la aplicación.
+    *   **Exportación de Horarios Mejorada:** Se ha optimizado la lógica de exportación de horarios individuales y múltiples (tanto para grupos como para maestros) en formatos PDF e imagen (ZIP), asegurando su correcto funcionamiento y la visibilidad de los botones de exportación en todas las condiciones.
+    *   *(Agrega tus últimas actualizaciones aquí)*
+
 
 ---
 

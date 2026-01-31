@@ -18,7 +18,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:asystem_cobacam/utils/schedule_exporter.dart' as exporter;
-import 'package:dropdown_search/dropdown_search.dart';
+import 'package:collection/collection.dart';
+
 import 'package:asystem_cobacam/data/educational_centers.dart' as edu_centers;
 
 class TeacherScheduleViewerScreen extends StatefulWidget {
@@ -351,43 +352,9 @@ class _TeacherScheduleViewerScreenState
         ? const Center(child: CircularProgressIndicator())
         : Column(
             children: [
-              _buildTeacherSelectionCard(),
+              _buildTeacherSelectionCard(), // Now only contains multi-selection and export buttons
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Builder(builder: (context) {
-                    List<Widget> scheduleWidgets = [];
-
-                    if (_selectedTeacher == null) {
-                      scheduleWidgets.add(_buildEmptyState('Selecciona un maestro para ver su horario.'));
-                    } else {
-                      scheduleWidgets.add(
-                        Screenshot(
-                          controller: _screenshotController,
-                          child: ScheduleDisplayWidget(
-                            title: 'Horario: ${_selectedTeacher!.name}',
-                            subtitle: 'Ciclo Escolar: $_selectedSchoolCycle',
-                            scheduleData: _getScheduleForTeacher(_selectedTeacher!.id),
-                            viewType: 'teacher',
-                            mainTitle: 'COLEGIO DE BACHILLERES DEL ESTADO DE CAMPECHE',
-                            campusName: _campusName ?? 'N/A',
-                            logoPath: 'assets/images/logo1.png',
-                          ),
-                        ),
-                      );
-                    }
-
-                    if (_selectedTeacher != null) {
-                      scheduleWidgets.add(_buildSingleExportButtons());
-                    }
-                    
-                    scheduleWidgets.add(const SizedBox(height: 20)); // Add spacing at the end
-
-                    return Column(
-                      children: scheduleWidgets,
-                    );
-                  }),
-                ),
+                child: _buildEmptyState('Utiliza las casillas de selección para elegir maestros a visualizar o exportar.'),
               ),
             ],
           );
@@ -438,46 +405,10 @@ class _TeacherScheduleViewerScreenState
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            DropdownSearch<Teacher>(
-              items: _allTeachers,
-              selectedItem: _selectedTeacher,
-              itemAsString: (Teacher t) => t.name,
-              onChanged: (Teacher? data) {
-                if (data != null) {
-                  setState(() => _selectedTeacher = data);
-                }
-              },
-              dropdownDecoratorProps: const DropDownDecoratorProps(
-                dropdownSearchDecoration: InputDecoration(
-                  labelText: 'Seleccionar Maestro',
-                  prefixIcon: Icon(Icons.person),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              popupProps: PopupProps.menu(
-                showSearchBox: true,
-                emptyBuilder: (context, search) => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text("No se encontraron maestros"),
-                  ),
-                ),
-                searchFieldProps: const TextFieldProps(
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    hintText: "Buscar maestro...",
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
             // Multi-export section
             if (_allTeachers.isNotEmpty && !_isLoading) ...[
-              const Divider(),
-              const SizedBox(height: 10),
               Text(
-                'Opciones de exportación y visualización',
+                'Seleccionar Maestros para Visualizar/Exportar',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 10),
@@ -487,17 +418,18 @@ class _TeacherScheduleViewerScreenState
                 onChanged: (bool? value) {
                   setState(() {
                     _selectAllTeachers = value ?? false;
-                    for (var teacher in _allTeachers) { // Use _allTeachers here
+                    for (var teacher in _allTeachers) {
                       _selectedTeachersForExport[teacher.id] = _selectAllTeachers;
                     }
+                    _updateSelectedTeacherFromCheckboxes(); // Update _selectedTeacher based on new selection
                   });
                 },
               ),
               Container(
-                constraints: const BoxConstraints(maxHeight: 150), // Limit height to avoid overflow
+                constraints: const BoxConstraints(maxHeight: 150),
                 child: Scrollbar(
                   child: ListView.builder(
-                    shrinkWrap: true, // Make ListView take only necessary space
+                    shrinkWrap: true,
                     itemCount: _filteredTeachers.length,
                     itemBuilder: (context, index) {
                       final teacher = _filteredTeachers[index];
@@ -507,12 +439,12 @@ class _TeacherScheduleViewerScreenState
                         onChanged: (bool? value) {
                           setState(() {
                             _selectedTeachersForExport[teacher.id] = value ?? false;
-                            // If any is unchecked, "Select all" should be unchecked
                             if (!(_selectedTeachersForExport[teacher.id] ?? false)) {
                               _selectAllTeachers = false;
                             } else if (_selectedTeachersForExport.values.every((element) => element)) {
                               _selectAllTeachers = true;
                             }
+                            _updateSelectedTeacherFromCheckboxes(); // Update _selectedTeacher based on new selection
                           });
                         },
                       );
@@ -521,62 +453,68 @@ class _TeacherScheduleViewerScreenState
                 ),
               ),
               const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: _selectedTeachersForExport.values.any((e) => e)
-                    ? () async {
-                        setState(() => _isExporting = true); // Use _isExporting for feedback
-                        final List<Teacher> teachersToView = _allTeachers.where((teacher) => _selectedTeachersForExport[teacher.id] ?? false).toList();
-                        final List<exporter.ScheduleExportData> schedules = [];
-                        for (var teacher in teachersToView) {
-                          final data = await _getScheduleExportDataForTeacherExport(teacher);
-                          if (data != null) {
-                            schedules.add(data);
-                          }
-                        }
-                        setState(() {
-                          _multiDisplaySchedules = schedules;
-                          _isMultiScheduleView = true;
-                          _isExporting = false; // Reset exporting state
-                          _selectedTeacher = null; // Clear single selection
-                        });
-                      }
-                    : null,
-                icon: const Icon(Icons.remove_red_eye),
-                label: const Text('Ver Seleccionados en Pantalla'),
+              // Moved "Opciones de exportación y visualización" here to be closer to buttons
+              Text(
+                'Opciones:',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 10),
-              _buildMultiExportButtons(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _selectedTeachersForExport.values.any((e) => e)
+                        ? () async {
+                            setState(() => _isExporting = true);
+                            final List<Teacher> teachersToView = _allTeachers.where((teacher) => _selectedTeachersForExport[teacher.id] ?? false).toList();
+                            final List<exporter.ScheduleExportData> schedules = [];
+                            for (var teacher in teachersToView) {
+                              final data = await _getScheduleExportDataForTeacherExport(teacher);
+                              if (data != null) {
+                                schedules.add(data);
+                              }
+                            }
+                            setState(() {
+                              _multiDisplaySchedules = schedules;
+                              _isMultiScheduleView = true;
+                              _isExporting = false;
+                              _selectedTeacher = null; // Clear _selectedTeacher as we are now in multi-view
+                            });
+                          }
+                        : null,
+                    icon: const Icon(Icons.remove_red_eye),
+                    label: const Text('Ver Seleccionados'),
+                  ),
+                  _buildMultiExportButtons(), // Batch export buttons
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Single export buttons now appear here if exactly one teacher is selected
+              if (_selectedTeacher != null) _buildSingleExportButtons(),
             ],
-            const SizedBox(height: 20),
-            // The previous "Ver todos los horarios" button logic was replaced by multi-export section
-            // if (_allTeachers.isNotEmpty)
-            //   ElevatedButton.icon(
-            //     onPressed: () {
-            //       setState(() {
-            //         _isMultiScheduleView = true;
-            //         _multiDisplaySchedules = _allTeachers.where((teacher) => true).map((teacher) { // Select all by default
-            //           final scheduleData = _getScheduleForTeacher(teacher.id);
-            //           return exporter.ScheduleExportData(
-            //             id: teacher.id,
-            //             name: teacher.name,
-            //             title: 'Horario: ${teacher.name}',
-            //             subtitle: 'Ciclo Escolar: $_selectedSchoolCycle',
-            //             scheduleData: scheduleData,
-            //             viewType: 'teacher',
-            //             mainTitle: 'COLEGIO DE BACHILLERES DEL ESTADO DE CAMPECHE',
-            //             campusName: _campusName ?? 'N/A',
-            //             logoPath: 'assets/images/logo1.png',
-            //           );
-            //         }).toList();
-            //       });
-            //     },
-            //     icon: const Icon(Icons.view_carousel),
-            //     label: const Text('Ver todos los horarios'),
-            //   ),
           ],
         ),
       ),
     );
+  }
+
+  void _updateSelectedTeacherFromCheckboxes() {
+    final selectedTeacherIds = _selectedTeachersForExport.entries
+        .where((entry) => entry.value)
+        .map((entry) => entry.key)
+        .toList();
+
+    if (selectedTeacherIds.length == 1) {
+      setState(() {
+        _selectedTeacher = _allTeachers.firstWhereOrNull(
+          (teacher) => teacher.id == selectedTeacherIds.first,
+        );
+      });
+    } else {
+      setState(() {
+        _selectedTeacher = null;
+      });
+    }
   }
 
   Widget _buildSingleExportButtons() {
