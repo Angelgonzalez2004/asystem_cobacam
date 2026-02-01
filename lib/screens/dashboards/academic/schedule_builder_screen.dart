@@ -4,8 +4,7 @@ import 'package:asystem_cobacam/models/schedule_models.dart';
 import 'package:asystem_cobacam/screens/dashboards/academic/manage_groups_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/academic/manage_subjects_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/academic/manage_teachers_screen.dart';
-import 'package:asystem_cobacam/widgets/schedule_display_widget.dart';
-import 'package:asystem_cobacam/models/class_session_model.dart';
+import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -369,8 +368,6 @@ class _ScheduleBuilderScreenState extends State<ScheduleBuilderScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -537,8 +534,6 @@ class _ScheduleBuilderScreenState extends State<ScheduleBuilderScreen> {
         endTime: HORARIOS[int.parse(parts[1])].endTime,
         subjectId: assignment.subjectId,
         teacherId: assignment.teacherId,
-        groupId: assignment.groupId,
-        classroomId: assignment.classroomId,
         subjectName: subject.name,
         teacherName: teacher.name,
         groupName: group.name,
@@ -547,17 +542,17 @@ class _ScheduleBuilderScreenState extends State<ScheduleBuilderScreen> {
       // Apply search filter here
       if (query.isEmpty ||
           classSession.subjectName.toLowerCase().contains(query) ||
-          classSession.teacherName.toLowerCase().contains(query) ||
-          classSession.groupName.toLowerCase().contains(query)) {
+          (classSession.teacherName?.toLowerCase() ?? '').contains(query) ||
+          (classSession.groupName?.toLowerCase() ?? '').contains(query)) {
         final dayName = DIAS_SEMANA[dayIndex];
         displaySchedule.putIfAbsent(dayName, () => []).add(classSession);
       }
     });
 
     // Sort sessions by start time for each day
-    displaySchedule.values.forEach((sessions) {
+    for (var sessions in displaySchedule.values) {
       sessions.sort((a, b) => a.startTime.compareTo(b.startTime));
-    });
+    }
 
     return displaySchedule;
   }

@@ -3,29 +3,29 @@
 import 'package:firebase_database/firebase_database.dart';
 
 class TimeSlot {
-  final String start;
-  final String end;
+  final String startTime;
+  final String endTime;
   final bool isRecess;
 
   const TimeSlot(
-      {required this.start, required this.end, this.isRecess = false});
+      {required this.startTime, required this.endTime, this.isRecess = false});
 
   @override
   String toString() {
-    return '$start - $end';
+    return '$startTime - $endTime';
   }
 }
 
 const List<TimeSlot> HORARIOS = [
-  TimeSlot(start: '07:00', end: '07:50'),
-  TimeSlot(start: '07:50', end: '08:40'),
-  TimeSlot(start: '08:40', end: '09:30'),
-  TimeSlot(start: '09:30', end: '09:50', isRecess: true),
-  TimeSlot(start: '09:50', end: '10:40'),
-  TimeSlot(start: '10:40', end: '11:30'),
-  TimeSlot(start: '11:30', end: '12:20'),
-  TimeSlot(start: '12:20', end: '13:10'),
-  TimeSlot(start: '13:10', end: '14:00'),
+  TimeSlot(startTime: '07:00', endTime: '07:50'),
+  TimeSlot(startTime: '07:50', endTime: '08:40'),
+  TimeSlot(startTime: '08:40', endTime: '09:30'),
+  TimeSlot(startTime: '09:30', endTime: '09:50', isRecess: true),
+  TimeSlot(startTime: '09:50', endTime: '10:40'),
+  TimeSlot(startTime: '10:40', endTime: '11:30'),
+  TimeSlot(startTime: '11:30', endTime: '12:20'),
+  TimeSlot(startTime: '12:20', endTime: '13:10'),
+  TimeSlot(startTime: '13:10', endTime: '14:00'),
 ];
 
 const List<String> DIAS_SEMANA = [
