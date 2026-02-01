@@ -1,11 +1,15 @@
-import 'dart:typed_data';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // For compute function
+import 'package:asystem_cobacam/utils/export_isolates.dart'; // Import the new isolate functions
+
+// --- Existing imports ---
+
+
 import 'package:pdf/widgets.dart' as pw;
-import 'package:pdf/pdf.dart'; // Added for PdfPageFormat
+import 'package:pdf/pdf.dart';
 import 'package:gal/gal.dart';
 import 'package:asystem_cobacam/utils/web_downloader.dart'
     if (dart.library.html) 'package:asystem_cobacam/utils/web_downloader_web.dart';
-import 'package:archive/archive_io.dart';
+
 
 // Assuming ClassSession is defined elsewhere and imported
 import 'package:asystem_cobacam/models/class_session_model.dart';
@@ -70,7 +74,7 @@ class FileExporter {
         ),
       );
 
-      final Uint8List pdfBytes = await pdf.save();
+      final Uint8List pdfBytes = await compute(_savePdfInIsolate, pdf); // Use compute for pdf.save()
       await WebDownloader.downloadFile(pdfBytes, '$fileName.pdf', 'application/pdf');
 
       return true;
@@ -83,40 +87,7 @@ class FileExporter {
   // Exports multiple images into a multi-page PDF, two per page
   Future<bool> exportPdfMulti(List<Uint8List> imagePages, String fileName) async {
     try {
-      final pdf = pw.Document();
-
-      for (int i = 0; i < imagePages.length; i += 2) {
-        final image1 = pw.MemoryImage(imagePages[i]);
-        pw.MemoryImage? image2;
-        if (i + 1 < imagePages.length) {
-          image2 = pw.MemoryImage(imagePages[i+1]);
-        }
-
-        pdf.addPage(
-          pw.Page(
-            pageFormat: PdfPageFormat.a4.landscape, // Standard A4 size, now landscape
-            build: (pw.Context context) {
-              if (image2 != null) {
-                return pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Expanded(child: pw.Image(image1)),
-                    pw.SizedBox(width: 10), // Space between images
-                    pw.Expanded(child: pw.Image(image2)),
-                  ],
-                );
-              } else {
-                return pw.Center(
-                  child: pw.Image(image1),
-                );
-              }
-            },
-          ),
-        );
-      }
-
-      final Uint8List pdfBytes = await pdf.save();
+      final Uint8List pdfBytes = await compute(generatePdfIsolate, imagePages); // Use compute
       await WebDownloader.downloadFile(pdfBytes, '$fileName.pdf', 'application/pdf');
       return true;
     } catch (e) {
@@ -128,18 +99,19 @@ class FileExporter {
   // Exports multiple images into a ZIP archive
   Future<bool> exportImagesToZip(Map<String, Uint8List> images, String zipFileName) async {
     try {
-      final archive = Archive();
-      for (final entry in images.entries) {
-        archive.addFile(ArchiveFile(entry.key, entry.value.length, entry.value));
-      }
-      final zipBytes = ZipEncoder().encode(archive);
+      final Uint8List? zipBytes = await compute(generateZipIsolate, images); // Use compute
       if (zipBytes == null) return false;
 
-      await WebDownloader.downloadFile(Uint8List.fromList(zipBytes), '$zipFileName.zip', 'application/zip');
+      await WebDownloader.downloadFile(zipBytes, '$zipFileName.zip', 'application/zip');
       return true;
     } catch (e) {
       debugPrint('Error exporting images to ZIP: $e');
       return false;
     }
   }
+}
+
+// Top-level function for compute to save a single PDF
+Future<Uint8List> _savePdfInIsolate(pw.Document pdf) async {
+  return await pdf.save();
 }

@@ -693,7 +693,7 @@ class _TeacherScheduleViewerScreenState
       if (imageBytes != null) {
         pdfPages.add(imageBytes);
       }
-      await Future.delayed(const Duration(milliseconds: 50));
+
     }
 
     if (pdfPages.isNotEmpty) {

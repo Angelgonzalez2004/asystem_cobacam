@@ -638,7 +638,7 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
       if (imageBytes != null) {
         pdfPages.add(imageBytes);
       }
-      await Future.delayed(const Duration(milliseconds: 50)); // Small delay to prevent UI freezing
+
     }
 
     if (pdfPages.isNotEmpty) {
