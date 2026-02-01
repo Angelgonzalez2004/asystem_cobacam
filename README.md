@@ -11,7 +11,7 @@ Nos dedicamos a la mejora continua de Asystem Cobacam, incorporando nuevas funci
 *   **Últimas Actualizaciones:**
     *   **Estabilidad y Corrección de Errores:** Se han resuelto varios errores de sintaxis y referencias de métodos, mejorando la robustez general de la aplicación.
         *   **Exportación de Horarios Mejorada:** Se ha optimizado la lógica de exportación de horarios individuales y múltiples (tanto para grupos como para maestros) en formatos PDF e imagen (ZIP), asegurando su correcto funcionamiento y la visibilidad de los botones de exportación en todas las condiciones.
-        *   **Optimización de Exportación de Horarios:** Se ha mejorado significativamente el rendimiento al exportar horarios a PDF e imágenes (ZIP), especialmente para múltiples selecciones. Las operaciones intensivas de CPU ahora se ejecutan en segundo plano, lo que resulta en una experiencia de usuario más fluida y descargas más rápidas.
+        *   **Mejoras en la Exportación de Horarios (Orientación Vertical y Rendimiento):** Se ha ajustado la orientación de los horarios exportados a PDF e imágenes para que sean verticales (formato retrato), permitiendo un horario individual por página o imagen. Además, se ha optimizado aún más el rendimiento de la captura de imágenes para una experiencia de descarga más rápida y fluida.
         *(Agrega tus últimas actualizaciones aquí)*
 
 ---

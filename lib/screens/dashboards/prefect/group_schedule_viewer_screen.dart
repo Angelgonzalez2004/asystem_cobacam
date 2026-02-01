@@ -514,8 +514,8 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
     return await controller.captureFromWidget(
       widgetToCapture,
       delay: const Duration(milliseconds: 100),
-      pixelRatio: 2.0,
-      targetSize: const Size(1500, 1200), // Increased size for better capture and landscape orientation
+      pixelRatio: 1.0,
+      targetSize: const Size(1200, 1500), // Changed to portrait orientation
     );
   }
 

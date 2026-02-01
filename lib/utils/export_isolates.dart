@@ -7,37 +7,20 @@ import 'package:pdf/pdf.dart'; // Needed for PdfPageFormat
 Future<Uint8List> generatePdfIsolate(List<Uint8List> imagePages) async {
   final pdf = pw.Document();
 
-  for (int i = 0; i < imagePages.length; i += 2) {
-    final image1 = pw.MemoryImage(imagePages[i]);
-    pw.MemoryImage? image2;
-    if (i + 1 < imagePages.length) {
-      image2 = pw.MemoryImage(imagePages[i+1]);
-    }
-
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4.landscape,
-        build: (pw.Context context) {
-          if (image2 != null) {
-            return pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Expanded(child: pw.Image(image1)),
-                pw.SizedBox(width: 10),
-                pw.Expanded(child: pw.Image(image2)),
-              ],
-            );
-          } else {
+    for (final imageBytes in imagePages) {
+      final image = pw.MemoryImage(imageBytes);
+  
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4, // Portrait A4 size
+          build: (pw.Context context) {
             return pw.Center(
-              child: pw.Image(image1),
+              child: pw.Image(image),
             );
-          }
-        },
-      ),
-    );
-  }
-  return await pdf.save();
+          },
+        ),
+      );
+    }  return await pdf.save();
 }
 
 /// Top-level function to generate a ZIP archive in an isolate.
