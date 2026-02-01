@@ -2,17 +2,15 @@ import 'package:asystem_cobacam/models/announcement_model.dart';
 import 'package:asystem_cobacam/services/announcement_service.dart';
 import 'package:asystem_cobacam/widgets/announcement_widgets.dart';
 import 'package:asystem_cobacam/widgets/welcome_header.dart';
-import 'package:asystem_cobacam/screens/dashboards/academic/manage_groups_screen.dart';
-import 'package:asystem_cobacam/screens/dashboards/academic/manage_subjects_screen.dart';
-import 'package:asystem_cobacam/screens/dashboards/academic/manage_teachers_screen.dart';
-import 'package:asystem_cobacam/screens/dashboards/academic/schedule_builder_screen.dart';
+import 'package:asystem_cobacam/utils/animations.dart'; // Added this import
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 class AcademicHomeScreen extends StatefulWidget {
-  const AcademicHomeScreen({super.key});
+  final Function(String route)? onNavigate;
+  const AcademicHomeScreen({super.key, this.onNavigate});
 
   @override
   State<AcademicHomeScreen> createState() => _AcademicHomeScreenState();
@@ -73,59 +71,32 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader(theme, 'Gestión Escolar'),
+                _buildSectionHeader(theme, 'Acciones Rápidas'),
                 const SizedBox(height: 16),
 
-                // Cuadrícula de herramientas administrativas
                 GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisCount:
-                      MediaQuery.of(context).size.width > 600 ? 2 : 1,
-                  childAspectRatio: 3,
+                      MediaQuery.of(context).size.width > 600 ? 4 : 2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
+                  childAspectRatio: 1.4,
                   children: [
-                    _buildAdminTile(
-                        context,
-                        'Maestros',
-                        Icons.person_pin_rounded,
-                        Colors.blue,
-                        () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const ManageTeachersScreen()))),
-                    _buildAdminTile(
-                        context,
-                        'Materias',
-                        Icons.book_rounded,
-                        Colors.orange,
-                        () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const ManageSubjectsScreen()))),
-                    _buildAdminTile(
-                        context,
-                        'Grupos',
-                        Icons.class_rounded,
-                        Colors.purple,
-                        () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const ManageGroupsScreen()))),
-                    _buildAdminTile(
-                        context,
-                        'Horarios',
-                        Icons.grid_view_rounded,
-                        Colors.teal,
-                        () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const ScheduleBuilderScreen()))),
+                    _buildQuickAction(
+                      context,
+                      icon: Icons.schedule_rounded,
+                      label: 'Gestión Horarios',
+                      color: Colors.blue,
+                      onTap: () => widget.onNavigate?.call('manage_group_schedules'),
+                    ),
+                    _buildQuickAction(
+                      context,
+                      icon: Icons.person_pin_rounded,
+                      label: 'Gestionar Docentes',
+                      color: Colors.purple,
+                      onTap: () => widget.onNavigate?.call('manage_teachers'),
+                    ),
                   ],
                 ),
 
@@ -180,32 +151,44 @@ class _AcademicHomeScreenState extends State<AcademicHomeScreen> {
     );
   }
 
-  Widget _buildAdminTile(BuildContext context, String title, IconData icon,
-      Color color, VoidCallback onTap) {
+  Widget _buildQuickAction(BuildContext context,
+      {required IconData icon,
+      required String label,
+      required Color color,
+      required VoidCallback onTap}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.2)),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(width: 12),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-            const Spacer(),
-            const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
-          ],
+    return FadeInUp(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white10 : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withOpacity(0.3)),
+              boxShadow: [
+                BoxShadow(
+                    color: color.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4)),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 32),
+                const SizedBox(height: 8),
+                Text(label,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 13)),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
+

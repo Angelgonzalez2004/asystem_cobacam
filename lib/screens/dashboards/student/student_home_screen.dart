@@ -9,7 +9,8 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 class StudentHomeScreen extends StatefulWidget {
-  const StudentHomeScreen({super.key});
+  final Function(String route)? onNavigate;
+  const StudentHomeScreen({super.key, this.onNavigate});
 
   @override
   State<StudentHomeScreen> createState() => _StudentHomeScreenState();

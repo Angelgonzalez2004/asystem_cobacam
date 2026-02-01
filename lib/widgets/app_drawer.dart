@@ -120,10 +120,7 @@ class AppDrawer extends StatelessWidget {
                       icon: Icons.people_outline_rounded,
                       title: 'Alumnos',
                       onTap: () => onNavigate?.call('alumnos')),
-                  _buildDrawerItem(context,
-                      icon: Icons.schedule_rounded,
-                      title: 'Horarios',
-                      onTap: () => onNavigate?.call('horarios')),
+
                   const Divider(),
                    Padding(
                     padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
@@ -140,14 +137,7 @@ class AppDrawer extends StatelessWidget {
                       title: 'Visor de Horario (Maestro)',
                       onTap: () => onNavigate?.call('visor_maestro')),
                   const Divider(),
-                  _buildDrawerItem(context,
-                      icon: Icons.calendar_today_rounded,
-                      title: 'Ciclos Escolares',
-                      onTap: () => onNavigate?.call('ciclos')),
-                  _buildDrawerItem(context,
-                      icon: Icons.event_busy_rounded,
-                      title: 'Días No Lectivos',
-                      onTap: () => onNavigate?.call('no_lectivos')),
+
                   _buildDrawerItem(context,
                       icon: Icons.help_outline_rounded,
                       title: 'Manual Operativo (FAQ)',
@@ -157,6 +147,10 @@ class AppDrawer extends StatelessWidget {
 
                 // --- ADMIN SPECIFIC TOOLS ---
                 if (role.contains('Administrativo')) ...[
+                  _buildDrawerItem(context,
+                      icon: Icons.help_outline_rounded,
+                      title: 'Manual Operativo (FAQ)',
+                      onTap: () => onNavigate?.call('faq')),
                   _buildDrawerItem(
                     context,
                     icon: Icons.campaign_rounded,
@@ -171,16 +165,58 @@ class AppDrawer extends StatelessWidget {
                   ),
                 ],
 
-                // Académica puede ver llaves si se considera necesario (opcional)
+
+
+                // --- ACADÉMICA SPECIFIC TOOLS ---
                 if (role == 'Academica') ...[
                   const Divider(),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.vpn_key_rounded,
-                    title: 'Llaves de Registro',
-                    onTap: () => onNavigate?.call('manage_access_codes'),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+                    child: Text('HORARIOS',
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: Colors.grey)),
                   ),
+                  _buildDrawerItem(context,
+                      icon: Icons.grid_view_rounded,
+                      title: 'Visor de Horario (Grupo)',
+                      onTap: () => onNavigate?.call('visor_grupo')),
+                  _buildDrawerItem(context,
+                      icon: Icons.person_search_rounded,
+                      title: 'Visor de Horario (Maestro)',
+                      onTap: () => onNavigate?.call('visor_maestro')),
+                  _buildDrawerItem(context,
+                      icon: Icons.schedule_rounded,
+                      title: 'Gestión de Horarios',
+                      onTap: () => onNavigate?.call('manage_group_schedules')),
+                  const Divider(),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+                    child: Text('PERSONAL',
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: Colors.grey)),
+                  ),
+                  _buildDrawerItem(context,
+                      icon: Icons.person_pin_rounded,
+                      title: 'Gestionar Personal Docente',
+                      onTap: () => onNavigate?.call('manage_teachers')),
+                  _buildDrawerItem(context,
+                      icon: Icons.help_outline_rounded,
+                      title: 'Manual Operativo (FAQ)',
+                      onTap: () => onNavigate?.call('faq')),
+                  const Divider(),
                 ],
+
+
+                // --- ALUMNO SPECIFIC TOOLS ---
+                if (role == 'Alumno') ...[
+                  const Divider(),
+                  _buildDrawerItem(context,
+                      icon: Icons.help_outline_rounded,
+                      title: 'Manual Operativo (FAQ)',
+                      onTap: () => onNavigate?.call('faq')),
+                  const Divider(),
+                ],
+
 
                 // Common Items
                 _buildDrawerItem(

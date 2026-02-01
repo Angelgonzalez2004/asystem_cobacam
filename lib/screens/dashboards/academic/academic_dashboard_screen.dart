@@ -7,9 +7,9 @@ class AcademicDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ResponsiveDashboard(
+    return ResponsiveDashboard(
       role: 'Académica',
-      body: AcademicHomeScreen(),
+      bodyBuilder: (onNavigate) => AcademicHomeScreen(onNavigate: onNavigate),
     );
   }
 }

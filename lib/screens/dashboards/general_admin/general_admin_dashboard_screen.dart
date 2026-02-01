@@ -7,9 +7,9 @@ class GeneralAdminDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ResponsiveDashboard(
+    return ResponsiveDashboard(
       role: 'Admin General',
-      body: GeneralAdminHomeScreen(),
+      bodyBuilder: (onNavigate) => GeneralAdminHomeScreen(onNavigate: onNavigate),
     );
   }
 }

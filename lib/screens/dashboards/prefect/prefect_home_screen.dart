@@ -147,6 +147,35 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
                       color: Colors.redAccent,
                       onTap: () => widget.onNavigate?.call('incidencia'),
                     ),
+                    // New Quick Actions
+                    _buildQuickAction(
+                      context,
+                      icon: Icons.grid_view_rounded,
+                      label: 'Horario (Grupo)',
+                      color: Colors.teal,
+                      onTap: () => widget.onNavigate?.call('visor_grupo'),
+                    ),
+                    _buildQuickAction(
+                      context,
+                      icon: Icons.person_search_rounded,
+                      label: 'Horario (Maestro)',
+                      color: Colors.indigo,
+                      onTap: () => widget.onNavigate?.call('visor_maestro'),
+                    ),
+                    _buildQuickAction(
+                      context,
+                      icon: Icons.bar_chart_rounded,
+                      label: 'Estadísticas',
+                      color: Colors.purple,
+                      onTap: () => widget.onNavigate?.call('stats'),
+                    ),
+                    _buildQuickAction(
+                      context,
+                      icon: Icons.people_outline_rounded,
+                      label: 'Alumnos',
+                      color: Colors.cyan,
+                      onTap: () => widget.onNavigate?.call('alumnos'),
+                    ),
                   ],
                 ),
 

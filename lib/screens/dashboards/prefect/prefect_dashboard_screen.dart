@@ -16,7 +16,7 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/non_attendance_manage
 import 'package:asystem_cobacam/screens/dashboards/prefect/credential_generator_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/incidence_report_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/ai_assistant_screen.dart';
-import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_faq_screen.dart';
+import 'package:asystem_cobacam/screens/common/faq_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/statistics_screen.dart'; // Importado
 import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_schedule_viewer_screen.dart';
@@ -66,7 +66,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       const IncidenceReportScreen(),
       const StatisticsScreen(), // Opción 13
       const AIAssistantScreen(), // Opción 14
-      const PrefectFaqScreen(), // Opción 15
+      const FaqScreen(), // Opción 15
       const GroupScheduleViewerScreen(), // Opción 16
       const TeacherScheduleViewerScreen(), // Opción 17
     ];

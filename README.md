@@ -9,6 +9,13 @@
 Nos dedicamos a la mejora continua de Asystem Cobacam, incorporando nuevas funcionalidades y optimizando las existentes basándonos en las necesidades de nuestros usuarios y los avances tecnológicos.
 
 *   **Últimas Actualizaciones:**
+    *   **Módulo de FAQ (Manual Operativo) Completado y Mejorado:**
+        *   Se reemplazó todo el contenido de marcador de posición con **más de 100 preguntas y respuestas profesionales** y detalladas, cubriendo los 5 roles principales (Alumnos, Académica, Prefectura, Administrativo, Sistema).
+        *   Se añadió **numeración automática** a las preguntas para facilitar su referencia y lectura.
+        *   Se incorporaron animaciones sutiles para una experiencia de usuario más fluida.
+    *   **Mejoras de Calidad de Código y UI:**
+        *   Se corrigieron más de 10 errores y advertencias del analizador de Flutter, mejorando la estabilidad y mantenibilidad del código.
+        *   Se añadió un **botón para limpiar el campo de búsqueda** en la pantalla de "Gestión de Horarios", una mejora de usabilidad solicitada para agilizar las consultas.
     *   **Estabilidad y Corrección de Errores:** Se han resuelto varios errores de sintaxis y referencias de métodos, mejorando la robustez general de la aplicación.
         *   **Exportación de Horarios Mejorada:** Se ha optimizado la lógica de exportación de horarios individuales y múltiples (tanto para grupos como para maestros) en formatos PDF e imagen (ZIP), asegurando su correcto funcionamiento y la visibilidad de los botones de exportación en todas las condiciones.
         *   **Mejoras en la Exportación de Horarios (Orientación Vertical y Rendimiento):** Se ha ajustado la orientación de los horarios exportados a PDF e imágenes para que sean verticales (formato retrato), permitiendo un horario individual por página o imagen. Además, se ha optimizado aún más el rendimiento de la captura de imágenes para una experiencia de descarga más rápida y fluida.

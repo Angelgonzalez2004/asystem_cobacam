@@ -14,11 +14,12 @@ import 'package:asystem_cobacam/models/school_cycle_model.dart';
 import 'package:asystem_cobacam/services/app_settings_service.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
-import 'package:asystem_cobacam/screens/dashboards/prefect/manage_cycle_teachers_screen.dart';
+
 import 'package:provider/provider.dart';
 
 class GroupScheduleManagementScreen extends StatefulWidget {
-  const GroupScheduleManagementScreen({super.key});
+  final bool isReadOnlyUser;
+  const GroupScheduleManagementScreen({super.key, this.isReadOnlyUser = false});
 
   @override
   State<GroupScheduleManagementScreen> createState() =>
@@ -199,11 +200,22 @@ class _GroupScheduleManagementScreenState
   }
 
   void _filterGroups() {
-    final query = _searchController.text.toLowerCase();
+    final rawQuery = _searchController.text.toLowerCase();
+    final searchTerms = rawQuery
+        .split(',')
+        .map((term) => term.trim())
+        .where((term) => term.isNotEmpty)
+        .toList();
+
     setState(() {
-      _filteredGroups = _allGroups
-          .where((group) => group.name.toLowerCase().contains(query))
-          .toList();
+      if (searchTerms.isEmpty) {
+        _filteredGroups = _allGroups;
+      } else {
+        _filteredGroups = _allGroups
+            .where((group) =>
+                searchTerms.any((term) => group.name.toLowerCase().contains(term)))
+            .toList();
+      }
     });
   }
 
@@ -217,8 +229,8 @@ class _GroupScheduleManagementScreenState
   }
 
   Future<void> _editClassSession(Group group, String day, ClassSession session) async {
-    if (_isReadOnly) {
-      UiHelpers.showSnackBar(context, 'Ciclo cerrado. No se pueden modificar horarios.', isError: true);
+    if (_isReadOnly || widget.isReadOnlyUser) {
+      UiHelpers.showSnackBar(context, 'No se pueden modificar horarios en este modo.', isError: true);
       return;
     }
 
@@ -300,29 +312,7 @@ class _GroupScheduleManagementScreenState
           ),
         );
       }),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 16.0),
-        child: FloatingActionButton.small(
-          heroTag: 'manage_teachers',
-          onPressed: () {
-            if (_campus != null && _selectedSchoolCycle != null) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ManageCycleTeachersScreen(
-                    campusId: _campus!,
-                    schoolCycleId: _selectedSchoolCycle!,
-                  ),
-                ),
-              );
-            } else {
-              UiHelpers.showSnackBar(context, 'Selecciona un ciclo escolar primero.', isError: true);
-            }
-          },
-          tooltip: 'Gestionar Personal Docente',
-          child: const Icon(Icons.person),
-        ),
-      ),
+
     );
   }
   
@@ -353,9 +343,31 @@ class _GroupScheduleManagementScreenState
             ),
             const SizedBox(height: 16),
             _buildSearchBar(),
-            if (_isReadOnly) _buildReadOnlyBanner(),
+            if (widget.isReadOnlyUser) _buildReadOnlyUserBanner(), // User role-based read-only
+            if (_isReadOnly) _buildReadOnlyBanner(), // Cycle status-based read-only
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildReadOnlyUserBanner() {
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+          color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.info_outline, size: 14, color: Colors.blue),
+          SizedBox(width: 6),
+          Text("Modo Solo Consulta: Contactar a Académica para ediciones.",
+              style: TextStyle(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12)),
+        ],
       ),
     );
   }
@@ -388,8 +400,16 @@ class _GroupScheduleManagementScreenState
     return TextField(
       controller: _searchController,
       decoration: InputDecoration(
-        hintText: 'Buscar grupo por nombre...',
+        hintText: 'Buscar grupo(s) por nombre (ej. 101, 303)...',
         prefixIcon: const Icon(Icons.search),
+        suffixIcon: _searchController.text.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  _searchController.clear();
+                },
+              )
+            : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -467,15 +487,17 @@ class _GroupScheduleManagementScreenState
                       mainTitle: 'Gestión de Horario',
                       campusName: _campus ?? 'N/A',
                       logoPath: 'assets/images/logo1.png',
-                      onSessionTap: (session, day, startTime, endTime) {
-                        if (_isReadOnly) {
-                          UiHelpers.showSnackBar(context,
-                              'Ciclo cerrado. No se pueden modificar horarios.',
-                              isError: true);
-                          return;
-                        }
-                        _editClassSession(group, day, session!);
-                      },
+                      onSessionTap: (widget.isReadOnlyUser || _isReadOnly)
+                          ? null
+                          : (session, day, startTime, endTime) {
+                              if (_isReadOnly) { // This check is redundant due to above, but kept for historical context if _isReadOnly changes meaning
+                                UiHelpers.showSnackBar(context,
+                                    'Ciclo cerrado. No se pueden modificar horarios.',
+                                    isError: true);
+                                return;
+                              }
+                              _editClassSession(group, day, session!);
+                            },
                     ),
                 ],
               ),

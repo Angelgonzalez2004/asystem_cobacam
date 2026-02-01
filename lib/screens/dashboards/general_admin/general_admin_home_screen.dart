@@ -8,7 +8,8 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 class GeneralAdminHomeScreen extends StatefulWidget {
-  const GeneralAdminHomeScreen({super.key});
+  final Function(String route)? onNavigate;
+  const GeneralAdminHomeScreen({super.key, this.onNavigate});
 
   @override
   State<GeneralAdminHomeScreen> createState() => _GeneralAdminHomeScreenState();

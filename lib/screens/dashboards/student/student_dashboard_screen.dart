@@ -7,9 +7,9 @@ class StudentDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ResponsiveDashboard(
+    return ResponsiveDashboard(
       role: 'Alumno',
-      body: StudentHomeScreen(),
+      bodyBuilder: (onNavigate) => StudentHomeScreen(onNavigate: onNavigate),
     );
   }
 }
