@@ -1,3 +1,4 @@
+// ignore_for_file: unnecessary_nullable_for_final_variable_declarations
 import 'dart:io';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
@@ -12,7 +13,6 @@ import 'package:asystem_cobacam/models/school_cycle_model.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:provider/provider.dart';
-
 class StudentExcelImportScreen extends StatefulWidget {
   final String campusId;
   final String currentSchoolCycle;
@@ -95,6 +95,20 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
   }
 
   Future<void> _pickExcelFile() async {
+    // 1. Mostrar un diálogo de confirmación/recordatorio primero.
+    final bool? confirmed = await UiHelpers.showConfirmationDialog(
+      context,
+      title: 'Recordatorio Importante',
+      content:
+          'Antes de importar el archivo Excel, asegúrate de que los grupos para el ciclo escolar seleccionado ya han sido creados en el sistema.',
+      confirmText: 'Continuar',
+      cancelText: 'Cancelar',
+    );
+
+    if (confirmed != true) {
+      return; // El usuario canceló la operación.
+    }
+    
     if (_targetSchoolCycle == null) return;
 
     // Validación crítica: Deben existir grupos para este ciclo
@@ -167,7 +181,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
 
       for (var table in excel.tables.keys) {
         var sheet = excel.tables[table];
-        if (sheet == null || sheet.maxColumns < expectedHeaders.length) {
+        if (sheet == null) {
           continue;
         }
 
@@ -301,8 +315,23 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
       }
     } catch (e) {
       if (mounted) {
-        UiHelpers.showSnackBar(context, 'Error al procesar Excel: $e',
-            isError: true);
+        String errorMessage = 'Error al procesar Excel: $e';
+        if (e.toString().contains('_Namespace')) {
+          UiHelpers.showAlertDialog(
+            context,
+            title: 'Error de Formato de Excel',
+            content:
+                'El archivo .xlsx que intentas importar parece tener un formato XML interno no compatible, lo que causa el error: "Unsupported operation: _Namespace".\n\n'
+                '**¿Cómo solucionarlo?**\n'
+                '1. Abre el archivo en un editor de hojas de cálculo (como Microsoft Excel o Google Sheets).\n'
+                '2. Ve a **"Guardar como"**.\n'
+                '3. Asegúrate de seleccionar el formato **"Libro de Excel (*.xlsx)"** estándar (no "Strict Open XML" ni otros formatos).\n'
+                '4. Guarda el archivo con un nuevo nombre e intenta importarlo de nuevo.\n\n'
+                'Este paso usualmente corrige los problemas de compatibilidad de formato.',
+          );
+        } else {
+          UiHelpers.showSnackBar(context, errorMessage, isError: true);
+        }
       }
     }
   }

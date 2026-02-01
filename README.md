@@ -9,6 +9,12 @@
 Nos dedicamos a la mejora continua de Asystem Cobacam, incorporando nuevas funcionalidades y optimizando las existentes basándonos en las necesidades de nuestros usuarios y los avances tecnológicos.
 
 *   **Últimas Actualizaciones:**
+    *   **Mejoras en Perfil y Experiencia de Usuario (UX):**
+        *   Se implementó un **límite de tiempo** para el cambio de foto de perfil: solo se permite un cambio cada 15 días para todos los roles.
+        *   Se mejoró la **experiencia de descarga de archivos** (horarios en PDF/ZIP). Ahora en computadoras de escritorio se pregunta la ubicación de guardado, mientras que en móvil se guarda en la carpeta de "Descargas" para mayor comodidad.
+    *   **Robustez en Importación de Datos:**
+        *   Se añadió un **diálogo de advertencia** para recordar a los usuarios que deben crear los grupos antes de intentar importar alumnos desde Excel.
+        *   Se implementó un **manejo de errores mejorado** que muestra instrucciones claras si el archivo Excel tiene un formato incompatible.
     *   **Módulo de FAQ (Manual Operativo) Completado y Mejorado:**
         *   Se reemplazó todo el contenido de marcador de posición con **más de 100 preguntas y respuestas profesionales** y detalladas, cubriendo los 5 roles principales (Alumnos, Académica, Prefectura, Administrativo, Sistema).
         *   Se añadió **numeración automática** a las preguntas para facilitar su referencia y lectura.

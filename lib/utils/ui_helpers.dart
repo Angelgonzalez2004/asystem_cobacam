@@ -30,6 +30,39 @@ class UiHelpers {
     );
   }
 
+  /// Muestra un diálogo de información simple con un botón de OK.
+  static Future<void> showAlertDialog(
+    BuildContext context, {
+    required String title,
+    required String content,
+  }) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(content),
+          actionsPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   /// Muestra un diálogo de confirmación moderno.
   static Future<bool> showConfirmationDialog(
     BuildContext context, {

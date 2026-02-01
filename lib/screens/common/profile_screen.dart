@@ -1,3 +1,4 @@
+// ignore_for_file: unnecessary_nullable_for_final_variable_declarations
 import 'dart:io';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -25,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Data Containers
   Map<String, dynamic> _userData = {};
+  int? _profileImageLastUpdated;
   XFile? _newProfileImage;
 
   // Controllers
@@ -55,9 +57,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _userData = data;
           _nameController.text = data['fullName'] ?? '';
-          _phoneController.text =
-              data['phone'] ?? ''; // Assuming phone field exists or adding it
+          _phoneController.text = data['phone'] ?? '';
           _locationController.text = data['location'] ?? '';
+          _profileImageLastUpdated = data['profileImageLastUpdated'] as int?;
           _isLoading = false;
         });
       }
@@ -67,6 +69,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _handleChangeProfilePictureRequest() async {
+    final lastUpdate = _profileImageLastUpdated;
+
+    if (lastUpdate != null) {
+      final now = DateTime.now();
+      final lastUpdateDate = DateTime.fromMillisecondsSinceEpoch(lastUpdate);
+      final difference = now.difference(lastUpdateDate);
+
+      if (difference.inDays < 15) {
+        final daysRemaining = 15 - difference.inDays;
+        final dayText = daysRemaining == 1 ? 'día' : 'días';
+        await UiHelpers.showAlertDialog(
+          context,
+          title: 'Límite de Tiempo',
+          content: 'Ya has cambiado tu foto de perfil recientemente. Podrás cambiarla de nuevo en $daysRemaining $dayText.',
+        );
+        return; // Block the action
+      }
+    }
+
+    // If cooldown is over or it's the first time, show confirmation
+    final bool? shouldProceed = await UiHelpers.showConfirmationDialog(
+      context,
+      title: 'Confirmar Cambio',
+      content: 'Estás a punto de cambiar tu foto de perfil. Solo puedes realizar esta acción una vez cada 15 días.\n\n¿Deseas continuar?',
+      confirmText: 'Continuar',
+    );
+
+    if (shouldProceed == true) {
+      _pickImage();
+    }
+  }
+
+
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -74,9 +110,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _newProfileImage = image;
       });
-      // Optionally save immediately or wait for "Save" button.
-      // For UX, let's wait for explicit save to avoid accidental uploads,
-      // but showing preview is key.
     }
   }
 
@@ -85,9 +118,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isSaving = true);
 
     try {
-      String? imageUrl = _userData['profileImageUrl'];
+      final Map<String, dynamic> updateData = {
+        'fullName': _nameController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'location': _locationController.text.trim(),
+      };
 
-      // 1. Upload new image if selected
+      // 1. Upload new image and add its data if selected
       if (_newProfileImage != null) {
         final storageRef = FirebaseStorage.instance
             .ref()
@@ -100,29 +137,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
         } else {
           await storageRef.putFile(File(_newProfileImage!.path));
         }
-        imageUrl = await storageRef.getDownloadURL();
+        final imageUrl = await storageRef.getDownloadURL();
+        final newTimestamp = DateTime.now().millisecondsSinceEpoch;
+
+        updateData['profileImageUrl'] = imageUrl;
+        updateData['profileImageLastUpdated'] = newTimestamp;
       }
 
       // 2. Update Database
-      final updateData = {
-        'fullName': _nameController.text.trim(),
-        'phone': _phoneController.text.trim(),
-        'location': _locationController.text.trim(),
-        'profileImageUrl': imageUrl,
-      };
-
       await _userRef.child(_currentUser.uid).update(updateData);
 
       // 3. Update Local State
       setState(() {
         _userData.addAll(updateData);
+        if (updateData.containsKey('profileImageLastUpdated')) {
+          _profileImageLastUpdated = updateData['profileImageLastUpdated'];
+        }
         _isEditing = false;
         _newProfileImage = null;
       });
 
       if (mounted) {
         UiHelpers.showSnackBar(context, '¡Perfil actualizado con éxito!');
-        // Opcional: Podrías forzar un refresh del Drawer aquí si usas un Provider
       }
     } catch (e) {
       if (mounted) {
@@ -232,7 +268,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 bottom: 0,
                                 right: 0,
                                 child: GestureDetector(
-                                  onTap: _pickImage,
+                                  onTap: _handleChangeProfilePictureRequest,
                                   child: Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(

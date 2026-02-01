@@ -763,10 +763,6 @@ class _FaqScreenState extends State<FaqScreen> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manual Operativo (FAQ)'),
-        centerTitle: true,
-      ),
       body: Column(
         children: [
           Padding(

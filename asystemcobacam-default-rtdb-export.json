@@ -275,6 +275,12 @@
           "semester": 1,
           "studentCount": 0
         },
+        "-OjHQc0iDwyvZeIaUe54": {
+          "name": "504",
+          "schoolCycleId": "2025-B",
+          "semester": 5,
+          "studentCount": 0
+        },
         "grp_at_101": {
           "name": "101",
           "schoolCycleId": "2025-B",
@@ -689,13 +695,156 @@
       "schedules": {
         "2025-B": {
           "-Oiwp7J1x6hDDRh1Asek": {
-            "Miércoles": {
-              "dayOfWeek": "Miércoles",
-              "entryTime": "7:00",
-              "exitTime": "12:20",
-              "groupId": "-Oiwp7J1x6hDDRh1Asek",
-              "schoolCycle": "2025-B"
-            }
+            "dailySchedules": {
+              "Jueves": [
+                {
+                  "endTime": "07:50",
+                  "startTime": "07:00",
+                  "subjectId": "Biologia I",
+                  "subjectName": "Biologia I",
+                  "teacherId": "-OkNP7JTWUxBgoZT4-FF",
+                  "teacherName": "Carmen Alcocer"
+                },
+                {
+                  "endTime": "08:40",
+                  "startTime": "07:50",
+                  "subjectId": "Ingles II",
+                  "subjectName": "Ingles II",
+                  "teacherId": "-OjHkozq-lVBTSETBJ5L",
+                  "teacherName": "Jose Guadalupe Jimenez Garcia"
+                },
+                {
+                  "endTime": "11:30",
+                  "startTime": "10:40",
+                  "subjectId": "Computacion II",
+                  "subjectName": "Computacion II",
+                  "teacherId": "-OkNP7JTWUxBgoZT4-FF",
+                  "teacherName": "Carmen Alcocer"
+                }
+              ],
+              "Lunes": [
+                {
+                  "endTime": "07:50",
+                  "startTime": "07:00",
+                  "subjectId": "Matematicas II",
+                  "subjectName": "Matematicas II",
+                  "teacherId": "-OjHkz-sq94dfnUzuA8f",
+                  "teacherName": "Juliana Perez reyes"
+                },
+                {
+                  "endTime": "08:40",
+                  "startTime": "07:50",
+                  "subjectId": "matematicas",
+                  "subjectName": "matematicas",
+                  "teacherId": "-OjHkozq-lVBTSETBJ5L",
+                  "teacherName": "Jose Guadalupe Jimenez Garcia"
+                },
+                {
+                  "endTime": "09:30",
+                  "startTime": "08:40",
+                  "subjectId": "Calculo II",
+                  "subjectName": "Calculo II",
+                  "teacherId": "-OjHkz-sq94dfnUzuA8f",
+                  "teacherName": "Juliana Perez reyes"
+                },
+                {
+                  "endTime": "10:40",
+                  "startTime": "09:50",
+                  "subjectId": "internet I",
+                  "subjectName": "internet I",
+                  "teacherId": "-OjHkozq-lVBTSETBJ5L",
+                  "teacherName": "Jose Guadalupe Jimenez Garcia"
+                }
+              ],
+              "Martes": [
+                {
+                  "endTime": "07:50",
+                  "startTime": "07:00",
+                  "subjectId": "Literatura I",
+                  "subjectName": "Literatura I",
+                  "teacherId": "-OjHkz-sq94dfnUzuA8f",
+                  "teacherName": "Juliana Perez reyes"
+                },
+                {
+                  "endTime": "08:40",
+                  "startTime": "07:50",
+                  "subjectId": "matematicas",
+                  "subjectName": "matematicas",
+                  "teacherId": "-OjHkozq-lVBTSETBJ5L",
+                  "teacherName": "Jose Guadalupe Jimenez Garcia"
+                },
+                {
+                  "endTime": "10:40",
+                  "startTime": "09:50",
+                  "subjectId": "español",
+                  "subjectName": "español",
+                  "teacherId": "-OjHkozq-lVBTSETBJ5L",
+                  "teacherName": "Jose Guadalupe Jimenez Garcia"
+                }
+              ],
+              "Miércoles": [
+                {
+                  "endTime": "07:50",
+                  "startTime": "07:00",
+                  "subjectId": "Calculo II",
+                  "subjectName": "Calculo II",
+                  "teacherId": "-OjHkz-sq94dfnUzuA8f",
+                  "teacherName": "Juliana Perez reyes"
+                },
+                {
+                  "endTime": "08:40",
+                  "startTime": "07:50",
+                  "subjectId": "matematicas",
+                  "subjectName": "matematicas",
+                  "teacherId": "-OjHkozq-lVBTSETBJ5L",
+                  "teacherName": "Jose Guadalupe Jimenez Garcia"
+                },
+                {
+                  "endTime": "10:40",
+                  "startTime": "09:50",
+                  "subjectId": "Quimica II",
+                  "subjectName": "Quimica II",
+                  "teacherId": "-OjHkz-sq94dfnUzuA8f",
+                  "teacherName": "Juliana Perez reyes"
+                },
+                {
+                  "endTime": "13:10",
+                  "startTime": "12:20",
+                  "subjectId": "Ingles II",
+                  "subjectName": "Ingles II",
+                  "teacherId": "-OjHkozq-lVBTSETBJ5L",
+                  "teacherName": "Jose Guadalupe Jimenez Garcia"
+                }
+              ],
+              "Viernes": [
+                {
+                  "endTime": "07:50",
+                  "startTime": "07:00",
+                  "subjectId": "matematicas",
+                  "subjectName": "matematicas",
+                  "teacherId": "-OjHkozq-lVBTSETBJ5L",
+                  "teacherName": "Jose Guadalupe Jimenez Garcia"
+                },
+                {
+                  "endTime": "08:40",
+                  "startTime": "07:50",
+                  "subjectId": "Biologia I",
+                  "subjectName": "Biologia I",
+                  "teacherId": "-OkNP7JTWUxBgoZT4-FF",
+                  "teacherName": "Carmen Alcocer"
+                },
+                {
+                  "endTime": "14:00",
+                  "startTime": "13:10",
+                  "subjectId": "Computacion II",
+                  "subjectName": "Computacion II",
+                  "teacherId": "-OkNP7JTWUxBgoZT4-FF",
+                  "teacherName": "Carmen Alcocer"
+                }
+              ]
+            },
+            "groupId": "-Oiwp7J1x6hDDRh1Asek",
+            "schoolCycle": ""
           },
           "grp_at_101": {
             "Jueves": {
@@ -750,6 +899,40 @@
               "exitTime": "11:00",
               "groupId": "grp_at_103",
               "schoolCycle": "2025-B"
+            }
+          }
+        }
+      },
+      "school_cycles": {
+        "2025-B": {
+          "teachers": {
+            "-OjHkozq-lVBTSETBJ5L": {
+              "name": "Jose Guadalupe Jimenez Garcia",
+              "subjects": [
+                "Calculo integral",
+                "matematicas",
+                "español",
+                "internet I",
+                "Ingles II"
+              ]
+            },
+            "-OjHkz-sq94dfnUzuA8f": {
+              "name": "Juliana Perez reyes",
+              "subjects": [
+                "Matematicas II",
+                "Literatura I",
+                "Calculo II",
+                "Quimica II",
+                "Ingles III"
+              ]
+            },
+            "-OkNP7JTWUxBgoZT4-FF": {
+              "name": "Carmen Alcocer",
+              "subjects": [
+                "Computacion II",
+                "Ingles IV",
+                "Biologia I"
+              ]
             }
           }
         }
@@ -2911,19 +3094,74 @@
       "sessions": {
         "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Mobile Safari_537_36": {
           "deviceId": "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_143_0_0_0 Mobile Safari_537_36",
-          "ip": "2806:370:8260:aa23:1:0:8a28:1ef3",
+          "ip": "2806:10a6:28:97dc:b388:bf4b:44f4:a667",
           "isWeb": true,
-          "lastActive": 1768654903611,
-          "location": "Mérida, Yucatán",
+          "lastActive": 1768745128101,
+          "location": "Centro Municipality, Tabasco",
+          "model": "chrome on Linux armv81",
+          "platform": "Web"
+        },
+        "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Mobile Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Mobile Safari_537_36",
+          "ip": "2806:10a6:28:2eca:905f:43ca:5ea9:e69b",
+          "isWeb": true,
+          "lastActive": 1769876738893,
+          "location": "Centro Municipality, Tabasco",
+          "model": "chrome on Linux armv81",
+          "platform": "Web"
+        },
+        "Web_Google Inc__Mozilla_5_0 (Linux; Android 6_0; Nexus 5 Build_MRA58N) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Mobile Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Linux; Android 6_0; Nexus 5 Build_MRA58N) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Mobile Safari_537_36",
+          "ip": "2806:10a6:28:2eca:30f6:bac9:201f:f9af",
+          "isWeb": true,
+          "lastActive": 1769889495057,
+          "location": "Centro Municipality, Tabasco",
+          "model": "chrome on Win32",
+          "platform": "Web"
+        },
+        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Safari_537_36",
+          "ip": "189.238.203.65",
+          "isWeb": true,
+          "lastActive": 1769961692533,
+          "location": "Centro, Tabasco",
+          "model": "chrome on Win32",
+          "platform": "Web"
+        },
+        "Web_Google Inc__Mozilla_5_0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit_605_1_15 (KHTML, like Gecko) Version_18_5 Mobile_15E148 Safari_604_1": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit_605_1_15 (KHTML, like Gecko) Version_18_5 Mobile_15E148 Safari_604_1",
+          "ip": "2806:10a6:28:2eca:30f6:bac9:201f:f9af",
+          "isWeb": true,
+          "lastActive": 1769889515132,
+          "location": "Centro Municipality, Tabasco",
+          "model": "safari on Win32",
+          "platform": "Web"
+        }
+      }
+    },
+    "r5wkzLJP5GNQDC9Pw57MRzW68st1": {
+      "campus": "Atasta",
+      "dateOfBirth": "2026-01-31",
+      "email": "servicioseimpresionesancar@gmail.com",
+      "fullName": "ANGEL GONZALEZ",
+      "location": "ATASTA",
+      "role": "Academica",
+      "sessions": {
+        "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Mobile Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Mobile Safari_537_36",
+          "ip": "189.238.203.65",
+          "isWeb": true,
+          "lastActive": 1769910406811,
+          "location": "Centro, Tabasco",
           "model": "chrome on Linux armv81",
           "platform": "Web"
         },
         "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Safari_537_36": {
           "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Safari_537_36",
-          "ip": "2806:10a6:28:97dc:4d50:eb1e:27e5:adf4",
+          "ip": "189.238.203.65",
           "isWeb": true,
-          "lastActive": 1768739976669,
-          "location": "Centro Municipality, Tabasco",
+          "lastActive": 1769961672201,
+          "location": "Centro, Tabasco",
           "model": "chrome on Win32",
           "platform": "Web"
         }
