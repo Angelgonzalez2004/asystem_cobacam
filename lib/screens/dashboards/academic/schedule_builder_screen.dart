@@ -4,11 +4,14 @@ import 'package:asystem_cobacam/models/schedule_models.dart';
 import 'package:asystem_cobacam/screens/dashboards/academic/manage_groups_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/academic/manage_subjects_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/academic/manage_teachers_screen.dart';
-import 'package:asystem_cobacam/utils/ui_helpers.dart';
+import 'package:asystem_cobacam/widgets/schedule_display_widget.dart';
+import 'package:asystem_cobacam/models/class_session_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:screenshot/screenshot.dart';
+import 'package:asystem_cobacam/widgets/schedule_display_widget.dart';
+import 'package:asystem_cobacam/models/class_session_model.dart';
 import 'package:gal/gal.dart'; // <--- NUEVA LIBRERÍA
 import 'package:asystem_cobacam/data/educational_centers.dart';
 
@@ -24,6 +27,7 @@ class _ScheduleBuilderScreenState extends State<ScheduleBuilderScreen> {
   bool _isLoading = true;
   String? _campus;
   Map<String, String>? _schoolInfo;
+  bool _isSearching = false;
 
   // Data lists for dropdowns
   List<Teacher> _teachers = [];
@@ -36,15 +40,24 @@ class _ScheduleBuilderScreenState extends State<ScheduleBuilderScreen> {
   Map<String, ClassAssignment> _schedule = {};
   StreamSubscription? _scheduleSubscription;
 
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = ''; // To store the current search query
+
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+      });
+    });
     _initData();
   }
 
   @override
   void dispose() {
     _scheduleSubscription?.cancel();
+    _searchController.dispose(); // Dispose the controller
     super.dispose();
   }
 
@@ -361,12 +374,44 @@ class _ScheduleBuilderScreenState extends State<ScheduleBuilderScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Constructor de Horarios'),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Buscar horario...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.grey),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                    },
+                  ),
+                ),
+                style: TextStyle(color: theme.colorScheme.onSurface),
+              )
+            : const Text('Constructor de Horarios'),
         backgroundColor: theme.colorScheme.surface,
         foregroundColor: theme.colorScheme.onSurface,
         elevation: 0,
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search, color: theme.colorScheme.onSurface),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) {
+                  _searchController.clear();
+                  _searchQuery = '';
+                }
+              });
+            },
+            tooltip: _isSearching ? 'Cerrar Búsqueda' : 'Buscar Horario',
+          ),
           IconButton(
             icon: Icon(Icons.auto_awesome, color: theme.colorScheme.secondary),
             onPressed: _runGreedyGenerator,
@@ -387,6 +432,7 @@ class _ScheduleBuilderScreenState extends State<ScheduleBuilderScreen> {
                       'Error: No se pudo determinar la información del plantel.'))
               : LayoutBuilder(
                   builder: (context, constraints) {
+                    final convertedSchedule = _convertScheduleToDisplayFormat();
                     return Center(
                       child: SingleChildScrollView(
                         // Allow full page scroll if needed vertically
@@ -395,52 +441,23 @@ class _ScheduleBuilderScreenState extends State<ScheduleBuilderScreen> {
                           scrollDirection: Axis.horizontal,
                           child: Screenshot(
                             controller: _screenshotController,
-                            child: Container(
-                              color: isDark
-                                  ? theme.scaffoldBackgroundColor
-                                  : Colors.white,
-                              padding: const EdgeInsets.all(24.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(_schoolInfo!['name']!,
-                                      style: theme.textTheme.headlineSmall
-                                          ?.copyWith(
-                                              fontWeight: FontWeight.bold)),
-                                  Text(
-                                      '${_schoolInfo!['municipio']!} - Clave: ${_schoolInfo!['clave']!}',
-                                      style: theme.textTheme.titleMedium
-                                          ?.copyWith(color: Colors.grey)),
-                                  const SizedBox(height: 24),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: Colors.grey
-                                              .withValues(alpha: 0.3)),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: DataTable(
-                                      headingRowColor: WidgetStateProperty.all(
-                                          theme.colorScheme.primary
-                                              .withValues(alpha: 0.05)),
-                                      dataRowColor: WidgetStateProperty.all(
-                                          isDark
-                                              ? theme.cardTheme.color
-                                              : Colors.white),
-                                      columns: _buildColumns(theme),
-                                      rows: _buildRows(theme),
-                                      border: TableBorder(
-                                        horizontalInside: BorderSide(
-                                            color: Colors.grey
-                                                .withValues(alpha: 0.2)),
-                                        verticalInside: BorderSide(
-                                            color: Colors.grey
-                                                .withValues(alpha: 0.2)),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            child: ScheduleDisplayWidget(
+                              title: 'Horario: ${_schoolInfo!['name']!}',
+                              subtitle:
+                                  '${_schoolInfo!['municipio']!} - Clave: ${_schoolInfo!['clave']!}',
+                              scheduleData: convertedSchedule,
+                              viewType: 'builder', // Custom view type for builder
+                              mainTitle: 'COLEGIO DE BACHILLERES DEL ESTADO DE CAMPECHE',
+                              campusName: _schoolInfo!['name']!,
+                              logoPath: 'assets/images/logo1.png',
+                              onSessionTap: (session, day, startTime, endTime) {
+                                final dayIndex = DIAS_SEMANA.indexOf(day);
+                                final timeSlotIndex = HORARIOS.indexWhere(
+                                    (slot) => slot.startTime == startTime);
+                                if (dayIndex != -1 && timeSlotIndex != -1) {
+                                  _showAssignmentDialog(dayIndex, timeSlotIndex);
+                                }
+                              },
                             ),
                           ),
                         ),
@@ -500,136 +517,50 @@ class _ScheduleBuilderScreenState extends State<ScheduleBuilderScreen> {
     }
   }
 
-  List<DataColumn> _buildColumns(ThemeData theme) {
-    return [
-      DataColumn(
-          label: Text('Hora',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary))),
-      ...DIAS_SEMANA.map((day) => DataColumn(
-          label: Text(day,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface)))),
-    ];
-  }
+  Map<String, List<ClassSession>> _convertScheduleToDisplayFormat() {
+    final Map<String, List<ClassSession>> displaySchedule = {};
+    final query = _searchQuery.toLowerCase();
 
-  List<DataRow> _buildRows(ThemeData theme) {
-    return HORARIOS.asMap().entries.map((entry) {
-      final timeSlotIndex = entry.key;
-      final timeSlot = entry.value;
+    _schedule.forEach((key, assignment) {
+      final parts = key.split('-');
+      final dayIndex = int.parse(parts[0]);
 
-      if (timeSlot.isRecess) {
-        return DataRow(
-          color: WidgetStateProperty.all(
-              theme.colorScheme.secondary.withValues(alpha: 0.1)),
-          cells: List.generate(DIAS_SEMANA.length + 1, (index) {
-            if (index == 0) {
-              return DataCell(Center(
-                  child: Text(timeSlot.toString(),
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.secondary))));
-            }
-            if (index == 3) {
-              return DataCell(Center(
-                  child: Text('R E C E S O',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.secondary,
-                          letterSpacing: 2))));
-            }
-            return const DataCell(SizedBox());
-          }),
-        );
-      }
+      final subject = _subjects.firstWhere((s) => s.key == assignment.subjectId,
+          orElse: () => Subject(key: '', name: 'N/A', code: ''));
+      final teacher = _teachers.firstWhere((t) => t.key == assignment.teacherId,
+          orElse: () => Teacher(key: '', name: 'N/A', subjects: []));
+      final group = _groups.firstWhere((g) => g.key == assignment.groupId,
+          orElse: () => Group(key: '', name: 'N/A', semester: 0, studentCount: 0, schoolCycleId: ''));
 
-      return DataRow(
-        cells: [
-          DataCell(Text(timeSlot.toString(),
-              style: const TextStyle(fontWeight: FontWeight.w500))),
-          ...DIAS_SEMANA.asMap().entries.map((dayEntry) {
-            final dayIndex = dayEntry.key;
-            final assignment = _schedule['$dayIndex-$timeSlotIndex'];
-            return DataCell(
-              _buildCell(assignment, dayIndex, timeSlotIndex, theme),
-              onTap: () => _showAssignmentDialog(dayIndex, timeSlotIndex),
-            );
-          }),
-        ],
+      final classSession = ClassSession(
+        startTime: HORARIOS[int.parse(parts[1])].startTime,
+        endTime: HORARIOS[int.parse(parts[1])].endTime,
+        subjectId: assignment.subjectId,
+        teacherId: assignment.teacherId,
+        groupId: assignment.groupId,
+        classroomId: assignment.classroomId,
+        subjectName: subject.name,
+        teacherName: teacher.name,
+        groupName: group.name,
       );
-    }).toList();
+
+      // Apply search filter here
+      if (query.isEmpty ||
+          classSession.subjectName.toLowerCase().contains(query) ||
+          classSession.teacherName.toLowerCase().contains(query) ||
+          classSession.groupName.toLowerCase().contains(query)) {
+        final dayName = DIAS_SEMANA[dayIndex];
+        displaySchedule.putIfAbsent(dayName, () => []).add(classSession);
+      }
+    });
+
+    // Sort sessions by start time for each day
+    displaySchedule.values.forEach((sessions) {
+      sessions.sort((a, b) => a.startTime.compareTo(b.startTime));
+    });
+
+    return displaySchedule;
   }
 
-  Widget _buildCell(ClassAssignment? assignment, int dayIndex,
-      int timeSlotIndex, ThemeData theme) {
-    if (assignment == null) {
-      return Center(
-          child:
-              Icon(Icons.add_rounded, color: Colors.grey.shade300, size: 20));
-    }
 
-    // Find the names from the IDs
-    final subject = _subjects
-        .firstWhere((s) => s.key == assignment.subjectId,
-            orElse: () => Subject(key: '', name: 'N/A', code: ''))
-        .name;
-    final teacher = _teachers
-        .firstWhere((t) => t.key == assignment.teacherId,
-            orElse: () => Teacher(key: '', name: 'N/A', subjects: []))
-        .name;
-    final group = _groups
-        .firstWhere((g) => g.key == assignment.groupId,
-            orElse: () => Group(
-                key: '',
-                name: 'N/A',
-                semester: 0,
-                studentCount: 0,
-                schoolCycleId: ''))
-        .name;
-    final classroom = _classrooms
-        .firstWhere((c) => c.key == assignment.classroomId,
-            orElse: () => Classroom(key: '', name: 'N/A', capacity: 0))
-        .name;
-
-    return Tooltip(
-      message:
-          'Materia: $subject\nMaestro: $teacher\nGrupo: $group\nAula: $classroom',
-      child: Container(
-        margin: const EdgeInsets.all(4),
-        padding: const EdgeInsets.all(6),
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Text(subject,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                    color: theme.colorScheme.primary),
-                overflow: TextOverflow.ellipsis),
-            Text(group,
-                style: TextStyle(
-                    fontSize: 10, color: theme.colorScheme.onSurface)),
-            Text(teacher.split(' ').last,
-                style: TextStyle(
-                    fontSize: 10,
-                    fontStyle: FontStyle.italic,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
-            Text(classroom,
-                style: TextStyle(
-                    fontSize: 10, color: theme.colorScheme.secondary)),
-          ],
-        ),
-      ),
-    );
-  }
 }
