@@ -13,6 +13,7 @@ import 'package:asystem_cobacam/models/school_cycle_model.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:provider/provider.dart';
+import 'dart:typed_data';
 class StudentExcelImportScreen extends StatefulWidget {
   final String campusId;
   final String currentSchoolCycle;
@@ -138,17 +139,38 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['xlsx'],
+        withData: true, // Asegura que los bytes se carguen en la web
       );
 
-      if (result != null && result.files.single.path != null) {
-        _filePath = result.files.single.path;
-        await _parseExcel(_filePath!);
+      if (result != null) {
+        final PlatformFile file = result.files.single;
+        setState(() {
+          _filePath = file.name; // Usar file.name para mostrar en la UI
+        });
+
+        // En la web, file.bytes no será nulo si withData es true.
+        // En móvil/escritorio, podríamos necesitar leer desde la ruta si file.bytes es nulo.
+        Uint8List? fileBytes = file.bytes;
+
+        if (fileBytes == null && file.path != null) {
+          // Fallback para móvil/escritorio si los bytes no se cargaron directamente
+          fileBytes = await File(file.path!).readAsBytes();
+        }
+
+        if (fileBytes != null) {
+          await _parseExcel(fileBytes);
+        } else {
+          if (mounted) {
+            UiHelpers.showSnackBar(context, 'No se pudo leer el archivo.',
+                isError: true);
+          }
+        }
       } else {
         if (mounted) UiHelpers.showSnackBar(context, 'Selección cancelada.');
       }
     } catch (e) {
       if (mounted) {
-        UiHelpers.showSnackBar(context, 'Error al seleccionar archivo.',
+        UiHelpers.showSnackBar(context, 'Error al seleccionar archivo: $e',
             isError: true);
       }
     } finally {
@@ -156,9 +178,8 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
     }
   }
 
-  Future<void> _parseExcel(String path) async {
+  Future<void> _parseExcel(Uint8List bytes) async {
     try {
-      var bytes = File(path).readAsBytesSync();
       var excel = Excel.decodeBytes(bytes);
 
       List<Student> studentsToImport = [];
@@ -315,9 +336,15 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // Limpiar el estado para que el usuario pueda reintentar sin confusión
+        setState(() {
+          _filePath = null;
+          _parsedStudents = [];
+        });
+
         String errorMessage = 'Error al procesar Excel: $e';
         if (e.toString().contains('_Namespace')) {
-          UiHelpers.showAlertDialog(
+          await UiHelpers.showAlertDialog(
             context,
             title: 'Error de Formato de Excel',
             content:
@@ -474,9 +501,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
                                           padding:
                                               const EdgeInsets.only(top: 16.0),
                                           child: Chip(
-                                              label: Text(_filePath!
-                                                  .split(Platform.pathSeparator)
-                                                  .last)),
+                                              label: Text(_filePath!)),
                                         ),
                                     ],
                                   ),

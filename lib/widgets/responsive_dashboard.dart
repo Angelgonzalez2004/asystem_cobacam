@@ -1,3 +1,4 @@
+import 'package:asystem_cobacam/screens/dashboards/student/student_credential_screen.dart'; // NEW IMPORT
 import 'package:asystem_cobacam/screens/common/profile_screen.dart';
 import 'package:asystem_cobacam/screens/common/settings_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_access_codes_screen.dart';
@@ -141,6 +142,9 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
       } else if (route == 'faq') {
         _activeSubScreen = const FaqScreen();
         _currentTitle = 'Manual Operativo (FAQ)';
+      } else if (route == 'credencial_alumno') { // NEW ROUTE FOR STUDENT CREDENTIAL
+        _activeSubScreen = const StudentCredentialScreen();
+        _currentTitle = 'Mi Credencial';
       }
     });
   }

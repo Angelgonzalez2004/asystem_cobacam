@@ -33,6 +33,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _locationController = TextEditingController();
+  final _matriculaController = TextEditingController();
+
+  // Matricula Edit Flags
+  bool _matriculaEdited = false;
+  bool _allowMatriculaEdit = false;
 
   @override
   void initState() {
@@ -45,6 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _locationController.dispose();
+    _matriculaController.dispose();
     super.dispose();
   }
 
@@ -59,7 +65,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _nameController.text = data['fullName'] ?? '';
           _phoneController.text = data['phone'] ?? '';
           _locationController.text = data['location'] ?? '';
+          _matriculaController.text = data['studentId'] ?? '';
           _profileImageLastUpdated = data['profileImageLastUpdated'] as int?;
+          _matriculaEdited = data['matriculaEdited'] ?? false;
+          _allowMatriculaEdit = data['allowMatriculaEdit'] ?? false;
           _isLoading = false;
         });
       }
@@ -118,13 +127,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isSaving = true);
 
     try {
+      // 1. Prepare base data
       final Map<String, dynamic> updateData = {
         'fullName': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
         'location': _locationController.text.trim(),
       };
 
-      // 1. Upload new image and add its data if selected
+      // 2. Handle Matricula one-time edit logic
+      if (_userData['role'] == 'Alumno') {
+        final bool isEditable = !_matriculaEdited || _allowMatriculaEdit;
+        if (isEditable && _matriculaController.text.trim() != (_userData['studentId'] ?? '')) {
+          updateData['studentId'] = _matriculaController.text.trim();
+          updateData['matriculaEdited'] = true;
+          updateData['allowMatriculaEdit'] = false; // Consume the override
+        }
+      }
+
+      // 3. Upload new image and add its data if selected
       if (_newProfileImage != null) {
         final storageRef = FirebaseStorage.instance
             .ref()
@@ -144,14 +164,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
         updateData['profileImageLastUpdated'] = newTimestamp;
       }
 
-      // 2. Update Database
+      // 4. Update Database
       await _userRef.child(_currentUser.uid).update(updateData);
 
-      // 3. Update Local State
+      // 5. Update Local State
       setState(() {
         _userData.addAll(updateData);
         if (updateData.containsKey('profileImageLastUpdated')) {
           _profileImageLastUpdated = updateData['profileImageLastUpdated'];
+        }
+        if (updateData.containsKey('matriculaEdited')) {
+          _matriculaEdited = updateData['matriculaEdited'];
+          _allowMatriculaEdit = updateData['allowMatriculaEdit'];
         }
         _isEditing = false;
         _newProfileImage = null;
@@ -218,6 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _nameController.text = _userData['fullName'] ?? '';
                       _phoneController.text = _userData['phone'] ?? '';
                       _locationController.text = _userData['location'] ?? '';
+                      _matriculaController.text = _userData['studentId'] ?? '';
                     });
                   },
                 ),
@@ -385,6 +410,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // Espacio extra si es alumno para datos como matrícula
                   if (_userData['role'] == 'Alumno') ...[
                     const SizedBox(height: 16),
+                    _buildMatriculaField(theme),
+                    const SizedBox(height: 16),
                     _buildReadOnlyField(
                       label: 'Fecha de Nacimiento',
                       value: _userData['dateOfBirth'] ?? 'N/A',
@@ -540,6 +567,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMatriculaField(ThemeData theme) {
+    final bool isEditable = _isEditing && (!_matriculaEdited || _allowMatriculaEdit);
+    String helperText = "Tu matrícula ya ha sido confirmada. Para cambios, contacta a prefectura.";
+    Color helperColor = Colors.grey;
+
+    if (isEditable) {
+      if (_allowMatriculaEdit) {
+        helperText = "Un administrador ha autorizado la edición de tu matrícula. Guárdala para bloquearla de nuevo.";
+        helperColor = Colors.orange.shade800;
+      } else {
+        helperText = "Puedes editar tu matrícula UNA SOLA VEZ. Asegúrate de que sea correcta antes de guardar.";
+        helperColor = Colors.blue.shade800;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildProfileField(
+          label: 'Matrícula',
+          controller: _matriculaController,
+          icon: Icons.badge_outlined,
+          enabled: isEditable,
+        ),
+        if (_isEditing)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+            child: Text(
+              helperText,
+              style: TextStyle(
+                color: helperColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

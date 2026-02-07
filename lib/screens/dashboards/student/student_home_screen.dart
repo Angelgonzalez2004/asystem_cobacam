@@ -1,4 +1,5 @@
 import 'package:asystem_cobacam/models/announcement_model.dart';
+import 'package:asystem_cobacam/screens/dashboards/student/student_credential_screen.dart';
 import 'package:asystem_cobacam/services/announcement_service.dart';
 import 'package:asystem_cobacam/widgets/announcement_widgets.dart';
 import 'package:asystem_cobacam/widgets/welcome_header.dart';
@@ -54,14 +55,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Responsive Grid
-        int crossAxisCount = 2;
-        if (constraints.maxWidth > 900) {
-          crossAxisCount = 4;
-        } else if (constraints.maxWidth > 600) {
-          crossAxisCount = 3;
-        }
-
         return SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,57 +70,33 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Mis Herramientas',
+                      'Acciones Rápidas',
                       style: Theme.of(context)
                           .textTheme
                           .titleLarge
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: crossAxisCount,
-                      crossAxisSpacing: 16.0,
-                      mainAxisSpacing: 16.0,
-                      childAspectRatio: 1.3,
-                      children: [
-                        _buildDashboardCard(
-                          context,
-                          index: 0,
-                          icon: Icons.grade_rounded,
-                          label: 'Calificaciones',
-                          color: Colors.blue.shade600,
-                          onTap: () => UiHelpers.showSnackBar(
-                              context, 'Módulo de calificaciones próximamente'),
-                        ),
-                        _buildDashboardCard(
-                          context,
-                          index: 1,
-                          icon: Icons.schedule_rounded,
-                          label: 'Horario',
-                          color: Colors.teal.shade500,
-                          onTap: () => UiHelpers.showSnackBar(
-                              context, 'Tu horario se está actualizando...'),
-                        ),
-                        _buildDashboardCard(
-                          context,
-                          index: 2,
-                          icon: Icons.badge_rounded,
-                          label: 'Credencial',
-                          color: Colors.orange.shade500,
-                          onTap: () => UiHelpers.showSnackBar(
-                              context, 'Generando credencial digital...'),
-                        ),
-                        _buildDashboardCard(
-                          context,
-                          index: 3,
-                          icon: Icons.notifications_active_rounded,
-                          label: 'Avisos',
-                          color: Colors.purple.shade500,
-                          onTap: () {},
-                        ),
-                      ],
+                    Center(
+                      child: Column(
+                        children: [
+                          _buildDashboardCard(
+                            context,
+                            index: 0,
+                            icon: Icons.badge_rounded,
+                            label: 'Mi Credencial',
+                            color: Colors.orange.shade500,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const StudentCredentialScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 32),
                     Row(

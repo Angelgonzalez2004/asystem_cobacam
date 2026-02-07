@@ -29,8 +29,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _locationController = TextEditingController();
   final _dobController = TextEditingController();
   final _accessCodeController = TextEditingController();
+  final _matriculaController = TextEditingController();
 
   final FocusNode _accessCodeFocus = FocusNode();
+  final FocusNode _matriculaFocus = FocusNode();
 
   String? _selectedRole;
   String? _selectedCampus;
@@ -48,6 +50,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void initState() {
     super.initState();
     _accessCodeFocus.addListener(_onAccessCodeFocus);
+    _matriculaFocus.addListener(_onMatriculaFocus);
+  }
+
+  void _onMatriculaFocus() {
+    if (_matriculaFocus.hasFocus) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "¡ADVERTENCIA! Favor de ingresar su matrícula VERDADERA. El sistema detecta intentos de suplantación.",
+                  style: TextStyle(fontSize: 13, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: Colors.orange.shade800.withOpacity(0.9),
+          elevation: 6,
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    }
   }
 
   @override
@@ -58,7 +89,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _locationController.dispose();
     _dobController.dispose();
     _accessCodeController.dispose();
+    _matriculaController.dispose();
     _accessCodeFocus.dispose();
+    _matriculaFocus.dispose();
     super.dispose();
   }
 
@@ -204,7 +237,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
         DatabaseReference userRef =
             FirebaseDatabase.instance.ref('users/${user.uid}');
-        await userRef.set({
+        
+        final userData = {
           'fullName': _nameController.text.trim(),
           'email': _emailController.text.trim(),
           'role': _selectedRole,
@@ -214,7 +248,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'dateOfBirth': _dobController.text,
           'location': _locationController.text.trim(),
           'profileImageUrl': profileImageUrl,
-        });
+        };
+
+        if (_selectedRole == 'Alumno') {
+          userData['studentId'] = _matriculaController.text.trim();
+        }
+
+        await userRef.set(userData);
 
         if (mounted) {
           UiHelpers.showSnackBar(context, '¡Cuenta creada exitosamente!');
@@ -443,6 +483,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
           label: 'Selecciona tu Plantel',
           icon: Icons.apartment_rounded,
           onChanged: (val) => setState(() => _selectedCampus = val),
+        ),
+      ],
+
+      if (_selectedRole == 'Alumno') ...[
+        const SizedBox(height: 16),
+        _buildStyledField(
+          controller: _matriculaController,
+          label: 'Matrícula',
+          icon: Icons.badge_outlined,
+          keyboardType: TextInputType.text,
+          focusNode: _matriculaFocus,
         ),
       ],
 

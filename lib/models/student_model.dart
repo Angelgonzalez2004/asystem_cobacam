@@ -69,8 +69,14 @@ class Student {
   // Factory constructor for creating a Student from a Firebase DataSnapshot
   factory Student.fromSnapshot(DataSnapshot snapshot) {
     final data = Map<String, dynamic>.from(snapshot.value as Map);
+    data['id'] = snapshot.key!; // Add the ID from the snapshot key
+    return Student.fromMap(data);
+  }
+
+  // Factory constructor for creating a Student from a Map (e.g., from Firebase .value as Map)
+  factory Student.fromMap(Map<String, dynamic> data) {
     return Student(
-      id: snapshot.key!,
+      id: data['id'] ?? '', // Assuming 'id' is present if coming from a full snapshot.key
       fullName: data['fullName'] ?? '',
       guardianFullName: data['guardianFullName'] ?? '',
       age: data['age'] ?? 0,
@@ -82,7 +88,7 @@ class Student {
       group: data['group'] ?? '',
       institutionalEmail: data['institutionalEmail'] ?? '',
       studentId: data['studentId'] ?? '',
-      isActive: data['isActive'] ?? true, // Default to true if not present
+      isActive: data['isActive'] ?? true,
       deactivationReason: data['deactivationReason'],
       allergies: data['allergies'],
       healthConditions: data['healthConditions'],

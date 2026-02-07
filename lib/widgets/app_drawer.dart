@@ -211,6 +211,10 @@ class AppDrawer extends StatelessWidget {
                 if (role == 'Alumno') ...[
                   const Divider(),
                   _buildDrawerItem(context,
+                      icon: Icons.badge_rounded,
+                      title: 'Mi Credencial',
+                      onTap: () => onNavigate?.call('credencial_alumno')),
+                  _buildDrawerItem(context,
                       icon: Icons.help_outline_rounded,
                       title: 'Manual Operativo (FAQ)',
                       onTap: () => onNavigate?.call('faq')),

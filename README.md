@@ -1,89 +1,61 @@
-# 🎓 Asystem Cobacam - Suite de Gestión Académica Integral
+# 🎓 Asystem Cobacam - Plataforma de Gestión Académica Integral
 
-**Asystem Cobacam** es una plataforma digital de vanguardia en **constante evolución y mejora**, desarrollada para el **Colegio de Bachilleres del Estado de Campeche (COBACAM)**. Su objetivo es modernizar, centralizar y optimizar continuamente todos los procesos académicos y administrativos, conectando a alumnos, docentes, prefectos y personal directivo en un ecosistema seguro y eficiente.
-
----
-
-## ✨ Novedades y Mejoras Recientes
-
-Nos dedicamos a la mejora continua de Asystem Cobacam, incorporando nuevas funcionalidades y optimizando las existentes basándonos en las necesidades de nuestros usuarios y los avances tecnológicos.
-
-*   **Últimas Actualizaciones:**
-    *   **Mejoras en Perfil y Experiencia de Usuario (UX):**
-        *   Se implementó un **límite de tiempo** para el cambio de foto de perfil: solo se permite un cambio cada 15 días para todos los roles.
-        *   Se mejoró la **experiencia de descarga de archivos** (horarios en PDF/ZIP). Ahora en computadoras de escritorio se pregunta la ubicación de guardado, mientras que en móvil se guarda en la carpeta de "Descargas" para mayor comodidad.
-    *   **Robustez en Importación de Datos:**
-        *   Se añadió un **diálogo de advertencia** para recordar a los usuarios que deben crear los grupos antes de intentar importar alumnos desde Excel.
-        *   Se implementó un **manejo de errores mejorado** que muestra instrucciones claras si el archivo Excel tiene un formato incompatible.
-    *   **Módulo de FAQ (Manual Operativo) Completado y Mejorado:**
-        *   Se reemplazó todo el contenido de marcador de posición con **más de 100 preguntas y respuestas profesionales** y detalladas, cubriendo los 5 roles principales (Alumnos, Académica, Prefectura, Administrativo, Sistema).
-        *   Se añadió **numeración automática** a las preguntas para facilitar su referencia y lectura.
-        *   Se incorporaron animaciones sutiles para una experiencia de usuario más fluida.
-    *   **Mejoras de Calidad de Código y UI:**
-        *   Se corrigieron más de 10 errores y advertencias del analizador de Flutter, mejorando la estabilidad y mantenibilidad del código.
-        *   Se añadió un **botón para limpiar el campo de búsqueda** en la pantalla de "Gestión de Horarios", una mejora de usabilidad solicitada para agilizar las consultas.
-    *   **Estabilidad y Corrección de Errores:** Se han resuelto varios errores de sintaxis y referencias de métodos, mejorando la robustez general de la aplicación.
-        *   **Exportación de Horarios Mejorada:** Se ha optimizado la lógica de exportación de horarios individuales y múltiples (tanto para grupos como para maestros) en formatos PDF e imagen (ZIP), asegurando su correcto funcionamiento y la visibilidad de los botones de exportación en todas las condiciones.
-        *   **Mejoras en la Exportación de Horarios (Orientación Vertical y Rendimiento):** Se ha ajustado la orientación de los horarios exportados a PDF e imágenes para que sean verticales (formato retrato), permitiendo un horario individual por página o imagen. Además, se ha optimizado aún más el rendimiento de la captura de imágenes para una experiencia de descarga más rápida y fluida.
-        *   **Rediseño de la Gestión de Horarios:** La pantalla de "Gestión de Horarios" ha sido actualizada con un diseño más consistente, adoptando la misma estética que las pantallas de visualización de horarios. Se ha implementado un nuevo buscador profesional en la barra de aplicación para filtrar horarios por materia, maestro o grupo, mejorando la usabilidad y la búsqueda de información.
+**Asystem Cobacam** es una avanzada plataforma digital en continua evolución, diseñada para el **Colegio de Bachilleres del Estado de Campeche (COBACAM)**. Su misión es modernizar, centralizar y optimizar los procesos académicos y administrativos, creando un ecosistema seguro y eficiente que conecta a estudiantes, docentes, prefectos y personal directivo.
 
 ---
 
-## 🚀 Funcionalidades Principales
+## ✨ Características Principales y Novedades
 
-Un vistazo a las capacidades que hacen de Asystem una herramienta indispensable.
+Asystem Cobacam se enfoca en proporcionar una experiencia integral y eficiente, integrando funcionalidades clave para la gestión educativa moderna.
 
-### 🌟 Seguridad y Acceso
-*   **Bloqueo de Aplicación Local:** Protege la aplicación con PIN o datos biométricos (huella/rostro), asegurando la sesión sin necesidad de cerrar la cuenta.
-*   **Gestión de Sesiones Activas:** Permite a los usuarios ver y revocar el acceso en otros dispositivos desde los ajustes.
-*   **Autenticación por Roles:** Sistema robusto que dirige a cada usuario a su panel de control personalizado.
+### 👥 Gestión de Usuarios y Roles (RBAC)
+Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cada usuario (Alumno, Prefecto, Académico, Administrador de Plantel, Administrador General) acceda a una interfaz y funcionalidades personalizadas, adaptadas a sus necesidades específicas.
 
-### 👤 Roles de Usuario
-*   **Alumno:** Consulta su horario y anuncios. Su credencial con código QR es la llave para el registro de asistencia.
-*   **Prefecto:** El rol operativo central. Gestiona el pase de lista, registra incidencias, y administra y visualiza todos los horarios.
-*   **Administrador de Plantel:** Gestiona los datos académicos de su plantel, como ciclos escolares y grupos.
-*   **Administrador General:** Tiene control total sobre la plataforma, incluyendo la gestión de planteles y códigos de acceso.
+### 📊 Gestión de Asistencia Avanzada
+*   **Pase de Lista Flexible:** Registro de entradas y salidas mediante escaneo de credenciales QR, entrada manual o registro masivo para grupos.
+*   **Importación y Exportación Excel:**
+    *   **Descarga de Plantillas:** Genera plantillas de Excel para "Entrada" o "Salida" facilitando la preparación de datos.
+    *   **Importación Masiva:** Permite cargar registros de asistencia desde archivos Excel, agilizando la actualización de la base de datos.
+*   **Modo Offline-First:** La asistencia puede registrarse **sin conexión a internet**. Los datos se guardan localmente (usando Hive) y se sincronizan automáticamente con Firebase al recuperar la conexión, garantizando la continuidad operativa.
 
-### 📡 Modo Offline
-*   **Asistencia sin Conexión:** Permite registrar la asistencia incluso sin internet. Los datos se guardan localmente y se sincronizan automáticamente al recuperar la conexión.
+### 🧠 Inteligencia Operativa y Asistencia con IA
+*   **AsystemBot (Gemini 1.5 Flash):** Un asistente de inteligencia artificial que proporciona respuestas y ayuda contextual a los usuarios en lenguaje natural, integrado de forma segura a través de Cloud Functions.
+*   **Centro de Inteligencia (Prefectura):** Dashboard con estadísticas y KPIs dinámicos sobre disciplina y asistencia.
 
-### 🧠 Inteligencia Operativa y Asistencia IA
-*   **Centro de Inteligencia (Prefectura):** Un dashboard que responde a preguntas clave sobre disciplina y asistencia.
-*   **AsystemBot (Gemini 1.5 Flash):** Asistente de IA para realizar consultas en lenguaje natural.
-*   **Estadísticas en Tiempo Real:** Gráficos y KPIs dinámicos de asistencia.
-
-### 🚑 Sistema de Alerta Médica Crítica
-*   Al escanear la credencial de un alumno con una condición médica registrada, el sistema emite una alerta visual y vibratoria inmediata para el prefecto.
+### 🛡️ Seguridad y Control
+*   **Bloqueo de Aplicación Local:** Protege la sesión con PIN o datos biométricos.
+*   **Gestión de Sesiones Activas:** Permite visualizar y revocar el acceso desde otros dispositivos.
+*   **Alerta Médica Crítica:** Emite una alerta visual y vibratoria instantánea al escanear credenciales de alumnos con condiciones médicas registradas.
 
 ### 🗓️ Gestión y Visualización de Horarios
-*   **Interfaz de Cuadrícula Profesional:** Se ha rediseñado completamente la visualización de horarios a una **cuadrícula o tabla de estilo tradicional**. Esta vista muestra las horas como filas y los días de la semana como columnas, ofreciendo una lectura mucho más clara e intuitiva.
-*   **Gestión Interactiva:** En la pantalla de **gestión de horarios**, los prefectos pueden hacer clic directamente sobre cualquier celda de la cuadrícula para **añadir, editar o eliminar** una sesión de clase, haciendo el proceso más rápido y visual.
-*   **Visores Claros y Concisos:** Las pantallas de **"Visor por Grupo"** y **"Visor por Maestro"** utilizan la misma interfaz de cuadrícula en modo de solo lectura para una consulta rápida y sin distracciones.
-*   **Exportación Integrada:** Posibilidad de exportar horarios individuales o múltiples a formatos PDF e imagen (ZIP) para facilitar la distribución y archivo.
-*   **Lógica de Negocio Respetada:** Todos los cambios son puramente visuales. Se mantiene intacta la lógica de negocio, incluyendo la validación de ciclos cerrados (modo solo lectura) y el manejo de recesos no modificables.
-*   **Filtrado y Búsqueda:** Todas las pantallas de horarios permiten filtrar por ciclo escolar y cuentan con una barra de búsqueda para localizar rápidamente el grupo o maestro deseado.
+*   **Interfaz de Cuadrícula Profesional:** Rediseño completo de la visualización de horarios a un formato de cuadrícula intuitivo (horas como filas, días como columnas).
+*   **Gestión Interactiva:** Edición directa de sesiones de clase haciendo clic en las celdas de la cuadrícula.
+*   **Visores Claros y Concisos:** Vistas de solo lectura para horarios por grupo y maestro.
+*   **Exportación Integrada:** Exporta horarios individuales o múltiples a PDF e imagen (ZIP), con orientación vertical optimizada.
+*   **Filtrado y Búsqueda:** Búsqueda avanzada por materia, maestro o grupo.
 
-### 🛠️ Operaciones Diarias
-*   **Pase de Lista con QR:** Registro de entradas y salidas mediante escaneo de credenciales.
-*   **Registro Manual y Masivo:** Opciones para registrar asistencia de forma manual o a grupos completos.
+### 🛠️ Operaciones Diarias Adicionales
 *   **Generación de Reportes:** Exportación de listas de asistencia e incidencias a formato Excel.
 *   **Generación de Credenciales:** Creación de credenciales en formato PDF listas para imprimir.
 
 ---
 
-## 🏛️ Arquitectura y Tecnologías
+## 🏛️ Arquitectura y Tecnologías Clave
 
-*   **Framework Principal:** [Flutter](https://flutter.dev/)
-*   **Lenguaje:** [Dart](https://dart.dev/)
-*   **Backend y Base de Datos:**
-    *   **Firebase Realtime Database:** Para sincronización de datos en tiempo real.
-    *   **Firebase Authentication:** Para gestión de usuarios y roles.
-    *   **Firebase Hosting:** Para el despliegue web.
-    *   **Cloud Functions for Firebase:** Para lógica de backend (Node.js).
-*   **Almacenamiento Local:** [Hive](https://pub.dev/packages/hive) para persistencia offline.
-*   **Gestión de Estado:** [Provider](https://pub.dev/packages/provider).
-*   **Inteligencia Artificial:** [Google AI SDK (Gemini)](https://pub.dev/packages/google_generative_ai).
-*   **Seguridad Local:** `local_auth` y `flutter_secure_storage`.
+*   **Framework Frontend:** [Flutter](https://flutter.dev/) para una experiencia multiplataforma nativa.
+*   **Lenguaje:** [Dart](https://dart.dev/).
+*   **Backend y Servicios en la Nube:**
+    *   **Firebase Realtime Database:** Base de datos NoSQL en tiempo real para sincronización y persistencia.
+    *   **Firebase Authentication:** Gestión robusta de usuarios y autenticación segura.
+    *   **Firebase Hosting:** Despliegue rápido y escalable de la aplicación web.
+    *   **Cloud Functions for Firebase (Node.js):** Lógica de backend sin servidor, utilizada para la interacción segura con la API de Gemini (protegiendo claves y personalizando prompts).
+*   **Almacenamiento Local Offline:** [Hive](https://pub.dev/packages/hive) para una persistencia de datos local rápida y eficiente.
+*   **Gestión de Estado:** [Provider](https://pub.dev/packages/provider) para una gestión reactiva y escalable del estado de la aplicación.
+*   **Inteligencia Artificial:** [Google AI SDK (Gemini)](https://pub.dev/packages/google_generative_ai) para capacidades de IA.
+*   **Otras Librerías:**
+    *   `file_picker` y `excel`: Para la manipulación de archivos Excel.
+    *   `mobile_scanner`: Para el escaneo de códigos QR.
+    *   `local_auth` y `flutter_secure_storage`: Para seguridad local y almacenamiento seguro.
 
 ---
 
@@ -92,32 +64,34 @@ Un vistazo a las capacidades que hacen de Asystem una herramienta indispensable.
 ### 1. Prerrequisitos
 *   Tener [Flutter SDK](https://flutter.dev/docs/get-started/install) instalado.
 *   Un editor de código como [Visual Studio Code](https://code.visualstudio.com/).
-*   Tener una cuenta de [Firebase](https://firebase.google.com/) y el [Firebase CLI](https://firebase.google.com/docs/cli) instalado.
+*   Tener una cuenta de [Firebase](https://firebase.google.com/) y el [Firebase CLI](https://firebase.google.com/docs/cli) instalado y configurado.
 
-### 2. Configuración
+### 2. Configuración del Proyecto
 ```bash
 # Clona el repositorio
 git clone https://github.com/Angelgonzalez2004/asystem_cobacam.git
 cd asystem_cobacam
 
-# Instala dependencias
+# Instala las dependencias de Flutter
 flutter pub get
+
+# Asegúrate de que tu proyecto Firebase esté correctamente configurado.
+# El archivo `lib/firebase_options.dart` es crucial para la conexión de la app con tu proyecto Firebase.
 ```
 
-### 3. Configuración de Firebase
-*   **Android/iOS/Web:** Asegúrate de que tu proyecto esté configurado con Firebase. El archivo `lib/firebase_options.dart` es esencial.
-
-### 4. Ejecutar la Aplicación
+### 3. Ejecutar la Aplicación en Desarrollo
 ```bash
+# Para ejecutar en un dispositivo o emulador
 flutter run
 ```
 
-### 5. Compilar y Desplegar en Firebase Hosting
+### 4. Compilar y Desplegar en Firebase Hosting
 ```bash
 # Compila la versión de producción para la web
 flutter build web
 
-# Despliega la aplicación en Firebase
+# Despliega la aplicación web en Firebase Hosting
+# Asegúrate de haber configurado tu proyecto Firebase con `firebase init` y de estar autenticado con `firebase login`.
 firebase deploy --only hosting
 ```
 

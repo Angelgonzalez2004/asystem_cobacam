@@ -388,6 +388,61 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
     }
   }
 
+  Future<void> _grantMatriculaEditPermission() async {
+    if (widget.student == null) return;
+
+    final confirmed = await UiHelpers.showConfirmationDialog(
+      context,
+      title: 'Autorizar Cambio de Matrícula',
+      content:
+          '¿Estás seguro de que quieres permitir que ${widget.student!.fullName} edite su matrícula por única vez?',
+      confirmText: 'Sí, autorizar',
+    );
+
+    if (!confirmed || !mounted) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      // Find the user UID linked to this studentId (matricula)
+      final usersQuery = FirebaseDatabase.instance
+          .ref('users')
+          .orderByChild('studentId')
+          .equalTo(widget.student!.studentId);
+      
+      final snapshot = await usersQuery.get();
+
+      if (snapshot.exists && snapshot.children.isNotEmpty) {
+        final userUid = snapshot.children.first.key;
+
+        if (userUid != null) {
+          // Grant permission
+          await FirebaseDatabase.instance
+              .ref('users/$userUid')
+              .update({'allowMatriculaEdit': true});
+          
+          if (mounted) {
+            UiHelpers.showSnackBar(context, '¡Permiso concedido! El alumno ya puede editar su matrícula.');
+          }
+        } else {
+          throw Exception('UID de usuario no encontrado.');
+        }
+      } else {
+        UiHelpers.showSnackBar(
+          context,
+          'Error: No se encontró ninguna cuenta de usuario vinculada a la matrícula ${widget.student!.studentId}.',
+          isError: true,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Error al conceder permiso: ${e.toString()}', isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -663,6 +718,21 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
                             ),
                           ),
                         ),
+                        if (widget.student != null && !_isReadOnly) ...[
+                          const SizedBox(height: 24),
+                          _buildSectionTitle(theme, 'Acciones Administrativas'),
+                          const SizedBox(height: 16),
+                          ListTile(
+                            leading: const Icon(Icons.vpn_key_off_rounded),
+                            title: const Text('Permitir edición de matrícula'),
+                            subtitle: const Text(
+                                'Esto le dará al alumno un permiso de un solo uso para cambiar su matrícula.'),
+                            trailing: ElevatedButton(
+                              onPressed: _grantMatriculaEditPermission,
+                              child: const Text('Autorizar'),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
