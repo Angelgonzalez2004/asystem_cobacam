@@ -21,7 +21,6 @@ import 'package:asystem_cobacam/models/attendance_record_model.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
- // Necesario para guardar archivos si se implementa guardado local
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -1018,7 +1017,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        // CORREGIDO: BoxBoxShadow -> BoxShadow
         boxShadow: [
           BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -1775,7 +1773,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     // Filter and sort active students
     final List<Student> activeStudents = _studentsMap.values
-        .where((s) => s.isActive && s.campusId == _campus && s.schoolCycle == _currentSchoolCycle)
+        .where((s) => s.isActive && s.schoolCycle == _currentSchoolCycle)
         .toList();
     activeStudents.sort((a, b) => a.fullName.compareTo(b.fullName));
 
@@ -1787,14 +1785,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     // --- Headers ---
     // Column indices: A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7
     List<String> headers = [
-      'Matrícula',       // A (0)
-      'Nombre',          // B (1)
-      'Grupo',           // C (2) -- NEW
-      'Fecha',           // D (3)
-      'Hora Actual',     // E (4)
+      'Matrícula',        // A (0)
+      'Nombre',           // B (1)
+      'Grupo',            // C (2) -- NEW
+      'Fecha',            // D (3)
+      'Hora Actual',      // E (4)
       'Hora Programada', // F (5) -- NEW
-      'Asistencia',      // G (6)
-      'Observaciones'    // H (7)
+      'Asistencia',       // G (6)
+      'Observaciones'     // H (7)
     ];
     sheet.appendRow(headers.map((e) => excel_lib.TextCellValue(e)).toList());
 
@@ -1804,60 +1802,45 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       final rowNum = i + 2; // Excel rows are 1-indexed, headers take row 1
 
       // Matrícula (Column A)
-      sheet.updateCell(
-        excel_lib.CellIndex.indexByColumn(columnIndex: 0, rowIndex: rowNum - 1),
-        excel_lib.TextCellValue(student.studentId),
-      );
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowNum - 1)).value =
+          excel_lib.TextCellValue(student.studentId);
 
       // Nombre (Column B)
-      sheet.updateCell(
-        excel_lib.CellIndex.indexByColumn(columnIndex: 1, rowIndex: rowNum - 1),
-        excel_lib.TextCellValue(student.fullName),
-      );
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowNum - 1)).value =
+          excel_lib.TextCellValue(student.fullName);
 
       // Grupo (Column C)
-      sheet.updateCell(
-        excel_lib.CellIndex.indexByColumn(columnIndex: 2, rowIndex: rowNum - 1),
-        excel_lib.TextCellValue(student.group),
-      );
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowNum - 1)).value =
+          excel_lib.TextCellValue(student.group);
 
       // Fecha (Column D) - Formula: =IF(A_fila_actual="", "", IF(D_fila_actual<>0, D_fila_actual, TODAY()))
       // Adjusted to use actual column letters D, A
-      sheet.updateCell(
-        excel_lib.CellIndex.indexByColumn(columnIndex: 3, rowIndex: rowNum - 1),
-        excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(D$rowNum<>0, D$rowNum, TODAY()))'),
-      );
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowNum - 1)).value =
+          excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(D$rowNum<>0, D$rowNum, TODAY()))');
 
       // Hora Actual (Column E) - Formula: =IF(A_fila_actual="", "", IF(E_fila_actual<>0, E_fila_actual, AHORA()))
       // Adjusted to use actual column letters E, A
-      sheet.updateCell(
-        excel_lib.CellIndex.indexByColumn(columnIndex: 4, rowIndex: rowNum - 1),
-        excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(E$rowNum<>0, E$rowNum, NOW()))'),
-      );
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowNum - 1)).value =
+          excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(E$rowNum<>0, E$rowNum, NOW()))');
 
       // Hora Programada (Column F)
       final scheduledTime = _getScheduledTimeForStudent(student, type);
-      sheet.updateCell(
-        excel_lib.CellIndex.indexByColumn(columnIndex: 5, rowIndex: rowNum - 1),
-        excel_lib.TextCellValue(scheduledTime),
-      );
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowNum - 1)).value =
+          excel_lib.TextCellValue(scheduledTime);
 
       // Asistencia (Column G) - Formula: =IF(E_fila_actual="", "No", "Si")
       // Adjusted to use actual column letter E
-      sheet.updateCell(
-        excel_lib.CellIndex.indexByColumn(columnIndex: 6, rowIndex: rowNum - 1),
-        excel_lib.FormulaCellValue('IF(E$rowNum="", "No", "Si")'),
-      );
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowNum - 1)).value =
+          excel_lib.FormulaCellValue('IF(E$rowNum="", "No", "Si")');
 
       // Observaciones (Column H) - Leave blank
-      sheet.updateCell(
-        excel_lib.CellIndex.indexByColumn(columnIndex: 7, rowIndex: rowNum - 1),
-        excel_lib.TextCellValue(''),
-      );
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowNum - 1)).value =
+          excel_lib.TextCellValue('');
     }
 
     // --- Add INSTRUCCIONES Sheet ---
-    excel_lib.Sheet instructionsSheet = excel['INSTRUCCIONES'] = excel_lib.Sheet(sheetName: 'INSTRUCCIONES');
+    // CORREGIDO: Usar operador [] en lugar de addSheet()
+    excel_lib.Sheet instructionsSheet = excel['INSTRUCCIONES'];
     instructionsSheet.appendRow([excel_lib.TextCellValue('INSTRUCCIONES PARA EL USO DE LA PLANTILLA DE ASISTENCIA')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('Esta plantilla está diseñada para registrar la asistencia de ${type == 'entry' ? 'ENTRADAS' : 'SALIDAS'}.')]);
@@ -1978,7 +1961,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             errorCount++;
             continue;
           }
-          // Validación de fecha (CORREGIDO: Eliminada variable attendanceDate no usada)
+          // Validación de fecha
           try {
             DateFormat('yyyy-MM-dd').parse(dateStr);
           } catch (_) {
@@ -2086,7 +2069,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     String? faltas, // Changed from incidenceType
     String? observacionIncidencias, // Changed from incidenceDetail
   }) async {
-    // CORREGIDO: Mover currentConnectivity al inicio de la función para que esté en el scope correcto
     final ConnectivityResult currentConnectivity =
         await _connectivityService.checkConnectivity();
 
@@ -2186,7 +2168,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     // Save/sync the attendance record ONLY if there's actual attendance data to record
     if (isEntryProvided || isExitProvided || isFaltasProvided) {
-      // CORREGIDO: currentConnectivity ahora está disponible aquí
       if (currentConnectivity == ConnectivityResult.none) {
         final attendanceRecord = AttendanceRecord.fromFirebaseMap(
           student.studentId,
@@ -2249,4 +2230,4 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
     }
   }
-} // CORREGIDO: Se agregó la llave de cierre faltante
+}
