@@ -1677,6 +1677,51 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (mounted) setState(() => _offlineRecordsCount = count);
   }
 
+  String _getScheduledTimeForStudent(Student student, String type) {
+    if (_groupSchedulesMap.isEmpty) return '';
+
+    String targetGroupId = student.group;
+    try {
+      final groupObj = _groups.firstWhere((g) => g.name == student.group);
+      targetGroupId = groupObj.key;
+    } catch (_) {
+      // Fallback: If group not found by name, assume student.group is the ID
+      // If student.group is not a valid key, groupSchedule will be null
+    }
+
+    final GroupSchedule? groupSchedule = _groupSchedulesMap[targetGroupId];
+
+    if (groupSchedule == null) return '';
+
+    // Use a generic weekday for template generation (e.g., Monday's schedule)
+    // to find the earliest entry or latest exit.
+    // If the student's group has no schedule for Monday, try another day.
+    // This is a simplification for template generation.
+    List<ClassSession>? todaySessions;
+    List<String> weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+
+    for (var day in weekdays) {
+      if (groupSchedule.dailySchedules.containsKey(day) && groupSchedule.dailySchedules[day]!.isNotEmpty) {
+        todaySessions = groupSchedule.dailySchedules[day];
+        break; // Found a day with a schedule, use it.
+      }
+    }
+
+    if (todaySessions == null || todaySessions.isEmpty) return '';
+
+    if (type == 'entry') {
+      final earliestSession = todaySessions.reduce(
+          (a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
+      return earliestSession.startTime;
+    } else {
+      // type == 'exit'
+      final latestSession = todaySessions
+          .reduce((a, b) => a.endTime.compareTo(b.endTime) > 0 ? a : b);
+      return latestSession.endTime;
+    }
+  }
+
+
   Future<void> _showDownloadOptionsDialog() async {
     if (_campus == null || _currentSchoolCycle.isEmpty) {
       UiHelpers.showSnackBar(
@@ -1740,14 +1785,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     excel_lib.Sheet sheet = excel['Asistencia'];
 
     // --- Headers ---
-    // Column indices: A=0, B=1, C=2, D=3, E=4, F=5
+    // Column indices: A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7
     List<String> headers = [
-      'Matrícula', // A
-      'Nombre',    // B
-      'Fecha',     // C
-      'Hora',      // D
-      'Asistencia',// E
-      'Observaciones' // F
+      'Matrícula',       // A (0)
+      'Nombre',          // B (1)
+      'Grupo',           // C (2) -- NEW
+      'Fecha',           // D (3)
+      'Hora Actual',     // E (4)
+      'Hora Programada', // F (5) -- NEW
+      'Asistencia',      // G (6)
+      'Observaciones'    // H (7)
     ];
     sheet.appendRow(headers.map((e) => excel_lib.TextCellValue(e)).toList());
 
@@ -1768,30 +1815,43 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         excel_lib.TextCellValue(student.fullName),
       );
 
-      // Fecha (Column C) - Formula: =IF(A_fila_actual="", "", IF(C_fila_actual<>0, C_fila_actual, HOY()))
-      // Adjusted to use actual column letters C, A
+      // Grupo (Column C)
       sheet.updateCell(
         excel_lib.CellIndex.indexByColumn(columnIndex: 2, rowIndex: rowNum - 1),
-        excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(C$rowNum<>0, C$rowNum, TODAY()))'),
+        excel_lib.TextCellValue(student.group),
       );
 
-      // Hora (Column D) - Formula: =IF(A_fila_actual="", "", IF(D_fila_actual<>0, D_fila_actual, AHORA()))
+      // Fecha (Column D) - Formula: =IF(A_fila_actual="", "", IF(D_fila_actual<>0, D_fila_actual, TODAY()))
       // Adjusted to use actual column letters D, A
       sheet.updateCell(
         excel_lib.CellIndex.indexByColumn(columnIndex: 3, rowIndex: rowNum - 1),
-        excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(D$rowNum<>0, D$rowNum, NOW()))'),
+        excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(D$rowNum<>0, D$rowNum, TODAY()))'),
       );
 
-      // Asistencia (Column E) - Formula: =IF(D_fila_actual="", "No", "Si")
-      // Adjusted to use actual column letter D
+      // Hora Actual (Column E) - Formula: =IF(A_fila_actual="", "", IF(E_fila_actual<>0, E_fila_actual, AHORA()))
+      // Adjusted to use actual column letters E, A
       sheet.updateCell(
         excel_lib.CellIndex.indexByColumn(columnIndex: 4, rowIndex: rowNum - 1),
-        excel_lib.FormulaCellValue('IF(D$rowNum="", "No", "Si")'),
+        excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(E$rowNum<>0, E$rowNum, NOW()))'),
       );
 
-      // Observaciones (Column F) - Leave blank
+      // Hora Programada (Column F)
+      final scheduledTime = _getScheduledTimeForStudent(student, type);
       sheet.updateCell(
         excel_lib.CellIndex.indexByColumn(columnIndex: 5, rowIndex: rowNum - 1),
+        excel_lib.TextCellValue(scheduledTime),
+      );
+
+      // Asistencia (Column G) - Formula: =IF(E_fila_actual="", "No", "Si")
+      // Adjusted to use actual column letter E
+      sheet.updateCell(
+        excel_lib.CellIndex.indexByColumn(columnIndex: 6, rowIndex: rowNum - 1),
+        excel_lib.FormulaCellValue('IF(E$rowNum="", "No", "Si")'),
+      );
+
+      // Observaciones (Column H) - Leave blank
+      sheet.updateCell(
+        excel_lib.CellIndex.indexByColumn(columnIndex: 7, rowIndex: rowNum - 1),
         excel_lib.TextCellValue(''),
       );
     }
@@ -1800,7 +1860,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     excel_lib.Sheet instructionsSheet = excel['INSTRUCCIONES'] = excel_lib.Sheet(sheetName: 'INSTRUCCIONES');
     instructionsSheet.appendRow([excel_lib.TextCellValue('INSTRUCCIONES PARA EL USO DE LA PLANTILLA DE ASISTENCIA')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('Para que las fórmulas de "Fecha" y "Hora" funcionen correctamente y se "congelen" una vez registradas, necesita habilitar el cálculo iterativo en Excel:')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('Esta plantilla está diseñada para registrar la asistencia de ${type == 'entry' ? 'ENTRADAS' : 'SALIDAS'}.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('Contiene los datos de todos los alumnos activos de este plantel y ciclo escolar.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('COLUMNAS:')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('A: Matrícula del Alumno')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('B: Nombre Completo del Alumno')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('C: Grupo al que pertenece el Alumno')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('D: Fecha (se auto-completa con la fecha actual si está vacía)')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('E: Hora Actual (se auto-completa con la hora actual si está vacía, aquí se registra el momento del pase de lista)')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('F: Hora Programada (Hora de ${type == 'entry' ? 'entrada' : 'salida'} según el horario del alumno)')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('G: Asistencia (Si/No - basado en si la columna "Hora Actual" tiene un valor)')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('H: Observaciones (Para cualquier nota adicional)')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('*** IMPORTANTE: HABILITAR CÁLCULO ITERATIVO EN EXCEL ***')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('Para que las fórmulas de "Fecha" (Columna D) y "Hora Actual" (Columna E) funcionen correctamente y se "congelen" una vez registradas, necesita habilitar el cálculo iterativo en Excel:')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('Pasos para Excel (Windows/macOS):')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('1. Vaya a "Archivo" > "Opciones" (en macOS, "Excel" > "Preferencias").')]);
@@ -1810,12 +1884,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     instructionsSheet.appendRow([excel_lib.TextCellValue('5. "Cambio máximo" puede dejarse en 0,001 (valor por defecto).')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('Modo de Uso Sugerido:')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('1. Busque al alumno por "Matrícula" (Ctrl+B).')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('2. La celda de "Hora" (columna D) se actualizará automáticamente con la hora actual en cuanto edite cualquier celda en esa fila (por ejemplo, al poner una observación en la columna F).')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('3. La celda de "Fecha" (columna C) se actualizará automáticamente con la fecha actual si está vacía.')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('4. No modifique las columnas A, B, C, D o E si ya tienen valores que desea conservar, a menos que entienda el comportamiento de las fórmulas iterativas.')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('La plantilla es para el registro de ${type == 'entry' ? 'ENTRADAS' : 'SALIDAS'}.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('1. Busque al alumno por "Matrícula" (Ctrl+B) o "Nombre" (Ctrl+B).')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('2. Para registrar una asistencia, simplemente edite cualquier celda en la fila del alumno (ej. añada una observación en la Columna H). Las celdas "Fecha" (D) y "Hora Actual" (E) se auto-actualizarán y "congelarán" con los valores actuales.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('3. La columna "Asistencia" (G) se actualizará automáticamente a "Si" una vez que la "Hora Actual" (E) se registre.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('4. No modifique directamente las celdas de las columnas D, E y G si ya tienen valores que desea conservar, a menos que entienda el comportamiento de las fórmulas iterativas.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('5. Después de registrar las asistencias en la plantilla, puede usar la función "Importar Excel" en la aplicación para subir los datos.')]);
 
 
     // Codificar archivo
