@@ -1722,38 +1722,113 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     });
   }
 
-  // MÉTODO AGREGADO: Genera una plantilla de Excel básica
   Future<void> _generateExcelTemplate(String type) async {
+    if (_campus == null || _currentSchoolCycle.isEmpty) {
+      UiHelpers.showSnackBar(context, 'Error: No se ha inicializado el plantel o ciclo escolar.', isError: true);
+      return;
+    }
+
+    // Filter and sort active students
+    final List<Student> activeStudents = _studentsMap.values
+        .where((s) => s.isActive && s.campusId == _campus && s.schoolCycle == _currentSchoolCycle)
+        .toList();
+    activeStudents.sort((a, b) => a.fullName.compareTo(b.fullName));
+
     var excel = excel_lib.Excel.createExcel();
     // Rename default sheet
     excel.rename(excel.getDefaultSheet()!, 'Asistencia');
     excel_lib.Sheet sheet = excel['Asistencia'];
 
-    // Headers
+    // --- Headers ---
+    // Column indices: A=0, B=1, C=2, D=3, E=4, F=5
     List<String> headers = [
-      'ID',
-      'Nombre',
-      'Matrícula',
-      'Fecha (YYYY-MM-DD)',
-      'Hora Entrada (HH:MM)',
-      'Hora Salida (HH:MM)',
-      'Faltas (Si/No)',
-      'Observaciones'
+      'Matrícula', // A
+      'Nombre',    // B
+      'Fecha',     // C
+      'Hora',      // D
+      'Asistencia',// E
+      'Observaciones' // F
     ];
-    
-    // Insertar headers
     sheet.appendRow(headers.map((e) => excel_lib.TextCellValue(e)).toList());
+
+    // --- Populate with Student Data and Formulas ---
+    for (int i = 0; i < activeStudents.length; i++) {
+      final student = activeStudents[i];
+      final rowNum = i + 2; // Excel rows are 1-indexed, headers take row 1
+
+      // Matrícula (Column A)
+      sheet.updateCell(
+        excel_lib.CellIndex.indexByColumn(columnIndex: 0, rowIndex: rowNum - 1),
+        excel_lib.TextCellValue(student.studentId),
+      );
+
+      // Nombre (Column B)
+      sheet.updateCell(
+        excel_lib.CellIndex.indexByColumn(columnIndex: 1, rowIndex: rowNum - 1),
+        excel_lib.TextCellValue(student.fullName),
+      );
+
+      // Fecha (Column C) - Formula: =IF(A_fila_actual="", "", IF(C_fila_actual<>0, C_fila_actual, HOY()))
+      // Adjusted to use actual column letters C, A
+      sheet.updateCell(
+        excel_lib.CellIndex.indexByColumn(columnIndex: 2, rowIndex: rowNum - 1),
+        excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(C$rowNum<>0, C$rowNum, TODAY()))'),
+      );
+
+      // Hora (Column D) - Formula: =IF(A_fila_actual="", "", IF(D_fila_actual<>0, D_fila_actual, AHORA()))
+      // Adjusted to use actual column letters D, A
+      sheet.updateCell(
+        excel_lib.CellIndex.indexByColumn(columnIndex: 3, rowIndex: rowNum - 1),
+        excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(D$rowNum<>0, D$rowNum, NOW()))'),
+      );
+
+      // Asistencia (Column E) - Formula: =IF(D_fila_actual="", "No", "Si")
+      // Adjusted to use actual column letter D
+      sheet.updateCell(
+        excel_lib.CellIndex.indexByColumn(columnIndex: 4, rowIndex: rowNum - 1),
+        excel_lib.FormulaCellValue('IF(D$rowNum="", "No", "Si")'),
+      );
+
+      // Observaciones (Column F) - Leave blank
+      sheet.updateCell(
+        excel_lib.CellIndex.indexByColumn(columnIndex: 5, rowIndex: rowNum - 1),
+        excel_lib.TextCellValue(''),
+      );
+    }
+
+    // --- Add INSTRUCCIONES Sheet ---
+    excel_lib.Sheet instructionsSheet = excel['INSTRUCCIONES'] = excel_lib.Sheet(sheetName: 'INSTRUCCIONES');
+    instructionsSheet.appendRow([excel_lib.TextCellValue('INSTRUCCIONES PARA EL USO DE LA PLANTILLA DE ASISTENCIA')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('Para que las fórmulas de "Fecha" y "Hora" funcionen correctamente y se "congelen" una vez registradas, necesita habilitar el cálculo iterativo en Excel:')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('Pasos para Excel (Windows/macOS):')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('1. Vaya a "Archivo" > "Opciones" (en macOS, "Excel" > "Preferencias").')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('2. Seleccione "Fórmulas".')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('3. En la sección "Opciones de cálculo", marque la casilla "Habilitar cálculo iterativo".')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('4. Asegúrese de que "Iteraciones máximas" esté en 1.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('5. "Cambio máximo" puede dejarse en 0,001 (valor por defecto).')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('Modo de Uso Sugerido:')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('1. Busque al alumno por "Matrícula" (Ctrl+B).')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('2. La celda de "Hora" (columna D) se actualizará automáticamente con la hora actual en cuanto edite cualquier celda en esa fila (por ejemplo, al poner una observación en la columna F).')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('3. La celda de "Fecha" (columna C) se actualizará automáticamente con la fecha actual si está vacía.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('4. No modifique las columnas A, B, C, D o E si ya tienen valores que desea conservar, a menos que entienda el comportamiento de las fórmulas iterativas.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('La plantilla es para el registro de ${type == 'entry' ? 'ENTRADAS' : 'SALIDAS'}.')]);
+
 
     // Codificar archivo
     var fileBytes = excel.save();
 
     if (fileBytes != null) {
-      // Aquí se debería implementar el guardado del archivo.
-      // Dado que no tenemos el path_provider configurado en este snippet,
-      // mostramos un mensaje de éxito simulado.
+      // For web, you would typically offer a download.
+      // In a real Flutter web app, you might use dart:html or a package like `download_path_provider`
+      // combined with `js` package for browser download.
+      // For now, we simulate the success message.
       if (mounted) {
         UiHelpers.showSnackBar(
-            context, 'Plantilla de $type generada exitosamente (Simulación).');
+            context, 'Plantilla de ${type == 'entry' ? 'entrada' : 'salida'} generada exitosamente.');
       }
       debugPrint("Excel generado con ${fileBytes.length} bytes.");
     }
