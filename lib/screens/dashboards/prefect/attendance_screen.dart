@@ -1,17 +1,18 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:excel/excel.dart' as excel_lib;
 import 'dart:async';
-import 'package:asystem_cobacam/models/incidence_model.dart'; // Importar modelo
+import 'dart:io'; // Required for File
+import 'package:asystem_cobacam/models/incidence_model.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Para HapticFeedback
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:asystem_cobacam/models/student_model.dart';
 import 'package:asystem_cobacam/models/group_model.dart';
 import 'package:asystem_cobacam/models/group_schedule_model.dart';
-import 'package:asystem_cobacam/models/class_session_model.dart'; // NEW IMPORT
+import 'package:asystem_cobacam/models/class_session_model.dart';
 import 'package:asystem_cobacam/services/app_settings_service.dart';
 import 'package:asystem_cobacam/models/non_attendance_day_model.dart';
 import 'package:intl/intl.dart';
@@ -21,6 +22,9 @@ import 'package:asystem_cobacam/models/attendance_record_model.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart'; // Required for getApplicationDocumentsDirectory
+import 'package:asystem_cobacam/utils/web_downloader.dart'; // Required for WebDownloader
+import 'package:flutter/foundation.dart' show kIsWeb; // Required for kIsWeb
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -38,7 +42,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   );
 
   late final AppSettingsService _appSettingsService;
-
   late final HiveService _hiveService;
   late final ConnectivityService _connectivityService;
 
@@ -114,7 +117,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         if (_connectivityResult != ConnectivityResult.none) {
           _syncOfflineAttendance();
           if (!wasOnline) {
-            // Re-load data from Firebase when online again
             _syncFirebaseData();
             if (mounted) {
               UiHelpers.showSnackBar(
@@ -122,7 +124,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             }
           }
         } else {
-          // No internet, ensure data is loaded from Hive for offline mode
           _loadStudentsAndSchedules(online: false);
           if (mounted) {
             UiHelpers.showSnackBar(context, 'Modo Offline activado.',
@@ -134,7 +135,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     });
   }
 
-  /// Initializes the screen with data available locally (offline-first).
   Future<void> _initData() async {
     setState(() => _isLoading = true);
     try {
@@ -158,7 +158,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         debugPrint('Error obteniendo perfil online: $e');
       }
 
-      // Si falló Firebase (sin red), usar caché
       campus ??= prefs.getString('cached_campus');
 
       if (campus == null) {
@@ -205,17 +204,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
-  /// Fetches fresh data from Firebase and updates the state.
   Future<void> _syncFirebaseData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null ||
         await _connectivityService.checkConnectivity() ==
             ConnectivityResult.none) {
-      return; // Don't sync if there's no user or no connection
+      return;
     }
 
     try {
-      // Fetch and update user's campus
       final userProfileSnapshot = await FirebaseDatabase.instance
           .ref('users/${user.uid}')
           .get()
@@ -230,7 +227,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         }
       }
 
-      // Fetch and update school cycle and non-attendance days
       final onlineCycleId = await _appSettingsService.getCurrentSchoolCycleId();
       final onlineNonAttendance =
           await _appSettingsService.getAllNonAttendanceDays(_campus!);
@@ -242,7 +238,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         });
       }
 
-      // Re-initialize listeners with potentially new cycle/campus info
       _setupFirebaseRefs();
       _setupFirebaseListeners();
     } catch (e) {
@@ -412,7 +407,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       return;
     }
 
-    // Si hay un borde activo (cooldown visual), ignorar escaneos
     if (_scannerBorderColor != Colors.transparent) {
       return;
     }
@@ -437,7 +431,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       return false;
     }
 
-    // Normalizar fecha de hoy y de la lista para comparar solo YYYY-MM-DD
     final todayStr = DateFormat('yyyy-MM-dd').format(now);
 
     if (_nonAttendanceDays.any((day) {
@@ -451,7 +444,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return true;
   }
 
-  // --- LOGICA DE PROCESAMIENTO ---
   Future<void> _processStudentId(String studentId) async {
     if (!_isProcessing || _campus == null) return;
     if (studentId == _lastProcessedStudentId) return;
@@ -518,24 +510,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       final groupObj = _groups.firstWhere((g) => g.name == student.group);
       targetGroupId = groupObj.key;
     } catch (_) {
-      // Fallback: If group not found by name, assume student.group is the ID
     }
 
     final GroupSchedule? groupSchedule = _groupSchedulesMap[targetGroupId];
 
-    // Initialize with default values for compilation
     DateTime scheduledEntry =
-        DateTime(now.year, now.month, now.day, 7, 0); // Default 7:00 AM
+        DateTime(now.year, now.month, now.day, 7, 0); 
     DateTime scheduledExit =
-        DateTime(now.year, now.month, now.day, 14, 0); // Default 2:00 PM
+        DateTime(now.year, now.month, now.day, 14, 0); 
 
-    // Try to derive actual entry/exit from ClassSessions
     if (groupSchedule != null &&
         groupSchedule.dailySchedules.containsKey(todayDayOfWeek)) {
       final List<ClassSession> todaySessions =
           groupSchedule.dailySchedules[todayDayOfWeek]!;
       if (todaySessions.isNotEmpty) {
-        // Find the earliest entry and latest exit from today's ClassSessions
         final earliestSession = todaySessions.reduce(
             (a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
         final latestSession = todaySessions
@@ -553,7 +541,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         } catch (_) {}
       }
     } else {
-      // If no schedule for group or day, treat as no schedule for today.
       _triggerFeedback(false);
       UiHelpers.showSnackBar(context, 'Grupo ${student.group} sin horario hoy.',
           isError: true);
@@ -589,7 +576,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         record['status'] = 'presente';
       }
     } else {
-      // scanType is 'exit'
       record['exitTime'] = currentTime;
       if (now.isBefore(scheduledExit)) {
         needsReason = true;
@@ -613,7 +599,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
     }
 
-    // --- LÓGICA DE ALERTA MÉDICA ---
     _checkAndShowMedicalAlert(student);
 
     _triggerFeedback(true, isWarning: isWarning);
@@ -939,7 +924,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       IconData icon, Color color) {
     return InkWell(
       onTap: () async {
-        Navigator.pop(context); // Cerrar modal rápido
+        Navigator.pop(context);
 
         String finalType = type;
         if (type == 'Otro') {
@@ -995,15 +980,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         isSynced: true,
         schoolCycle: _currentSchoolCycle,
       );
-      // Guardar (Si no hay red, la persistencia de Firebase lo maneja, no necesitamos Hive manual crítico para esto ahora)
       await newRef.set(incidence.toFirebaseMap());
       if (mounted) UiHelpers.showSnackBar(context, '⚠️ Incidencia "$type" registrada.');
     } catch (e) {
       if (mounted) UiHelpers.showSnackBar(context, 'Error al guardar reporte.', isError: true);
     }
   }
-
-  // --- DASHBOARD WIDGETS ---
 
   Widget _buildStatsDashboard(ThemeData theme) {
     int total = _todayAttendance.length;
@@ -1054,8 +1036,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  // --- MAIN BUILD ---
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -1068,7 +1048,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'download') _showDownloadOptionsDialog();
-              if (value == 'upload') _importAttendanceFromExcel();
+              if (value == 'upload') _showImportOptionsDialog();
             },
             itemBuilder: (context) => [
               const PopupMenuItem(
@@ -1107,10 +1087,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // 1. STATS DASHBOARD
                 _buildStatsDashboard(theme),
-
-                // 2. SCANNER / INPUT
                 Expanded(
                   flex: 4,
                   child: Container(
@@ -1153,8 +1130,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 ],
                               ),
                             ),
-
-                          // Botones Flotantes (Flash y Cámara)
                           if (!_isManualInputMode)
                             Positioned(
                               bottom: 16,
@@ -1192,8 +1167,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 ],
                               ),
                             ),
-
-                          // Badge de Ciclo
                           Positioned(
                             top: 16,
                             left: 16,
@@ -1221,8 +1194,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               ),
                             ),
                           ),
-
-                          // Botón Switch Modo
                           Positioned(
                             top: 16,
                             right: 16,
@@ -1237,7 +1208,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                   foregroundColor: Colors.black87),
                             ),
                           ),
-
                           if (!_isProcessing &&
                               _scannerBorderColor == Colors.transparent)
                             const Center(
@@ -1248,8 +1218,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     ),
                   ),
                 ),
-
-                // 3. MANUAL ENTRY (Buscador Predictivo Mejorado)
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
@@ -1268,7 +1236,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     onSelected: (Student selection) {
                       _processStudentId(selection.studentId);
                     },
-                    // VISTA PERSONALIZADA DE RESULTADOS
                     optionsViewBuilder: (context, onSelected, options) {
                       return Align(
                         alignment: Alignment.topLeft,
@@ -1332,8 +1299,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     },
                   ),
                 ),
-
-                // 4. HISTORIAL
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
@@ -1347,7 +1312,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     ],
                   ),
                 ),
-
                 Expanded(
                   flex: 3,
                   child: _todayAttendance.isEmpty
@@ -1378,12 +1342,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                   backgroundColor: theme.colorScheme.primary
                                       .withOpacity(0.1),
                                   child: Text(
-                                      studentName.isNotEmpty
-                                          ? studentName[0]
-                                          : '?',
-                                      style: TextStyle(
-                                          color: theme.colorScheme.primary,
-                                          fontSize: 14)),
+                                    studentName.isNotEmpty
+                                        ? studentName[0]
+                                        : '?',
+                                    style: TextStyle(
+                                        color: theme.colorScheme.primary,
+                                        fontSize: 14),
+                                  ),
                                 ),
                                 title: Text(studentName,
                                     style: const TextStyle(
@@ -1393,7 +1358,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                     overflow: TextOverflow.ellipsis),
                                 subtitle: Text('$studentId • $group',
                                     style: const TextStyle(fontSize: 11)),
-                                // TRAILING ACTIONS: Hora + Botón de Reporte
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -1432,7 +1396,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                       ],
                                     ),
                                     const SizedBox(width: 8),
-                                    // BOTÓN DE REPORTE RÁPIDO
                                     IconButton(
                                       icon: const Icon(
                                           Icons.warning_amber_rounded,
@@ -1454,14 +1417,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   void _showMassAttendanceDialog() {
-    // Validar día antes de abrir
     if (!_isDayValidForAttendance((msg) =>
         UiHelpers.showSnackBar(context, msg, isError: true))) {
       return;
     }
 
-    const String type = 'exit'; // Forzado a Salida
-    String? scope; // all, group
+    const String type = 'exit';
+    String? scope;
     String? groupId;
 
     showDialog(
@@ -1572,7 +1534,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       return;
     }
 
-    // Preguntar por motivo general
     final String? reason = await _showReasonDialog(
         'Motivo General para Registro Masivo ($type)',
         type == 'entry' ? _tardyReasons : _earlyExitReasons);
@@ -1580,8 +1541,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (reason == null) return;
 
     setState(() => _isLoading = true);
-    final DateTime now = DateTime.now();
-    final currentTime = DateFormat('HH:mm').format(now);
+    final currentTime = DateFormat('HH:mm').format(DateTime.now());
 
     int successCount = 0;
 
@@ -1596,11 +1556,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         final Map<String, dynamic> record =
             Map<String, dynamic>.from(existing);
 
-        // --- LOGICA AVANZADA DE FILTRADO ---
         bool shouldUpdate = false;
 
         if (type == 'entry') {
-          // Solo registrar si NO tiene entrada previa
           if (!record.containsKey('entryTime')) {
             record['entryTime'] = currentTime;
             record['status'] = 'presente_masivo';
@@ -1608,8 +1566,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             shouldUpdate = true;
           }
         } else {
-          // type == 'exit'
-          // Solo registrar si TIENE entrada Y NO TIENE salida
           if (record.containsKey('entryTime') &&
               !record.containsKey('exitTime')) {
             record['exitTime'] = currentTime;
@@ -1619,7 +1575,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         }
 
         if (shouldUpdate) {
-          // Asegurar campos base si es un registro nuevo (solo relevante para entry)
           if (!record.containsKey('studentId')) {
             record['studentFullName'] = s.fullName;
             record['group'] = s.group;
@@ -1683,25 +1638,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       final groupObj = _groups.firstWhere((g) => g.name == student.group);
       targetGroupId = groupObj.key;
     } catch (_) {
-      // Fallback: If group not found by name, assume student.group is the ID
-      // If student.group is not a valid key, groupSchedule will be null
     }
 
     final GroupSchedule? groupSchedule = _groupSchedulesMap[targetGroupId];
 
     if (groupSchedule == null) return '';
 
-    // Use a generic weekday for template generation (e.g., Monday's schedule)
-    // to find the earliest entry or latest exit.
-    // If the student's group has no schedule for Monday, try another day.
-    // This is a simplification for template generation.
     List<ClassSession>? todaySessions;
     List<String> weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
     for (var day in weekdays) {
       if (groupSchedule.dailySchedules.containsKey(day) && groupSchedule.dailySchedules[day]!.isNotEmpty) {
         todaySessions = groupSchedule.dailySchedules[day];
-        break; // Found a day with a schedule, use it.
+        break;
       }
     }
 
@@ -1712,7 +1661,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           (a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
       return earliestSession.startTime;
     } else {
-      // type == 'exit'
       final latestSession = todaySessions
           .reduce((a, b) => a.endTime.compareTo(b.endTime) > 0 ? a : b);
       return latestSession.endTime;
@@ -1743,7 +1691,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               groupValue: selectedType,
               onChanged: (value) {
                 selectedType = value;
-                Navigator.pop(context, value); // Close dialog and return value
+                Navigator.pop(context, value);
               },
             ),
             RadioListTile<String>(
@@ -1752,7 +1700,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               groupValue: selectedType,
               onChanged: (value) {
                 selectedType = value;
-                Navigator.pop(context, value); // Close dialog and return value
+                Navigator.pop(context, value);
               },
             ),
           ],
@@ -1771,75 +1719,127 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       return;
     }
 
-    // Filter and sort active students
     final List<Student> activeStudents = _studentsMap.values
         .where((s) => s.isActive && s.schoolCycle == _currentSchoolCycle)
         .toList();
     activeStudents.sort((a, b) => a.fullName.compareTo(b.fullName));
 
     var excel = excel_lib.Excel.createExcel();
-    // Rename default sheet
     excel.rename(excel.getDefaultSheet()!, 'Asistencia');
     excel_lib.Sheet sheet = excel['Asistencia'];
 
-    // --- Headers ---
-    // Column indices: A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7
-    List<String> headers = [
-      'Matrícula',        // A (0)
-      'Nombre',           // B (1)
-      'Grupo',            // C (2) -- NEW
-      'Fecha',            // D (3)
-      'Hora Actual',      // E (4)
-      'Hora Programada', // F (5) -- NEW
-      'Asistencia',       // G (6)
-      'Observaciones'     // H (7)
-    ];
-    sheet.appendRow(headers.map((e) => excel_lib.TextCellValue(e)).toList());
+    // --- ESTILO PARA CENTRAR Y FUENTES ---
+    final centerStyle = excel_lib.CellStyle(
+      horizontalAlign: excel_lib.HorizontalAlign.Center,
+      verticalAlign: excel_lib.VerticalAlign.Center,
+    );
+    final headerStyle = excel_lib.CellStyle(
+      horizontalAlign: excel_lib.HorizontalAlign.Center,
+      verticalAlign: excel_lib.VerticalAlign.Center,
+      bold: true,
+      fontColorHex: excel_lib.ExcelColor.white,
+      backgroundColorHex: excel_lib.ExcelColor.fromHexString("#2196F3"), // Deep Blue
+    );
 
-    // --- Populate with Student Data and Formulas ---
+    List<String> headers = [
+      'Matrícula',
+      'Nombre',
+      'Grupo',
+      'Fecha',
+      'Hora Actual ${type == 'entry' ? 'Entrada' : 'Salida'}', // Now for manual input
+      'Hora Programada',
+      'Asistencia',
+      'Motivo de Incidencia',
+      'Observaciones'
+    ];
+    // Apply header style
+    for (int col = 0; col < headers.length; col++) {
+      var cell = sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0));
+      cell.value = excel_lib.TextCellValue(headers[col]);
+      cell.cellStyle = headerStyle;
+    }
+      
     for (int i = 0; i < activeStudents.length; i++) {
       final student = activeStudents[i];
-      final rowNum = i + 2; // Excel rows are 1-indexed, headers take row 1
+      final rowNum = i + 2; // Excel rows are 1-indexed, headers are row 1
+      
+      // Matrícula (Col A, index 0)
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowNum - 1))
+          .value = excel_lib.TextCellValue(student.studentId);
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowNum - 1)).cellStyle = centerStyle;
 
-      // Matrícula (Column A)
-      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowNum - 1)).value =
-          excel_lib.TextCellValue(student.studentId);
+      // Nombre (Col B, index 1)
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowNum - 1))
+          .value = excel_lib.TextCellValue(student.fullName);
+      // No center style for name as it might be long
 
-      // Nombre (Column B)
-      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowNum - 1)).value =
-          excel_lib.TextCellValue(student.fullName);
+      // Grupo (Col C, index 2)
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowNum - 1))
+          .value = excel_lib.TextCellValue(student.group);
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowNum - 1)).cellStyle = centerStyle;
 
-      // Grupo (Column C)
-      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowNum - 1)).value =
-          excel_lib.TextCellValue(student.group);
-
-      // Fecha (Column D) - Formula: =IF(A_fila_actual="", "", IF(D_fila_actual<>0, D_fila_actual, TODAY()))
-      // Adjusted to use actual column letters D, A
-      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowNum - 1)).value =
-          excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(D$rowNum<>0, D$rowNum, TODAY()))');
-
-      // Hora Actual (Column E) - Formula: =IF(A_fila_actual="", "", IF(E_fila_actual<>0, E_fila_actual, AHORA()))
-      // Adjusted to use actual column letters E, A
+      // Fecha (Col D, index 3) - Formula + Short Date Format
+      var dateCell = sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowNum - 1));
+      dateCell.value = excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(D$rowNum<>0, D$rowNum, TODAY()))');
+      dateCell.cellStyle = excel_lib.CellStyle(
+        horizontalAlign: excel_lib.HorizontalAlign.Center,
+        verticalAlign: excel_lib.VerticalAlign.Center,
+        numberFormat: excel_lib.NumFormat.standard_14, // Short date format
+      );
+      
+      // Hora Actual Entrada/Salida (Col E, index 4) - NOW MANUAL INPUT
+      // This cell will be left empty or with a default hint, no formula here
       sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowNum - 1)).value =
-          excel_lib.FormulaCellValue('IF(A$rowNum="", "", IF(E$rowNum<>0, E$rowNum, NOW()))');
+          excel_lib.TextCellValue(''); // Empty for manual input
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowNum - 1)).cellStyle = excel_lib.CellStyle(
+        horizontalAlign: excel_lib.HorizontalAlign.Center,
+        verticalAlign: excel_lib.VerticalAlign.Center,
+        numberFormat: excel_lib.NumFormat.standard_20, // Explicitly set time format
+      );
 
-      // Hora Programada (Column F)
+      // Hora Programada (Col F, index 5)
       final scheduledTime = _getScheduledTimeForStudent(student, type);
-      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowNum - 1)).value =
-          excel_lib.TextCellValue(scheduledTime);
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowNum - 1))
+          .value = excel_lib.TextCellValue(scheduledTime);
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowNum - 1)).cellStyle = centerStyle;
 
-      // Asistencia (Column G) - Formula: =IF(E_fila_actual="", "No", "Si")
-      // Adjusted to use actual column letter E
-      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowNum - 1)).value =
-          excel_lib.FormulaCellValue('IF(E$rowNum="", "No", "Si")');
+      // Asistencia (Col G, index 6) - Based on manual input in Col E
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowNum - 1))
+          .value = excel_lib.FormulaCellValue('IF(E$rowNum="", "No", "Si")');
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowNum - 1)).cellStyle = centerStyle;
 
-      // Observaciones (Column H) - Leave blank
-      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowNum - 1)).value =
-          excel_lib.TextCellValue('');
+      // Motivo de Incidencia (Col H, index 7)
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowNum - 1))
+          .value = excel_lib.TextCellValue('');
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowNum - 1)).cellStyle = centerStyle;
+
+      // Observaciones (Col I, index 8)
+      sheet.cell(excel_lib.CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: rowNum - 1))
+          .value = excel_lib.TextCellValue('');
+      // No center style for observations as it might be long
     }
 
-    // --- Add INSTRUCCIONES Sheet ---
-    // CORREGIDO: Usar operador [] en lugar de addSheet()
+    // --- AUTO-AJUSTE DE ANCHOS DE COLUMNA Y CENTRADO ---
+    sheet.setColumnAutoFit(0); // Matrícula
+    sheet.setColumnAutoFit(1); // Nombre
+    sheet.setColumnAutoFit(2); // Grupo
+    sheet.setColumnAutoFit(3); // Fecha
+    sheet.setColumnAutoFit(4); // Hora Actual E/S
+    sheet.setColumnAutoFit(5); // Hora Programada
+    sheet.setColumnAutoFit(6); // Asistencia
+    sheet.setColumnAutoFit(7); // Motivo Incidencia
+    sheet.setColumnAutoFit(8); // Observaciones
+    // Optionally set minimum widths if autofit is too small
+    sheet.setColumnWidth(0, 15.0); // Matrícula
+    sheet.setColumnWidth(1, 35.0); // Nombre
+    sheet.setColumnWidth(2, 12.0); // Grupo
+    sheet.setColumnWidth(3, 15.0); // Fecha
+    sheet.setColumnWidth(4, 20.0); // Hora Actual E/S
+    sheet.setColumnWidth(5, 20.0); // Hora Programada
+    sheet.setColumnWidth(6, 15.0); // Asistencia
+    sheet.setColumnWidth(7, 30.0); // Motivo Incidencia
+    sheet.setColumnWidth(8, 40.0); // Observaciones
+      
     excel_lib.Sheet instructionsSheet = excel['INSTRUCCIONES'];
     instructionsSheet.appendRow([excel_lib.TextCellValue('INSTRUCCIONES PARA EL USO DE LA PLANTILLA DE ASISTENCIA')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
@@ -1850,14 +1850,28 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     instructionsSheet.appendRow([excel_lib.TextCellValue('A: Matrícula del Alumno')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('B: Nombre Completo del Alumno')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('C: Grupo al que pertenece el Alumno')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('D: Fecha (se auto-completa con la fecha actual si está vacía)')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('E: Hora Actual (se auto-completa con la hora actual si está vacía, aquí se registra el momento del pase de lista)')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('D: Fecha (se auto-completa con la fecha actual si está vacía, con formato corto de fecha)')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('E: Hora Actual ${type == 'entry' ? 'Entrada' : 'Salida'} (PARA INSERTAR MANUALMENTE LA HORA. Si está vacía, "Asistencia" será "No")')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('F: Hora Programada (Hora de ${type == 'entry' ? 'entrada' : 'salida'} según el horario del alumno)')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('G: Asistencia (Si/No - basado en si la columna "Hora Actual" tiene un valor)')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('H: Observaciones (Para cualquier nota adicional)')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('H: Motivo de Incidencia (Escribir el motivo si aplica)')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('I: Observaciones (Para cualquier nota adicional)')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
+      
+    // Add the formula as an instruction in J2 (or nearby) with different styling
+    instructionsSheet.cell(excel_lib.CellIndex.indexByString("J2")).value = excel_lib.TextCellValue('Fórmula Opcional (Columna E):');
+    instructionsSheet.cell(excel_lib.CellIndex.indexByString("J2")).cellStyle = excel_lib.CellStyle(bold: true);
+    var formulaCellK2 = instructionsSheet.cell(excel_lib.CellIndex.indexByString("K2"));
+    formulaCellK2.value = excel_lib.TextCellValue('=SI(A2="", "", SI(E2<>0, E2, AHORA()))');
+    formulaCellK2.cellStyle = excel_lib.CellStyle(
+      fontColorHex: excel_lib.ExcelColor.fromHexString("#FF5722"), // Orange color
+      bold: true,
+      italic: true,
+    );
+      
     instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('*** IMPORTANTE: HABILITAR CÁLCULO ITERATIVO EN EXCEL ***')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('Para que las fórmulas de "Fecha" (Columna D) y "Hora Actual" (Columna E) funcionen correctamente y se "congelen" una vez registradas, necesita habilitar el cálculo iterativo en Excel:')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('Para que las fórmulas de "Fecha" (Columna D) y "Asistencia" (Columna G) funcionen correctamente, y si usa la fórmula de "Hora Actual" (Columna E), necesita habilitar el cálculo iterativo en Excel:')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('Pasos para Excel (Windows/macOS):')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('1. Vaya a "Archivo" > "Opciones" (en macOS, "Excel" > "Preferencias").')]);
@@ -1868,30 +1882,88 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     instructionsSheet.appendRow([excel_lib.TextCellValue('')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('Modo de Uso Sugerido:')]);
     instructionsSheet.appendRow([excel_lib.TextCellValue('1. Busque al alumno por "Matrícula" (Ctrl+B) o "Nombre" (Ctrl+B).')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('2. Para registrar una asistencia, simplemente edite cualquier celda en la fila del alumno (ej. añada una observación en la Columna H). Las celdas "Fecha" (D) y "Hora Actual" (E) se auto-actualizarán y "congelarán" con los valores actuales.')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('3. La columna "Asistencia" (G) se actualizará automáticamente a "Si" una vez que la "Hora Actual" (E) se registre.')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('4. No modifique directamente las celdas de las columnas D, E y G si ya tienen valores que desea conservar, a menos que entienda el comportamiento de las fórmulas iterativas.')]);
-    instructionsSheet.appendRow([excel_lib.TextCellValue('5. Después de registrar las asistencias en la plantilla, puede usar la función "Importar Excel" en la aplicación para subir los datos.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('2. Para registrar una asistencia, simplemente edite la celda correspondiente en la columna "Hora Actual ${type == 'entry' ? 'Entrada' : 'Salida'}" (Columna E) o añada una observación en la Columna I. Las celdas "Fecha" (D) y "Asistencia" (G) se auto-actualizarán.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('3. La columna "Asistencia" (G) se actualizará automáticamente a "Si" una vez que la "Hora Actual ${type == 'entry' ? 'Entrada' : 'Salida'}" (E) tenga un valor.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('4. Si desea auto-completar la hora, COPIE la fórmula que se encuentra en la celda K2 de esta hoja (=SI(A2="", "", SI(E2<>0, E2, AHORA()))) y PEGUE como texto en la celda correspondiente de la columna "Hora Actual ${type == 'entry' ? 'Entrada' : 'Salida'}" (E).')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('5. No modifique directamente las celdas de las columnas D y G si ya tienen valores que desea conservar, a menos que entienda el comportamiento de las fórmulas iterativas.')]);
+    instructionsSheet.appendRow([excel_lib.TextCellValue('6. Después de registrar las asistencias en la plantilla, puede usar la función "Importar Excel" en la aplicación para subir los datos.')]);
 
-
-    // Codificar archivo
     var fileBytes = excel.save();
 
     if (fileBytes != null) {
-      // For web, you would typically offer a download.
-      // In a real Flutter web app, you might use dart:html or a package like `download_path_provider`
-      // combined with `js` package for browser download.
-      // For now, we simulate the success message.
+      final String formattedDate = DateFormat('dd_MM_yyyy').format(DateTime.now());
+      final String baseName = type == 'entry' ? 'ASISTENCIAS_ENTRADA' : 'ASISTENCIAS_SALIDA';
+      final String fileName = '$baseName-$formattedDate.xlsx';
+
+      if (kIsWeb) {
+        await WebDownloader.downloadFile(Uint8List.fromList(fileBytes), fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      } else {
+        final directory = await getApplicationDocumentsDirectory();
+        final file = File('${directory.path}/$fileName');
+        await file.writeAsBytes(fileBytes);
+        if (context.mounted) {
+          UiHelpers.showSnackBar(
+              context, 'Archivo guardado en ${directory.path}/$fileName');
+        }
+      }
+
       if (mounted) {
         UiHelpers.showSnackBar(
             context, 'Plantilla de ${type == 'entry' ? 'entrada' : 'salida'} generada exitosamente.');
       }
-      debugPrint("Excel generado con ${fileBytes.length} bytes.");
     }
   }
 
-  // Placeholder for Excel Import Functionality
-  Future<void> _importAttendanceFromExcel() async {
+  Future<void> _showImportOptionsDialog() async {
+    if (_campus == null || _currentSchoolCycle.isEmpty) {
+      UiHelpers.showSnackBar(
+          context, 'Error: No se ha inicializado el plantel o ciclo escolar.',
+          isError: true);
+      return;
+    }
+
+    String? selectedType; 
+
+    selectedType = await showDialog<String>( 
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Tipo de Plantilla a Importar'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<String>(
+              title: const Text('Plantilla de Entrada'),
+              value: 'entry',
+              groupValue: selectedType,
+              onChanged: (value) {
+                Navigator.pop(context, value);
+              },
+            ),
+            RadioListTile<String>(
+              title: const Text('Plantilla de Salida'),
+              value: 'exit',
+              groupValue: selectedType,
+              onChanged: (value) {
+                Navigator.pop(context, value);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedType != null) {
+      _importAttendanceFromExcel(selectedType);
+    }
+  }
+
+  Future<void> _importAttendanceFromExcel(String importType) async {
     if (_campus == null || _currentSchoolCycle.isEmpty) {
       UiHelpers.showSnackBar(
           context, 'Error: No se ha inicializado el plantel o ciclo escolar.',
@@ -1907,7 +1979,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       );
 
       if (result != null && result.files.single.bytes != null) {
-        // Show loading indicator
         if (mounted) {
           setState(() {
             _isLoading = true;
@@ -1917,29 +1988,25 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
         final bytes = result.files.single.bytes!;
         final excel_lib.Excel excel = excel_lib.Excel.decodeBytes(bytes);
-        final sheet = excel.sheets.values.first; // Get the first sheet
+        final sheet = excel.sheets.values.first;
 
         int importedCount = 0;
         int errorCount = 0;
         List<String> errors = [];
 
-        // Assuming headers: Matrícula, Fecha, Hora Entrada, Hora Salida, Faltas, Observacion de Incidencias
-        // Start from row 1 (index 0 is header)
         for (var i = 1; i < sheet.rows.length; i++) {
           final row = sheet.rows[i];
           if (row.every((cell) => cell == null || cell.value == null)) {
-            // If row is completely empty, it's not a valid student row, so just skip.
             continue;
           }
 
-          String? studentId = row[2]?.value?.toString().trim(); // Matrícula
-          String? dateStr = row[3]?.value?.toString().trim(); // Fecha
-          String? entryTimeStr = row[4]?.value?.toString().trim(); // Hora Entrada
-          String? exitTimeStr = row[5]?.value?.toString().trim(); // Hora Salida
-          String? faltasStr = row[6]?.value?.toString().trim(); // Faltas
-          String? observacionIncidenciasStr = row[7]?.value?.toString().trim(); // Observacion
+          String? studentId = row[2]?.value?.toString().trim();
+          String? dateStr = row[3]?.value?.toString().trim();
+          String? entryTimeStr = row[4]?.value?.toString().trim();
+          String? exitTimeStr = row[5]?.value?.toString().trim();
+          String? faltasStr = row[6]?.value?.toString().trim();
+          String? observacionIncidenciasStr = row[7]?.value?.toString().trim();
 
-          // Critical validations
           if (studentId == null || studentId.isEmpty) {
             errors.add('Fila ${i + 1}: Matrícula vacía. Esta fila será omitida.');
             errorCount++;
@@ -1961,7 +2028,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             errorCount++;
             continue;
           }
-          // Validación de fecha
           try {
             DateFormat('yyyy-MM-dd').parse(dateStr);
           } catch (_) {
@@ -1970,7 +2036,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             continue;
           }
 
-          // Non-critical validations
           if (entryTimeStr != null &&
               entryTimeStr.isNotEmpty &&
               !RegExp(r'^\d{2}:\d{2}$').hasMatch(entryTimeStr)) {
@@ -1995,7 +2060,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             errorCount++;
           }
 
-          // Process attendance
           try {
             await _processImportedAttendanceRecord(
               student: student,
@@ -2060,14 +2124,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
-  // New helper function to process a single imported attendance record
   Future<void> _processImportedAttendanceRecord({
     required Student student,
     required String date,
     String? entryTime,
     String? exitTime,
-    String? faltas, // Changed from incidenceType
-    String? observacionIncidencias, // Changed from incidenceDetail
+    String? faltas, 
+    String? observacionIncidencias, 
   }) async {
     final ConnectivityResult currentConnectivity =
         await _connectivityService.checkConnectivity();
@@ -2076,7 +2139,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final String todayDayOfWeek =
         DateFormat('EEEE', 'es_MX').format(recordDate).toLowerCase();
 
-    // Fetch existing record for the specific date
     Map<String, dynamic> existingRecord = _todayAttendance.firstWhere(
       (rec) => rec['studentId'] == student.studentId && rec['date'] == date,
       orElse: () => <String, dynamic>{},
@@ -2099,7 +2161,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     bool isObservacionIncidenciasProvided =
         observacionIncidencias != null && observacionIncidencias.isNotEmpty;
 
-    // Determine scheduled times for lateness/early exit calculation
     DateTime? scheduledEntry;
     DateTime? scheduledExit;
     final GroupSchedule? groupSchedule = _groupSchedulesMap[student.group];
@@ -2135,9 +2196,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       record['entryTime'] = entryTime;
       if (scheduledEntry != null) {
         final actualEntryTime = DateFormat('HH:mm')
-            .parse('$date $entryTime'); // Combine date for proper comparison
+            .parse('$date $entryTime');
         final toleranceLimit =
-            scheduledEntry.add(const Duration(minutes: 15)); // 15 mins tolerance
+            scheduledEntry.add(const Duration(minutes: 15)); 
 
         if (actualEntryTime.isAfter(toleranceLimit)) {
           record['status'] = 'tarde';
@@ -2166,7 +2227,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
     }
 
-    // Save/sync the attendance record ONLY if there's actual attendance data to record
     if (isEntryProvided || isExitProvided || isFaltasProvided) {
       if (currentConnectivity == ConnectivityResult.none) {
         final attendanceRecord = AttendanceRecord.fromFirebaseMap(
@@ -2190,7 +2250,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
     }
 
-    // Process Incidence if provided
     if (isObservacionIncidenciasProvided) {
       try {
         final newRef = FirebaseDatabase.instance
@@ -2201,12 +2260,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           studentId: student.studentId,
           studentName: student.fullName,
           group: student.group,
-          type: faltas ?? 'General', // Use faltas as type, or 'General'
+          type: faltas ?? 'General',
           description: observacionIncidencias,
           date: recordDate,
           campusId: _campus!,
           isSynced: currentConnectivity !=
-              ConnectivityResult.none, // Sync immediately if online
+              ConnectivityResult.none,
           schoolCycle: _currentSchoolCycle,
         );
         if (currentConnectivity == ConnectivityResult.none) {

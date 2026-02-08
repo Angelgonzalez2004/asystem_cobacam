@@ -21,7 +21,7 @@ Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cad
     *   El archivo Excel incluye una hoja adicional llamada "**Tipos de Incidencia**" que sirve como referencia de las categorías de incidentes.
     *   El archivo se descarga con el formato: `FORMATOASISTENCIAS_DD_MM_YYYY.xlsx`.
 *   **Importación y Exportación Excel:**
-    *   **Descarga de Plantillas:** Genera plantillas de Excel para "Entrada" o "Salida" facilitando la preparación de datos.
+    *   **Descarga de Plantillas:** Genera plantillas de Excel para "Entrada" o "Salida" facilitando la preparación de datos. La plantilla de importación ahora incluye un **menú desplegable de validación de datos** en la columna "Motivo de Incidencia" (Columna H) con opciones predefinidas (retrasos, salidas anticipadas, tipos de incidencia). Las opciones se gestionan desde una hoja oculta en el mismo archivo.
     *   **Importación Masiva:** Permite cargar registros de asistencia desde archivos Excel, agilizando la actualización de la base de datos.
 *   **Modo Offline-First:** La asistencia puede registrarse **sin conexión a internet**. Los datos se guardan localmente (usando Hive) y se sincronizan automáticamente con Firebase al recuperar la conexión, garantizando la continuidad operativa.
 

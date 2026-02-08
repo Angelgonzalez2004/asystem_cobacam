@@ -3,13 +3,13 @@ import 'package:asystem_cobacam/models/school_cycle_model.dart';
 import 'package:asystem_cobacam/models/student_model.dart';
 import 'package:asystem_cobacam/models/non_attendance_day_model.dart';
 import 'package:asystem_cobacam/models/group_model.dart';
-import 'package:asystem_cobacam/models/group_schedule_model.dart'; // Added
+// Added
 import 'package:asystem_cobacam/services/app_settings_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
-import 'package:asystem_cobacam/services/group_schedule_service.dart'; // Added
+// Added
 import 'package:asystem_cobacam/utils/attendance_excel_exporter.dart';
-import 'package:asystem_cobacam/utils/detailed_attendance_excel_exporter.dart'; // Added
+// Added
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart'; // ✅ CORRECTO
@@ -30,7 +30,7 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
   late final AppSettingsService _appSettingsService;
   late final HiveService _hiveService;
   late final ConnectivityService _connectivityService;
-  late final GroupScheduleService _groupScheduleService; // Added
+
 
   String? _campus;
   List<SchoolCycle> _schoolCycles = [];
@@ -61,7 +61,7 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
         Provider.of<ConnectivityService>(context, listen: false);
     _appSettingsService =
         AppSettingsService(_hiveService, _connectivityService);
-    _groupScheduleService = GroupScheduleService(_hiveService, _connectivityService); // Added
+
 
     // Inicializar rango de semana actual (Lunes a Viernes)
     _calculateCurrentWeek();
@@ -551,34 +551,15 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'advanced') {
-                        _exportExcel();
-                      } else if (value == 'detailed') {
-                        _exportDetailedExcel();
-                      }
-                    },
-                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                      const PopupMenuItem<String>(
-                        value: 'advanced',
-                        child: Text('Reporte Avanzado (Resumen)'),
-                      ),
-                      const PopupMenuItem<String>(
-                        value: 'detailed',
-                        child: Text('Reporte Detallado (Eventos)'),
-                      ),
-                    ],
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoadingAttendance ? null : () {}, // The button itself won't have an action, the menu items will
-                      icon: const Icon(Icons.file_download_outlined, size: 18),
-                      label: const Text('Exportar'),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade700,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                    ),
+                  ElevatedButton.icon(
+                    onPressed: _isLoadingAttendance ? null : _exportExcel,
+                    icon: const Icon(Icons.file_download_outlined, size: 18),
+                    label: const Text('Exportar'),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade700,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12))),
                   )
                 ],
               )
@@ -926,95 +907,6 @@ class _AttendanceQueryScreenState extends State<AttendanceQueryScreen> {
         Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
       ]);
 
-  Future<void> _exportDetailedExcel() async {
-    if (_campus == null || _selectedCycle == null) {
-      UiHelpers.showSnackBar(context, 'Campus o Ciclo Escolar no seleccionados.', isError: true);
-      return;
-    }
-
-    // Show dialog to ask for export type (Entry or Exit)
-    final String? exportType = await showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Tipo de Reporte Detallado'),
-          content: const Text('¿Desea exportar los registros de entrada o de salida?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'entry'),
-              child: const Text('Entradas'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'exit'),
-              child: const Text('Salidas'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (exportType == null) {
-      return; // User cancelled
-    }
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => _buildLoadingOverlay(message: 'Generando Reporte Detallado (${exportType == 'entry' ? 'Entradas' : 'Salidas'})...', subMessage: 'Esto puede tomar un momento...'),
-    );
-
-    try {
-      final List<AttendanceRecord> allAttendanceRecords = [];
-      for (var recordsList in _attendanceData.values) {
-        allAttendanceRecords.addAll(recordsList);
-      }
-
-      // Filter attendance records based on exportType
-      final List<AttendanceRecord> filteredRecords = allAttendanceRecords.where((record) {
-        if (exportType == 'entry') {
-          return record.entryTime != null;
-        } else if (exportType == 'exit') {
-          return record.exitTime != null;
-        }
-        return false; // Should not happen
-      }).toList();
-
-      if (filteredRecords.isEmpty) {
-        if (mounted) UiHelpers.showSnackBar(context, 'No hay registros de ${exportType == 'entry' ? 'entrada' : 'salida'} para el período y filtros actuales.', isError: false);
-        return;
-      }
-
-      // Fetch all group schedules for the current campus and cycle
-      final List<GroupSchedule> fetchedGroupSchedules =
-          await _groupScheduleService.getAllGroupSchedules(_campus!, _selectedCycle!);
-
-      final Map<String, GroupSchedule> groupSchedulesMap = {
-        for (var schedule in fetchedGroupSchedules) schedule.groupId: schedule
-      };
-
-      await DetailedAttendanceExcelExporter.exportDetailedAttendanceReport(
-        context: context,
-        attendanceRecords: filteredRecords, // Pass filtered records
-        groupSchedules: groupSchedulesMap,
-        campus: _campus!,
-        cycle: _selectedCycle!,
-        exportType: exportType, // Pass the export type
-        customFileName: 'Reporte_Asistencia_Detallado_${exportType == 'entry' ? 'Entradas' : 'Salidas'}_${_getRangeLabelForExport(_filterMode, _selectedDate, _selectedWeekRange, _selectedCycle!)}.xlsx',
-      );
-
-      if (mounted) UiHelpers.showSnackBar(context, 'Reporte detallado de ${exportType == 'entry' ? 'entradas' : 'salidas'} exportado con éxito!');
-
-    } catch (e) {
-      debugPrint('Error exporting detailed attendance: $e');
-      if (mounted) UiHelpers.showSnackBar(context, 'Error exportando reporte detallado: $e', isError: true);
-    } finally {
-      if (mounted) Navigator.of(context, rootNavigator: true).pop();
-    }
-  }
 
   Future<void> _exportExcel() async {
     String? tempCycle = _selectedCycle;

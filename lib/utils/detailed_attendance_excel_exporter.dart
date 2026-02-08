@@ -16,11 +16,12 @@ class DetailedAttendanceExcelExporter {
     required Map<String, GroupSchedule> groupSchedules,
     required String campus,
     required String cycle,
-    required String exportType, // New parameter: 'entry' or 'exit'
+    required String exportType, // 'entry' or 'exit'
     String? customFileName,
   }) async {
     final excel = Excel.createExcel();
-    final String sheetName = 'Reporte Detallado (${exportType == 'entry' ? 'Entradas' : 'Salidas'})';
+    final String sheetName =
+        'Reporte Detallado (${exportType == 'entry' ? 'Entradas' : 'Salidas'})';
 
     // Rename default sheet if it exists
     if (excel.sheets.keys.isNotEmpty) {
@@ -39,12 +40,16 @@ class DetailedAttendanceExcelExporter {
       verticalAlign: VerticalAlign.Center,
     );
 
-    final centerStyle = CellStyle(horizontalAlign: HorizontalAlign.Center);
+    final centerStyle = CellStyle(
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    );
 
     // --- REPORT HEADER ---
     sheet.merge(CellIndex.indexByString("A1"), CellIndex.indexByString("I1"));
     var cellTitle = sheet.cell(CellIndex.indexByString("A1"));
-    cellTitle.value = TextCellValue("REPORTE DETALLADO DE ${exportType == 'entry' ? 'ENTRADAS' : 'SALIDAS'} - $campus");
+    cellTitle.value = TextCellValue(
+        "REPORTE DETALLADO DE ${exportType == 'entry' ? 'ENTRADAS' : 'SALIDAS'} - $campus");
     cellTitle.cellStyle = CellStyle(
         bold: true, fontSize: 14, horizontalAlign: HorizontalAlign.Center);
 
@@ -62,7 +67,7 @@ class DetailedAttendanceExcelExporter {
       'Fecha',
       'Hora Actual',
       'Hora Programada',
-      'Motivo de Incidencia', // New column
+      'Motivo de Incidencia',
       'Asistencia',
       'Observaciones',
     ];
@@ -87,12 +92,13 @@ class DetailedAttendanceExcelExporter {
 
     for (var record in attendanceRecords) {
       String? actualTime;
-      String? scheduledTime; // This will be either entry or exit scheduled time
+      String? scheduledTime;
 
-      // The calling screen already filters for actualTime != null, so actualTime is guaranteed not null here.
+      // The calling screen already filters for actualTime != null
       if (exportType == 'entry') {
         actualTime = record.entryTime;
-      } else { // exportType == 'exit'
+      } else {
+        // exportType == 'exit'
         actualTime = record.exitTime;
       }
 
@@ -100,95 +106,169 @@ class DetailedAttendanceExcelExporter {
 
       if (groupSchedule != null) {
         final DateTime recordDate = DateTime.parse(record.date);
-        final String dayOfWeek = DateFormat('EEEE', 'es').format(recordDate); // e.g., 'lunes', 'martes'
+        final String dayOfWeek = DateFormat('EEEE', 'es')
+            .format(recordDate); // e.g., 'lunes', 'martes'
 
-        final List<ClassSession>? sessions = groupSchedule.dailySchedules[dayOfWeek.toLowerCase()];
+        final List<ClassSession>? sessions =
+            groupSchedule.dailySchedules[dayOfWeek.toLowerCase()];
 
         if (sessions != null && sessions.isNotEmpty) {
           if (exportType == 'entry') {
-            scheduledTime = sessions.map((s) => s.startTime).reduce((a, b) => a.compareTo(b) < 0 ? a : b);
-          } else { // exportType == 'exit'
-            scheduledTime = sessions.map((s) => s.endTime).reduce((a, b) => a.compareTo(b) > 0 ? a : b);
+            scheduledTime = sessions
+                .map((s) => s.startTime)
+                .reduce((a, b) => a.compareTo(b) < 0 ? a : b);
+          } else {
+            // exportType == 'exit'
+            scheduledTime = sessions
+                .map((s) => s.endTime)
+                .reduce((a, b) => a.compareTo(b) > 0 ? a : b);
           }
         }
       }
 
-      // If scheduled time couldn't be determined, use a default '00:00' for formula comparison
+      // If scheduled time couldn't be determined, use a default '00:00'
       scheduledTime ??= '00:00';
+      actualTime ??= '00:00';
 
       // --- Populate Fixed Data ---
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex)).value = TextCellValue(record.studentId);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex)).value = TextCellValue(record.studentFullName);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex)).value = TextCellValue(record.group);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex)).value = TextCellValue(record.date);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex)).value = TextCellValue(actualTime!); // Actual time, guaranteed not null
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex)).value = TextCellValue(scheduledTime); // Scheduled time
+      var cellCol0 = sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex));
+      cellCol0.value = TextCellValue(record.studentId);
+      cellCol0.cellStyle = centerStyle;
+
+      var cellCol1 = sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex));
+      cellCol1.value = TextCellValue(record.studentFullName);
+      cellCol1.cellStyle = centerStyle;
+
+      var cellCol2 = sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex));
+      cellCol2.value = TextCellValue(record.group);
+      cellCol2.cellStyle = centerStyle;
+
+      var cellCol3 = sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex));
+      cellCol3.value = TextCellValue(
+          DateFormat('dd/MM/yyyy').format(DateTime.parse(record.date)));
+      cellCol3.cellStyle = centerStyle;
+
+      // Formatting times as HH:mm strings for Excel TIMEVALUE compatibility
+      var cellCol4 = sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex));
+      // Using arbitrary date to parse time safely
+      try {
+        cellCol4.value = TextCellValue(DateFormat('HH:mm')
+            .format(DateTime.parse('2000-01-01 $actualTime')));
+      } catch (e) {
+        cellCol4.value = TextCellValue(actualTime);
+      }
+      cellCol4.cellStyle = centerStyle;
+
+      var cellCol5 = sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex));
+      try {
+        cellCol5.value = TextCellValue(DateFormat('HH:mm')
+            .format(DateTime.parse('2000-01-01 $scheduledTime')));
+      } catch (e) {
+        cellCol5.value = TextCellValue(scheduledTime);
+      }
+      cellCol5.cellStyle = centerStyle;
 
       // --- Add Excel Formulas ---
-      final excelRow = rowIndex + 1; // Excel row numbers are 1-indexed for formulas
-      final actualTimeCellRef = 'E$excelRow'; // E column for Hora Actual
-      final scheduledTimeCellRef = 'F$excelRow'; // F column for Hora Programada
-      final asistenciaCellRef = 'H$excelRow'; // H column for Asistencia
+      // Excel row numbers are 1-indexed. Since our loop rowIndex is 0-based relative to the sheet array logic in some libs,
+      // but 'excel' package treats rowIndex as 0-indexed for access.
+      // However, for the FORMULA STRING (e.g. "E5"), we need the actual Excel row number.
+      // If rowIndex starts at 4 (which is row 5 in Excel visually), we add 1.
+      final excelRow = rowIndex + 1;
+
+      final actualTimeCellRef = 'E$excelRow'; // E column
+      final scheduledTimeCellRef = 'F$excelRow'; // F column
 
       String asistenciaFormula;
       String motivoIncidenciaFormula;
-      String observacionesFormula; // For the optional column I
+      String observacionesFormula = '""'; // Default empty
+
+      // Helper to safely format strings for Excel formulas (escaping double quotes)
+      String safeExcelString(String? text) {
+        if (text == null || text.trim().isEmpty) return '""';
+        return '"${text.replaceAll('"', '""')}"';
+      }
 
       if (exportType == 'entry') {
-        // Asistencia formula (new column H): Check for tardy (actualTime > scheduledTime)
-        asistenciaFormula = '=IF(TIMEVALUE($scheduledTimeCellRef)=0,"PRESENTE",' 'IF(TIMEVALUE($actualTimeCellRef)>TIMEVALUE($scheduledTimeCellRef),"RETARDO","PRESENTE"))';
+        // Asistencia: Check for tardy
+        // IF(Scheduled=0, "PRESENTE", IF(Actual > Scheduled, "RETARDO", "PRESENTE"))
+        asistenciaFormula =
+            '=IF(TIMEVALUE($scheduledTimeCellRef)=0, "PRESENTE", IF(TIMEVALUE($actualTimeCellRef)>TIMEVALUE($scheduledTimeCellRef), "RETARDO", "PRESENTE"))';
 
-        // Motivo de Incidencia formula (new column G): Mandatory reason for late
-        motivoIncidenciaFormula = '=IF($asistenciaCellRef="RETARDO",' 'IF(TRIM("""${record.reasonTardy ?? ""}""")<>"","""${record.reasonTardy ?? ""}""",""Llegó tarde.""),' '"" )'; // Blank if not RETARDO
+        // Motivo:
+        final reasonTardyExcel = safeExcelString(record.reasonTardy);
 
-        // Observaciones formula (new column I): Optional, defaults to blank
-        observacionesFormula = '""'; // Truly optional, so default to blank
-      } else { // exportType == 'exit'
-        // Asistencia formula (new column H): Check for early exit (actualTime < scheduledTime)
-        asistenciaFormula = '=IF(TIMEVALUE($scheduledTimeCellRef)=0,"PRESENTE",' 'IF(TIMEVALUE($actualTimeCellRef)<TIMEVALUE($scheduledTimeCellRef),"SALIDA ANTICIPADA","PRESENTE"))';
-        
-        // Motivo de Incidencia formula (new column G): Mandatory reason for early exit
-        motivoIncidenciaFormula = '=IF($asistenciaCellRef="SALIDA ANTICIPADA",' 'IF(TRIM("""${record.reasonEarlyExit ?? ""}""")<>"","""${record.reasonEarlyExit ?? ""}""",""Salió temprano.""),' '"" )'; // Blank if not SALIDA ANTICIPADA
+        // Logic:
+        // IF(Actual > Scheduled + 15min, check reason (Strict),
+        //   IF(Actual > Scheduled, check reason (Warning),
+        //     ""
+        //   )
+        // )
+        // Note: 15 mins in Excel day fraction is 15/1440
+        motivoIncidenciaFormula =
+            '=IF(TIMEVALUE($actualTimeCellRef) > TIMEVALUE($scheduledTimeCellRef) + (15/1440), IF(TRIM($reasonTardyExcel)="", "⚠️ RETARDO - PIDE MOTIVO", $reasonTardyExcel), IF(TIMEVALUE($actualTimeCellRef) > TIMEVALUE($scheduledTimeCellRef), IF(TRIM($reasonTardyExcel)="", "Llegó tarde.", $reasonTardyExcel), ""))';
+      } else {
+        // Exit: Check for early exit
+        // IF(Scheduled=0, "PRESENTE", IF(Actual < Scheduled, "SALIDA ANTICIPADA", "PRESENTE"))
+        asistenciaFormula =
+            '=IF(TIMEVALUE($scheduledTimeCellRef)=0, "PRESENTE", IF(TIMEVALUE($actualTimeCellRef)<TIMEVALUE($scheduledTimeCellRef), "SALIDA ANTICIPADA", "PRESENTE"))';
 
-        // Observaciones formula (new column I): Optional, defaults to blank
-        observacionesFormula = '""'; // Truly optional, so default to blank
+        // Motivo:
+        final reasonEarlyExitExcel = safeExcelString(record.reasonEarlyExit);
+
+        motivoIncidenciaFormula =
+            '=IF(TIMEVALUE($actualTimeCellRef) < TIMEVALUE($scheduledTimeCellRef), IF(TRIM($reasonEarlyExitExcel)="", "⚠️ FALTA MOTIVO ⚠️", $reasonEarlyExitExcel), "")';
       }
-      
-      // Assigning the formulas
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex)).value = FormulaCellValue(motivoIncidenciaFormula);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowIndex)).value = FormulaCellValue(asistenciaFormula);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: rowIndex)).value = FormulaCellValue(observacionesFormula);
 
-      // Apply center style to formula cells too
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex)).cellStyle = centerStyle;
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowIndex)).cellStyle = centerStyle;
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: rowIndex)).cellStyle = centerStyle;
+      // Assign formulas
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
+          .value = FormulaCellValue(motivoIncidenciaFormula);
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowIndex))
+          .value = FormulaCellValue(asistenciaFormula);
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: rowIndex))
+          .value = FormulaCellValue(observacionesFormula);
+
+      // Apply styles
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
+          .cellStyle = centerStyle;
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: rowIndex))
+          .cellStyle = centerStyle;
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: rowIndex))
+          .cellStyle = centerStyle;
 
       rowIndex++;
     }
 
-    // AUTO-ANCHO PROFESIONAL
+    // AUTO-WIDTH
     sheet.setColumnWidth(0, 15.0); // Matrícula
     sheet.setColumnWidth(1, 40.0); // Nombre
     sheet.setColumnWidth(2, 12.0); // Grupo
     sheet.setColumnWidth(3, 15.0); // Fecha
     sheet.setColumnWidth(4, 20.0); // Hora Actual
     sheet.setColumnWidth(5, 20.0); // Hora Programada
-    sheet.setColumnWidth(6, 40.0); // Motivo de Incidencia (NEW)
-    sheet.setColumnWidth(7, 15.0); // Asistencia (SHIFTED)
-    sheet.setColumnWidth(8, 40.0); // Observaciones (SHIFTED)
+    sheet.setColumnWidth(6, 40.0); // Motivo
+    sheet.setColumnWidth(7, 20.0); // Asistencia
+    sheet.setColumnWidth(8, 30.0); // Observaciones
 
-    final List<int>? fileBytes = excel.encode();
-    if (fileBytes == null) return;
-
-    // Intelligent File Naming
-    final String fileName = customFileName ?? 'FORMATOASISTENCIAS_${DateFormat('dd_MM_yyyy').format(DateTime.now())}.xlsx';
-
-    // --- Add a new sheet for Incidence Types as a reference ---
+    // --- SECOND SHEET: REFERENCE DATA ---
+    // (Optional: You can keep or remove this section based on preference)
     final Sheet incidenceTypesSheet = excel['Tipos de Incidencia'];
-    incidenceTypesSheet.cell(CellIndex.indexByString("A1")).value = TextCellValue("LISTA DE TIPOS DE INCIDENCIA");
-    incidenceTypesSheet.cell(CellIndex.indexByString("A1")).cellStyle = headerStyle; // Reuse header style
-    incidenceTypesSheet.setColumnWidth(0, 50.0); // Adjust width for the list
+    var refTitle =
+        incidenceTypesSheet.cell(CellIndex.indexByString("A1"));
+    refTitle.value = TextCellValue("LISTA DE TIPOS DE INCIDENCIA");
+    refTitle.cellStyle = headerStyle;
+    incidenceTypesSheet.setColumnWidth(0, 50.0);
 
     final List<String> incidenceTypes = [
       'Uniforme Incompleto',
@@ -218,19 +298,40 @@ class DetailedAttendanceExcelExporter {
     ];
 
     for (int i = 0; i < incidenceTypes.length; i++) {
-      incidenceTypesSheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: i + 1)).value = TextCellValue(incidenceTypes[i]);
+      incidenceTypesSheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: i + 1))
+          .value = TextCellValue(incidenceTypes[i]);
     }
-    // End of new sheet addition
+
+    // --- SAVE FILE ---
+    final List<int>? fileBytes = excel.save();
+
+    if (fileBytes == null) return;
+
+    final String fileName = customFileName ??
+        'FORMATOASISTENCIAS_${DateFormat('dd_MM_yyyy').format(DateTime.now())}.xlsx';
 
     if (kIsWeb) {
-      await WebDownloader.downloadFile(Uint8List.fromList(fileBytes), fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      await WebDownloader.downloadFile(
+          Uint8List.fromList(fileBytes),
+          fileName,
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     } else {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/$fileName');
-      await file.writeAsBytes(fileBytes);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Archivo guardado: $fileName')));
+      if (Platform.isAndroid || Platform.isIOS || Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        final directory = await getApplicationDocumentsDirectory();
+        final file = File('${directory.path}/$fileName');
+        
+        // Ensure directory exists (though getApplicationDocumentsDirectory usually implies it)
+        if (!await file.parent.exists()) {
+          await file.parent.create(recursive: true);
+        }
+
+        await file.writeAsBytes(fileBytes);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Archivo guardado en: ${file.path}')));
+        }
       }
     }
   }
