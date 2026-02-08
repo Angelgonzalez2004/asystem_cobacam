@@ -13,6 +13,13 @@ Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cad
 
 ### 📊 Gestión de Asistencia Avanzada
 *   **Pase de Lista Flexible:** Registro de entradas y salidas mediante escaneo de credenciales QR, entrada manual o registro masivo para grupos.
+*   **Reporte Detallado de Asistencias (NUEVO):**
+    *   Permite generar reportes Excel con información granular de los eventos de asistencia.
+    *   El usuario puede elegir exportar únicamente los registros de **"Entradas"** o de **"Salidas"**.
+    *   Incluye columnas específicas: `Matrícula`, `Nombre`, `Grupo`, `Fecha`, `Hora Actual`, `Hora Programada`, `Motivo de Incidencia`, `Asistencia`, `Observaciones`.
+    *   Las columnas `Motivo de Incidencia` y `Asistencia` se autocompletan con **fórmulas de Excel** inteligentes que detectan si el alumno llegó tarde o salió temprano, proporcionando el motivo correspondiente.
+    *   El archivo Excel incluye una hoja adicional llamada "**Tipos de Incidencia**" que sirve como referencia de las categorías de incidentes.
+    *   El archivo se descarga con el formato: `FORMATOASISTENCIAS_DD_MM_YYYY.xlsx`.
 *   **Importación y Exportación Excel:**
     *   **Descarga de Plantillas:** Genera plantillas de Excel para "Entrada" o "Salida" facilitando la preparación de datos.
     *   **Importación Masiva:** Permite cargar registros de asistencia desde archivos Excel, agilizando la actualización de la base de datos.
