@@ -43,6 +43,10 @@ class Student {
   String? nss; // Numero de Seguro Social
   @HiveField(18)
   bool medicalAlert; // Gatillo manual para alertas graves
+  @HiveField(19)
+  bool canEditProfile; // NEW FIELD: Allows student to edit their profile
+  @HiveField(20)
+  bool canEditMatricula; // NEW FIELD: Allows student to edit their matricula
 
   Student({
     required this.id,
@@ -64,6 +68,8 @@ class Student {
     this.generalHealthStatus = 'Sano',
     this.nss,
     this.medicalAlert = false, // Default false
+    this.canEditProfile = false, // NEW: Default to false
+    this.canEditMatricula = false, // NEW: Default to false
   });
 
   // Factory constructor for creating a Student from a Firebase DataSnapshot
@@ -95,6 +101,8 @@ class Student {
       generalHealthStatus: data['generalHealthStatus'] ?? 'Sano',
       nss: data['nss'],
       medicalAlert: data['medicalAlert'] ?? false,
+      canEditProfile: data['canEditProfile'] ?? false, // NEW
+      canEditMatricula: data['canEditMatricula'] ?? false, // NEW
     );
   }
 
@@ -119,6 +127,7 @@ class Student {
       'generalHealthStatus': generalHealthStatus,
       'nss': nss,
       'medicalAlert': medicalAlert,
+      'canEditProfile': canEditProfile, // NEW
+      'canEditMatricula': canEditMatricula, // NEW
     };
-  }
-}
+  }}

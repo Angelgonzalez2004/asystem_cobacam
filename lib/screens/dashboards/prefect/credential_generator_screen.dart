@@ -767,10 +767,35 @@ class _CredentialCardVisual extends StatelessWidget {
   }
 }
 
-class _CredentialCardContent extends StatelessWidget {
+class _CredentialCardContent extends StatefulWidget {
   final Student student;
   final String campus;
   const _CredentialCardContent({required this.student, required this.campus});
+
+  @override
+  State<_CredentialCardContent> createState() => __CredentialCardContentState();
+}
+
+class __CredentialCardContentState extends State<_CredentialCardContent> {
+  String? _profileImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    // student.id is the user's UID
+    final snapshot = await FirebaseDatabase.instance.ref('users/${widget.student.id}/profileImageUrl').get();
+    if (snapshot.exists && snapshot.value != null) {
+      if (mounted) {
+        setState(() {
+          _profileImageUrl = snapshot.value.toString();
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -879,18 +904,20 @@ class _CredentialCardContent extends StatelessWidget {
                                     offset: Offset(0, 2))
                               ],
                             ),
-                            child: Icon(
-                                (student.gender.toUpperCase().startsWith('F') ||
-                                        student.gender
-                                            .toUpperCase()
-                                            .contains('MUJER'))
-                                    ? Icons.woman
-                                    : Icons.man,
-                                size: 60,
-                                color: Colors.grey.shade400),
+                            child: _profileImageUrl != null && _profileImageUrl!.isNotEmpty
+                                ? Image.network(_profileImageUrl!, fit: BoxFit.cover)
+                                : Icon(
+                                    (widget.student.gender.toUpperCase().startsWith('F') ||
+                                            widget.student.gender
+                                                .toUpperCase()
+                                                .contains('MUJER'))
+                                        ? Icons.woman
+                                        : Icons.man,
+                                    size: 60,
+                                    color: Colors.grey.shade400),
                           ),
                           const SizedBox(height: 6),
-                          Text(student.schoolCycle,
+                          Text(widget.student.schoolCycle,
                               style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 10,
@@ -910,7 +937,7 @@ class _CredentialCardContent extends StatelessWidget {
                           children: [
                             // NOMBRE DEL ALUMNO
                             Text(
-                              student.fullName.toUpperCase(),
+                              widget.student.fullName.toUpperCase(),
                               style: const TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 13,
@@ -920,8 +947,8 @@ class _CredentialCardContent extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                                (student.gender.toUpperCase().startsWith('F') ||
-                                        student.gender
+                                (widget.student.gender.toUpperCase().startsWith('F') ||
+                                        widget.student.gender
                                             .toUpperCase()
                                             .contains('MUJER'))
                                     ? 'ALUMNA'
@@ -938,21 +965,21 @@ class _CredentialCardContent extends StatelessWidget {
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _dataField('MATRÍCULA', student.studentId,
+                                _dataField('MATRÍCULA', widget.student.studentId,
                                     primaryColor,
                                     isLarge: true),
                                 const SizedBox(width: 12),
                                 _dataField(
-                                    'GRUPO', student.group, Colors.black87),
+                                    'GRUPO', widget.student.group, Colors.black87), // CORRECTED
                               ],
                             ),
                             const SizedBox(height: 6),
                             Row(
                               children: [
-                                _dataField('NSS', student.nss ?? 'N/A',
+                                _dataField('NSS', widget.student.nss ?? 'N/A',
                                     Colors.black54),
                                 const SizedBox(width: 12),
-                                _dataField('PLANTEL', campus, Colors.black54),
+                                _dataField('PLANTEL', widget.campus, Colors.black54), // CORRECTED
                               ],
                             ),
 
@@ -964,7 +991,7 @@ class _CredentialCardContent extends StatelessWidget {
                               height: 28,
                               child: BarcodeWidget(
                                 barcode: Barcode.code128(),
-                                data: student.studentId,
+                                data: widget.student.studentId,
                                 drawText: false,
                                 color: Colors.black87,
                               ),

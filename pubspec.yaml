@@ -89,3 +89,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/excel_templates/ # NEW: Excel templates for student import

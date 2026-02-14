@@ -12,6 +12,16 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/student_excel_import_
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb; // For kIsWeb
+import 'package:flutter/services.dart'; // For ByteData, DefaultAssetBundle
+import 'dart:io' show File, Directory; // For File, Directory (non-web)
+import 'package:path_provider/path_provider.dart'; // For getApplicationDocumentsDirectory (non-web)
+import 'package:asystem_cobacam/utils/web_downloader.dart'; // For WebDownloader
+
+enum BatchAction {
+  authorize,
+  deauthorize,
+}
 
 class StudentManagementScreen extends StatefulWidget {
   const StudentManagementScreen({super.key});
@@ -149,6 +159,19 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text('Gestión de Alumnos'),
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.group_add_outlined),
+            tooltip: 'Autorización por Lotes',
+            onPressed: _showBatchAuthorizationDialog,
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddStudentDialog,
         backgroundColor: theme.colorScheme.primary,
@@ -245,6 +268,12 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                                 value: c.id, child: Text(c.id)))
                             .toList(),
                       ),
+                    ),
+                    const SizedBox(width: 12),
+                    IconButton.filledTonal(
+                      icon: const Icon(Icons.download_rounded),
+                      onPressed: _downloadTemplate,
+                      tooltip: 'Descargar Plantilla Excel',
                     ),
                     const SizedBox(width: 12),
                     IconButton.filledTonal(
@@ -409,6 +438,28 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // NEW: Toggle for canEditProfile
+          Tooltip(
+            message: 'Permitir edición de perfil al alumno',
+            child: Switch(
+              value: student.canEditProfile,
+              onChanged: (bool newValue) {
+                _toggleCanEditProfile(student, newValue);
+              },
+              activeColor: theme.colorScheme.primary,
+            ),
+          ),
+          // NEW: Toggle for canEditMatricula
+          Tooltip(
+            message: 'Permitir edición de matrícula al alumno',
+            child: Switch(
+              value: student.canEditMatricula,
+              onChanged: (bool newValue) {
+                _toggleCanEditMatricula(student, newValue);
+              },
+              activeColor: theme.colorScheme.tertiary, // Use a different color
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.edit, size: 20),
             onPressed: () => _openEditForm(student),
@@ -431,6 +482,54 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
         ],
       ),
     );
+  }
+
+  // NEW METHOD: _toggleCanEditProfile
+  Future<void> _toggleCanEditProfile(Student student, bool newValue) async {
+    final studentRef = FirebaseDatabase.instance
+        .ref('planteles/$_campus/students/$_currentSchoolCycle')
+        .child(student.id); // Use student.id (Firebase key) here
+
+    try {
+      await studentRef.update({'canEditProfile': newValue});
+      if (mounted) {
+        UiHelpers.showSnackBar(
+            context,
+            newValue
+                ? 'Edición de perfil habilitada para ${student.fullName}.'
+                : 'Edición de perfil deshabilitada para ${student.fullName}.');
+      }
+    } catch (e) {
+      if (mounted) {
+        UiHelpers.showSnackBar(
+            context, 'Error al actualizar el permiso de edición: $e',
+            isError: true);
+      }
+    }
+  }
+
+  // NEW METHOD: _toggleCanEditMatricula
+  Future<void> _toggleCanEditMatricula(Student student, bool newValue) async {
+    final studentRef = FirebaseDatabase.instance
+        .ref('planteles/$_campus/students/$_currentSchoolCycle')
+        .child(student.id);
+
+    try {
+      await studentRef.update({'canEditMatricula': newValue});
+      if (mounted) {
+        UiHelpers.showSnackBar(
+            context,
+            newValue
+                ? 'Edición de matrícula habilitada para ${student.fullName}.'
+                : 'Edición de matrícula deshabilitada para ${student.fullName}.');
+      }
+    } catch (e) {
+      if (mounted) {
+        UiHelpers.showSnackBar(
+            context, 'Error al actualizar el permiso de edición de matrícula: $e',
+            isError: true);
+      }
+    }
   }
 
   void _openEditForm(Student student) async {
@@ -516,6 +615,121 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
     }
   }
 
+  // NEW METHOD: Bulk Authorization Dialog
+  Future<void> _showBatchAuthorizationDialog() async {
+    if (_campus == null || _currentSchoolCycle.isEmpty) {
+      UiHelpers.showSnackBar(context, 'Campus o Ciclo Escolar no definidos.', isError: true);
+      return;
+    }
+
+    BatchAction? selectedAction;
+    bool allowMatriculaEdit = false;
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setStateInDialog) {
+            return AlertDialog(
+              title: const Text('Autorización de Edición por Lotes'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                      'Aplicar a todos los alumnos activos del ciclo actual: $_currentSchoolCycle'),
+                  const SizedBox(height: 16),
+                  RadioListTile<BatchAction>(
+                    title: const Text('Autorizar Edición de Perfil'),
+                    value: BatchAction.authorize,
+                    groupValue: selectedAction,
+                    onChanged: (BatchAction? value) {
+                      setStateInDialog(() {
+                        selectedAction = value;
+                      });
+                    },
+                  ),
+                  RadioListTile<BatchAction>(
+                    title: const Text('Desautorizar Edición de Perfil'),
+                    value: BatchAction.deauthorize,
+                    groupValue: selectedAction,
+                    onChanged: (BatchAction? value) {
+                      setStateInDialog(() {
+                        selectedAction = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  CheckboxListTile(
+                    title: const Text('Permitir edición de Matrícula (si se autoriza perfil)'),
+                    value: allowMatriculaEdit,
+                    onChanged: selectedAction == BatchAction.authorize ? (bool? value) {
+                      setStateInDialog(() {
+                        allowMatriculaEdit = value ?? false;
+                      });
+                    } : null, // Only enable if authorizing profile edit
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(dialogContext, false),
+                    child: const Text('Cancelar')),
+                ElevatedButton(
+                  onPressed: selectedAction == null
+                      ? null
+                      : () => Navigator.pop(dialogContext, true),
+                  child: const Text('Aplicar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed == true && selectedAction != null) {
+      await _updateBulkStudentPermissions(
+          selectedAction == BatchAction.authorize, allowMatriculaEdit);
+    }
+  }
+
+  // NEW METHOD: Update Bulk Student Permissions
+  Future<void> _updateBulkStudentPermissions(
+      bool authorizeProfileEdit, bool authorizeMatriculaEdit) async {
+    if (_campus == null || _currentSchoolCycle.isEmpty) return;
+
+    UiHelpers.showSnackBar(
+        context, 'Aplicando cambios a todos los alumnos...');
+
+    try {
+      final studentsToUpdate =
+          _allStudents.where((s) => s.isActive).toList(); // Only active students
+
+      for (var student in studentsToUpdate) {
+        final studentRef = FirebaseDatabase.instance
+            .ref('planteles/$_campus/students/$_currentSchoolCycle')
+            .child(student.id);
+        await studentRef.update({
+          'canEditProfile': authorizeProfileEdit,
+          'canEditMatricula': authorizeMatriculaEdit && authorizeProfileEdit, // Matricula edit only if profile edit is authorized
+        });
+      }
+
+      if (mounted) {
+        UiHelpers.showSnackBar(
+            context, 'Permisos de edición actualizados para todos los alumnos del ciclo actual.');
+      }
+    } catch (e) {
+      if (mounted) {
+        UiHelpers.showSnackBar(
+            context, 'Error al aplicar permisos por lotes: $e',
+            isError: true);
+      }
+    }
+  }
+
   void _showAddStudentDialog() async {
     if (_campus == null) return;
     await Navigator.push(
@@ -523,5 +737,54 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
         MaterialPageRoute(
             builder: (context) => StudentFormScreen(
                 campusId: _campus!, currentSchoolCycle: _currentSchoolCycle)));
+  }
+
+  // NEW METHOD: _downloadTemplate
+  Future<void> _downloadTemplate() async {
+    final confirmed = await UiHelpers.showConfirmationDialog(
+      context,
+      title: 'Descargar Plantilla',
+      content: '¿Estás seguro de que quieres descargar la plantilla de Excel para registros de alumnos? Recuerda que debes modificar este archivo con los datos reales de los alumnos y asegurarte de que correspondan al ciclo escolar seleccionado. También es importante ajustar los grupos en las hojas de Excel, ya que estos pueden variar en cada ciclo escolar.',
+      confirmText: 'Descargar',
+    );
+
+    if (confirmed != true) return;
+
+    if (_campus == null || _currentSchoolCycle.isEmpty) {
+      UiHelpers.showSnackBar(context, 'Campus o Ciclo Escolar no definidos. No se puede generar la plantilla.', isError: true);
+      return;
+    }
+
+    UiHelpers.showSnackBar(context, 'Preparando descarga de plantilla...');
+
+    try {
+      // Path to the asset file (adjust if the actual file name/path is dynamic)
+      // Assuming the user has placed the file in assets/excel_templates/
+      final String assetPath = 'assets/excel_templates/plantilla_alumnos_2026A_Atasta_.xlsx';
+      final String fileName = 'plantilla_alumnos_${_currentSchoolCycle.replaceAll("/", "-")}_${_campus ?? 'generico'}.xlsx';
+
+      // Load the asset as bytes
+      final ByteData data = await DefaultAssetBundle.of(context).load(assetPath);
+      final Uint8List bytes = data.buffer.asUint8List();
+
+      if (kIsWeb) {
+        await WebDownloader.downloadFile(bytes, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      } else {
+        // For non-web platforms, save to downloads or a common directory
+        // ignore: unnecessary_nullable_for_final_variable_declarations
+        final Directory? appDocumentsDir = await getApplicationDocumentsDirectory();
+        if (appDocumentsDir != null) {
+          final String savePath = '${appDocumentsDir.path}/$fileName';
+          final File file = File(savePath);
+          await file.writeAsBytes(bytes);
+          UiHelpers.showSnackBar(context, 'Plantilla guardada en: ${file.path}', duration: const Duration(seconds: 5));
+        } else {
+          UiHelpers.showSnackBar(context, 'No se pudo acceder al directorio de documentos para guardar la plantilla.', isError: true);
+        }
+      }
+      UiHelpers.showSnackBar(context, 'Plantilla descargada con éxito.');
+    } catch (e) {
+      UiHelpers.showSnackBar(context, 'Error al descargar la plantilla: $e', isError: true);
+    }
   }
 }

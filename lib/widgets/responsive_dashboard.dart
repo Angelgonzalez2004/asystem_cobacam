@@ -1,5 +1,6 @@
 import 'package:asystem_cobacam/screens/dashboards/student/student_credential_screen.dart'; // NEW IMPORT
 import 'package:asystem_cobacam/screens/common/profile_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/student/student_profile_screen.dart'; // NEW IMPORT
 import 'package:asystem_cobacam/screens/common/settings_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_access_codes_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_announcements_screen.dart';
@@ -145,6 +146,9 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
       } else if (route == 'credencial_alumno') { // NEW ROUTE FOR STUDENT CREDENTIAL
         _activeSubScreen = const StudentCredentialScreen();
         _currentTitle = 'Mi Credencial';
+      } else if (route == 'mi_perfil') { // NEW ROUTE FOR STUDENT PROFILE
+        _activeSubScreen = const StudentProfileScreen();
+        _currentTitle = 'Mi Perfil';
       }
     });
   }

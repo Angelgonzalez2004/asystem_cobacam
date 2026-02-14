@@ -11,6 +11,21 @@ Asystem Cobacam se enfoca en proporcionar una experiencia integral y eficiente, 
 ### 👥 Gestión de Usuarios y Roles (RBAC)
 Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cada usuario (Alumno, Prefecto, Académico, Administrador de Plantel, Administrador General) acceda a una interfaz y funcionalidades personalizadas, adaptadas a sus necesidades específicas.
 
+### 🎓 Gestión Académica y Ciclos Escolares
+*   **Gestión de Ciclos Escolares (Prefectura):** Pantalla dedicada para la creación, edición y eliminación de ciclos escolares, permitiendo un control preciso sobre la estructura académica vigente y futura.
+
+### 🧑‍🎓 Perfil del Alumno y Edición Controlada
+*   **Visualización de Perfil:** Los alumnos pueden acceder a su propio perfil para revisar sus datos registrados (personales, de contacto, académicos, médicos).
+*   **Edición Condicional:** La edición de campos (excepto ciclo escolar y grupo) está habilitada solo si la Prefecta otorga autorización específica. La edición de la matrícula puede ser autorizada de forma granular por la Prefecta.
+*   **Confirmación de Guardado:** Tras modificar y guardar datos, el alumno debe confirmar la exactitud de los cambios. Una vez confirmados, los permisos de edición se restablecen, requiriendo una nueva autorización de la Prefecta para futuras modificaciones.
+*   **Foto de Credencial:** La foto de perfil del alumno se utiliza automáticamente en la generación de su credencial escolar. Se advierte al alumno que elija cuidadosamente su foto, ya que solo puede cambiarse un número limitado de veces al mes y es visible en su credencial.
+
+### 👩‍🏫 Gestión de Alumnos por Prefectura
+*   **Permisos Granulares:** La Prefecta puede autorizar o desautorizar individualmente a cada alumno para editar su perfil, y de forma independiente, para editar su matrícula.
+*   **Autorización por Lotes:** Nueva función que permite a la Prefecta autorizar o desautorizar la edición de perfiles y/o matrículas a *todos los alumnos activos del ciclo escolar actual* de forma masiva, optimizando la administración.
+*   **Importación y Exportación de Alumnos (Excel):**
+    *   **Descarga de Plantilla:** Nuevo botón para descargar una plantilla de Excel que sirve como formato base para la importación masiva de alumnos. Incluye advertencias para modificar la plantilla con datos reales y correspondientes al ciclo escolar seleccionado, ajustando los grupos según sea necesario.
+
 ### 📊 Gestión de Asistencia Avanzada
 *   **Pase de Lista Flexible:** Registro de entradas y salidas mediante escaneo de credenciales QR, entrada manual o registro masivo para grupos.
 *   **Reporte Detallado de Asistencias (NUEVO):**
@@ -63,6 +78,7 @@ Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cad
     *   `file_picker` y `excel`: Para la manipulación de archivos Excel.
     *   `mobile_scanner`: Para el escaneo de códigos QR.
     *   `local_auth` y `flutter_secure_storage`: Para seguridad local y almacenamiento seguro.
+    *   `path_provider`: Para acceso a directorios del sistema de archivos.
 
 ---
 

@@ -122,6 +122,21 @@ class AppDrawer extends StatelessWidget {
                       onTap: () => onNavigate?.call('alumnos')),
 
                   const Divider(),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+                    child: Text('ADMINISTRACIÓN',
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: Colors.grey)),
+                  ),
+                  _buildDrawerItem(context,
+                      icon: Icons.calendar_month_outlined,
+                      title: 'Gestión de Ciclos Escolares',
+                      onTap: () {
+                        Navigator.pop(context); // Close drawer
+                        onNavigate?.call('ciclos');
+                      }),
+
+                  const Divider(),
                    Padding(
                     padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
                     child: Text('VISUALIZACIÓN',
@@ -214,6 +229,10 @@ class AppDrawer extends StatelessWidget {
                       icon: Icons.badge_rounded,
                       title: 'Mi Credencial',
                       onTap: () => onNavigate?.call('credencial_alumno')),
+                  _buildDrawerItem(context,
+                      icon: Icons.person_outline_rounded,
+                      title: 'Mi Perfil',
+                      onTap: () => onNavigate?.call('mi_perfil')),
                   _buildDrawerItem(context,
                       icon: Icons.help_outline_rounded,
                       title: 'Manual Operativo (FAQ)',
