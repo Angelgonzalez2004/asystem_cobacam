@@ -1,9 +1,18 @@
 import 'dart:async';
-import 'package:asystem_cobacam/utils/animations.dart';
-import 'package:asystem_cobacam/utils/ui_helpers.dart';
+import 'dart:io'; // Necesario para File, Directory y Platform
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb; // Para kIsWeb
+import 'package:flutter/services.dart'; // Para ByteData, DefaultAssetBundle
+
+// Paquetes externos
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
+import 'package:path_provider/path_provider.dart'; // IMPORTANTE: Para guardar archivos
+
+// Tus imports internos
+import 'package:asystem_cobacam/utils/animations.dart';
+import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:asystem_cobacam/models/student_model.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/student_form_screen.dart';
 import 'package:asystem_cobacam/services/app_settings_service.dart';
@@ -11,12 +20,7 @@ import 'package:asystem_cobacam/models/school_cycle_model.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/student_excel_import_screen.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter/foundation.dart' show kIsWeb; // For kIsWeb
-import 'package:flutter/services.dart'; // For ByteData, DefaultAssetBundle
-import 'dart:io' show File, Directory; // For File, Directory (non-web)
-import 'package:path_provider/path_provider.dart'; // For getApplicationDocumentsDirectory (non-web)
-import 'package:asystem_cobacam/utils/web_downloader.dart'; // For WebDownloader
+import 'package:asystem_cobacam/utils/web_downloader.dart';
 
 enum BatchAction {
   authorize,
@@ -159,73 +163,63 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Gestión de Alumnos'),
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: theme.colorScheme.onSurface,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.group_add_outlined),
-            tooltip: 'Autorización por Lotes',
-            onPressed: _showBatchAuthorizationDialog,
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddStudentDialog,
-        backgroundColor: theme.colorScheme.primary,
-        child: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white),
-      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 900),
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(
-                      children: [
-                        // Tabs Container
-                        Container(
-                          margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                          decoration: BoxDecoration(
-                            color:
-                                isDark ? theme.cardTheme.color : Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color:
-                                    theme.dividerColor.withValues(alpha: 0.1)),
-                          ),
-                          child: TabBar(
-                            controller: _tabController,
-                            indicatorColor: theme.colorScheme.primary,
-                            labelColor: theme.colorScheme.primary,
-                            unselectedLabelColor: Colors.grey,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            indicatorSize: TabBarIndicatorSize.label,
-                            tabs: [
-                              Tab(text: 'Activos (${activeStudents.length})'),
-                              Tab(text: 'Bajas (${inactiveStudents.length})'),
-                            ],
-                          ),
-                        ),
+                                        child: _isLoading
+                                            ? const Center(child: CircularProgressIndicator())
+                                            : Stack(
+                                                children: [
+                                                  Column(
+                                                    children: [
+                                                      // Tabs Container
+                                                      Container(
+                                                        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                                                        decoration: BoxDecoration(
+                                                          color: isDark ? theme.cardTheme.color : Colors.white,
+                                                          borderRadius: BorderRadius.circular(16),
+                                                          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+                                                        ),
+                                                        child: TabBar(
+                                                          controller: _tabController,
+                                                          indicatorColor: theme.colorScheme.primary,
+                                                          labelColor: theme.colorScheme.primary,
+                                                          unselectedLabelColor: Colors.grey,
+                                                          padding: const EdgeInsets.symmetric(vertical: 8),
+                                                          indicatorSize: TabBarIndicatorSize.label,
+                                                          tabs: [
+                                                            Tab(text: 'Activos (${activeStudents.length})'),
+                                                            Tab(text: 'Bajas (${inactiveStudents.length})'),
+                                                          ],
+                                                        ),
+                                                      ),
 
-                        _buildFilterHeader(theme, isDark),
+                                                      _buildFilterHeader(theme, isDark),
 
-                        Expanded(
-                          child: TabBarView(
-                            controller: _tabController,
-                            children: [
-                              _buildGroupedStudentList(
-                                  activeStudents, true, theme, isDark),
-                              _buildGroupedStudentList(
-                                  inactiveStudents, false, theme, isDark),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                                                      Expanded(
+                                                        child: TabBarView(
+                                                          controller: _tabController,
+                                                          children: [
+                                                            _buildGroupedStudentList(activeStudents, true, theme, isDark),
+                                                            _buildGroupedStudentList(inactiveStudents, false, theme, isDark),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Positioned(
+                                                    right: 16.0,
+                                                    bottom: 16.0,
+                                                    child: FloatingActionButton(
+                                                      onPressed: _showAddStudentDialog,
+                                                      backgroundColor: theme.colorScheme.primary,
+                                                      child: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
             ),
           );
         },
@@ -289,6 +283,12 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                       },
                       tooltip: 'Importar Excel',
                     ),
+                    const SizedBox(width: 12), // Add a SizedBox for spacing
+                    IconButton.filledTonal(
+                      icon: const Icon(Icons.group_add_outlined),
+                      tooltip: 'Autorización por Lotes',
+                      onPressed: _showBatchAuthorizationDialog,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -316,7 +316,6 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
     );
   }
 
-  // NUEVA IMPLEMENTACIÓN: Lista agrupada por Grupos
   Widget _buildGroupedStudentList(
       List<Student> students, bool isActiveList, ThemeData theme, bool isDark) {
     if (students.isEmpty) {
@@ -460,6 +459,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
               activeColor: theme.colorScheme.tertiary, // Use a different color
             ),
           ),
+
           IconButton(
             icon: const Icon(Icons.edit, size: 20),
             onPressed: () => _openEditForm(student),
@@ -484,64 +484,121 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
     );
   }
 
-  // NEW METHOD: _toggleCanEditProfile
-  Future<void> _toggleCanEditProfile(Student student, bool newValue) async {
-    final studentRef = FirebaseDatabase.instance
-        .ref('planteles/$_campus/students/$_currentSchoolCycle')
-        .child(student.id); // Use student.id (Firebase key) here
+    // NEW METHOD: _toggleCanEditProfile
 
-    try {
-      await studentRef.update({'canEditProfile': newValue});
-      if (mounted) {
-        UiHelpers.showSnackBar(
-            context,
-            newValue
-                ? 'Edición de perfil habilitada para ${student.fullName}.'
-                : 'Edición de perfil deshabilitada para ${student.fullName}.');
+    Future<void> _toggleCanEditProfile(Student student, bool newValue) async {
+
+      final studentRef = FirebaseDatabase.instance
+
+          .ref('planteles/$_campus/students/$_currentSchoolCycle')
+
+          .child(student.id); // Use student.id (Firebase key) here
+
+  
+
+      try {
+
+        await studentRef.update({'canEditProfile': newValue});
+
+        if (mounted) {
+
+          UiHelpers.showSnackBar(
+
+              context,
+
+              newValue
+
+                  ? 'Edición de perfil habilitada para ${student.fullName}.'
+
+                  : 'Edición de perfil deshabilitada para ${student.fullName}.');
+
+        }
+
+      } catch (e) {
+
+        if (mounted) {
+
+          UiHelpers.showSnackBar(
+
+              context, 'Error al actualizar el permiso de edición: $e',
+
+              isError: true);
+
+        }
+
       }
-    } catch (e) {
-      if (mounted) {
-        UiHelpers.showSnackBar(
-            context, 'Error al actualizar el permiso de edición: $e',
-            isError: true);
-      }
+
     }
-  }
 
-  // NEW METHOD: _toggleCanEditMatricula
-  Future<void> _toggleCanEditMatricula(Student student, bool newValue) async {
-    final studentRef = FirebaseDatabase.instance
-        .ref('planteles/$_campus/students/$_currentSchoolCycle')
-        .child(student.id);
+  
 
-    try {
-      await studentRef.update({'canEditMatricula': newValue});
-      if (mounted) {
-        UiHelpers.showSnackBar(
-            context,
-            newValue
-                ? 'Edición de matrícula habilitada para ${student.fullName}.'
-                : 'Edición de matrícula deshabilitada para ${student.fullName}.');
+    // NEW METHOD: _toggleCanEditMatricula
+
+    Future<void> _toggleCanEditMatricula(Student student, bool newValue) async {
+
+      final studentRef = FirebaseDatabase.instance
+
+          .ref('planteles/$_campus/students/$_currentSchoolCycle')
+
+          .child(student.id);
+
+  
+
+      try {
+
+        await studentRef.update({'canEditMatricula': newValue});
+
+        if (mounted) {
+
+          UiHelpers.showSnackBar(
+
+              context,
+
+              newValue
+
+                  ? 'Edición de matrícula habilitada para ${student.fullName}.'
+
+                  : 'Edición de matrícula deshabilitada para ${student.fullName}.');
+
+        }
+
+      } catch (e) {
+
+        if (mounted) {
+
+          UiHelpers.showSnackBar(
+
+              context, 'Error al actualizar el permiso de edición de matrícula: $e',
+
+              isError: true);
+
+        }
+
       }
-    } catch (e) {
-      if (mounted) {
-        UiHelpers.showSnackBar(
-            context, 'Error al actualizar el permiso de edición de matrícula: $e',
-            isError: true);
-      }
+
     }
-  }
 
-  void _openEditForm(Student student) async {
-    if (_campus == null) return;
-    await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => StudentFormScreen(
-                student: student,
-                campusId: _campus!,
-                currentSchoolCycle: _currentSchoolCycle)));
-  }
+  
+
+    void _openEditForm(Student student) async {
+
+      if (_campus == null) return;
+
+      await Navigator.push(
+
+          context,
+
+          MaterialPageRoute(
+
+              builder: (context) => StudentFormScreen(
+
+                  student: student,
+
+                  campusId: _campus!,
+
+                  currentSchoolCycle: _currentSchoolCycle)));
+
+    }
 
   Future<void> _reactivateStudent(Student student) async {
     final confirmed = await UiHelpers.showConfirmationDialog(context,
@@ -608,9 +665,10 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
       },
     );
 
-    if (confirmed == true) {
-      await _studentsRef!.child(student.studentId).update(
-          {'isActive': false, 'deactivationReason': reasonController.text});
+    if (confirmed == true && _studentsRef != null) {
+      await _studentsRef!
+          .child(student.studentId)
+          .update({'isActive': false, 'deactivationReason': reasonController.text});
       if (mounted) UiHelpers.showSnackBar(context, 'Baja registrada.');
     }
   }
@@ -618,7 +676,8 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
   // NEW METHOD: Bulk Authorization Dialog
   Future<void> _showBatchAuthorizationDialog() async {
     if (_campus == null || _currentSchoolCycle.isEmpty) {
-      UiHelpers.showSnackBar(context, 'Campus o Ciclo Escolar no definidos.', isError: true);
+      UiHelpers.showSnackBar(context, 'Campus o Ciclo Escolar no definidos.',
+          isError: true);
       return;
     }
 
@@ -661,13 +720,16 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                   ),
                   const SizedBox(height: 16),
                   CheckboxListTile(
-                    title: const Text('Permitir edición de Matrícula (si se autoriza perfil)'),
+                    title: const Text(
+                        'Permitir edición de Matrícula (si se autoriza perfil)'),
                     value: allowMatriculaEdit,
-                    onChanged: selectedAction == BatchAction.authorize ? (bool? value) {
-                      setStateInDialog(() {
-                        allowMatriculaEdit = value ?? false;
-                      });
-                    } : null, // Only enable if authorizing profile edit
+                    onChanged: selectedAction == BatchAction.authorize
+                        ? (bool? value) {
+                            setStateInDialog(() {
+                              allowMatriculaEdit = value ?? false;
+                            });
+                          }
+                        : null, // Only enable if authorizing profile edit
                     controlAffinity: ListTileControlAffinity.leading,
                   ),
                 ],
@@ -700,8 +762,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
       bool authorizeProfileEdit, bool authorizeMatriculaEdit) async {
     if (_campus == null || _currentSchoolCycle.isEmpty) return;
 
-    UiHelpers.showSnackBar(
-        context, 'Aplicando cambios a todos los alumnos...');
+    UiHelpers.showSnackBar(context, 'Aplicando cambios a todos los alumnos...');
 
     try {
       final studentsToUpdate =
@@ -713,13 +774,14 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
             .child(student.id);
         await studentRef.update({
           'canEditProfile': authorizeProfileEdit,
-          'canEditMatricula': authorizeMatriculaEdit && authorizeProfileEdit, // Matricula edit only if profile edit is authorized
+          'canEditMatricula': authorizeMatriculaEdit &&
+              authorizeProfileEdit, // Matricula edit only if profile edit is authorized
         });
       }
 
       if (mounted) {
-        UiHelpers.showSnackBar(
-            context, 'Permisos de edición actualizados para todos los alumnos del ciclo actual.');
+        UiHelpers.showSnackBar(context,
+            'Permisos de edición actualizados para todos los alumnos del ciclo actual.');
       }
     } catch (e) {
       if (mounted) {
@@ -739,52 +801,78 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                 campusId: _campus!, currentSchoolCycle: _currentSchoolCycle)));
   }
 
-  // NEW METHOD: _downloadTemplate
+  // NEW METHOD: _downloadTemplate CORREGIDO
   Future<void> _downloadTemplate() async {
     final confirmed = await UiHelpers.showConfirmationDialog(
       context,
       title: 'Descargar Plantilla',
-      content: '¿Estás seguro de que quieres descargar la plantilla de Excel para registros de alumnos? Recuerda que debes modificar este archivo con los datos reales de los alumnos y asegurarte de que correspondan al ciclo escolar seleccionado. También es importante ajustar los grupos en las hojas de Excel, ya que estos pueden variar en cada ciclo escolar.',
+      content:
+          '¿Estás seguro de que quieres descargar la plantilla de Excel para registros de alumnos? Recuerda que debes modificar este archivo con los datos reales de los alumnos y asegurarte de que correspondan al ciclo escolar seleccionado. También es importante ajustar los grupos en las hojas de Excel, ya que estos pueden variar en cada ciclo escolar.',
       confirmText: 'Descargar',
     );
 
     if (confirmed != true) return;
 
     if (_campus == null || _currentSchoolCycle.isEmpty) {
-      UiHelpers.showSnackBar(context, 'Campus o Ciclo Escolar no definidos. No se puede generar la plantilla.', isError: true);
+      UiHelpers.showSnackBar(context,
+          'Campus o Ciclo Escolar no definidos. No se puede generar la plantilla.',
+          isError: true);
       return;
     }
 
     UiHelpers.showSnackBar(context, 'Preparando descarga de plantilla...');
 
     try {
-      // Path to the asset file (adjust if the actual file name/path is dynamic)
-      // Assuming the user has placed the file in assets/excel_templates/
-      final String assetPath = 'assets/excel_templates/plantilla_alumnos_2026A_Atasta_.xlsx';
-      final String fileName = 'plantilla_alumnos_${_currentSchoolCycle.replaceAll("/", "-")}_${_campus ?? 'generico'}.xlsx';
+      // Path to the asset file
+      const String assetPath =
+          'assets/excel_templates/plantilla_alumnos_2026A_Atasta_.xlsx';
+      final String fileName =
+          'plantilla_alumnos_${_currentSchoolCycle.replaceAll("/", "-")}_${_campus ?? 'generico'}.xlsx';
 
       // Load the asset as bytes
-      final ByteData data = await DefaultAssetBundle.of(context).load(assetPath);
+      final ByteData data =
+          await DefaultAssetBundle.of(context).load(assetPath);
       final Uint8List bytes = data.buffer.asUint8List();
 
       if (kIsWeb) {
-        await WebDownloader.downloadFile(bytes, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        // Lógica para WEB
+        await WebDownloader.downloadFile(bytes, fileName,
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       } else {
-        // For non-web platforms, save to downloads or a common directory
-        // ignore: unnecessary_nullable_for_final_variable_declarations
-        final Directory? appDocumentsDir = await getApplicationDocumentsDirectory();
-        if (appDocumentsDir != null) {
-          final String savePath = '${appDocumentsDir.path}/$fileName';
+        // Lógica para MÓVIL (Android/iOS)
+        Directory? directory;
+        
+        if (Platform.isAndroid) {
+          // En Android usamos ExternalStorageDirectory para que sea visible
+          directory = await getExternalStorageDirectory();
+        } else {
+          // En iOS usamos ApplicationDocumentsDirectory
+          directory = await getApplicationDocumentsDirectory();
+        }
+
+        if (directory != null) {
+          final String savePath = '${directory.path}/$fileName';
           final File file = File(savePath);
           await file.writeAsBytes(bytes);
-          UiHelpers.showSnackBar(context, 'Plantilla guardada en: ${file.path}', duration: const Duration(seconds: 5));
+
+          if (mounted) {
+            UiHelpers.showSnackBar(context,
+                'Plantilla guardada en: ${file.path}. Revisa tu carpeta Android/data/files o Archivos.',
+                duration: const Duration(seconds: 5));
+          }
         } else {
-          UiHelpers.showSnackBar(context, 'No se pudo acceder al directorio de documentos para guardar la plantilla.', isError: true);
+          throw Exception("No se pudo acceder al directorio de almacenamiento.");
         }
       }
-      UiHelpers.showSnackBar(context, 'Plantilla descargada con éxito.');
+
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Descarga completada.');
+      }
     } catch (e) {
-      UiHelpers.showSnackBar(context, 'Error al descargar la plantilla: $e', isError: true);
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Error al descargar la plantilla: $e',
+            isError: true);
+      }
     }
   }
 }

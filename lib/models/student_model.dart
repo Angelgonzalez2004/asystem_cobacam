@@ -48,6 +48,7 @@ class Student {
   @HiveField(20)
   bool canEditMatricula; // NEW FIELD: Allows student to edit their matricula
 
+
   Student({
     required this.id,
     required this.fullName,
@@ -70,6 +71,7 @@ class Student {
     this.medicalAlert = false, // Default false
     this.canEditProfile = false, // NEW: Default to false
     this.canEditMatricula = false, // NEW: Default to false
+
   });
 
   // Factory constructor for creating a Student from a Firebase DataSnapshot
@@ -103,6 +105,7 @@ class Student {
       medicalAlert: data['medicalAlert'] ?? false,
       canEditProfile: data['canEditProfile'] ?? false, // NEW
       canEditMatricula: data['canEditMatricula'] ?? false, // NEW
+
     );
   }
 
@@ -129,5 +132,6 @@ class Student {
       'medicalAlert': medicalAlert,
       'canEditProfile': canEditProfile, // NEW
       'canEditMatricula': canEditMatricula, // NEW
+
     };
   }}

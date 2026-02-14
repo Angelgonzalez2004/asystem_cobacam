@@ -1,7 +1,11 @@
+import 'dart:async'; // For StreamSubscription
 import 'package:asystem_cobacam/models/student_model.dart';
+import 'package:asystem_cobacam/services/app_settings_service.dart'; // For AppSettingsService
+import 'package:asystem_cobacam/models/school_cycle_model.dart'; // For SchoolCycle
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // For Provider
 
 class StudentProfileScreen extends StatefulWidget {
   const StudentProfileScreen({super.key});
@@ -16,6 +20,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   bool _isEditingEnabled = false; // Controlled by prefect
   String? _userProfileImageUrl; // NEW: To store profile image URL
   String _userEmail = ''; // NEW: To store user email
+
+  StreamSubscription<DatabaseEvent>? _studentDataSubscription;
+  StreamSubscription<DatabaseEvent>? _userDataSubscription;
 
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _guardianFullNameController = TextEditingController();
@@ -33,14 +40,39 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   final TextEditingController _generalHealthStatusController = TextEditingController();
   final TextEditingController _nssController = TextEditingController();
 
+  late final AppSettingsService _appSettingsService;
+  String _currentSystemSchoolCycle = '';
+  List<SchoolCycle> _availableSchoolCycles = [];
+  String? _selectedFilterSchoolCycle;
+  bool _isCurrentCycleSelected = false;
+
+
   @override
   void initState() {
     super.initState();
+    _appSettingsService = Provider.of<AppSettingsService>(context, listen: false);
+    _initSchoolCycleData();
     _loadStudentData();
+  }
+
+  Future<void> _initSchoolCycleData() async {
+    final dynamicSchoolCycle = await _appSettingsService.getCurrentSchoolCycleId();
+    final allCycles = await _appSettingsService.getAllSchoolCycles();
+
+    if (!mounted) return;
+    setState(() {
+      _currentSystemSchoolCycle = dynamicSchoolCycle;
+      _availableSchoolCycles = allCycles;
+      // Initially set selectedFilterSchoolCycle to the system's current cycle
+      _selectedFilterSchoolCycle = dynamicSchoolCycle;
+    });
   }
 
   @override
   void dispose() {
+    _studentDataSubscription?.cancel();
+    _userDataSubscription?.cancel();
+
     _fullNameController.dispose();
     _guardianFullNameController.dispose();
     _ageController.dispose();
@@ -51,6 +83,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     _schoolCycleController.dispose();
     _groupController.dispose();
     _institutionalEmailController.dispose();
+    _matriculaController.dispose();
     _allergiesController.dispose();
     _healthConditionsController.dispose();
     _generalHealthStatusController.dispose();
@@ -58,44 +91,71 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _loadStudentData() async {
+  Future<void> _loadStudentData({String? cycleId}) async {
     final User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
-      // Handle user not logged in or session expired
       setState(() {
         _isLoading = false;
       });
       return;
     }
 
+    // Determine which cycle to load data for
+    final String targetCycleId = cycleId ?? _selectedFilterSchoolCycle ?? _currentSystemSchoolCycle;
+
     // Fetch Student specific data (from 'students' node)
     final DatabaseReference studentRef =
-        FirebaseDatabase.instance.ref('students').child(currentUser.uid);
+        FirebaseDatabase.instance.ref('students/$targetCycleId').child(currentUser.uid);
 
     // Fetch User general data (from 'users' node)
     final DatabaseReference userGeneralRef =
         FirebaseDatabase.instance.ref('users').child(currentUser.uid);
 
-    // Listen to student data changes
-    studentRef.onValue.listen((event) {
+    // Stop previous listener if any
+    _studentDataSubscription?.cancel();
+
+    // Listen to student data changes for the selected cycle
+    _studentDataSubscription = studentRef.onValue.listen((event) {
       if (event.snapshot.exists && event.snapshot.value != null) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
         data['id'] = currentUser.uid; // Ensure ID is set from UID
-        setState(() {
-          _student = Student.fromMap(data);
-          _isEditingEnabled = data['canEditProfile'] ?? false;
-          _fillControllers();
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _student = Student.fromMap(data);
+            _selectedFilterSchoolCycle = targetCycleId; // Ensure dropdown reflects actual loaded data cycle
+            _isCurrentCycleSelected = (_selectedFilterSchoolCycle == _currentSystemSchoolCycle);
+            
+            // CORRECCIÓN AQUÍ: Se eliminó '?? false' porque canEditProfile ya es non-nullable
+            _isEditingEnabled = _student!.canEditProfile && _isCurrentCycleSelected;
+            
+            _fillControllers();
+            _isLoading = false;
+          });
+        }
       } else {
+        // If student data not found for the selected cycle, clear current student and disable editing
+        if (mounted) {
+          setState(() {
+            _student = null;
+            _isEditingEnabled = false;
+            _isLoading = false;
+          });
+        }
+      }
+    }, onError: (error) {
+      debugPrint('Error loading student data for cycle $targetCycleId: $error');
+      if (mounted) {
         setState(() {
+          _student = null;
+          _isEditingEnabled = false;
           _isLoading = false;
         });
       }
     });
 
     // Listen to user general data changes for profile image
-    userGeneralRef.onValue.listen((event) {
+    _userDataSubscription?.cancel();
+    _userDataSubscription = userGeneralRef.onValue.listen((event) {
       if (event.snapshot.exists && event.snapshot.value != null) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
         if (mounted) {
@@ -243,10 +303,12 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                         ),
                         child: Text(
                           _isEditingEnabled
-                              ? (_student!.canEditMatricula
-                                  ? '¡Edición activada! Puedes modificar tus datos, incluyendo tu matrícula. Ciclo y grupo no son editables.'
-                                  : '¡Edición activada! Puedes modificar tus datos. La matrícula, ciclo y grupo no son editables.')
-                              : 'Solo se pueden modificar datos con autorización de la Prefecta. La matrícula, ciclo y grupo no son editables por el alumno.',
+                              ? ((_student?.canEditMatricula ?? false)
+                                  ? '¡Edición activada! Puedes modificar tus datos del ciclo actual, incluyendo tu matrícula. Ciclo y grupo no son editables.'
+                                  : '¡Edición activada! Puedes modificar tus datos del ciclo actual. La matrícula, ciclo y grupo no son editables.')
+                              : _isCurrentCycleSelected
+                                  ? 'Solo se pueden modificar datos con autorización de la Prefecta. La matrícula, ciclo y grupo no son editables por el alumno.'
+                                  : 'Estás visualizando datos de un ciclo escolar pasado o futuro. La edición no está disponible para estos ciclos.',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: _isEditingEnabled
                                 ? theme.colorScheme.primary
@@ -256,6 +318,33 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                                 : FontWeight.normal,
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // School Cycle Selection
+                      DropdownButtonFormField<String>(
+                        value: _selectedFilterSchoolCycle,
+                        decoration: const InputDecoration(
+                          labelText: 'Ciclo Escolar a Visualizar',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
+                          prefixIcon:
+                              Icon(Icons.calendar_today_outlined, size: 20),
+                        ),
+                        onChanged: (val) {
+                          if (val != null && val != _selectedFilterSchoolCycle) {
+                            setState(() {
+                              _selectedFilterSchoolCycle = val;
+                              _isLoading = true; // Indicate loading
+                            });
+                            _loadStudentData(cycleId: val); // Reload student data for the selected cycle
+                          }
+                        },
+                        items: _availableSchoolCycles
+                            .map((c) => DropdownMenuItem(
+                                value: c.id, child: Text(c.id)))
+                            .toList(),
                       ),
                       const SizedBox(height: 20),
 
@@ -305,7 +394,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
 
                       _buildSectionTitle(context, 'Información Personal'),
                       _buildEditableField(context, 'Matrícula', _matriculaController,
-                          editable: _isEditingEnabled && _student!.canEditMatricula),
+                          editable: _isEditingEnabled && (_student?.canEditMatricula ?? false)),
                       _buildEditableField(context, 'Nombre Completo', _fullNameController,
                           editable: _isEditingEnabled),
                       _buildEditableField(context, 'Edad', _ageController,
@@ -314,7 +403,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                           editable: _isEditingEnabled),
                       _buildEditableField(context, 'Lugar de Residencia', _placeOfResidenceController,
                           editable: _isEditingEnabled),
-                      _buildInfoField(context, 'Correo Institucional', _student!.institutionalEmail,
+                      _buildInfoField(context, 'Correo Institucional', _student?.institutionalEmail ?? '',
                           editable: false),
 
                       const SizedBox(height: 20),
@@ -328,9 +417,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
 
                       const SizedBox(height: 20),
                       _buildSectionTitle(context, 'Información Académica'),
-                      _buildInfoField(context, 'Ciclo Escolar', _student!.schoolCycle,
+                      _buildInfoField(context, 'Ciclo Escolar', _student?.schoolCycle ?? '',
                           editable: false),
-                      _buildInfoField(context, 'Grupo', _student!.group,
+                      _buildInfoField(context, 'Grupo', _student?.group ?? '',
                           editable: false),
 
                       const SizedBox(height: 20),
@@ -343,8 +432,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                           editable: _isEditingEnabled),
                       _buildEditableField(context, 'NSS (Número de Seguro Social)', _nssController,
                           editable: _isEditingEnabled),
-                      _buildInfoField(context, 'Alerta Médica Activa', _student!.medicalAlert ? 'Sí' : 'No',
-                          editable: false, color: _student!.medicalAlert ? theme.colorScheme.error : null),
+                      _buildInfoField(context, 'Alerta Médica Activa', (_student?.medicalAlert ?? false) ? 'Sí' : 'No',
+                          editable: false, color: (_student?.medicalAlert ?? false) ? theme.colorScheme.error : null),
 
                       if (_isEditingEnabled) ...[
                         const SizedBox(height: 30),

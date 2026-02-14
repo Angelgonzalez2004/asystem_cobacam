@@ -16,7 +16,10 @@ Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cad
 
 ### 🧑‍🎓 Perfil del Alumno y Edición Controlada
 *   **Visualización de Perfil:** Los alumnos pueden acceder a su propio perfil para revisar sus datos registrados (personales, de contacto, académicos, médicos).
-*   **Edición Condicional:** La edición de campos (excepto ciclo escolar y grupo) está habilitada solo si la Prefecta otorga autorización específica. La edición de la matrícula puede ser autorizada de forma granular por la Prefecta.
+*   **Edición Condicional:** La capacidad de un alumno para editar sus datos (incluida la matrícula) está habilitada bajo dos condiciones clave:
+    1.  **Autorización de Prefectura:** La Prefecta debe otorgar autorización específica para la edición del perfil y, de forma independiente, para la matrícula.
+    2.  **Ciclo Escolar Actual:** La edición solo es posible si el alumno está visualizando y operando sobre los datos del ciclo escolar actualmente activo en el sistema. Para ciclos pasados o futuros, la información solo será de consulta.
+*   **Selección de Ciclo Escolar (Alumno):** Los alumnos ahora pueden seleccionar un ciclo escolar desde su perfil para visualizar sus datos históricos o futuros, aunque la edición se restringe al ciclo actual autorizado.
 *   **Confirmación de Guardado:** Tras modificar y guardar datos, el alumno debe confirmar la exactitud de los cambios. Una vez confirmados, los permisos de edición se restablecen, requiriendo una nueva autorización de la Prefecta para futuras modificaciones.
 *   **Foto de Credencial:** La foto de perfil del alumno se utiliza automáticamente en la generación de su credencial escolar. Se advierte al alumno que elija cuidadosamente su foto, ya que solo puede cambiarse un número limitado de veces al mes y es visible en su credencial.
 
@@ -97,6 +100,9 @@ cd asystem_cobacam
 
 # Instala las dependencias de Flutter
 flutter pub get
+
+# Genera los archivos necesarios (ej. para Hive, json_serializable)
+flutter pub run build_runner build --delete-conflicting-outputs
 
 # Asegúrate de que tu proyecto Firebase esté correctamente configurado.
 # El archivo `lib/firebase_options.dart` es crucial para la conexión de la app con tu proyecto Firebase.
