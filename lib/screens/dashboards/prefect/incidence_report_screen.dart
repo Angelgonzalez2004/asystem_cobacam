@@ -272,7 +272,9 @@ class _IncidenceReportScreenState extends State<IncidenceReportScreen> {
             schoolCycle: incidence.schoolCycle,
             group: incidence.group,
             institutionalEmail: '',
-            studentId: incidence.studentId);
+            studentId: incidence.studentId,
+            userId: '', // Placeholder as it's not a real student creation
+            registeredByUserId: ''); // Placeholder
       }
     });
   }

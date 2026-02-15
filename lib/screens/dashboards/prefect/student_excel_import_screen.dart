@@ -13,6 +13,7 @@ import 'package:asystem_cobacam/models/school_cycle_model.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // NEW IMPORT
 import 'dart:typed_data';
 class StudentExcelImportScreen extends StatefulWidget {
   final String campusId;
@@ -35,6 +36,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
   bool _isLoading = false;
   bool _isImporting = false;
   List<Group> _availableGroups = [];
+  bool _isLoadingGroups = true; // NEW: Loading state for groups
 
   // Cycle Management
   List<SchoolCycle> _availableSchoolCycles = [];
@@ -63,7 +65,10 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
           _isLoadingCycles = false;
         });
         // Cargar grupos del ciclo por defecto
-        _loadAvailableGroups(_targetSchoolCycle!);
+        setState(() {
+          _isLoadingGroups = true; // Set loading to true before fetching groups
+        });
+        await _loadAvailableGroups(_targetSchoolCycle!);
       }
     } catch (e) {
       if (mounted) setState(() => _isLoadingCycles = false);
@@ -71,6 +76,11 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
   }
 
   Future<void> _loadAvailableGroups(String cycleId) async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingGroups = true; // Start loading groups
+      _availableGroups = []; // Clear previous groups
+    });
     try {
       final groupsSnapshot = await FirebaseDatabase.instance
           .ref('planteles/${widget.campusId}/groups')
@@ -92,6 +102,8 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
         UiHelpers.showSnackBar(context, 'Error al cargar grupos.',
             isError: true);
       }
+    } finally {
+      if (mounted) setState(() => _isLoadingGroups = false); // End loading groups
     }
   }
 
@@ -108,6 +120,14 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
 
     if (confirmed != true) {
       return; // El usuario canceló la operación.
+    }
+
+    if (_isLoadingGroups) {
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'Cargando grupos, por favor espera.',
+            isError: true);
+      }
+      return;
     }
     
     if (_targetSchoolCycle == null) return;
@@ -179,6 +199,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
   }
 
   Future<void> _parseExcel(Uint8List bytes) async {
+    final currentUserUid = FirebaseAuth.instance.currentUser?.uid ?? ''; // Get current prefect's UID
     try {
       var excel = Excel.decodeBytes(bytes);
 
@@ -280,6 +301,8 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
 
             studentsToImport.add(Student(
               id: studentId,
+              userId: '', // Will be updated when student first logs in or account is created
+              registeredByUserId: currentUserUid, // Prefect who registered this student
               fullName: fullName,
               guardianFullName:
                   row[headers.indexOf('tutor')]?.value?.toString() ?? '',
@@ -409,7 +432,7 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
           title: const Text('Importar Alumnos'),
           elevation: 0,
           centerTitle: true),
-      body: _isLoading || _isImporting || _isLoadingCycles
+      body: _isLoading || _isImporting || _isLoadingCycles || _isLoadingGroups
           ? const Center(child: CircularProgressIndicator())
           : LayoutBuilder(
               builder: (context, constraints) {
@@ -443,15 +466,16 @@ class _StudentExcelImportScreenState extends State<StudentExcelImportScreen> {
                                       .map((c) => DropdownMenuItem(
                                           value: c.id, child: Text(c.id)))
                                       .toList(),
-                                  onChanged: (val) {
+                                  onChanged: (val) async { // Added async
                                     if (val != null) {
                                       setState(() {
                                         _targetSchoolCycle = val;
                                         _parsedStudents =
                                             []; // Limpiar previos si cambia el ciclo
                                         _filePath = null;
+                                        _isLoadingGroups = true; // Set loading groups to true
                                       });
-                                      _loadAvailableGroups(val);
+                                      await _loadAvailableGroups(val); // Await the group loading
                                     }
                                   },
                                 ),

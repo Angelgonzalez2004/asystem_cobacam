@@ -1,4 +1,5 @@
-import 'package:asystem_cobacam/screens/common/profile_screen.dart';
+import 'package:asystem_cobacam/screens/common/general_user_profile_screen.dart';
+import 'package:asystem_cobacam/screens/common/about_us_screen.dart'; // NEW IMPORT
 import 'package:asystem_cobacam/screens/common/settings_screen.dart';
 import 'package:asystem_cobacam/screens/login_screen.dart';
 import 'package:asystem_cobacam/utils/slide_transition.dart';
@@ -231,7 +232,7 @@ class AppDrawer extends StatelessWidget {
                       onTap: () => onNavigate?.call('credencial_alumno')),
                   _buildDrawerItem(context,
                       icon: Icons.person_outline_rounded,
-                      title: 'Mi Perfil',
+                      title: 'Datos Alumnos', // Changed title
                       onTap: () => onNavigate?.call('mi_perfil')),
                   _buildDrawerItem(context,
                       icon: Icons.help_outline_rounded,
@@ -244,15 +245,29 @@ class AppDrawer extends StatelessWidget {
                 // Common Items
                 _buildDrawerItem(
                   context,
+                  icon: Icons.info_outline,
+                  title: 'Sobre Nosotros',
+                  onTap: () {
+                    Navigator.pop(context); // Close drawer
+                    if (onNavigate != null) {
+                      onNavigate!.call('about_us');
+                    } else {
+                      Navigator.push(context,
+                          SlideRightRoute(page: const AboutUsScreen()));
+                    }
+                  },
+                ),
+                _buildDrawerItem( // Removed if (role != 'Alumno') condition
+                  context,
                   icon: Icons.person_outline_rounded,
-                  title: 'Mi Perfil',
+                  title: 'Mi Perfil', // Retained title
                   onTap: () {
                     Navigator.pop(context); // Solo este pop
                     if (onNavigate != null) {
                       onNavigate!.call('profile');
                     } else {
                       Navigator.push(context,
-                          SlideRightRoute(page: const ProfileScreen()));
+                          SlideRightRoute(page: const GeneralUserProfileScreen()));
                     }
                   },
                 ),

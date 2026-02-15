@@ -1,5 +1,5 @@
 import 'package:asystem_cobacam/screens/dashboards/student/student_credential_screen.dart'; // NEW IMPORT
-import 'package:asystem_cobacam/screens/common/profile_screen.dart';
+import 'package:asystem_cobacam/screens/common/general_user_profile_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/student/student_profile_screen.dart'; // NEW IMPORT
 import 'package:asystem_cobacam/screens/common/settings_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_access_codes_screen.dart';
@@ -10,6 +10,7 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/teacher_schedule_view
 import 'package:asystem_cobacam/screens/dashboards/prefect/manage_cycle_teachers_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_schedule_management_screen.dart';
 import 'package:asystem_cobacam/screens/common/faq_screen.dart'; // New import // New import // New import
+import 'package:asystem_cobacam/screens/common/about_us_screen.dart'; // NEW IMPORT
 import 'package:asystem_cobacam/services/app_settings_service.dart'; // New import
 import 'package:asystem_cobacam/services/hive_service.dart'; // New import
 import 'package:asystem_cobacam/services/connectivity_service.dart'; // New import
@@ -89,7 +90,7 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
         _activeSubScreen = null;
         _currentTitle = 'Dashboard $_userRole';
       } else if (route == 'profile') {
-        _activeSubScreen = const ProfileScreen(isEmbedded: true);
+        _activeSubScreen = const GeneralUserProfileScreen(isEmbedded: true);
         _currentTitle = 'Mi Perfil';
       } else if (route == 'settings') {
         _activeSubScreen = const SettingsScreen(isEmbedded: true);
@@ -143,6 +144,9 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
       } else if (route == 'faq') {
         _activeSubScreen = const FaqScreen();
         _currentTitle = 'Manual Operativo (FAQ)';
+      } else if (route == 'about_us') { // NEW ROUTE FOR ABOUT US
+        _activeSubScreen = const AboutUsScreen();
+        _currentTitle = 'Sobre Nosotros';
       } else if (route == 'credencial_alumno') { // NEW ROUTE FOR STUDENT CREDENTIAL
         _activeSubScreen = const StudentCredentialScreen();
         _currentTitle = 'Mi Credencial';

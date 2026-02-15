@@ -18,6 +18,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   Student? _student;
   bool _isLoading = true;
   bool _isEditingEnabled = false; // Controlled by prefect
+  bool _hasEditedProfileOnce = true; // NEW: Flag for one-time edit
   String? _userProfileImageUrl; // NEW: To store profile image URL
   String _userEmail = ''; // NEW: To store user email
 
@@ -92,48 +93,64 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   }
 
   Future<void> _loadStudentData({String? cycleId}) async {
+    debugPrint('[_loadStudentData] Starting data load...');
     final User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
-      setState(() {
-        _isLoading = false;
-      });
+      debugPrint('[_loadStudentData] No current user. Setting _isLoading to false.');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
       return;
     }
+    debugPrint('[_loadStudentData] Current user UID: ${currentUser.uid}');
 
     // Determine which cycle to load data for
     final String targetCycleId = cycleId ?? _selectedFilterSchoolCycle ?? _currentSystemSchoolCycle;
+    debugPrint('[_loadStudentData] Target cycle ID: $targetCycleId');
 
     // Fetch Student specific data (from 'students' node)
     final DatabaseReference studentRef =
         FirebaseDatabase.instance.ref('students/$targetCycleId').child(currentUser.uid);
+    debugPrint('[_loadStudentData] Student data path: ${studentRef.path}');
+
 
     // Fetch User general data (from 'users' node)
     final DatabaseReference userGeneralRef =
         FirebaseDatabase.instance.ref('users').child(currentUser.uid);
+    debugPrint('[_loadStudentData] User general data path: ${userGeneralRef.path}');
 
     // Stop previous listener if any
     _studentDataSubscription?.cancel();
+    _userDataSubscription?.cancel(); // Cancel user data subscription here too for safety
 
     // Listen to student data changes for the selected cycle
     _studentDataSubscription = studentRef.onValue.listen((event) {
+      debugPrint('[_loadStudentData] Student data listener triggered. Snapshot exists: ${event.snapshot.exists}');
       if (event.snapshot.exists && event.snapshot.value != null) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+        debugPrint('[_loadStudentData] Raw student data: $data');
         data['id'] = currentUser.uid; // Ensure ID is set from UID
         if (mounted) {
           setState(() {
             _student = Student.fromMap(data);
+            debugPrint('[_loadStudentData] Student object created: $_student');
             _selectedFilterSchoolCycle = targetCycleId; // Ensure dropdown reflects actual loaded data cycle
             _isCurrentCycleSelected = (_selectedFilterSchoolCycle == _currentSystemSchoolCycle);
             
             // CORRECCIÓN AQUÍ: Se eliminó '?? false' porque canEditProfile ya es non-nullable
-            _isEditingEnabled = _student!.canEditProfile && _isCurrentCycleSelected;
+            _isEditingEnabled = _student!.canEditProfile && _isCurrentCycleSelected && !_hasEditedProfileOnce;
+            debugPrint('[_loadStudentData] _isEditingEnabled: $_isEditingEnabled, _hasEditedProfileOnce: $_hasEditedProfileOnce');
             
             _fillControllers();
             _isLoading = false;
+            debugPrint('[_loadStudentData] Student data loaded. _isLoading set to false.');
           });
         }
       } else {
         // If student data not found for the selected cycle, clear current student and disable editing
+        debugPrint('[_loadStudentData] Student data not found for cycle $targetCycleId. Setting _student to null.');
         if (mounted) {
           setState(() {
             _student = null;
@@ -143,7 +160,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
         }
       }
     }, onError: (error) {
-      debugPrint('Error loading student data for cycle $targetCycleId: $error');
+      debugPrint('[_loadStudentData] Error in student data listener for cycle $targetCycleId: $error');
       if (mounted) {
         setState(() {
           _student = null;
@@ -154,16 +171,21 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     });
 
     // Listen to user general data changes for profile image
-    _userDataSubscription?.cancel();
     _userDataSubscription = userGeneralRef.onValue.listen((event) {
+      debugPrint('[_loadStudentData] User general data listener triggered. Snapshot exists: ${event.snapshot.exists}');
       if (event.snapshot.exists && event.snapshot.value != null) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+        debugPrint('[_loadStudentData] Raw user general data: $data');
         if (mounted) {
           setState(() {
             _userProfileImageUrl = data['profileImageUrl'];
             _userEmail = currentUser.email ?? '';
+            _hasEditedProfileOnce = data['hasEditedProfileOnce'] ?? true; // Fetch new flag
+            debugPrint('[_loadStudentData] User general data loaded. _hasEditedProfileOnce: $_hasEditedProfileOnce');
           });
         }
+      } else {
+         debugPrint('[_loadStudentData] User general data not found for UID: ${currentUser.uid}');
       }
     });
   }
@@ -244,23 +266,27 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       // 'medicalAlert': _student!.medicalAlert,
     };
 
-    if (_isEditingEnabled && _student!.canEditMatricula) {
-      updatedData['studentId'] = _matriculaController.text;
-    }
+
 
     try {
       await studentRef.update(updatedData);
       // Reset permissions after successful save
       await studentRef.update({
         'canEditProfile': false,
-        'canEditMatricula': false,
       });
+
+      // Mark that the student has used their one-time edit permission
+      final userRef = FirebaseDatabase.instance.ref('users').child(_student!.userId);
+      await userRef.update({'hasEditedProfileOnce': true});
+
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Datos actualizados correctamente y permisos de edición restablecidos.')),
         );
         setState(() {
           _isEditingEnabled = false; // Disable editing locally
+          _hasEditedProfileOnce = true; // Update local state
         });
       }
     } catch (e) {
@@ -303,9 +329,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                         ),
                         child: Text(
                           _isEditingEnabled
-                              ? ((_student?.canEditMatricula ?? false)
-                                  ? '¡Edición activada! Puedes modificar tus datos del ciclo actual, incluyendo tu matrícula. Ciclo y grupo no son editables.'
-                                  : '¡Edición activada! Puedes modificar tus datos del ciclo actual. La matrícula, ciclo y grupo no son editables.')
+                              ? '¡Edición activada! Puedes modificar tus datos del ciclo actual. La matrícula, ciclo y grupo no son editables.'
                               : _isCurrentCycleSelected
                                   ? 'Solo se pueden modificar datos con autorización de la Prefecta. La matrícula, ciclo y grupo no son editables por el alumno.'
                                   : 'Estás visualizando datos de un ciclo escolar pasado o futuro. La edición no está disponible para estos ciclos.',
@@ -392,48 +416,112 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      _buildSectionTitle(context, 'Información Personal'),
-                      _buildEditableField(context, 'Matrícula', _matriculaController,
-                          editable: _isEditingEnabled && (_student?.canEditMatricula ?? false)),
-                      _buildEditableField(context, 'Nombre Completo', _fullNameController,
-                          editable: _isEditingEnabled),
-                      _buildEditableField(context, 'Edad', _ageController,
-                          editable: _isEditingEnabled, keyboardType: TextInputType.number),
-                      _buildEditableField(context, 'Género', _genderController,
-                          editable: _isEditingEnabled),
-                      _buildEditableField(context, 'Lugar de Residencia', _placeOfResidenceController,
-                          editable: _isEditingEnabled),
-                      _buildInfoField(context, 'Correo Institucional', _student?.institutionalEmail ?? '',
-                          editable: false),
+                      Card(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle(context, 'Información Personal'),
+                              const SizedBox(height: 10),
+                              _buildEditableField(context, 'Matrícula', _matriculaController,
+                                  editable: false),
+                              _buildEditableField(context, 'Nombre Completo', _fullNameController,
+                                  editable: _isEditingEnabled),
+                              _buildEditableField(context, 'Edad', _ageController,
+                                  editable: _isEditingEnabled, keyboardType: TextInputType.number),
+                              _buildEditableField(context, 'Género', _genderController,
+                                  editable: _isEditingEnabled),
+                              _buildEditableField(context, 'Lugar de Residencia', _placeOfResidenceController,
+                                  editable: _isEditingEnabled),
+                              _buildInfoField(context, 'Correo Institucional', _student?.institutionalEmail ?? '',
+                                  editable: false),
+                            ],
+                          ),
+                        ),
+                      ),
 
                       const SizedBox(height: 20),
-                      _buildSectionTitle(context, 'Información de Contacto'),
-                      _buildEditableField(context, 'Teléfono del Alumno', _studentPhoneController,
-                          editable: _isEditingEnabled, keyboardType: TextInputType.phone),
-                      _buildEditableField(context, 'Nombre del Tutor', _guardianFullNameController,
-                          editable: _isEditingEnabled),
-                      _buildEditableField(context, 'Teléfono del Tutor', _guardianPhoneController,
-                          editable: _isEditingEnabled, keyboardType: TextInputType.phone),
+                      Card(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle(context, 'Información de Contacto'),
+                              const SizedBox(height: 10),
+                              _buildEditableField(context, 'Teléfono del Alumno', _studentPhoneController,
+                                  editable: _isEditingEnabled, keyboardType: TextInputType.phone),
+                              _buildEditableField(context, 'Nombre del Tutor', _guardianFullNameController,
+                                  editable: _isEditingEnabled),
+                              _buildEditableField(context, 'Teléfono del Tutor', _guardianPhoneController,
+                                  editable: _isEditingEnabled, keyboardType: TextInputType.phone),
+                            ],
+                          ),
+                        ),
+                      ),
 
                       const SizedBox(height: 20),
-                      _buildSectionTitle(context, 'Información Académica'),
-                      _buildInfoField(context, 'Ciclo Escolar', _student?.schoolCycle ?? '',
-                          editable: false),
-                      _buildInfoField(context, 'Grupo', _student?.group ?? '',
-                          editable: false),
+                      Card(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle(context, 'Información Académica'),
+                              const SizedBox(height: 10),
+                              _buildInfoField(context, 'Ciclo Escolar', _student?.schoolCycle ?? '',
+                                  editable: false),
+                              _buildInfoField(context, 'Grupo', _student?.group ?? '',
+                                  editable: false),
+                            ],
+                          ),
+                        ),
+                      ),
 
                       const SizedBox(height: 20),
-                      _buildSectionTitle(context, 'Información Médica'),
-                      _buildEditableField(context, 'Alergias', _allergiesController,
-                          editable: _isEditingEnabled, maxLines: 3),
-                      _buildEditableField(context, 'Condiciones de Salud', _healthConditionsController,
-                          editable: _isEditingEnabled, maxLines: 3),
-                      _buildEditableField(context, 'Estado General de Salud', _generalHealthStatusController,
-                          editable: _isEditingEnabled),
-                      _buildEditableField(context, 'NSS (Número de Seguro Social)', _nssController,
-                          editable: _isEditingEnabled),
-                      _buildInfoField(context, 'Alerta Médica Activa', (_student?.medicalAlert ?? false) ? 'Sí' : 'No',
-                          editable: false, color: (_student?.medicalAlert ?? false) ? theme.colorScheme.error : null),
+                      Card(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle(context, 'Información Médica'),
+                              const SizedBox(height: 10),
+                              _buildEditableField(context, 'Alergias', _allergiesController,
+                                  editable: _isEditingEnabled, maxLines: 3),
+                              _buildEditableField(context, 'Condiciones de Salud', _healthConditionsController,
+                                  editable: _isEditingEnabled, maxLines: 3),
+                              _buildEditableField(context, 'Estado General de Salud', _generalHealthStatusController,
+                                  editable: _isEditingEnabled),
+                              _buildEditableField(context, 'NSS (Número de Seguro Social)', _nssController,
+                                  editable: _isEditingEnabled),
+                              _buildInfoField(context, 'Alerta Médica Activa', (_student?.medicalAlert ?? false) ? 'Sí' : 'No',
+                                  editable: false, color: (_student?.medicalAlert ?? false) ? theme.colorScheme.error : null),
+                            ],
+                          ),
+                        ),
+                      ),
 
                       if (_isEditingEnabled) ...[
                         const SizedBox(height: 30),

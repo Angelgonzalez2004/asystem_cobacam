@@ -1,6 +1,6 @@
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_home_screen.dart';
-import 'package:asystem_cobacam/screens/common/profile_screen.dart';
+import 'package:asystem_cobacam/screens/common/general_user_profile_screen.dart';
 import 'package:asystem_cobacam/screens/common/settings_screen.dart';
 import 'package:asystem_cobacam/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +21,7 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/statistics_screen.dar
 import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_schedule_viewer_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/teacher_schedule_viewer_screen.dart';
+import 'package:asystem_cobacam/screens/common/about_us_screen.dart'; // NEW IMPORT
 
 class PrefectDashboardScreen extends StatefulWidget {
   const PrefectDashboardScreen({super.key});
@@ -52,7 +53,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
   void _initScreens() {
     _screens = [
       PrefectHomeScreen(campus: _userCampus, onNavigate: _onNavigate),
-      const ProfileScreen(isEmbedded: true),
+      const GeneralUserProfileScreen(isEmbedded: true),
       const SettingsScreen(isEmbedded: true),
       GroupManagementScreen(onNavigate: _onNavigate),
       const SchoolCycleManagementScreen(),
@@ -69,6 +70,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       const FaqScreen(), // Opción 15
       const GroupScheduleViewerScreen(), // Opción 16
       const TeacherScheduleViewerScreen(), // Opción 17
+      const AboutUsScreen(), // NEW - Opción 18
     ];
 
     _screenTitles = [
@@ -90,6 +92,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       'Manual Operativo (FAQ)',
       'Visor de Horarios (Grupo)',
       'Visor de Horarios (Maestro)',
+      'Sobre Nosotros', // NEW - Opción 18
     ];
   }
 
@@ -204,6 +207,9 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         break;
       case 'visor_maestro':
         index = 17;
+        break;
+      case 'about_us': // NEW
+        index = 18;
         break;
       default:
         index = 0;

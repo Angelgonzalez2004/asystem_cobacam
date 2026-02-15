@@ -16,16 +16,17 @@ Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cad
 
 ### 🧑‍🎓 Perfil del Alumno y Edición Controlada
 *   **Visualización de Perfil:** Los alumnos pueden acceder a su propio perfil para revisar sus datos registrados (personales, de contacto, académicos, médicos).
-*   **Edición Condicional:** La capacidad de un alumno para editar sus datos (incluida la matrícula) está habilitada bajo dos condiciones clave:
-    1.  **Autorización de Prefectura:** La Prefecta debe otorgar autorización específica para la edición del perfil y, de forma independiente, para la matrícula.
-    2.  **Ciclo Escolar Actual:** La edición solo es posible si el alumno está visualizando y operando sobre los datos del ciclo escolar actualmente activo en el sistema. Para ciclos pasados o futuros, la información solo será de consulta.
-*   **Selección de Ciclo Escolar (Alumno):** Los alumnos ahora pueden seleccionar un ciclo escolar desde su perfil para visualizar sus datos históricos o futuros, aunque la edición se restringe al ciclo actual autorizado.
+*   **Edición Condicional de Datos Personales:** La capacidad de un alumno para editar sus datos personales (excluyendo la matrícula y el ciclo escolar) está habilitada bajo dos condiciones clave:
+    1.  **Autorización de Prefectura:** La Prefecta debe otorgar autorización específica para la edición del perfil.
+    2.  **Edición de un Solo Uso:** Una vez que el alumno guarda los cambios en su perfil, los permisos de edición se restablecen automáticamente, requiriendo una nueva autorización de la Prefecta para futuras modificaciones.
+*   **Ciclo Escolar Actual:** La edición solo es posible si el alumno está visualizando y operando sobre los datos del ciclo escolar actualmente activo en el sistema. Para ciclos pasados o futuros, la información solo será de consulta.
+*   **Matrícula y Ciclo Escolar NO Editables:** La matrícula (ID de estudiante) y el ciclo escolar del alumno son campos de solo lectura y no pueden ser modificados por el alumno bajo ninguna circunstancia.
 *   **Confirmación de Guardado:** Tras modificar y guardar datos, el alumno debe confirmar la exactitud de los cambios. Una vez confirmados, los permisos de edición se restablecen, requiriendo una nueva autorización de la Prefecta para futuras modificaciones.
 *   **Foto de Credencial:** La foto de perfil del alumno se utiliza automáticamente en la generación de su credencial escolar. Se advierte al alumno que elija cuidadosamente su foto, ya que solo puede cambiarse un número limitado de veces al mes y es visible en su credencial.
 
 ### 👩‍🏫 Gestión de Alumnos por Prefectura
-*   **Permisos Granulares:** La Prefecta puede autorizar o desautorizar individualmente a cada alumno para editar su perfil, y de forma independiente, para editar su matrícula.
-*   **Autorización por Lotes:** Nueva función que permite a la Prefecta autorizar o desautorizar la edición de perfiles y/o matrículas a *todos los alumnos activos del ciclo escolar actual* de forma masiva, optimizando la administración.
+*   **Permisos Granulares:** La Prefecta puede autorizar o desautorizar individualmente a cada alumno para editar su perfil (excluyendo la matrícula y el ciclo escolar).
+*   **Autorización por Lotes:** Nueva función que permite a la Prefecta autorizar o desautorizar la edición de perfiles (excluyendo la matrícula y el ciclo escolar) a *todos los alumnos activos del ciclo escolar actual* de forma masiva, optimizando la administración. Al autorizar la edición, se habilita una oportunidad de edición de un solo uso para el alumno.
 *   **Importación y Exportación de Alumnos (Excel):**
     *   **Descarga de Plantilla:** Nuevo botón para descargar una plantilla de Excel que sirve como formato base para la importación masiva de alumnos. Incluye advertencias para modificar la plantilla con datos reales y correspondientes al ciclo escolar seleccionado, ajustando los grupos según sea necesario.
 
@@ -82,6 +83,30 @@ Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cad
     *   `mobile_scanner`: Para el escaneo de códigos QR.
     *   `local_auth` y `flutter_secure_storage`: Para seguridad local y almacenamiento seguro.
     *   `path_provider`: Para acceso a directorios del sistema de archivos.
+
+---
+
+## 📜 Historia del Desarrollo del Sistema ASYSTEM
+
+El sistema ASYSTEM inició su desarrollo en el transcurso de **Mayo - Agosto de 2024** como un proyecto de estadía profesional, impulsado por **dos alumnos de TSU de la UTCAM** (Universidad Tecnológica de Campeche).
+
+Tras un periodo de pausa, el proyecto fue retomado y se ha continuado su evolución hasta la fecha. Actualmente, se encuentra en sus **etapas finales de desarrollo**, con el objetivo de realizar las **primeras pruebas piloto en Marzo de 2026** en el **Plantel 05 Atasta** para el nuevo ciclo escolar.
+
+La visión a futuro es que, mediante un acuerdo formal, este sistema pueda ser implementado progresivamente en más planteles, o incluso en **todos los planteles del COBACAM**, optimizando así la gestión académica y administrativa a nivel estatal.
+
+### Supervisión del Proyecto
+El proyecto fue supervisado por:
+*   **Director del Plantel 05 Atasta:** Apoyo fundamental en la dirección estratégica y necesidades institucionales.
+*   **Encargado de Cómputo:** Asesoramiento técnico y coordinación para la integración tecnológica.
+*   **Prefecta:** Orientación sobre los procesos académicos y administrativos del día a día.
+
+---
+
+## 🔒 Propiedad y Créditos
+
+La propiedad intelectual y los derechos sobre los códigos fuente, bases de datos y demás componentes del proyecto ASYSTEM pertenecen al **Plantel 05 Atasta**. El desarrollo inicial y actual del sistema ha sido liderado por el joven **Ángel del Carmen González Alcocer**, con el apoyo y supervisión de los encargados del plantel.
+
+En caso de interés de otros planteles o de la totalidad de los planteles del COBACAM en adoptar el sistema, se establecerá un acuerdo formal para su implementación y uso, respetando la titularidad del Plantel 05 Atasta sobre el proyecto.
 
 ---
 

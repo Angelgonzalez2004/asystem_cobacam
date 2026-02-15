@@ -448,17 +448,6 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
               activeColor: theme.colorScheme.primary,
             ),
           ),
-          // NEW: Toggle for canEditMatricula
-          Tooltip(
-            message: 'Permitir edición de matrícula al alumno',
-            child: Switch(
-              value: student.canEditMatricula,
-              onChanged: (bool newValue) {
-                _toggleCanEditMatricula(student, newValue);
-              },
-              activeColor: theme.colorScheme.tertiary, // Use a different color
-            ),
-          ),
 
           IconButton(
             icon: const Icon(Icons.edit, size: 20),
@@ -485,98 +474,46 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
   }
 
     // NEW METHOD: _toggleCanEditProfile
-
     Future<void> _toggleCanEditProfile(Student student, bool newValue) async {
-
       final studentRef = FirebaseDatabase.instance
-
           .ref('planteles/$_campus/students/$_currentSchoolCycle')
-
           .child(student.id); // Use student.id (Firebase key) here
 
-  
-
       try {
-
         await studentRef.update({'canEditProfile': newValue});
 
+        // If enabling profile editing, reset the student's hasEditedProfileOnce flag in the 'users' collection
+        // Only update if userId is available (i.e., student has a linked Firebase account)
+        if (newValue && student.userId.isNotEmpty) {
+          final userRef = FirebaseDatabase.instance.ref('users').child(student.userId);
+          await userRef.update({'hasEditedProfileOnce': false});
+        } else if (newValue && student.userId.isEmpty) {
+          if (mounted) {
+            UiHelpers.showSnackBar(
+                context, 'No se puede resetear el permiso de edición única. El alumno no tiene un UID de Firebase asociado.',
+                isError: true);
+          }
+        }
+
         if (mounted) {
-
           UiHelpers.showSnackBar(
-
               context,
-
               newValue
-
                   ? 'Edición de perfil habilitada para ${student.fullName}.'
-
                   : 'Edición de perfil deshabilitada para ${student.fullName}.');
-
         }
-
       } catch (e) {
-
         if (mounted) {
-
           UiHelpers.showSnackBar(
-
               context, 'Error al actualizar el permiso de edición: $e',
-
               isError: true);
-
         }
-
       }
-
     }
 
   
 
-    // NEW METHOD: _toggleCanEditMatricula
-
-    Future<void> _toggleCanEditMatricula(Student student, bool newValue) async {
-
-      final studentRef = FirebaseDatabase.instance
-
-          .ref('planteles/$_campus/students/$_currentSchoolCycle')
-
-          .child(student.id);
-
-  
-
-      try {
-
-        await studentRef.update({'canEditMatricula': newValue});
-
-        if (mounted) {
-
-          UiHelpers.showSnackBar(
-
-              context,
-
-              newValue
-
-                  ? 'Edición de matrícula habilitada para ${student.fullName}.'
-
-                  : 'Edición de matrícula deshabilitada para ${student.fullName}.');
-
-        }
-
-      } catch (e) {
-
-        if (mounted) {
-
-          UiHelpers.showSnackBar(
-
-              context, 'Error al actualizar el permiso de edición de matrícula: $e',
-
-              isError: true);
-
-        }
-
-      }
-
-    }
+    
 
   
 
@@ -682,7 +619,6 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
     }
 
     BatchAction? selectedAction;
-    bool allowMatriculaEdit = false;
 
     final bool? confirmed = await showDialog<bool>(
       context: context,
@@ -719,19 +655,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                     },
                   ),
                   const SizedBox(height: 16),
-                  CheckboxListTile(
-                    title: const Text(
-                        'Permitir edición de Matrícula (si se autoriza perfil)'),
-                    value: allowMatriculaEdit,
-                    onChanged: selectedAction == BatchAction.authorize
-                        ? (bool? value) {
-                            setStateInDialog(() {
-                              allowMatriculaEdit = value ?? false;
-                            });
-                          }
-                        : null, // Only enable if authorizing profile edit
-                    controlAffinity: ListTileControlAffinity.leading,
-                  ),
+
                 ],
               ),
               actions: [
@@ -753,44 +677,51 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
 
     if (confirmed == true && selectedAction != null) {
       await _updateBulkStudentPermissions(
-          selectedAction == BatchAction.authorize, allowMatriculaEdit);
+          selectedAction == BatchAction.authorize);
     }
   }
 
   // NEW METHOD: Update Bulk Student Permissions
-  Future<void> _updateBulkStudentPermissions(
-      bool authorizeProfileEdit, bool authorizeMatriculaEdit) async {
-    if (_campus == null || _currentSchoolCycle.isEmpty) return;
-
-    UiHelpers.showSnackBar(context, 'Aplicando cambios a todos los alumnos...');
-
-    try {
-      final studentsToUpdate =
-          _allStudents.where((s) => s.isActive).toList(); // Only active students
-
-      for (var student in studentsToUpdate) {
-        final studentRef = FirebaseDatabase.instance
-            .ref('planteles/$_campus/students/$_currentSchoolCycle')
-            .child(student.id);
-        await studentRef.update({
-          'canEditProfile': authorizeProfileEdit,
-          'canEditMatricula': authorizeMatriculaEdit &&
-              authorizeProfileEdit, // Matricula edit only if profile edit is authorized
-        });
-      }
-
-      if (mounted) {
-        UiHelpers.showSnackBar(context,
-            'Permisos de edición actualizados para todos los alumnos del ciclo actual.');
-      }
-    } catch (e) {
-      if (mounted) {
-        UiHelpers.showSnackBar(
-            context, 'Error al aplicar permisos por lotes: $e',
-            isError: true);
+    Future<void> _updateBulkStudentPermissions(
+        bool authorizeProfileEdit) async {
+      if (_campus == null || _currentSchoolCycle.isEmpty) return;
+  
+      UiHelpers.showSnackBar(context, 'Aplicando cambios a todos los alumnos...');
+  
+      try {
+        final studentsToUpdate =
+            _allStudents.where((s) => s.isActive).toList(); // Only active students
+  
+        for (var student in studentsToUpdate) {
+          final studentRef = FirebaseDatabase.instance
+              .ref('planteles/$_campus/students/$_currentSchoolCycle')
+              .child(student.id);
+          await studentRef.update({
+            'canEditProfile': authorizeProfileEdit,
+          });
+  
+          // Also update the hasEditedProfileOnce flag in the 'users' collection
+          // if authorizing profile edit, and if the student has a linked Firebase account (userId is not empty)
+          if (authorizeProfileEdit && student.userId.isNotEmpty) {
+            final userRef = FirebaseDatabase.instance.ref('users').child(student.userId);
+            await userRef.update({'hasEditedProfileOnce': false});
+          } else if (authorizeProfileEdit && student.userId.isEmpty) {
+            debugPrint('Advertencia: No se pudo resetear el permiso de edición única para el alumno ${student.fullName} (ID: ${student.id}). No tiene un UID de Firebase asociado.');
+          }
+        }
+  
+        if (mounted) {
+          UiHelpers.showSnackBar(context,
+              'Permisos de edición actualizados para todos los alumnos del ciclo actual.');
+        }
+      } catch (e) {
+        if (mounted) {
+          UiHelpers.showSnackBar(
+              context, 'Error al aplicar permisos por lotes: $e',
+              isError: true);
+        }
       }
     }
-  }
 
   void _showAddStudentDialog() async {
     if (_campus == null) return;

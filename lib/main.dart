@@ -10,11 +10,13 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
+import 'package:asystem_cobacam/services/app_settings_service.dart'; // NEW IMPORT
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 final HiveService _hiveService = HiveService();
 final ConnectivityService _connectivityService = ConnectivityService();
+late final AppSettingsService _appSettingsService; // Declare AppSettingsService globally
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +31,9 @@ void main() async {
 
   // Inicializar Connectivity
   _connectivityService;
+
+  // Initialize AppSettingsService after Hive and Connectivity are ready
+  _appSettingsService = AppSettingsService(_hiveService, _connectivityService);
 
   // ---------------------------------------------------------
   // 2. INICIAR FIREBASE (FORZADO)
@@ -72,6 +77,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => LockService()),
         Provider<HiveService>(create: (_) => _hiveService),
         Provider<ConnectivityService>(create: (_) => _connectivityService),
+        Provider<AppSettingsService>(create: (_) => _appSettingsService), // NEW: Provide AppSettingsService
       ],
       child: const MyApp(),
     ),

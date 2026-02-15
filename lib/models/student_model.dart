@@ -46,7 +46,10 @@ class Student {
   @HiveField(19)
   bool canEditProfile; // NEW FIELD: Allows student to edit their profile
   @HiveField(20)
-  bool canEditMatricula; // NEW FIELD: Allows student to edit their matricula
+  String userId; // Firebase User UID
+  @HiveField(21)
+  String registeredByUserId; // User ID of the prefect who registered the student
+
 
 
   Student({
@@ -70,7 +73,9 @@ class Student {
     this.nss,
     this.medicalAlert = false, // Default false
     this.canEditProfile = false, // NEW: Default to false
-    this.canEditMatricula = false, // NEW: Default to false
+    required this.userId, // NEW
+    required this.registeredByUserId, // NEW
+
 
   });
 
@@ -104,7 +109,9 @@ class Student {
       nss: data['nss'],
       medicalAlert: data['medicalAlert'] ?? false,
       canEditProfile: data['canEditProfile'] ?? false, // NEW
-      canEditMatricula: data['canEditMatricula'] ?? false, // NEW
+      userId: data['userId'] ?? '', // NEW
+      registeredByUserId: data['registeredByUserId'] ?? '', // NEW
+
 
     );
   }
@@ -131,7 +138,9 @@ class Student {
       'nss': nss,
       'medicalAlert': medicalAlert,
       'canEditProfile': canEditProfile, // NEW
-      'canEditMatricula': canEditMatricula, // NEW
+      'userId': userId, // NEW
+      'registeredByUserId': registeredByUserId, // NEW
+
 
     };
   }}
