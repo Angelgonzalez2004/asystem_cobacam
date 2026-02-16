@@ -152,7 +152,7 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
         _currentTitle = 'Mi Credencial';
       } else if (route == 'mi_perfil') { // NEW ROUTE FOR STUDENT PROFILE
         _activeSubScreen = const StudentProfileScreen();
-        _currentTitle = 'Mi Perfil';
+        _currentTitle = 'Mi Perfil de Alumno'; // Updated title
       }
     });
   }

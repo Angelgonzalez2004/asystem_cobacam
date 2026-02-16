@@ -18,9 +18,11 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   Student? _student;
   bool _isLoading = true;
   bool _isEditingEnabled = false; // Controlled by prefect
-  bool _hasEditedProfileOnce = true; // NEW: Flag for one-time edit
-  String? _userProfileImageUrl; // NEW: To store profile image URL
-  String _userEmail = ''; // NEW: To store user email
+  bool _hasEditedProfileOnce = false; // Flag for one-time edit (default to false)
+  String? _userProfileImageUrl; // To store profile image URL
+  String _userEmail = ''; // To store user email
+  String? _userCampus; // NEW: To store user's campus
+  String? _userStudentId; // NEW: To store user's studentId (matricula)
 
   StreamSubscription<DatabaseEvent>? _studentDataSubscription;
   StreamSubscription<DatabaseEvent>? _userDataSubscription;
@@ -110,31 +112,59 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     final String targetCycleId = cycleId ?? _selectedFilterSchoolCycle ?? _currentSystemSchoolCycle;
     debugPrint('[_loadStudentData] Target cycle ID: $targetCycleId');
 
-    // Fetch Student specific data (from 'students' node)
-    final DatabaseReference studentRef =
-        FirebaseDatabase.instance.ref('students/$targetCycleId').child(currentUser.uid);
+    // Fetch User general data first to get campus and studentId
+    final DatabaseReference userGeneralRef = FirebaseDatabase.instance.ref('users').child(currentUser.uid);
+    final userSnapshot = await userGeneralRef.get(); // Fetch once instead of listening for now
+    
+    if (userSnapshot.exists && userSnapshot.value != null) {
+      final userDataMap = Map<String, dynamic>.from(userSnapshot.value as Map);
+      if (mounted) {
+        setState(() {
+          _userCampus = userDataMap['campus'] as String?;
+          _userStudentId = userDataMap['studentId'] as String?;
+          _userProfileImageUrl = userDataMap['profileImageUrl'] as String?;
+          _userEmail = currentUser.email ?? '';
+          _hasEditedProfileOnce = userDataMap['hasEditedProfileOnce'] ?? false;
+        });
+      }
+    } else {
+      debugPrint('[_loadStudentData] User general data not found for UID: ${currentUser.uid}. Cannot load student data.');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    if (_userCampus == null || _userStudentId == null || _userCampus!.isEmpty || _userStudentId!.isEmpty) {
+      debugPrint('[_loadStudentData] Campus or Student ID missing in user profile. Cannot load student data.');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    // Now construct the correct Student specific data path
+    final DatabaseReference studentRef = FirebaseDatabase.instance
+        .ref('planteles/$_userCampus/students/$targetCycleId/$_userStudentId');
     debugPrint('[_loadStudentData] Student data path: ${studentRef.path}');
-
-
-    // Fetch User general data (from 'users' node)
-    final DatabaseReference userGeneralRef =
-        FirebaseDatabase.instance.ref('users').child(currentUser.uid);
-    debugPrint('[_loadStudentData] User general data path: ${userGeneralRef.path}');
 
     // Stop previous listener if any
     _studentDataSubscription?.cancel();
-    _userDataSubscription?.cancel(); // Cancel user data subscription here too for safety
+    // No need to listen to userGeneralRef if we fetch it once at the beginning of _loadStudentData
+    _userDataSubscription?.cancel();
 
     // Listen to student data changes for the selected cycle
     _studentDataSubscription = studentRef.onValue.listen((event) {
       debugPrint('[_loadStudentData] Student data listener triggered. Snapshot exists: ${event.snapshot.exists}');
       if (event.snapshot.exists && event.snapshot.value != null) {
-        final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-        debugPrint('[_loadStudentData] Raw student data: $data');
-        data['id'] = currentUser.uid; // Ensure ID is set from UID
+        debugPrint('[_loadStudentData] Raw student data: ${event.snapshot.value}');
         if (mounted) {
           setState(() {
-            _student = Student.fromMap(data);
+            _student = Student.fromSnapshot(event.snapshot); // Use fromSnapshot directly
             debugPrint('[_loadStudentData] Student object created: $_student');
             _selectedFilterSchoolCycle = targetCycleId; // Ensure dropdown reflects actual loaded data cycle
             _isCurrentCycleSelected = (_selectedFilterSchoolCycle == _currentSystemSchoolCycle);
@@ -170,24 +200,6 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       }
     });
 
-    // Listen to user general data changes for profile image
-    _userDataSubscription = userGeneralRef.onValue.listen((event) {
-      debugPrint('[_loadStudentData] User general data listener triggered. Snapshot exists: ${event.snapshot.exists}');
-      if (event.snapshot.exists && event.snapshot.value != null) {
-        final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-        debugPrint('[_loadStudentData] Raw user general data: $data');
-        if (mounted) {
-          setState(() {
-            _userProfileImageUrl = data['profileImageUrl'];
-            _userEmail = currentUser.email ?? '';
-            _hasEditedProfileOnce = data['hasEditedProfileOnce'] ?? true; // Fetch new flag
-            debugPrint('[_loadStudentData] User general data loaded. _hasEditedProfileOnce: $_hasEditedProfileOnce');
-          });
-        }
-      } else {
-         debugPrint('[_loadStudentData] User general data not found for UID: ${currentUser.uid}');
-      }
-    });
   }
 
   void _fillControllers() {
@@ -207,6 +219,27 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       _healthConditionsController.text = _student!.healthConditions ?? '';
       _generalHealthStatusController.text = _student!.generalHealthStatus ?? '';
       _nssController.text = _student!.nss ?? '';
+      // No need to set medicalAlert here, it's a bool state
+    } else {
+      // Clear controllers if no student data found
+      _fullNameController.text = '';
+      _guardianFullNameController.text = '';
+      _ageController.text = '';
+      _guardianPhoneController.text = '';
+      _studentPhoneController.text = '';
+      _genderController.text = '';
+      _placeOfResidenceController.text = '';
+      _schoolCycleController.text = '';
+      _groupController.text = '';
+      _institutionalEmailController.text = '';
+      _matriculaController.text = '';
+      _allergiesController.text = '';
+      _healthConditionsController.text = '';
+      _generalHealthStatusController.text = '';
+      _nssController.text = '';
+      // Reset flags
+      _isEditingEnabled = false;
+      // _hasEditedProfileOnce is from user data, so it won't be cleared here
     }
   }
 
@@ -244,7 +277,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     }
 
     final DatabaseReference studentRef =
-        FirebaseDatabase.instance.ref('students').child(_student!.id);
+        FirebaseDatabase.instance.ref('planteles/$_userCampus/students/$_selectedFilterSchoolCycle').child(_student!.studentId);
 
     final updatedData = {
       'fullName': _fullNameController.text,
@@ -302,12 +335,11 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mi Perfil de Alumno'),
+      // appBar: AppBar( // Removed the AppBar as ResponsiveDashboard handles it
+      //   title: const Text('Mi Perfil de Alumno'),
         backgroundColor: theme.colorScheme.surface,
-        foregroundColor: theme.colorScheme.onSurface,
-        elevation: 0,
-      ),
+        // CORREGIDO: Se eliminaron foregroundColor y elevation que no son de Scaffold
+        // CORREGIDO: Se eliminó el cierre prematuro del Scaffold "),".
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _student == null
@@ -328,11 +360,13 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                           border: Border.all(color: theme.colorScheme.tertiary),
                         ),
                         child: Text(
-                          _isEditingEnabled
-                              ? '¡Edición activada! Puedes modificar tus datos del ciclo actual. La matrícula, ciclo y grupo no son editables.'
-                              : _isCurrentCycleSelected
-                                  ? 'Solo se pueden modificar datos con autorización de la Prefecta. La matrícula, ciclo y grupo no son editables por el alumno.'
-                                  : 'Estás visualizando datos de un ciclo escolar pasado o futuro. La edición no está disponible para estos ciclos.',
+                          _student == null
+                              ? 'Cargando datos del alumno...' // Or a more specific message for no data
+                              : _isEditingEnabled
+                                  ? '¡Edición activada! Puedes modificar tus datos del ciclo actual. La matrícula, ciclo y grupo no son editables.'
+                                  : _isCurrentCycleSelected
+                                      ? 'Solo se pueden modificar datos con autorización de la Prefecta. La matrícula, ciclo y grupo no son editables por el alumno.'
+                                      : 'Estás visualizando datos de un ciclo escolar pasado o futuro. La edición no está disponible para estos ciclos.',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: _isEditingEnabled
                                 ? theme.colorScheme.primary

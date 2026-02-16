@@ -264,21 +264,20 @@ class AppDrawer extends StatelessWidget {
                     }
                   },
                 ),
-                if (role != 'Alumno') // Only show "Mi Perfil" for non-students
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.person_outline_rounded,
-                    title: 'Mi Perfil', // Retained title
-                    onTap: () {
-                      Navigator.pop(context); // Solo este pop
-                      if (onNavigate != null) {
-                        onNavigate!.call('profile');
-                      } else {
-                        Navigator.push(context,
-                            SlideRightRoute(page: const GeneralUserProfileScreen()));
-                      }
-                    },
-                  ),
+                _buildDrawerItem( // Re-enable for all roles, including Alumno
+                  context,
+                  icon: Icons.person_outline_rounded,
+                  title: 'Mi Perfil', // Retained title
+                  onTap: () {
+                    Navigator.pop(context); // Solo este pop
+                    if (onNavigate != null) {
+                      onNavigate!.call('profile');
+                    } else {
+                      Navigator.push(context,
+                          SlideRightRoute(page: const GeneralUserProfileScreen()));
+                    }
+                  },
+                ),
                 _buildDrawerItem(
                   context,
                   icon: Icons.settings_outlined,
