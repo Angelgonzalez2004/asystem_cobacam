@@ -136,6 +136,13 @@ class AppDrawer extends StatelessWidget {
                         Navigator.pop(context); // Close drawer
                         onNavigate?.call('ciclos');
                       }),
+                  _buildDrawerItem(context,
+                      icon: Icons.event_busy_rounded, // Using the same icon as in NonAttendanceManagementScreen for consistency
+                      title: 'Días No Lectivos',
+                      onTap: () {
+                        Navigator.pop(context); // Close drawer
+                        onNavigate?.call('no_lectivos');
+                      }),
 
                   const Divider(),
                    Padding(
@@ -257,20 +264,21 @@ class AppDrawer extends StatelessWidget {
                     }
                   },
                 ),
-                _buildDrawerItem( // Removed if (role != 'Alumno') condition
-                  context,
-                  icon: Icons.person_outline_rounded,
-                  title: 'Mi Perfil', // Retained title
-                  onTap: () {
-                    Navigator.pop(context); // Solo este pop
-                    if (onNavigate != null) {
-                      onNavigate!.call('profile');
-                    } else {
-                      Navigator.push(context,
-                          SlideRightRoute(page: const GeneralUserProfileScreen()));
-                    }
-                  },
-                ),
+                if (role != 'Alumno') // Only show "Mi Perfil" for non-students
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.person_outline_rounded,
+                    title: 'Mi Perfil', // Retained title
+                    onTap: () {
+                      Navigator.pop(context); // Solo este pop
+                      if (onNavigate != null) {
+                        onNavigate!.call('profile');
+                      } else {
+                        Navigator.push(context,
+                            SlideRightRoute(page: const GeneralUserProfileScreen()));
+                      }
+                    },
+                  ),
                 _buildDrawerItem(
                   context,
                   icon: Icons.settings_outlined,

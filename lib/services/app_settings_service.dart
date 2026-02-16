@@ -14,7 +14,9 @@ class AppSettingsService {
   final HiveService _hiveService;
   final ConnectivityService _connectivityService;
 
-  AppSettingsService(this._hiveService, this._connectivityService);
+  AppSettingsService(this._hiveService, this._connectivityService) {
+    debugPrint('AppSettingsService: Constructor iniciado.');
+  }
 
   /// Returns the active school cycle ID purely from the local cache.
   /// This method is synchronous and safe to call on app startup.

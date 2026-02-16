@@ -487,12 +487,6 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
         if (newValue && student.userId.isNotEmpty) {
           final userRef = FirebaseDatabase.instance.ref('users').child(student.userId);
           await userRef.update({'hasEditedProfileOnce': false});
-        } else if (newValue && student.userId.isEmpty) {
-          if (mounted) {
-            UiHelpers.showSnackBar(
-                context, 'No se puede resetear el permiso de edición única. El alumno no tiene un UID de Firebase asociado.',
-                isError: true);
-          }
         }
 
         if (mounted) {
@@ -705,7 +699,8 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
           if (authorizeProfileEdit && student.userId.isNotEmpty) {
             final userRef = FirebaseDatabase.instance.ref('users').child(student.userId);
             await userRef.update({'hasEditedProfileOnce': false});
-          } else if (authorizeProfileEdit && student.userId.isEmpty) {
+          }
+          if (authorizeProfileEdit && student.userId.isEmpty) {
             debugPrint('Advertencia: No se pudo resetear el permiso de edición única para el alumno ${student.fullName} (ID: ${student.id}). No tiene un UID de Firebase asociado.');
           }
         }

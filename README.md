@@ -6,10 +6,20 @@
 
 ## ✨ Características Principales y Novedades
 
-Asystem Cobacam se enfoca en proporcionar una experiencia integral y eficiente, integrando funcionalidades clave para la gestión educativa moderna.
+Asystem Cobacam se enfoca en proporcionar una experiencia integral y eficiente, integrando funcionalidades clave para la gestión educativa moderna y en constante mejora.
 
 ### 👥 Gestión de Usuarios y Roles (RBAC)
 Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cada usuario (Alumno, Prefecto, Académico, Administrador de Plantel, Administrador General) acceda a una interfaz y funcionalidades personalizadas, adaptadas a sus necesidades específicas.
+
+### 🚀 Novedades Recientes y Mejoras Clave
+
+*   **Vinculación Segura de Cuentas de Alumnos:** Se ha implementado una mejora crítica en el proceso de registro de alumnos. Ahora, al crear una cuenta, el sistema vincula automáticamente el UID de Firebase Authentication del estudiante con su registro de estudiante existente (identificado por matrícula y plantel). Esto resuelve el error "No se puede resetear el permiso de edición única. El alumno no tiene un UID de Firebase asociado.", asegurando la correcta gestión de permisos por parte de la Prefectura y una integridad de datos mejorada.
+*   **Visor/Editor de Perfil de Alumno Mejorado:** La pantalla de perfil para alumnos ha sido significativamente mejorada para ofrecer una experiencia más completa y controlada:
+    *   **Visualización Detallada:** Muestra todos los datos relevantes del estudiante, incluyendo información académica, del tutor y médica, obtenida directamente de su registro detallado.
+    *   **Selector de Ciclo Escolar:** Los alumnos pueden seleccionar el ciclo escolar para ver y, si está autorizado, editar su información específica de ese periodo.
+    *   **Edición Condicional:** La capacidad de editar el perfil está estrictamente controlada. Solo se habilita si la Prefectura lo ha autorizado expresamente y si el permiso de edición única del ciclo escolar aún no ha sido utilizado. Campos clave como matrícula, grupo y ciclo escolar permanecen de solo lectura.
+*   **Gestión de Días No Lectivos (Prefectura):** La Prefectura ahora tiene acceso directo desde su menú a la pantalla "Días No Lectivos". Esto permite una fácil administración de vacaciones, feriados y otros días inhábiles que afectan la toma de asistencia.
+*   **Visibilidad de Código de Validación:** En la pantalla de registro de cuentas, el campo "Código de Validación" ahora cuenta con un icono de alternancia (ojo) para mostrar u ocultar su contenido, mejorando la usabilidad y privacidad.
 
 ### 🎓 Gestión Académica y Ciclos Escolares
 *   **Gestión de Ciclos Escolares (Prefectura):** Pantalla dedicada para la creación, edición y eliminación de ciclos escolares, permitiendo un control preciso sobre la estructura académica vigente y futura.
@@ -26,13 +36,13 @@ Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cad
 
 ### 👩‍🏫 Gestión de Alumnos por Prefectura
 *   **Permisos Granulares:** La Prefecta puede autorizar o desautorizar individualmente a cada alumno para editar su perfil (excluyendo la matrícula y el ciclo escolar).
-*   **Autorización por Lotes:** Nueva función que permite a la Prefecta autorizar o desautorizar la edición de perfiles (excluyendo la matrícula y el ciclo escolar) a *todos los alumnos activos del ciclo escolar actual* de forma masiva, optimizando la administración. Al autorizar la edición, se habilita una oportunidad de edición de un solo uso para el alumno.
+*   **Autorización por Lotes:** Función que permite a la Prefecta autorizar o desautorizar la edición de perfiles (excluyendo la matrícula y el ciclo escolar) a *todos los alumnos activos del ciclo escolar actual* de forma masiva, optimizando la administración. Al autorizar la edición, se habilita una oportunidad de edición de un solo uso para el alumno.
 *   **Importación y Exportación de Alumnos (Excel):**
-    *   **Descarga de Plantilla:** Nuevo botón para descargar una plantilla de Excel que sirve como formato base para la importación masiva de alumnos. Incluye advertencias para modificar la plantilla con datos reales y correspondientes al ciclo escolar seleccionado, ajustando los grupos según sea necesario.
+    *   **Descarga de Plantilla:** Botón para descargar una plantilla de Excel que sirve como formato base para la importación masiva de alumnos. Incluye advertencias para modificar la plantilla con datos reales y correspondientes al ciclo escolar seleccionado, ajustando los grupos según sea necesario.
 
 ### 📊 Gestión de Asistencia Avanzada
 *   **Pase de Lista Flexible:** Registro de entradas y salidas mediante escaneo de credenciales QR, entrada manual o registro masivo para grupos.
-*   **Reporte Detallado de Asistencias (NUEVO):**
+*   **Reporte Detallado de Asistencias:**
     *   Permite generar reportes Excel con información granular de los eventos de asistencia.
     *   El usuario puede elegir exportar únicamente los registros de **"Entradas"** o de **"Salidas"**.
     *   Incluye columnas específicas: `Matrícula`, `Nombre`, `Grupo`, `Fecha`, `Hora Actual`, `Hora Programada`, `Motivo de Incidencia`, `Asistencia`, `Observaciones`.

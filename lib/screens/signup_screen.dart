@@ -22,6 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isPasswordObscured = true;
+  bool _isAccessCodeObscured = true; // NEW
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -255,6 +256,49 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
 
         await userRef.set(userData);
+
+        // NEW LOGIC: If the user is a student, link their Firebase UID to their student record
+        if (_selectedRole == 'Alumno') {
+          final studentId = _matriculaController.text.trim();
+          final campus = _selectedCampus!; // Already validated to be not null for Alumno role
+
+          // Search for the student record across all school cycles for the given campus
+          final studentsRef = FirebaseDatabase.instance.ref('planteles/$campus/students');
+          final allStudentsSnapshot = await studentsRef.get();
+
+          if (allStudentsSnapshot.exists) {
+            String? foundSchoolCycle;
+            String? foundStudentFirebaseId; // This is the child key (student.id in model)
+
+            // Iterate through each school cycle (child node)
+            for (final cycleSnapshot in allStudentsSnapshot.children) {
+              // Iterate through each student in the current school cycle
+              for (final studentSnapshot in cycleSnapshot.children) {
+                final studentData = Map<String, dynamic>.from(studentSnapshot.value as Map);
+                if (studentData['studentId'] == studentId) {
+                  foundSchoolCycle = cycleSnapshot.key;
+                  foundStudentFirebaseId = studentSnapshot.key;
+                  break; // Found the student, no need to search further in this cycle
+                }
+              }
+              if (foundSchoolCycle != null) {
+                break; // Found student in a cycle, no need to check other cycles
+              }
+            }
+
+            if (foundSchoolCycle != null && foundStudentFirebaseId != null) {
+              // Update the student record with the new Firebase UID
+              final studentRecordRef = FirebaseDatabase.instance
+                  .ref('planteles/$campus/students/$foundSchoolCycle/$foundStudentFirebaseId');
+              await studentRecordRef.update({'userId': user.uid});
+              debugPrint('Vinculación exitosa: Student ID $studentId con Firebase UID ${user.uid}');
+            } else {
+              debugPrint('Advertencia: No se encontró el registro del alumno con matrícula $studentId en Firebase para vincular el UID.');
+            }
+          } else {
+              debugPrint('Advertencia: No hay registros de estudiantes en Firebase para el campus $campus.');
+          }
+        }
 
         if (mounted) {
           UiHelpers.showSnackBar(context, '¡Cuenta creada exitosamente!');
@@ -525,6 +569,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       controller: _accessCodeController,
                       label: 'Código de Validación',
                       icon: Icons.security_rounded,
+                      isAccessCode: true, // NEW
                       focusNode: _accessCodeFocus)),
             ]
           ],
@@ -542,6 +587,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               controller: _accessCodeController,
               label: 'Código de Validación',
               icon: Icons.security_rounded,
+              isAccessCode: true, // NEW
               focusNode: _accessCodeFocus),
         ]
       ]
@@ -587,10 +633,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
     required String label,
     required IconData icon,
     bool isPassword = false,
+    bool isAccessCode = false, // NEW PARAMETER
     TextInputType? keyboardType,
     FocusNode? focusNode,
   }) {
     final theme = Theme.of(context);
+
+    // Determine the obscureText state and the toggle function
+    bool currentObscuredState;
+    VoidCallback? toggleObscuredState;
+
+    if (isPassword) {
+      currentObscuredState = _isPasswordObscured;
+      toggleObscuredState = () => setState(() => _isPasswordObscured = !_isPasswordObscured);
+    } else if (isAccessCode) { // Handle for access code
+      currentObscuredState = _isAccessCodeObscured;
+      toggleObscuredState = () => setState(() => _isAccessCodeObscured = !_isAccessCodeObscured);
+    } else {
+      currentObscuredState = false;
+      toggleObscuredState = null;
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
@@ -599,7 +662,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       child: TextFormField(
         controller: controller,
         focusNode: focusNode,
-        obscureText: isPassword ? _isPasswordObscured : false,
+        obscureText: currentObscuredState, // Use dynamic state
         keyboardType: keyboardType,
         style: TextStyle(color: theme.colorScheme.onSurface),
         decoration: InputDecoration(
@@ -609,16 +672,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          suffixIcon: isPassword
+          suffixIcon: toggleObscuredState != null
               ? IconButton(
                   icon: Icon(
-                    _isPasswordObscured
+                    currentObscuredState
                         ? Icons.visibility_off
                         : Icons.visibility,
                     color: theme.colorScheme.onSurface.withOpacity(0.5),
                   ),
-                  onPressed: () => setState(
-                      () => _isPasswordObscured = !_isPasswordObscured),
+                  onPressed: toggleObscuredState, // Use dynamic toggle
                 )
               : null,
         ),

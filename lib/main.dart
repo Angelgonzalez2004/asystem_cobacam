@@ -1,3 +1,4 @@
+import 'dart:async'; // Agregado para capturar errores globales
 import 'package:asystem_cobacam/widgets/auth_wrapper.dart';
 import 'package:asystem_cobacam/widgets/inactivity_guard.dart';
 import 'package:asystem_cobacam/providers/theme_provider.dart';
@@ -5,83 +6,101 @@ import 'package:asystem_cobacam/services/lock_service.dart';
 import 'package:asystem_cobacam/widgets/session_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_database/firebase_database.dart'; // Importación agregada
+import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
-import 'package:asystem_cobacam/services/app_settings_service.dart'; // NEW IMPORT
+import 'package:asystem_cobacam/services/app_settings_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 final HiveService _hiveService = HiveService();
-final ConnectivityService _connectivityService = ConnectivityService();
-late final AppSettingsService _appSettingsService; // Declare AppSettingsService globally
+late final ConnectivityService _connectivityService;
+late final AppSettingsService _appSettingsService;
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('es_MX', null);
+  // Usamos runZonedGuarded para que si hay un error asíncrono, no se quede la pantalla en blanco
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await initializeDateFormatting('es_MX', null);
 
-  // ---------------------------------------------------------
-  // 1. INICIAR HIVE
-  // ---------------------------------------------------------
-  debugPrint("📦 Iniciando Hive...");
-  await _hiveService.initHive();
-  debugPrint("✅ Hive iniciado correctamente.");
+    debugPrint("🚀 INICIANDO APP...");
 
-  // Inicializar Connectivity
-  _connectivityService;
+    // ---------------------------------------------------------
+    // 1. INICIAR HIVE
+    // ---------------------------------------------------------
+    debugPrint("📦 Iniciando Hive...");
+    await _hiveService.initHive();
+    debugPrint("✅ Hive iniciado correctamente.");
 
-  // Initialize AppSettingsService after Hive and Connectivity are ready
-  _appSettingsService = AppSettingsService(_hiveService, _connectivityService);
-
-  // ---------------------------------------------------------
-  // 2. INICIAR FIREBASE (FORZADO)
-  // ---------------------------------------------------------
-  try {
-    debugPrint("🔥 Inicializando Firebase desde Flutter...");
-
-    // Verificar si ya está inicializado para evitar "duplicate-app"
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-      debugPrint("✅ Firebase inicializado manualmente con opciones.");
-    } else {
-      debugPrint(
-          "ℹ️ Firebase ya estaba inicializado (Nativo/Automático). Usando instancia existente.");
-    }
-
-    // Habilitar persistencia offline
+    // ---------------------------------------------------------
+    // 2. INICIAR FIREBASE (PRIORIDAD ALTA)
+    // ---------------------------------------------------------
+    // IMPORTANTE: Esto debe ir ANTES de iniciar AppSettingsService
     try {
-      FirebaseDatabase.instance.setPersistenceEnabled(true);
-      debugPrint("💾 Persistencia de Firebase Database habilitada.");
+      debugPrint("🔥 Inicializando Firebase...");
+      
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+        debugPrint("✅ Firebase inicializado.");
+      } else {
+        debugPrint("ℹ️ Firebase ya estaba activo.");
+      }
+
+      // Configuración de persistencia (segura para web)
+      try {
+        FirebaseDatabase.instance.setPersistenceEnabled(true);
+        debugPrint("💾 Persistencia activada.");
+      } catch (e) {
+        debugPrint("⚠️ Aviso: Persistencia no soportada o ya activa: $e");
+      }
     } catch (e) {
-      debugPrint(
-          "⚠️ No se pudo habilitar persistencia (quizás ya estaba activa): $e");
+      debugPrint("🚨 ERROR CRÍTICO AL INICIAR FIREBASE: $e");
+      // Continuamos, pero sabiendo que Firebase falló
     }
 
-    debugPrint("✅ Firebase listo.");
-  } catch (e) {
-    // Si falla aquí, es un error real de configuración (faltan credenciales, internet, etc.)
-    debugPrint("🚨 ERROR CRÍTICO DE FIREBASE: $e");
-  }
+    // ---------------------------------------------------------
+    // 3. INICIAR SERVICIOS
+    // ---------------------------------------------------------
+    debugPrint("🌐 Inicializando ConnectivityService...");
+    _connectivityService = ConnectivityService();
+    debugPrint("✅ ConnectivityService listo.");
 
-  // ---------------------------------------------------------
-  // 3. ARRANCAR LA APP
-  // ---------------------------------------------------------
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => LockService()),
-        Provider<HiveService>(create: (_) => _hiveService),
-        Provider<ConnectivityService>(create: (_) => _connectivityService),
-        Provider<AppSettingsService>(create: (_) => _appSettingsService), // NEW: Provide AppSettingsService
-      ],
-      child: const MyApp(),
-    ),
-  );
+    try {
+      debugPrint("⚙️ Inicializando AppSettingsService...");
+      // AHORA SÍ es seguro crear esto, porque Firebase ya existe
+      _appSettingsService = AppSettingsService(_hiveService, _connectivityService);
+      debugPrint("✅ AppSettingsService inicializado correctamente.");
+    } catch (e, stack) {
+      debugPrint("🚨 ERROR FATAL EN APP_SETTINGS_SERVICE: $e");
+      debugPrint("Stack: $stack");
+      // Si esto falla, la app podría no funcionar, pero intentamos seguir
+    }
+
+    // ---------------------------------------------------------
+    // 4. ARRANCAR LA UI
+    // ---------------------------------------------------------
+    debugPrint("🚀 Ejecutando runApp...");
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => LockService()),
+          Provider<HiveService>(create: (_) => _hiveService),
+          Provider<ConnectivityService>(create: (_) => _connectivityService),
+          Provider<AppSettingsService>(create: (_) => _appSettingsService),
+        ],
+        child: const MyApp(),
+      ),
+    );
+  }, (error, stack) {
+    // Bloque global de captura de errores (evita la pantalla gris/blanca en muchos casos)
+    debugPrint("🔥 ERROR NO CAPTURADO (Global): $error");
+    debugPrint(stack.toString());
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -89,6 +108,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("🏗️ Construyendo MyApp...");
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
@@ -104,8 +124,7 @@ class MyApp extends StatelessWidget {
           ],
           theme: ThemeData(
             useMaterial3: true,
-            fontFamily:
-                'Inter', // Si 'Inter' no está disponible, Flutter usará la fuente por defecto.
+            fontFamily: 'Inter',
             colorScheme: ColorScheme.fromSeed(
               seedColor: const Color(0xFF3B82F6), // Tailwind Blue-500
               primary: const Color(0xFF2563EB), // Tailwind Blue-600
@@ -118,8 +137,7 @@ class MyApp extends StatelessWidget {
               error: const Color(0xFFEF4444), // Tailwind Red-500
               brightness: Brightness.light,
             ),
-            scaffoldBackgroundColor:
-                const Color(0xFFF8FAFC), // Tailwind Slate-50
+            scaffoldBackgroundColor: const Color(0xFFF8FAFC), // Tailwind Slate-50
             textTheme: const TextTheme(
               displayLarge: TextStyle(
                   fontSize: 32.0,
@@ -141,8 +159,7 @@ class MyApp extends StatelessWidget {
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(12), // Modern slightly rounded
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 padding:
                     const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
@@ -161,16 +178,14 @@ class MyApp extends StatelessWidget {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: Color(0xFFE2E8F0)), // Slate-200
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                    color: Color(0xFF3B82F6), width: 2), // Blue-500
+                borderSide:
+                    const BorderSide(color: Color(0xFF3B82F6), width: 2),
               ),
-              labelStyle:
-                  const TextStyle(color: Color(0xFF64748B)), // Slate-500
+              labelStyle: const TextStyle(color: Color(0xFF64748B)),
             ),
             appBarTheme: const AppBarTheme(
               backgroundColor: Colors.white,
@@ -184,20 +199,18 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             fontFamily: 'Inter',
             colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF3B82F6), // Tailwind Blue-500
-              primary: const Color(
-                  0xFF60A5FA), // Tailwind Blue-400 (Lighter for dark mode)
-              secondary: const Color(0xFF34D399), // Tailwind Emerald-400
-              tertiary: const Color(0xFFFBBF24), // Tailwind Amber-400
-              surface: const Color(0xFF1E293B), // Tailwind Slate-800
-              onPrimary: const Color(0xFF0F172A), // Slate-900
+              seedColor: const Color(0xFF3B82F6),
+              primary: const Color(0xFF60A5FA),
+              secondary: const Color(0xFF34D399),
+              tertiary: const Color(0xFFFBBF24),
+              surface: const Color(0xFF1E293B),
+              onPrimary: const Color(0xFF0F172A),
               onSecondary: const Color(0xFF0F172A),
-              onSurface: const Color(0xFFF1F5F9), // Slate-100
-              error: const Color(0xFFF87171), // Tailwind Red-400
+              onSurface: const Color(0xFFF1F5F9),
+              error: const Color(0xFFF87171),
               brightness: Brightness.dark,
             ),
-            scaffoldBackgroundColor:
-                const Color(0xFF0F172A), // Tailwind Slate-900
+            scaffoldBackgroundColor: const Color(0xFF0F172A),
             textTheme: const TextTheme(
               displayLarge: TextStyle(
                   fontSize: 32.0,
@@ -209,14 +222,14 @@ class MyApp extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   color: Colors.white),
               bodyMedium: TextStyle(
-                  fontSize: 15.0, color: Color(0xFFCBD5E1)), // Slate-300
+                  fontSize: 15.0, color: Color(0xFFCBD5E1)),
               bodySmall: TextStyle(
-                  fontSize: 13.0, color: Color(0xFF94A3B8)), // Slate-400
+                  fontSize: 13.0, color: Color(0xFF94A3B8)),
             ),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF60A5FA), // Blue-400
-                foregroundColor: const Color(0xFF0F172A), // Slate-900
+                backgroundColor: const Color(0xFF60A5FA),
+                foregroundColor: const Color(0xFF0F172A),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -229,7 +242,7 @@ class MyApp extends StatelessWidget {
             ),
             inputDecorationTheme: InputDecorationTheme(
               filled: true,
-              fillColor: const Color(0xFF1E293B), // Slate-800
+              fillColor: const Color(0xFF1E293B),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               border: OutlineInputBorder(
@@ -238,16 +251,14 @@ class MyApp extends StatelessWidget {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: Color(0xFF334155)), // Slate-700
+                borderSide: const BorderSide(color: Color(0xFF334155)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                    color: Color(0xFF60A5FA), width: 2), // Blue-400
+                borderSide:
+                    const BorderSide(color: Color(0xFF60A5FA), width: 2),
               ),
-              labelStyle:
-                  const TextStyle(color: Color(0xFF94A3B8)), // Slate-400
+              labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
             ),
             appBarTheme: const AppBarTheme(
               backgroundColor: Color(0xFF0F172A),

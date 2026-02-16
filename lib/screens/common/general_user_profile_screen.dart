@@ -1,5 +1,8 @@
 // ignore_for_file: unnecessary_nullable_for_final_variable_declarations
 import 'dart:io';
+import 'package:asystem_cobacam/services/app_settings_service.dart';
+import 'package:asystem_cobacam/services/connectivity_service.dart';
+import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -7,6 +10,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:asystem_cobacam/models/student_model.dart';
+import 'package:asystem_cobacam/models/school_cycle_model.dart';
+import 'package:provider/provider.dart';
 
 class GeneralUserProfileScreen extends StatefulWidget {
   final bool isEmbedded;
@@ -29,18 +35,74 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
   int? _profileImageLastUpdated;
   XFile? _newProfileImage;
 
-  // Controllers
+  // --- Student Specific Data ---
+  Student? _studentProfile;
+  String? _selectedStudentSchoolCycle;
+  List<SchoolCycle> _availableStudentSchoolCycles = [];
+  bool _canEditStudentProfile = false; // From Student record
+  bool _hasEditedProfileOnce = false; // From User record
+  bool _medicalAlert = false; // From Student record
+
+  // Controllers for general user profile fields
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _locationController = TextEditingController();
-  final _matriculaController = TextEditingController();
+  final _matriculaController = TextEditingController(); // This is the studentId from /users/uid
 
-  // Matricula Edit Flags
+  // Controllers for student specific fields
+  final _guardianFullNameController = TextEditingController();
+  final _guardianPhoneController = TextEditingController();
+  final _studentPhoneController = TextEditingController();
+  String? _selectedGender; // For dropdown
+  final _placeOfResidenceStudentController = TextEditingController(); // Student specific residence
+  final _allergiesController = TextEditingController();
+  final _healthConditionsController = TextEditingController();
+  final _generalHealthStatusController = TextEditingController();
+  final _nssController = TextEditingController();
+
+  late final AppSettingsService _appSettingsService;
+  late final ConnectivityService _connectivityService;
+  late final HiveService _hiveService;
+
+  // --- Smart Selectors Predefined Lists ---
+  final List<String> _commonAllergies = [
+    'Ninguna', 'Penicilina', 'Sulfa', 'Polvo/Ácaros', 'Polen', 'Aines (Aspirina)', 'Látex', 'Picaduras de insectos',
+    'Mariscos', 'Nueces/Cacahuates', 'Lácteos', 'Huevo', 'Pelo de animal', 'Moho', 'Colorantes', 'Otro (especificar)'
+  ];
+  final List<String> _commonConditions = [
+    'Ninguna', 'Asma', 'Diabetes Tipo 1', 'Diabetes Tipo 2', 'Hipertensión', 'Epilepsia/Convulsiones', 'Migraña Crónica',
+    'Gastritis', 'Anemia', 'Artritis', 'Problemas Cardíacos', 'Problemas Renales', 'Hipotiroidismo', 'TDAH',
+    'Ansiedad/Depresión', 'Otro (especificar)'
+  ];
+  final List<String> _commonHealthStatus = [
+    'Excelente', 'Bueno', 'Regular', 'Malo', 'En tratamiento médico', 'Convaleciente', 'Requiere observación', 'Estable',
+    'Delicado', 'Con fatiga crónica', 'Sobrepeso', 'Bajo peso', 'Saludable con alergias', 'Saludable con condiciones controladas',
+    'Desconocido', 'Otro (especificar)'
+  ];
 
 
   @override
   void initState() {
     super.initState();
+    _hiveService = Provider.of<HiveService>(context, listen: false);
+    _connectivityService = Provider.of<ConnectivityService>(context, listen: false);
+    _appSettingsService = AppSettingsService(_hiveService, _connectivityService);
+
+    _nameController.text = ''; // Initialize to empty
+    _phoneController.text = '';
+    _locationController.text = '';
+    _matriculaController.text = '';
+
+    _guardianFullNameController.text = '';
+    _guardianPhoneController.text = '';
+    _studentPhoneController.text = '';
+    _selectedGender = null;
+    _placeOfResidenceStudentController.text = '';
+    _allergiesController.text = '';
+    _healthConditionsController.text = '';
+    _generalHealthStatusController.text = '';
+    _nssController.text = '';
+    
     _fetchUserData();
   }
 
@@ -50,6 +112,15 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
     _phoneController.dispose();
     _locationController.dispose();
     _matriculaController.dispose();
+
+    _guardianFullNameController.dispose();
+    _guardianPhoneController.dispose();
+    _studentPhoneController.dispose();
+    _placeOfResidenceStudentController.dispose();
+    _allergiesController.dispose();
+    _healthConditionsController.dispose();
+    _generalHealthStatusController.dispose();
+    _nssController.dispose();
     super.dispose();
   }
 
@@ -66,13 +137,116 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
           _locationController.text = data['location'] ?? '';
           _matriculaController.text = data['studentId'] ?? '';
           _profileImageLastUpdated = data['profileImageLastUpdated'] as int?;
-
-          _isLoading = false;
+          _hasEditedProfileOnce = data['hasEditedProfileOnce'] ?? false;
         });
+
+        // If the user is a student, fetch their specific student profile
+        if (_userData['role'] == 'Alumno') {
+          final studentId = _userData['studentId'] as String?;
+          final campus = _userData['campus'] as String?;
+
+          if (studentId != null && campus != null && studentId.isNotEmpty && campus.isNotEmpty) {
+            final allCycles = await _appSettingsService.getAllSchoolCycles();
+            if (mounted) {
+              setState(() {
+                _availableStudentSchoolCycles = allCycles;
+                // Determine the currently active cycle ID using the service
+                final currentActiveCycleId = _appSettingsService.getActiveSchoolCycleIdFromCache();
+                
+                // Set _selectedStudentSchoolCycle to the current active cycle if available,
+                // otherwise to the first available cycle, or null if no cycles
+                _selectedStudentSchoolCycle = allCycles.firstWhere(
+                  (cycle) => cycle.id == currentActiveCycleId,
+                  orElse: () => allCycles.isNotEmpty ? allCycles.first : SchoolCycle(id: '', type: '', startDate: DateTime.now(), endDate: DateTime.now())
+                ).id;
+
+                if (_selectedStudentSchoolCycle!.isEmpty && allCycles.isNotEmpty) {
+                  _selectedStudentSchoolCycle = allCycles.first.id;
+                }
+              });
+            }
+
+            if (_selectedStudentSchoolCycle != null && _selectedStudentSchoolCycle!.isNotEmpty) {
+              await _fetchStudentDataForSelectedCycle(_selectedStudentSchoolCycle!);
+            }
+          } else {
+            debugPrint('Advertencia: Datos de Alumno incompletos para vincular perfil.');
+          }
+        }
+
+        if (mounted) setState(() => _isLoading = false);
+      } else {
+        if (mounted) setState(() => _isLoading = false);
+        debugPrint('No user data found in Firebase for UID: ${_currentUser.uid}');
       }
     } catch (e) {
       debugPrint('Error fetching profile: $e');
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _fetchStudentDataForSelectedCycle(String cycleId) async {
+    if (_currentUser == null || _userData['role'] != 'Alumno') return;
+
+    final studentId = _userData['studentId'] as String?;
+    final campus = _userData['campus'] as String?;
+
+    if (studentId == null || campus == null || studentId.isEmpty || campus.isEmpty) {
+      debugPrint('Error: studentId o campus no disponibles para _fetchStudentDataForSelectedCycle.');
+      if (mounted) {
+        UiHelpers.showSnackBar(context, 'No se pudo cargar el perfil de alumno: datos incompletos.', isError: true);
+      }
+      return;
+    }
+
+    try {
+      setState(() => _isLoading = true);
+      final studentSnapshot = await FirebaseDatabase.instance
+          .ref('planteles/$campus/students/$cycleId/$studentId')
+          .get();
+
+      if (studentSnapshot.exists) {
+        final studentDataMap = Map<String, dynamic>.from(studentSnapshot.value as Map);
+        final student = Student.fromMap(studentDataMap); // Assuming Student.fromMap can handle it
+        if (mounted) {
+          setState(() {
+            _studentProfile = student;
+            // Populate student-specific controllers
+            _guardianFullNameController.text = student.guardianFullName;
+            _guardianPhoneController.text = student.guardianPhone;
+            _studentPhoneController.text = student.studentPhone ?? '';
+            _selectedGender = student.gender;
+            _placeOfResidenceStudentController.text = student.placeOfResidence;
+            _allergiesController.text = student.allergies ?? 'Ninguna';
+            _healthConditionsController.text = student.healthConditions ?? 'Ninguna';
+            _generalHealthStatusController.text = student.generalHealthStatus ?? 'Sano';
+            _nssController.text = student.nss ?? '';
+            _medicalAlert = student.medicalAlert;
+            _canEditStudentProfile = student.canEditProfile; // Set editing permission
+
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _studentProfile = null;
+            _isLoading = false;
+            _canEditStudentProfile = false; // No student record, no editing
+          });
+          UiHelpers.showSnackBar(context, 'No se encontró registro de alumno para el ciclo seleccionado.', isError: true);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching student data for cycle $cycleId: $e');
+      if (mounted) {
+        setState(() {
+          _studentProfile = null;
+          _isLoading = false;
+          _canEditStudentProfile = false;
+        });
+        UiHelpers.showSnackBar(context, 'Error al cargar datos del alumno: $e', isError: true);
+      }
     }
   }
 
@@ -132,6 +306,28 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
         'location': _locationController.text.trim(),
       };
 
+      // 2. Handle student-specific updates if role is Alumno and editing is allowed
+      if (_userData['role'] == 'Alumno' && _studentProfile != null && _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce) {
+        final studentUpdates = {
+          'guardianFullName': _guardianFullNameController.text.trim(),
+          'guardianPhone': _guardianPhoneController.text.trim(),
+          'studentPhone': _studentPhoneController.text.trim().isNotEmpty ? _studentPhoneController.text.trim() : null,
+          'gender': _selectedGender,
+          'placeOfResidence': _placeOfResidenceStudentController.text.trim(),
+          'allergies': _allergiesController.text.trim().isNotEmpty ? _allergiesController.text.trim() : null,
+          'healthConditions': _healthConditionsController.text.trim().isNotEmpty ? _healthConditionsController.text.trim() : null,
+          'generalHealthStatus': _generalHealthStatusController.text.trim().isNotEmpty ? _generalHealthStatusController.text.trim() : 'Sano',
+          'nss': _nssController.text.trim().isNotEmpty ? _nssController.text.trim() : null,
+          'medicalAlert': _medicalAlert,
+        };
+
+        final studentRef = FirebaseDatabase.instance
+            .ref('planteles/${_userData['campus']}/students/$_selectedStudentSchoolCycle/${_studentProfile!.id}');
+        await studentRef.update(studentUpdates);
+
+        // Also set hasEditedProfileOnce to true in the user's profile
+        updateData['hasEditedProfileOnce'] = true;
+      }
 
 
       // 3. Upload new image and add its data if selected
@@ -215,8 +411,14 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
               if (!_isEditing)
                 IconButton(
                   icon: const Icon(Icons.edit_rounded, color: Colors.white),
-                  onPressed: () => setState(() => _isEditing = true),
-                  tooltip: 'Editar Perfil',
+                  onPressed: _userData['role'] == 'Alumno' && (!_canEditStudentProfile || _hasEditedProfileOnce)
+                      ? null // Disable if student role and not allowed to edit or has already edited
+                      : () => setState(() => _isEditing = true),
+                  tooltip: _userData['role'] == 'Alumno' && !_canEditStudentProfile
+                      ? 'Edición deshabilitada por prefectura'
+                      : (_userData['role'] == 'Alumno' && _hasEditedProfileOnce
+                          ? 'Permiso de edición única ya utilizado'
+                          : 'Editar Perfil'),
                 )
               else
                 IconButton(
@@ -393,28 +595,162 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 16),
 
-                  // Espacio extra si es alumno para datos como matrícula
+                  // --- Student-specific fields ---
                   if (_userData['role'] == 'Alumno') ...[
+                    // School Cycle Selector for Students
+                    _buildSectionHeader(theme, 'CICLO ESCOLAR DEL ALUMNO'),
                     const SizedBox(height: 16),
-                    _buildReadOnlyField(
-                      label: 'Matrícula',
-                      value: _userData['studentId'] ?? 'N/A',
-                      icon: Icons.badge_outlined,
-                      theme: theme,
+                    DropdownButtonFormField<String>(
+                      value: _selectedStudentSchoolCycle,
+                      decoration: InputDecoration(
+                        labelText: 'Ciclo Escolar',
+                        prefixIcon: const Icon(Icons.calendar_today_outlined),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      ),
+                      items: _availableStudentSchoolCycles
+                          .map((c) => DropdownMenuItem(value: c.id, child: Text(c.id)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            _selectedStudentSchoolCycle = val;
+                          });
+                          _fetchStudentDataForSelectedCycle(val); // Reload student data for selected cycle
+                        }
+                      },
                     ),
-                    const SizedBox(height: 16),
-                    _buildReadOnlyField(
-                      label: 'Fecha de Nacimiento',
-                      value: _userData['dateOfBirth'] ?? 'N/A',
-                      icon: Icons.cake_outlined,
-                      theme: theme,
-                    ),
+                    const SizedBox(height: 24),
+
+                    if (_studentProfile != null) ...[
+                      // Student Personal Info
+                      _buildSectionHeader(theme, 'DATOS DEL ALUMNO', Icons.person_pin_rounded),
+                      const SizedBox(height: 16),
+                      _buildReadOnlyField(
+                        label: 'Matrícula',
+                        value: _studentProfile!.studentId,
+                        icon: Icons.badge_outlined,
+                        theme: theme,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildReadOnlyField(
+                        label: 'Edad',
+                        value: _studentProfile!.age.toString(),
+                        icon: Icons.cake_outlined,
+                        theme: theme,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildReadOnlyField(
+                        label: 'Género',
+                        value: _studentProfile!.gender,
+                        icon: Icons.wc_outlined,
+                        theme: theme,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildProfileField(
+                        label: 'Lugar de Residencia (Alumno)',
+                        controller: _placeOfResidenceStudentController,
+                        icon: Icons.home_outlined,
+                        enabled: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildProfileField(
+                        label: 'Teléfono Alumno',
+                        controller: _studentPhoneController,
+                        icon: Icons.phone_android_outlined,
+                        enabled: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce,
+                        inputType: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Guardian Info
+                      _buildSectionHeader(theme, 'DATOS DEL TUTOR', Icons.family_restroom_outlined),
+                      const SizedBox(height: 16),
+                      _buildProfileField(
+                        label: 'Nombre Completo (Tutor)',
+                        controller: _guardianFullNameController,
+                        icon: Icons.person_outline,
+                        enabled: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildProfileField(
+                        label: 'Teléfono Tutor',
+                        controller: _guardianPhoneController,
+                        icon: Icons.phone_outlined,
+                        enabled: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce,
+                        inputType: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Medical Info
+                      _buildSectionHeader(theme, 'INFORMACIÓN MÉDICA (OPCIONAL)', Icons.medical_services_outlined),
+                      const SizedBox(height: 16),
+                      _buildProfileField(
+                        label: 'NSS',
+                        controller: _nssController,
+                        icon: Icons.health_and_safety_outlined,
+                        enabled: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSmartSelector(
+                        label: 'Alergias',
+                        icon: Icons.warning_amber_rounded,
+                        options: _commonAllergies,
+                        controller: _allergiesController,
+                        enabled: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce,
+                        initialValue: _allergiesController.text,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSmartSelector(
+                        label: 'Condiciones de Salud',
+                        icon: Icons.healing_outlined,
+                        options: _commonConditions,
+                        controller: _healthConditionsController,
+                        enabled: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce,
+                        initialValue: _healthConditionsController.text,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSmartSelector(
+                        label: 'Estado General de Salud',
+                        icon: Icons.favorite_border_rounded,
+                        options: _commonHealthStatus,
+                        controller: _generalHealthStatusController,
+                        enabled: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce,
+                        initialValue: _generalHealthStatusController.text,
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: _medicalAlert
+                              ? Colors.red.withOpacity(0.1)
+                              : Colors.grey.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: _medicalAlert ? Colors.red : Colors.transparent),
+                        ),
+                        child: SwitchListTile(
+                          title: const Text('Activar Alerta Médica Crítica',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: const Text(
+                              'Mostrará un aviso urgente al pasar lista. Úsalo solo para casos graves (Diabetes, Epilepsia, etc).',
+                              style: TextStyle(fontSize: 12)),
+                          value: _medicalAlert,
+                          activeColor: Colors.red,
+                          secondary: Icon(Icons.add_alert_rounded,
+                              color: _medicalAlert ? Colors.red : Colors.grey),
+                          onChanged: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce
+                              ? (val) => setState(() => _medicalAlert = val)
+                              : null,
+                        ),
+                      ),
+                    ]
                   ],
 
                   const SizedBox(height: 40),
 
-                  if (_isEditing)
+                  if (_isEditing && (_userData['role'] != 'Alumno' || (_canEditStudentProfile && !_hasEditedProfileOnce)))
                     SizedBox(
                       width: double.infinity,
                       height: 56,
@@ -434,6 +770,18 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1.0)),
+                      ),
+                    ),
+                  // Display message if student cannot edit or has used their one-time edit
+                  if (_userData['role'] == 'Alumno' && _isEditing && (!_canEditStudentProfile || _hasEditedProfileOnce))
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Text(
+                        _hasEditedProfileOnce
+                            ? 'Has utilizado tu permiso de edición única para este ciclo escolar.'
+                            : 'La prefectura no ha habilitado la edición de tu perfil para este ciclo escolar.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.orange.shade700),
                       ),
                     ),
                   const SizedBox(height: 40),
@@ -460,18 +808,26 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
     return null;
   }
 
-  Widget _buildSectionHeader(ThemeData theme, String title) {
+  Widget _buildSectionHeader(ThemeData theme, String title, [IconData? icon]) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title.toUpperCase(),
-          style: TextStyle(
-            color: theme.colorScheme.primary,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
+        Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              title.toUpperCase(),
+              style: TextStyle(
+                color: theme.colorScheme.primary,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
         ),
         Divider(
             color: theme.colorScheme.primary.withOpacity(0.2), thickness: 1),
@@ -562,5 +918,76 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
     );
   }
 
+  Widget _buildSmartSelector({
+    required String label,
+    required IconData icon,
+    required List<String> options,
+    required TextEditingController controller,
+    required bool enabled,
+    String? initialValue,
+  }) {
+    // Determine the initial selected value for the dropdown
+    String? selectedValue;
+    if (initialValue != null && options.contains(initialValue)) {
+      selectedValue = initialValue;
+    } else if (initialValue != null && initialValue.isNotEmpty) {
+      selectedValue = 'Otro (especificar)';
+    }
 
+    final bool isCustom = selectedValue == 'Otro (especificar)';
+
+    return Column(
+      children: [
+        DropdownButtonFormField<String>(
+          value: selectedValue,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: label,
+            prefixIcon: Icon(icon, size: 20),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          items: options
+              .map((opt) => DropdownMenuItem(
+                  value: opt,
+                  child: Text(opt, overflow: TextOverflow.ellipsis)))
+              .toList(),
+          onChanged: enabled
+              ? (val) {
+                  if (val != null) {
+                    if (val != 'Otro (especificar)') {
+                      controller.text = val;
+                    } else {
+                      controller.text = ''; // Clear for user input if "Otro"
+                    }
+                    setState(() {}); // Rebuild to update TextFormField visibility
+                  }
+                }
+              : null,
+          validator: (val) => val == null || val.isEmpty ? 'Requerido' : null, // Assuming these fields are required if enabled
+        ),
+        if (isCustom)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, left: 12),
+            child: TextFormField(
+              controller: controller,
+              autofocus: true,
+              enabled: enabled,
+              decoration: InputDecoration(
+                labelText: 'Especifique $label',
+                prefixIcon: const Icon(Icons.edit_note_rounded,
+                    size: 20, color: Colors.grey),
+                filled: true,
+                fillColor: Colors.grey.withOpacity(0.05),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              validator: (val) =>
+                  val!.isEmpty ? 'Por favor especifique' : null,
+            ),
+          ),
+      ],
+    );
+  }
 }
