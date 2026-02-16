@@ -606,6 +606,7 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
                       value: _selectedStudentSchoolCycle,
                       decoration: InputDecoration(
                         labelText: 'Ciclo Escolar',
+                        helperText: 'Seleccione el ciclo escolar deseado para consultar sus datos.', // NEW HELPER TEXT
                         prefixIcon: const Icon(Icons.calendar_today_outlined),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

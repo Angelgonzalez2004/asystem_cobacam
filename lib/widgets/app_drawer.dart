@@ -238,10 +238,6 @@ class AppDrawer extends StatelessWidget {
                       title: 'Mi Credencial',
                       onTap: () => onNavigate?.call('credencial_alumno')),
                   _buildDrawerItem(context,
-                      icon: Icons.person_outline_rounded,
-                      title: 'Datos Alumnos', // Changed title
-                      onTap: () => onNavigate?.call('mi_perfil')),
-                  _buildDrawerItem(context,
                       icon: Icons.help_outline_rounded,
                       title: 'Manual Operativo (FAQ)',
                       onTap: () => onNavigate?.call('faq')),

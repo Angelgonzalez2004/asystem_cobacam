@@ -15,8 +15,8 @@ class CredentialCardContent extends StatelessWidget {
     const bgColor = Color(0xFFF8F9FA); // Blanco Humo
 
     return Container(
-      width: 350,
-      height: 220,
+      width: 324, // Adjusted for CR-80 standard (approx 85.6mm at 96dpi)
+      height: 204, // Adjusted for CR-80 standard (approx 54mm at 96dpi)
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
@@ -39,8 +39,8 @@ class CredentialCardContent extends StatelessWidget {
             children: [
               // --- HEADER ---
               Container(
-                height: 52,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                height: 48, // Adjusted height
+                padding: const EdgeInsets.symmetric(horizontal: 10), // Adjusted padding
                 decoration: const BoxDecoration(
                   color: primaryColor,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
@@ -51,11 +51,11 @@ class CredentialCardContent extends StatelessWidget {
                       padding: const EdgeInsets.all(2),
                       decoration: const BoxDecoration(
                           color: Colors.white, shape: BoxShape.circle),
-                                                child: ClipOval(
-                                                    child: Image.asset('assets/images/logo1.png',
-                                                        width: 36, height: 36)),
-                                          ),
-                    const SizedBox(width: 10),
+                      child: ClipOval(
+                          child: Image.asset('assets/images/logo1.png',
+                              width: 32, height: 32)), // Adjusted logo size
+                    ),
+                    const SizedBox(width: 8), // Adjusted spacing
                     const Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -66,7 +66,7 @@ class CredentialCardContent extends StatelessWidget {
                             style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 8.5),
+                                fontSize: 8.0), // Adjusted font size
                             maxLines: 1,
                           ),
                           SizedBox(height: 1),
@@ -75,12 +75,13 @@ class CredentialCardContent extends StatelessWidget {
                             style: TextStyle(
                                 color: Color(0xFFD4AF37),
                                 fontWeight: FontWeight.bold,
-                                fontSize: 11,
-                                letterSpacing: 0.5),
+                                fontSize: 10.0, // Adjusted font size
+                                letterSpacing: 0.5), // Moved inside TextStyle
                           ),
                         ],
                       ),
-                    ),                  ],
+                    ),
+                  ],
                 ),
               ),
 
@@ -91,7 +92,7 @@ class CredentialCardContent extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Adjusted padding
                   child: Row(
                     children: [
                       // COLUMNA IZQUIERDA: FOTO
@@ -99,8 +100,8 @@ class CredentialCardContent extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Container(
-                            width: 80,
-                            height: 95,
+                            width: 74, // Adjusted width
+                            height: 88, // Adjusted height
                             decoration: BoxDecoration(
                               color: Colors.grey.shade200,
                               border: Border.all(color: primaryColor, width: 2),
@@ -119,11 +120,10 @@ class CredentialCardContent extends StatelessWidget {
                                             .contains('MUJER'))
                                     ? Icons.woman
                                     : Icons.man,
-                                size: 60,
+                                size: 55, // Adjusted icon size
                                 color: Colors.grey.shade400),
                           ),
-                          const SizedBox(height: 6),
-
+                          const SizedBox(height: 4), // Adjusted spacing
                           Text(student.schoolCycle,
                               style: const TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -190,12 +190,12 @@ class CredentialCardContent extends StatelessWidget {
                               ],
                             ),
 
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 6), // Adjusted spacing
 
                             // CÓDIGO DE BARRAS
                             SizedBox(
                               width: double.infinity,
-                              height: 28,
+                              height: 25, // Adjusted height
                               child: BarcodeWidget(
                                 barcode: Barcode.code128(),
                                 data: student.studentId,
@@ -213,7 +213,7 @@ class CredentialCardContent extends StatelessWidget {
 
               // --- FOOTER ---
               Container(
-                height: 12,
+                height: 10, // Adjusted height
                 width: double.infinity,
                 decoration: BoxDecoration(
                     color: Colors.grey.shade200,

@@ -496,6 +496,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
                   ? 'Edición de perfil habilitada para ${student.fullName}.'
                   : 'Edición de perfil deshabilitada para ${student.fullName}.');
         }
+        if (mounted) setState(() {}); // Force UI update
       } catch (e) {
         if (mounted) {
           UiHelpers.showSnackBar(
@@ -708,6 +709,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen>
         if (mounted) {
           UiHelpers.showSnackBar(context,
               'Permisos de edición actualizados para todos los alumnos del ciclo actual.');
+          _loadStudentsForCycle(_selectedFilterSchoolCycle!); // Reload students to update UI
         }
       } catch (e) {
         if (mounted) {
