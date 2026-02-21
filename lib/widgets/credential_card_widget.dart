@@ -113,15 +113,36 @@ class CredentialCardContent extends StatelessWidget {
                                     offset: Offset(0, 2))
                               ],
                             ),
-                            child: Icon(
-                                (student.gender.toUpperCase().startsWith('F') ||
-                                        student.gender
-                                            .toUpperCase()
-                                            .contains('MUJER'))
-                                    ? Icons.woman
-                                    : Icons.man,
-                                size: 55, // Adjusted icon size
-                                color: Colors.grey.shade400),
+                            child: (student.profileImageUrl != null &&
+                                    student.profileImageUrl!.isNotEmpty)
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(2),
+                                    child: Image.network(
+                                      student.profileImageUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          Icon(
+                                              (student.gender
+                                                          .toUpperCase()
+                                                          .startsWith('F') ||
+                                                      student.gender
+                                                          .toUpperCase()
+                                                          .contains('MUJER'))
+                                                  ? Icons.woman
+                                                  : Icons.man,
+                                              size: 55,
+                                              color: Colors.grey.shade400),
+                                    ),
+                                  )
+                                : Icon(
+                                    (student.gender.toUpperCase().startsWith('F') ||
+                                            student.gender
+                                                .toUpperCase()
+                                                .contains('MUJER'))
+                                        ? Icons.woman
+                                        : Icons.man,
+                                    size: 55, // Adjusted icon size
+                                    color: Colors.grey.shade400),
                           ),
                           const SizedBox(height: 4), // Adjusted spacing
                           Text(student.schoolCycle,

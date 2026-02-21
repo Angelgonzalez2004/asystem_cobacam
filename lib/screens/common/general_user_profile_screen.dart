@@ -54,6 +54,8 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
   final _guardianPhoneController = TextEditingController();
   final _studentPhoneController = TextEditingController();
   String? _selectedGender; // For dropdown
+  final _ageController = TextEditingController();
+  final _groupController = TextEditingController();
   final _placeOfResidenceStudentController = TextEditingController(); // Student specific residence
   final _allergiesController = TextEditingController();
   final _healthConditionsController = TextEditingController();
@@ -80,6 +82,9 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
     'Desconocido', 'Otro (especificar)'
   ];
 
+  final List<String> _ageOptions =
+      List.generate(68, (index) => (index + 13).toString()); // 13 to 80
+
 
   @override
   void initState() {
@@ -97,6 +102,8 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
     _guardianPhoneController.text = '';
     _studentPhoneController.text = '';
     _selectedGender = null;
+    _ageController.text = '';
+    _groupController.text = '';
     _placeOfResidenceStudentController.text = '';
     _allergiesController.text = '';
     _healthConditionsController.text = '';
@@ -116,6 +123,8 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
     _guardianFullNameController.dispose();
     _guardianPhoneController.dispose();
     _studentPhoneController.dispose();
+    _ageController.dispose();
+    _groupController.dispose();
     _placeOfResidenceStudentController.dispose();
     _allergiesController.dispose();
     _healthConditionsController.dispose();
@@ -216,7 +225,17 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
             _guardianPhoneController.text = student.guardianPhone;
             _studentPhoneController.text = student.studentPhone ?? '';
             _selectedGender = student.gender;
+            _ageController.text = student.age.toString();
+            _groupController.text = student.group;
             _placeOfResidenceStudentController.text = student.placeOfResidence;
+            
+            // Sync general fields with student data for consistency
+            _nameController.text = student.fullName;
+            if (student.studentPhone != null && student.studentPhone!.isNotEmpty) {
+              _phoneController.text = student.studentPhone!;
+            }
+            _locationController.text = student.placeOfResidence;
+
             _allergiesController.text = student.allergies ?? 'Ninguna';
             _healthConditionsController.text = student.healthConditions ?? 'Ninguna';
             _generalHealthStatusController.text = student.generalHealthStatus ?? 'Sano';
@@ -250,36 +269,84 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
     }
   }
 
+  bool _shouldRemoveImage = false; // NEW state to track removal
+
   Future<void> _handleChangeProfilePictureRequest() async {
     final lastUpdate = _profileImageLastUpdated;
+    final changesCount = _userData['profileImageChangesCount'] ?? 0;
+    final now = DateTime.now();
 
+    bool isNewMonth = true;
     if (lastUpdate != null) {
-      final now = DateTime.now();
       final lastUpdateDate = DateTime.fromMillisecondsSinceEpoch(lastUpdate);
-      final difference = now.difference(lastUpdateDate);
-
-      if (difference.inDays < 15) {
-        final daysRemaining = 15 - difference.inDays;
-        final dayText = daysRemaining == 1 ? 'día' : 'días';
-        await UiHelpers.showAlertDialog(
-          context,
-          title: 'Límite de Tiempo',
-          content: 'Ya has cambiado tu foto de perfil recientemente. Podrás cambiarla de nuevo en $daysRemaining $dayText.',
-        );
-        return; // Block the action
-      }
+      isNewMonth = now.year != lastUpdateDate.year || now.month != lastUpdateDate.month;
     }
 
-    // If cooldown is over or it's the first time, show confirmation
-    final bool? shouldProceed = await UiHelpers.showConfirmationDialog(
-      context,
-      title: 'Confirmar Cambio',
-      content: 'Estás a punto de cambiar tu foto de perfil. Solo puedes realizar esta acción una vez cada 15 días.\n\n¿Deseas continuar?',
-      confirmText: 'Continuar',
+    int currentMonthChanges = isNewMonth ? 0 : changesCount;
+
+    // Show options: Change or Remove
+    final String? action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library_rounded),
+                title: const Text('Seleccionar nueva foto'),
+                onTap: () => Navigator.pop(context, 'change'),
+              ),
+              if ((_userData['profileImageUrl'] != null && _userData['profileImageUrl'].isNotEmpty) || _newProfileImage != null)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                  title: const Text('Eliminar foto actual', style: TextStyle(color: Colors.red)),
+                  onTap: () => Navigator.pop(context, 'remove'),
+                ),
+            ],
+          ),
+        );
+      },
     );
 
-    if (shouldProceed == true) {
-      _pickImage();
+    if (action == 'remove') {
+      setState(() {
+        _newProfileImage = null;
+        _shouldRemoveImage = true;
+      });
+      UiHelpers.showSnackBar(context, 'Foto marcada para eliminar. Guarda cambios para aplicar.');
+      return;
+    }
+
+    if (action == 'change') {
+      if (_userData['role'] == 'Alumno' && currentMonthChanges >= 3) {
+        await UiHelpers.showAlertDialog(
+          context,
+          title: 'Límite Alcanzado',
+          content: 'Has agotado tus 3 cambios de foto de perfil permitidos para este mes. Podrás realizar cambios nuevamente el próximo mes.',
+        );
+        return;
+      }
+
+      String warningMsg = 'Estás a punto de cambiar tu foto de perfil.\n\n';
+      warningMsg += '⚠️ IMPORTANTE: Esta foto será la que aparezca en tu CREDENCIAL OFICIAL.\n\n';
+      if (_userData['role'] == 'Alumno') {
+        warningMsg += '• Límite mensual de cambios: 3.\n';
+        warningMsg += '• Cambios realizados este mes: $currentMonthChanges de 3.\n\n';
+      }
+      warningMsg += '¿Deseas seleccionar una nueva imagen para tu perfil y credencial?';
+
+      final bool? shouldProceed = await UiHelpers.showConfirmationDialog(
+        context,
+        title: 'Confirmar Foto de Credencial',
+        content: warningMsg,
+        confirmText: 'Seleccionar Foto',
+        cancelText: 'Cancelar',
+      );
+
+      if (shouldProceed == true) {
+        _pickImage();
+        setState(() => _shouldRemoveImage = false); // Cancel removal if picking new
+      }
     }
   }
 
@@ -296,6 +363,19 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
 
   Future<void> _saveProfile() async {
     if (_currentUser == null) return;
+
+    // Show confirmation for students if they are editing their institutional profile
+    if (_userData['role'] == 'Alumno' && _studentProfile != null && _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce) {
+      final bool? confirmed = await UiHelpers.showConfirmationDialog(
+        context,
+        title: 'Confirmar Cambios',
+        content: '¿Estás seguro de que tus datos son correctos? Una vez guardados, tu perfil se bloqueará para edición y solo podrás visualizarlo. Para futuros cambios, deberás solicitar autorización a la prefectura.',
+        confirmText: 'Sí, Guardar',
+        cancelText: 'Revisar',
+      );
+      if (confirmed != true) return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
@@ -309,16 +389,19 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
       // 2. Handle student-specific updates if role is Alumno and editing is allowed
       if (_userData['role'] == 'Alumno' && _studentProfile != null && _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce) {
         final studentUpdates = {
+          'fullName': _nameController.text.trim(), // Synchronize fullName
           'guardianFullName': _guardianFullNameController.text.trim(),
           'guardianPhone': _guardianPhoneController.text.trim(),
-          'studentPhone': _studentPhoneController.text.trim().isNotEmpty ? _studentPhoneController.text.trim() : null,
+          'studentPhone': _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null, // Sync studentPhone with general phone
           'gender': _selectedGender,
-          'placeOfResidence': _placeOfResidenceStudentController.text.trim(),
+          'age': int.tryParse(_ageController.text) ?? _studentProfile!.age,
+          'placeOfResidence': _locationController.text.trim(), // Sync placeOfResidence with general location
           'allergies': _allergiesController.text.trim().isNotEmpty ? _allergiesController.text.trim() : null,
           'healthConditions': _healthConditionsController.text.trim().isNotEmpty ? _healthConditionsController.text.trim() : null,
           'generalHealthStatus': _generalHealthStatusController.text.trim().isNotEmpty ? _generalHealthStatusController.text.trim() : 'Sano',
           'nss': _nssController.text.trim().isNotEmpty ? _nssController.text.trim() : null,
           'medicalAlert': _medicalAlert,
+          'canEditProfile': false, // Reset permission after save
         };
 
         final studentRef = FirebaseDatabase.instance
@@ -330,7 +413,7 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
       }
 
 
-      // 3. Upload new image and add its data if selected
+      // 3. Upload new image and add its data if selected, or handle removal
       if (_newProfileImage != null) {
         final storageRef = FirebaseStorage.instance
             .ref()
@@ -348,6 +431,49 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
 
         updateData['profileImageUrl'] = imageUrl;
         updateData['profileImageLastUpdated'] = newTimestamp;
+
+        // Increment or reset the monthly changes count for students
+        if (_userData['role'] == 'Alumno') {
+          final lastUpdate = _profileImageLastUpdated;
+          final changesCount = _userData['profileImageChangesCount'] ?? 0;
+          final now = DateTime.now();
+
+          bool isNewMonth = true;
+          if (lastUpdate != null) {
+            final lastUpdateDate = DateTime.fromMillisecondsSinceEpoch(lastUpdate);
+            isNewMonth = now.year != lastUpdateDate.year || now.month != lastUpdateDate.month;
+          }
+
+          updateData['profileImageChangesCount'] = isNewMonth ? 1 : (changesCount + 1);
+
+          // IMPORTANT: Update the Student record with the new photo for the credential
+          if (_studentProfile != null && _selectedStudentSchoolCycle != null) {
+             final studentRef = FirebaseDatabase.instance
+                .ref('planteles/${_userData['campus']}/students/$_selectedStudentSchoolCycle/${_studentProfile!.id}');
+             await studentRef.update({'profileImageUrl': imageUrl});
+          }
+        }
+      } else if (_shouldRemoveImage) {
+        // Handle deletion
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('profile_pictures/${_currentUser.uid}');
+        
+        try {
+          await storageRef.delete();
+        } catch (e) {
+          debugPrint('Error deleting image from storage: $e');
+        }
+
+        updateData['profileImageUrl'] = null; // Mark as null in DB
+        
+        // Also remove from student record for credential
+        if (_studentProfile != null && _selectedStudentSchoolCycle != null) {
+             final studentRef = FirebaseDatabase.instance
+                .ref('planteles/${_userData['campus']}/students/$_selectedStudentSchoolCycle/${_studentProfile!.id}');
+             await studentRef.update({'profileImageUrl': null});
+        }
+        _shouldRemoveImage = false; // Reset state
       }
 
       // 4. Update Database
@@ -411,14 +537,8 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
               if (!_isEditing)
                 IconButton(
                   icon: const Icon(Icons.edit_rounded, color: Colors.white),
-                  onPressed: _userData['role'] == 'Alumno' && (!_canEditStudentProfile || _hasEditedProfileOnce)
-                      ? null // Disable if student role and not allowed to edit or has already edited
-                      : () => setState(() => _isEditing = true),
-                  tooltip: _userData['role'] == 'Alumno' && !_canEditStudentProfile
-                      ? 'Edición deshabilitada por prefectura'
-                      : (_userData['role'] == 'Alumno' && _hasEditedProfileOnce
-                          ? 'Permiso de edición única ya utilizado'
-                          : 'Editar Perfil'),
+                  onPressed: () => setState(() => _isEditing = true),
+                  tooltip: 'Editar Perfil',
                 )
               else
                 IconButton(
@@ -544,14 +664,14 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
                     label: 'Nombre Completo',
                     controller: _nameController,
                     icon: Icons.person_outline,
-                    enabled: _isEditing,
+                    enabled: _isEditing && (_userData['role'] != 'Alumno' || (_canEditStudentProfile && !_hasEditedProfileOnce)),
                   ),
                   const SizedBox(height: 16),
                   _buildProfileField(
                     label: 'Teléfono de Contacto',
                     controller: _phoneController,
                     icon: Icons.phone_outlined,
-                    enabled: _isEditing,
+                    enabled: _isEditing && (_userData['role'] != 'Alumno' || (_canEditStudentProfile && !_hasEditedProfileOnce)),
                     inputType: TextInputType.phone,
                   ),
                   const SizedBox(height: 16),
@@ -559,7 +679,7 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
                     label: 'Lugar de Residencia',
                     controller: _locationController,
                     icon: Icons.location_on_outlined,
-                    enabled: _isEditing,
+                    enabled: _isEditing && (_userData['role'] != 'Alumno' || (_canEditStudentProfile && !_hasEditedProfileOnce)),
                   ),
 
                   const SizedBox(height: 32),
@@ -637,32 +757,57 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
                       ),
                       const SizedBox(height: 16),
                       _buildReadOnlyField(
-                        label: 'Edad',
-                        value: _studentProfile!.age.toString(),
-                        icon: Icons.cake_outlined,
+                        label: 'Grupo',
+                        value: _studentProfile!.group,
+                        icon: Icons.groups_outlined,
                         theme: theme,
                       ),
                       const SizedBox(height: 16),
-                      _buildReadOnlyField(
-                        label: 'Género',
-                        value: _studentProfile!.gender,
-                        icon: Icons.wc_outlined,
-                        theme: theme,
+                      // Age Selector
+                      DropdownButtonFormField<String>(
+                        value: _ageOptions.contains(_ageController.text) ? _ageController.text : null,
+                        items: _ageOptions
+                            .map((age) => DropdownMenuItem(value: age, child: Text(age)))
+                            .toList(),
+                        onChanged: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce
+                            ? (val) {
+                                if (val != null) {
+                                  setState(() {
+                                    _ageController.text = val;
+                                  });
+                                }
+                              }
+                            : null,
+                        decoration: InputDecoration(
+                          labelText: 'Edad',
+                          prefixIcon: const Icon(Icons.cake_outlined),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        ),
                       ),
                       const SizedBox(height: 16),
-                      _buildProfileField(
-                        label: 'Lugar de Residencia (Alumno)',
-                        controller: _placeOfResidenceStudentController,
-                        icon: Icons.home_outlined,
-                        enabled: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildProfileField(
-                        label: 'Teléfono Alumno',
-                        controller: _studentPhoneController,
-                        icon: Icons.phone_android_outlined,
-                        enabled: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce,
-                        inputType: TextInputType.phone,
+                      // Gender Selector
+                      DropdownButtonFormField<String>(
+                        value: _selectedGender,
+                        items: const [
+                          DropdownMenuItem(value: 'Masculino', child: Text('Masculino')),
+                          DropdownMenuItem(value: 'Femenino', child: Text('Femenino')),
+                        ],
+                        onChanged: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce
+                            ? (val) {
+                                if (val != null) {
+                                  setState(() {
+                                    _selectedGender = val;
+                                  });
+                                }
+                              }
+                            : null,
+                        decoration: InputDecoration(
+                          labelText: 'Género',
+                          prefixIcon: const Icon(Icons.wc_outlined),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        ),
                       ),
                       const SizedBox(height: 16),
 
@@ -689,7 +834,7 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
                       _buildSectionHeader(theme, 'INFORMACIÓN MÉDICA (OPCIONAL)', Icons.medical_services_outlined),
                       const SizedBox(height: 16),
                       _buildProfileField(
-                        label: 'NSS',
+                        label: 'NSS (Número de Seguro Social)',
                         controller: _nssController,
                         icon: Icons.health_and_safety_outlined,
                         enabled: _isEditing && _canEditStudentProfile && !_hasEditedProfileOnce,
@@ -796,6 +941,7 @@ class _GeneralUserProfileScreenState extends State<GeneralUserProfileScreen> {
   }
 
   ImageProvider? _getProfileImage() {
+    if (_shouldRemoveImage) return null;
     if (_newProfileImage != null) {
       if (kIsWeb) {
         return NetworkImage(_newProfileImage!.path);

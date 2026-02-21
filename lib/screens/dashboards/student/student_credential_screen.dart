@@ -8,6 +8,8 @@ import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:asystem_cobacam/utils/web_downloader.dart';
+// Asegúrate de que este import sea el correcto para tu widget de credencial.
+// En tu código anterior lo llamabas CredentialCardContent, si da error, cámbialo por el nombre correcto.
 import 'package:asystem_cobacam/widgets/credential_card_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -48,6 +50,10 @@ class _StudentCredentialScreenState extends State<StudentCredentialScreen> {
   int _downloadCount = 0;
   final int _maxDownloads = 3;
 
+  // ---> CAMBIO AQUI: Definimos las dimensiones fijas EXACTAS del generador <---
+  final double _fixedCredentialWidth = 1030.0;
+  final double _fixedCredentialHeight = 666.0;
+
   @override
   void initState() {
     super.initState();
@@ -71,7 +77,7 @@ class _StudentCredentialScreenState extends State<StudentCredentialScreen> {
       final userProfileSnap =
           await FirebaseDatabase.instance.ref('users/${user.uid}').get();
       if (!userProfileSnap.exists) throw Exception("No se encontró tu perfil de usuario.");
-      
+
       final userProfile = Map<String, dynamic>.from(userProfileSnap.value as Map);
       _userMatricula = userProfile['studentId'];
       _userCampusId = userProfile['campus'];
@@ -82,7 +88,7 @@ class _StudentCredentialScreenState extends State<StudentCredentialScreen> {
 
       _schoolCycles = await _appSettingsService.getAllSchoolCycles();
       if (_schoolCycles.isEmpty) throw Exception("No se encontraron ciclos escolares.");
-      
+
       await _fetchDownloadCount();
 
     } catch (e) {
@@ -155,9 +161,11 @@ class _StudentCredentialScreenState extends State<StudentCredentialScreen> {
     setState(() => _isDownloading = true);
 
     try {
+      // Nota: pixelRatio: 1.0 es suficiente si ya estamos forzando un tamaño gigante de 1030x666.
+      // Si usas 2.0, la imagen será de 2060x1332, quizás demasiado grande. Puedes probar con 1.0 o 2.0.
       final imageBytes = await _screenshotController.capture(
         delay: const Duration(milliseconds: 50),
-        pixelRatio: 2.0, // Higher resolution
+        pixelRatio: 1.0, // Cambiado a 1.0 porque el tamaño base ya es muy grande.
       );
 
       if (imageBytes != null) {
@@ -168,7 +176,6 @@ class _StudentCredentialScreenState extends State<StudentCredentialScreen> {
           if (mounted) UiHelpers.showSnackBar(context, "¡Descarga iniciada! Revisa tus descargas.");
         } else {
           debugPrint('[_handleDownload] No es Web. Intentando guardar con FilePicker.');
-          // Use file_picker for mobile/desktop to ask for save location
           String? outputFile = await FilePicker.platform.saveFile(
             dialogTitle: 'Guardar Credencial',
             fileName: fileName,
@@ -178,19 +185,16 @@ class _StudentCredentialScreenState extends State<StudentCredentialScreen> {
 
           if (outputFile != null) {
             debugPrint('[_handleDownload] Archivo seleccionado: $outputFile');
-            // Write the image bytes to the selected file path
             final file = File(outputFile);
             await file.writeAsBytes(imageBytes);
             if (mounted) UiHelpers.showSnackBar(context, "¡Credencial guardada en: $outputFile!");
           } else {
-            // User cancelled the save dialog
             debugPrint('[_handleDownload] Usuario canceló el diálogo de guardar.');
             if (mounted) UiHelpers.showSnackBar(context, "Descarga cancelada.", isError: false);
-            return; // Don't increment download count if cancelled
+            return;
           }
         }
 
-        // Increment download count in Firebase
         final dbPath = 'user_private/$_userId/credential_downloads/$_currentYearMonth';
         final dbRef = FirebaseDatabase.instance.ref(dbPath);
         await dbRef.set(ServerValue.increment(1));
@@ -198,7 +202,6 @@ class _StudentCredentialScreenState extends State<StudentCredentialScreen> {
 
         if (mounted) {
           setState(() => _downloadCount++);
-          // No need for a snackbar here as it's handled above based on platform
         }
       } else {
         debugPrint('[_handleDownload] imageBytes es null. No se pudo capturar la imagen.');
@@ -217,14 +220,11 @@ class _StudentCredentialScreenState extends State<StudentCredentialScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // title: const Text('Mi Credencial Digital'), // Removed to avoid double title
         centerTitle: true,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null && _credentialData == null
-              ? _buildFeedbackMessage(_errorMessage!, isError: true)
-              : _buildCredentialUI(),
+          : _buildCredentialUI(),
     );
   }
 
@@ -249,15 +249,35 @@ class _StudentCredentialScreenState extends State<StudentCredentialScreen> {
             decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 16), hintText: 'Seleccionar...'),
           ),
           const SizedBox(height: 24),
+
+          // ---> CAMBIO IMPORTANTE AQUI <---
+          // Se ha modificado la estructura dentro del Expanded para permitir Scroll
+          // y mantener el tamaño original para el Screenshot.
           Expanded(
             child: _isFetchingCredential
                 ? const Center(child: CircularProgressIndicator())
                 : _credentialData != null
-                    ? Screenshot(controller: _screenshotController, child: _buildCredentialView(_credentialData!))
+                    ? Center(
+                        // Scroll Horizontal
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          // Scroll Vertical
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.vertical,
+                            // El Screenshot envuelve el contenido que tiene el tamaño forzado
+                            child: Screenshot(
+                              controller: _screenshotController,
+                              child: _buildCredentialView(_credentialData!),
+                            ),
+                          ),
+                        ),
+                      )
                     : _errorMessage != null
                         ? _buildFeedbackMessage(_errorMessage!, isError: true)
                         : _buildFeedbackMessage('Por favor, selecciona un ciclo escolar para ver tu credencial.', isError: false),
           ),
+          // ---> FIN DEL CAMBIO IMPORTANTE <---
+
           const SizedBox(height: 16),
           if (_isDownloading)
             const Center(child: CircularProgressIndicator())
@@ -277,23 +297,45 @@ class _StudentCredentialScreenState extends State<StudentCredentialScreen> {
     );
   }
 
+  // ---> CAMBIO AQUI: Modificamos esta función para forzar el tamaño exacto <---
   Widget _buildCredentialView(Student student) {
-    // This container was previously used to hardcode size, but CredentialCardContent now manages its own size.
-    return CredentialCardContent(
-      student: student,
-      campus: _userCampusId ?? 'N/A',
+    // Usamos un Container para forzar las dimensiones exactas (1030x666)
+    // Esto asegura que el Screenshot capture el tamaño original y no el ajustado a la pantalla.
+    return Container(
+      width: _fixedCredentialWidth,
+      height: _fixedCredentialHeight,
+      // Opcional: Sombra para que se distinga el fondo
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            spreadRadius: 2,
+          )
+        ]
+      ),
+      // NOTA: En tu código pegado usabas 'CredentialCardContent'.
+      // Si tu widget real se llama 'CredentialCard', cámbialo aquí.
+      child: CredentialCardContent(
+        student: student,
+        campus: _userCampusId ?? 'N/A',
+        // Si tu widget CredentialCardContent acepta width y height, pásalos aquí también:
+        // width: _fixedCredentialWidth,
+        // height: _fixedCredentialHeight,
+      ),
     );
   }
 
   Widget _buildFeedbackMessage(String message, {required bool isError}) {
-    return SizedBox.expand( // Use SizedBox.expand to take available space
+    return SizedBox.expand(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center, // Center vertically
-        crossAxisAlignment: CrossAxisAlignment.center, // Center horizontally
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Padding( // Keep padding for content, not for spacing the whole widget
+          Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Column( // Inner column for content
+            child: Column(
               children: [
                 Icon(isError ? Icons.error_outline : Icons.info_outline, color: isError ? Colors.red : Colors.blue, size: 50),
                 const SizedBox(height: 16),

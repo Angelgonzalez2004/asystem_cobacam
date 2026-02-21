@@ -13,6 +13,9 @@ class LockService with ChangeNotifier {
   bool _isPinSet = false;
   bool get isPinSet => _isPinSet;
 
+  bool _useBiometrics = false;
+  bool get useBiometrics => _useBiometrics;
+
   LockService() {
     _init();
   }
@@ -21,9 +24,18 @@ class LockService with ChangeNotifier {
     final pin = await _secureStorage.read(key: 'app_pin');
     _isPinSet = pin != null && pin.isNotEmpty;
 
+    final biometricsPref = await _secureStorage.read(key: 'use_biometrics');
+    _useBiometrics = biometricsPref == 'true';
+
     // Si hay un PIN configurado, la app debe empezar bloqueada.
     _isLocked = _isPinSet;
 
+    notifyListeners();
+  }
+
+  Future<void> setUseBiometrics(bool value) async {
+    await _secureStorage.write(key: 'use_biometrics', value: value.toString());
+    _useBiometrics = value;
     notifyListeners();
   }
 
@@ -42,8 +54,11 @@ class LockService with ChangeNotifier {
   }
 
   Future<bool> authenticateWithBiometrics() async {
-    if (!await isBiometricsAvailable()) return false;
+    if (!_useBiometrics || !await isBiometricsAvailable()) return false;
+    return authenticateWithBiometricsManually();
+  }
 
+  Future<bool> authenticateWithBiometricsManually() async {
     try {
       final didAuthenticate = await _localAuth.authenticate(
         localizedReason: 'Desbloquea la aplicación para continuar',
@@ -79,7 +94,9 @@ class LockService with ChangeNotifier {
 
   Future<void> removePin() async {
     await _secureStorage.delete(key: 'app_pin');
+    await _secureStorage.delete(key: 'use_biometrics');
     _isPinSet = false;
+    _useBiometrics = false;
     _isLocked = false; // Si no hay PIN, no hay bloqueo.
     notifyListeners();
   }

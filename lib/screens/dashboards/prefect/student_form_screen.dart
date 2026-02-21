@@ -351,11 +351,27 @@ class _StudentFormScreenState extends State<StudentFormScreen> {
             ? _nssController.text.trim()
             : null,
         medicalAlert: _medicalAlert, // Guardar preferencia
+        canEditProfile: widget.student?.canEditProfile ?? false, // Preserve existing value
       );
 
       await databaseRef
           .child(studentData.studentId)
           .set(studentData.toFirebaseMap());
+
+      // NEW: Synchronize with users record if student is linked
+      if (studentData.userId.isNotEmpty) {
+        final userRef = FirebaseDatabase.instance.ref('users').child(studentData.userId);
+        final Map<String, dynamic> userUpdate = {
+          'fullName': studentData.fullName,
+          'studentId': studentData.studentId, // Ensure matricula is synced
+          'campus': widget.campusId,
+          'location': studentData.placeOfResidence, // Sync location
+        };
+        if (studentData.studentPhone != null) {
+          userUpdate['phone'] = studentData.studentPhone;
+        }
+        await userRef.update(userUpdate);
+      }
 
       if (widget.student != null &&
           widget.student!.id != studentData.studentId) {

@@ -23,12 +23,15 @@ class _LockScreenState extends State<LockScreen> {
 
   Future<void> _checkBiometricsAndAuthenticate() async {
     final lockService = Provider.of<LockService>(context, listen: false);
-    final available = await lockService.isBiometricsAvailable();
+    final hardwareAvailable = await lockService.isBiometricsAvailable();
+    final userEnabled = lockService.useBiometrics;
+    
     setState(() {
-      _isBiometricsAvailable = available;
+      _isBiometricsAvailable = hardwareAvailable && userEnabled;
     });
-    // Si están disponibles, intentar autenticar inmediatamente al cargar la pantalla
-    if (available) {
+    
+    // Si están disponibles y activados por el usuario, intentar autenticar inmediatamente
+    if (hardwareAvailable && userEnabled) {
       await lockService.authenticateWithBiometrics();
     }
   }

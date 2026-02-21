@@ -23,12 +23,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   List<Map<String, dynamic>> _activeSessions = [];
   String? _currentDeviceId;
   bool _isLoadingSessions = true;
+  bool _isBiometricsHardwareAvailable = false;
 
   @override
   void initState() {
     super.initState();
     _loadAppVersion();
     _loadSessions();
+    _checkBiometrics();
+  }
+
+  Future<void> _checkBiometrics() async {
+    final lockService = Provider.of<LockService>(context, listen: false);
+    final available = await lockService.isBiometricsAvailable();
+    if (mounted) {
+      setState(() {
+        _isBiometricsHardwareAvailable = available;
+      });
+    }
   }
 
   Future<void> _loadAppVersion() async {
@@ -347,6 +359,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 : 'Configurar PIN de bloqueo',
             onTap: _handlePinManagement,
           ),
+          if (lockService.isPinSet && _isBiometricsHardwareAvailable)
+            _buildSettingsTile(
+              context,
+              icon: Icons.fingerprint_rounded,
+              title: 'Autenticación Biométrica',
+              subtitle: 'Usar huella o rostro para desbloquear',
+              trailing: Switch(
+                value: lockService.useBiometrics,
+                onChanged: (val) async {
+                  if (val) {
+                    // Si intenta activar, probar que funcione
+                    final success = await lockService.authenticateWithBiometricsManually();
+                    if (success) {
+                      await lockService.setUseBiometrics(true);
+                      if (mounted) UiHelpers.showSnackBar(context, 'Biometría activada.');
+                    } else {
+                      if (mounted) UiHelpers.showSnackBar(context, 'Autenticación fallida o cancelada.', isError: true);
+                    }
+                  } else {
+                    await lockService.setUseBiometrics(false);
+                    if (mounted) UiHelpers.showSnackBar(context, 'Biometría desactivada.');
+                  }
+                },
+                activeColor: theme.colorScheme.primary,
+              ),
+            ),
           if (lockService.isPinSet)
             _buildSettingsTile(
               context,

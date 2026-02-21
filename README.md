@@ -11,151 +11,82 @@ Asystem Cobacam se enfoca en proporcionar una experiencia integral y eficiente, 
 ### 👥 Gestión de Usuarios y Roles (RBAC)
 Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cada usuario (Alumno, Prefecto, Académico, Administrador de Plantel, Administrador General) acceda a una interfaz y funcionalidades personalizadas, adaptadas a sus necesidades específicas.
 
-### 🚀 Novedades Recientes y Mejoras Clave
+### 🚀 Últimas Actualizaciones (Febrero 2026)
 
-*   **Vinculación Segura de Cuentas de Alumnos:** Se ha implementado una mejora crítica en el proceso de registro de alumnos. Ahora, al crear una cuenta, el sistema vincula automáticamente el UID de Firebase Authentication del estudiante con su registro de estudiante existente (identificado por matrícula y plantel). Esto resuelve el error "No se puede resetear el permiso de edición única. El alumno no tiene un UID de Firebase asociado.", asegurando la correcta gestión de permisos por parte de la Prefectura y una integridad de datos mejorada.
-*   **Visor/Editor de Perfil de Alumno Mejorado:** La pantalla de perfil para alumnos ha sido significativamente mejorada para ofrecer una experiencia más completa y controlada:
-    *   **Visualización Detallada:** Muestra todos los datos relevantes del estudiante, incluyendo información académica, del tutor y médica, obtenida directamente de su registro detallado.
-    *   **Selector de Ciclo Escolar:** Los alumnos pueden seleccionar el ciclo escolar para ver y, si está autorizado, editar su información específica de ese periodo.
-    *   **Edición Condicional:** La capacidad de editar el perfil está estrictamente controlada. Solo se habilita si la Prefectura lo ha autorizado expresamente y si el permiso de edición única del ciclo escolar aún no ha sido utilizado. Campos clave como matrícula, grupo y ciclo escolar permanecen de solo lectura.
-*   **Gestión de Días No Lectivos (Prefectura):** La Prefectura ahora tiene acceso directo desde su menú a la pantalla "Días No Lectivos". Esto permite una fácil administración de vacaciones, feriados y otros días inhábiles que afectan la toma de asistencia.
-*   **Visibilidad de Código de Validación:** En la pantalla de registro de cuentas, el campo "Código de Validación" ahora cuenta con un icono de alternancia (ojo) para mostrar u ocultar su contenido, mejorando la usabilidad y privacidad.
+#### 🔐 Seguridad y Autenticación Biométrica
+*   **Desbloqueo por Huella/Rostro:** Implementación de autenticación biométrica nativa. Los usuarios pueden proteger el acceso a la aplicación utilizando los sensores de su dispositivo (huella dactilar o reconocimiento facial), complementando el bloqueo por PIN existente.
+*   **Gestión de Sesiones:** Visualización y control de sesiones activas en múltiples dispositivos, con opción de cierre de sesión remoto por seguridad.
 
-### 🎓 Gestión Académica y Ciclos Escolares
-*   **Gestión de Ciclos Escolares (Prefectura):** Pantalla dedicada para la creación, edición y eliminación de ciclos escolares, permitiendo un control preciso sobre la estructura académica vigente y futura.
+#### 🪪 Credencialización Digital Inteligente
+*   **Generador de Alta Resolución:** Módulo de credencialización capaz de generar identificaciones digitales y para impresión en alta definición (1030x666 px).
+*   **Sincronización Automática:**
+    *   **Foto de Perfil:** La foto que el alumno sube a su perfil se sincroniza automáticamente con su credencial digital.
+    *   **Fallback de Género:** Si el alumno no tiene foto, la credencial muestra automáticamente un icono representativo según su género.
+*   **Descarga Controlada:** Los alumnos pueden descargar su credencial digital (formato PNG) directamente a su dispositivo, con un límite de seguridad de **3 descargas por mes**.
 
-### 🧑‍🎓 Perfil del Alumno y Edición Controlada
-*   **Visualización de Perfil:** Los alumnos pueden acceder a su propio perfil para revisar sus datos registrados (personales, de contacto, académicos, médicos).
-*   **Edición Condicional de Datos Personales:** La capacidad de un alumno para editar sus datos personales (excluyendo la matrícula y el ciclo escolar) está habilitada bajo dos condiciones clave:
-    1.  **Autorización de Prefectura:** La Prefecta debe otorgar autorización específica para la edición del perfil.
-    2.  **Edición de un Solo Uso:** Una vez que el alumno guarda los cambios en su perfil, los permisos de edición se restablecen automáticamente, requiriendo una nueva autorización de la Prefecta para futuras modificaciones.
-*   **Ciclo Escolar Actual:** La edición solo es posible si el alumno está visualizando y operando sobre los datos del ciclo escolar actualmente activo en el sistema. Para ciclos pasados o futuros, la información solo será de consulta.
-*   **Matrícula y Ciclo Escolar NO Editables:** La matrícula (ID de estudiante) y el ciclo escolar del alumno son campos de solo lectura y no pueden ser modificados por el alumno bajo ninguna circunstancia.
-*   **Confirmación de Guardado:** Tras modificar y guardar datos, el alumno debe confirmar la exactitud de los cambios. Una vez confirmados, los permisos de edición se restablecen, requiriendo una nueva autorización de la Prefecta para futuras modificaciones.
-*   **Foto de Credencial:** La foto de perfil del alumno se utiliza automáticamente en la generación de su credencial escolar. Se advierte al alumno que elija cuidadosamente su foto, ya que solo puede cambiarse un número limitado de veces al mes y es visible en su credencial.
+#### 🧑‍🎓 Perfil del Alumno: Control y Autonomía
+*   **Edición Condicional:** Los alumnos pueden editar sus datos personales (excluyendo matrícula y ciclo escolar) solo bajo autorización expresa de la Prefectura.
+*   **Permiso de Un Solo Uso:** Una vez que el alumno guarda sus cambios, el permiso de edición se revoca automáticamente para garantizar la integridad de los datos institucionales.
+*   **Gestión de Foto de Perfil:**
+    *   Los alumnos pueden actualizar su foto de perfil (y por ende, su credencial) con un límite de **3 cambios por mes**.
+    *   La eliminación de la foto es ilimitada y revierte la credencial al icono por defecto.
+*   **Campo NSS Unificado:** Estandarización del campo "Número de Seguro Social" (NSS) en todas las vistas (Prefectura y Alumno) para asegurar la consistencia de la información médica.
 
-### 👩‍🏫 Gestión de Alumnos por Prefectura
-*   **Permisos Granulares:** La Prefecta puede autorizar o desautorizar individualmente a cada alumno para editar su perfil (excluyendo la matrícula y el ciclo escolar).
-*   **Autorización por Lotes:** Función que permite a la Prefecta autorizar o desautorizar la edición de perfiles (excluyendo la matrícula y el ciclo escolar) a *todos los alumnos activos del ciclo escolar actual* de forma masiva, optimizando la administración. Al autorizar la edición, se habilita una oportunidad de edición de un solo uso para el alumno.
-*   **Importación y Exportación de Alumnos (Excel):**
-    *   **Descarga de Plantilla:** Botón para descargar una plantilla de Excel que sirve como formato base para la importación masiva de alumnos. Incluye advertencias para modificar la plantilla con datos reales y correspondientes al ciclo escolar seleccionado, ajustando los grupos según sea necesario.
+#### 👩‍🏫 Herramientas para Prefectura
+*   **Autorización por Lotes:** Capacidad para autorizar la edición de perfil a todos los alumnos de un ciclo escolar con un solo clic.
+*   **Visor de Ciclos:** Gestión completa de ciclos escolares, grupos y asignación de docentes.
 
 ### 📊 Gestión de Asistencia Avanzada
-*   **Pase de Lista Flexible:** Registro de entradas y salidas mediante escaneo de credenciales QR, entrada manual o registro masivo para grupos.
-*   **Reporte Detallado de Asistencias:**
-    *   Permite generar reportes Excel con información granular de los eventos de asistencia.
-    *   El usuario puede elegir exportar únicamente los registros de **"Entradas"** o de **"Salidas"**.
-    *   Incluye columnas específicas: `Matrícula`, `Nombre`, `Grupo`, `Fecha`, `Hora Actual`, `Hora Programada`, `Motivo de Incidencia`, `Asistencia`, `Observaciones`.
-    *   Las columnas `Motivo de Incidencia` y `Asistencia` se autocompletan con **fórmulas de Excel** inteligentes que detectan si el alumno llegó tarde o salió temprano, proporcionando el motivo correspondiente.
-    *   El archivo Excel incluye una hoja adicional llamada "**Tipos de Incidencia**" que sirve como referencia de las categorías de incidentes.
-    *   El archivo se descarga con el formato: `FORMATOASISTENCIAS_DD_MM_YYYY.xlsx`.
-*   **Importación y Exportación Excel:**
-    *   **Descarga de Plantillas:** Genera plantillas de Excel para "Entrada" o "Salida" facilitando la preparación de datos. La plantilla de importación ahora incluye un **menú desplegable de validación de datos** en la columna "Motivo de Incidencia" (Columna H) con opciones predefinidas (retrasos, salidas anticipadas, tipos de incidencia). Las opciones se gestionan desde una hoja oculta en el mismo archivo.
-    *   **Importación Masiva:** Permite cargar registros de asistencia desde archivos Excel, agilizando la actualización de la base de datos.
-*   **Modo Offline-First:** La asistencia puede registrarse **sin conexión a internet**. Los datos se guardan localmente (usando Hive) y se sincronizan automáticamente con Firebase al recuperar la conexión, garantizando la continuidad operativa.
+*   **Pase de Lista Flexible:** Registro mediante escaneo de credenciales QR, entrada manual o registro masivo.
+*   **Reportes en Excel:** Exportación detallada de asistencias e incidencias con fórmulas automáticas para el cálculo de retardos y justificaciones.
+*   **Modo Offline-First:** Funcionalidad completa sin conexión a internet, sincronizando los datos con Firebase cuando la conexión se restablece.
 
-### 🧠 Inteligencia Operativa y Asistencia con IA
-*   **AsystemBot (Gemini 1.5 Flash):** Un asistente de inteligencia artificial que proporciona respuestas y ayuda contextual a los usuarios en lenguaje natural, integrado de forma segura a través de Cloud Functions.
-*   **Centro de Inteligencia (Prefectura):** Dashboard con estadísticas y KPIs dinámicos sobre disciplina y asistencia.
-
-### 🛡️ Seguridad y Control
-*   **Bloqueo de Aplicación Local:** Protege la sesión con PIN o datos biométricos.
-*   **Gestión de Sesiones Activas:** Permite visualizar y revocar el acceso desde otros dispositivos.
-*   **Alerta Médica Crítica:** Emite una alerta visual y vibratoria instantánea al escanear credenciales de alumnos con condiciones médicas registradas.
-
-### 🗓️ Gestión y Visualización de Horarios
-*   **Interfaz de Cuadrícula Profesional:** Rediseño completo de la visualización de horarios a un formato de cuadrícula intuitivo (horas como filas, días como columnas).
-*   **Gestión Interactiva:** Edición directa de sesiones de clase haciendo clic en las celdas de la cuadrícula.
-*   **Visores Claros y Concisos:** Vistas de solo lectura para horarios por grupo y maestro.
-*   **Exportación Integrada:** Exporta horarios individuales o múltiples a PDF e imagen (ZIP), con orientación vertical optimizada.
-*   **Filtrado y Búsqueda:** Búsqueda avanzada por materia, maestro o grupo.
-
-### 🛠️ Operaciones Diarias Adicionales
-*   **Generación de Reportes:** Exportación de listas de asistencia e incidencias a formato Excel.
-*   **Generación de Credenciales:** Creación de credenciales en formato PDF listas para imprimir.
+### 🧠 Asistencia con IA (AsystemBot)
+Integración con **Gemini 1.5 Flash** para proporcionar asistencia contextual y respuestas en lenguaje natural sobre el funcionamiento de la plataforma y reglamentos institucionales.
 
 ---
 
 ## 🏛️ Arquitectura y Tecnologías Clave
 
-*   **Framework Frontend:** [Flutter](https://flutter.dev/) para una experiencia multiplataforma nativa.
-*   **Lenguaje:** [Dart](https://dart.dev/).
-*   **Backend y Servicios en la Nube:**
-    *   **Firebase Realtime Database:** Base de datos NoSQL en tiempo real para sincronización y persistencia.
-    *   **Firebase Authentication:** Gestión robusta de usuarios y autenticación segura.
-    *   **Firebase Hosting:** Despliegue rápido y escalable de la aplicación web.
-    *   **Cloud Functions for Firebase (Node.js):** Lógica de backend sin servidor, utilizada para la interacción segura con la API de Gemini (protegiendo claves y personalizando prompts).
-*   **Almacenamiento Local Offline:** [Hive](https://pub.dev/packages/hive) para una persistencia de datos local rápida y eficiente.
-*   **Gestión de Estado:** [Provider](https://pub.dev/packages/provider) para una gestión reactiva y escalable del estado de la aplicación.
-*   **Inteligencia Artificial:** [Google AI SDK (Gemini)](https://pub.dev/packages/google_generative_ai) para capacidades de IA.
-*   **Otras Librerías:**
-    *   `file_picker` y `excel`: Para la manipulación de archivos Excel.
-    *   `mobile_scanner`: Para el escaneo de códigos QR.
-    *   `local_auth` y `flutter_secure_storage`: Para seguridad local y almacenamiento seguro.
-    *   `path_provider`: Para acceso a directorios del sistema de archivos.
+*   **Frontend:** [Flutter](https://flutter.dev/) (Dart) para una experiencia nativa en Web, Android e iOS.
+*   **Backend & Cloud:**
+    *   **Firebase Realtime Database:** Sincronización de datos en tiempo real.
+    *   **Firebase Authentication:** Gestión segura de identidades.
+    *   **Firebase Hosting:** Despliegue de alto rendimiento para la versión web.
+    *   **Cloud Functions:** Lógica de negocio segura y conexión con APIs de IA.
+*   **Almacenamiento Local:** [Hive](https://pub.dev/packages/hive) para persistencia offline rápida.
+*   **Seguridad Local:** `local_auth` y `flutter_secure_storage` para biometría y encriptación de datos sensibles.
 
 ---
 
-## 📜 Historia del Desarrollo del Sistema ASYSTEM
+## 📜 Historia del Desarrollo
 
-El sistema ASYSTEM inició su desarrollo en el transcurso de **Mayo - Agosto de 2024** como un proyecto de estadía profesional, impulsado por **dos alumnos de TSU de la UTCAM** (Universidad Tecnológica de Campeche).
+El sistema **ASYSTEM** inició su desarrollo entre **Mayo y Agosto de 2024** como un proyecto de estadía profesional impulsado por alumnos de la **UTCAM** (Universidad Tecnológica de Campeche).
 
-Tras un periodo de pausa, el proyecto fue retomado y se ha continuado su evolución hasta la fecha. Actualmente, se encuentra en sus **etapas finales de desarrollo**, con el objetivo de realizar las **primeras pruebas piloto en Marzo de 2026** en el **Plantel 05 Atasta** para el nuevo ciclo escolar.
-
-La visión a futuro es que, mediante un acuerdo formal, este sistema pueda ser implementado progresivamente en más planteles, o incluso en **todos los planteles del COBACAM**, optimizando así la gestión académica y administrativa a nivel estatal.
-
-### Supervisión del Proyecto
-El proyecto fue supervisado por:
-*   **Director del Plantel 05 Atasta:** Apoyo fundamental en la dirección estratégica y necesidades institucionales.
-*   **Encargado de Cómputo:** Asesoramiento técnico y coordinación para la integración tecnológica.
-*   **Prefecta:** Orientación sobre los procesos académicos y administrativos del día a día.
+Actualmente, el proyecto se encuentra en sus **etapas finales de desarrollo**, preparándose para pruebas piloto en el **Plantel 05 Atasta** para el ciclo escolar **Marzo 2026**. El liderazgo técnico está a cargo de **Ángel del Carmen González Alcocer**.
 
 ---
 
-## 🔒 Propiedad y Créditos
+## ⚙️ Despliegue y Configuración
 
-La propiedad intelectual y los derechos sobre los códigos fuente, bases de datos y demás componentes del proyecto ASYSTEM pertenecen al **Plantel 05 Atasta**. El desarrollo inicial y actual del sistema ha sido liderado por el joven **Ángel del Carmen González Alcocer**, con el apoyo y supervisión de los encargados del plantel.
+### 1. Requisitos
+*   Flutter SDK (v3.22 o superior)
+*   Firebase CLI
 
-En caso de interés de otros planteles o de la totalidad de los planteles del COBACAM en adoptar el sistema, se establecerá un acuerdo formal para su implementación y uso, respetando la titularidad del Plantel 05 Atasta sobre el proyecto.
-
----
-
-## ⚙️ Despliegue y Desarrollo
-
-### 1. Prerrequisitos
-*   Tener [Flutter SDK](https://flutter.dev/docs/get-started/install) instalado.
-*   Un editor de código como [Visual Studio Code](https://code.visualstudio.com/).
-*   Tener una cuenta de [Firebase](https://firebase.google.com/) y el [Firebase CLI](https://firebase.google.com/docs/cli) instalado y configurado.
-
-### 2. Configuración del Proyecto
+### 2. Instalación
 ```bash
-# Clona el repositorio
 git clone https://github.com/Angelgonzalez2004/asystem_cobacam.git
 cd asystem_cobacam
-
-# Instala las dependencias de Flutter
 flutter pub get
-
-# Genera los archivos necesarios (ej. para Hive, json_serializable)
-flutter pub run build_runner build --delete-conflicting-outputs
-
-# Asegúrate de que tu proyecto Firebase esté correctamente configurado.
-# El archivo `lib/firebase_options.dart` es crucial para la conexión de la app con tu proyecto Firebase.
 ```
 
-### 3. Ejecutar la Aplicación en Desarrollo
+### 3. Compilación para Web
 ```bash
-# Para ejecutar en un dispositivo o emulador
-flutter run
+flutter build web --release
 ```
 
-### 4. Compilar y Desplegar en Firebase Hosting
+### 4. Despliegue
 ```bash
-# Compila la versión de producción para la web
-flutter build web
-
-# Despliega la aplicación web en Firebase Hosting
-# Asegúrate de haber configurado tu proyecto Firebase con `firebase init` y de estar autenticado con `firebase login`.
 firebase deploy --only hosting
 ```
 

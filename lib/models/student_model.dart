@@ -49,8 +49,8 @@ class Student {
   String userId; // Firebase User UID
   @HiveField(21)
   String registeredByUserId; // User ID of the prefect who registered the student
-
-
+  @HiveField(22)
+  String? profileImageUrl; // NEW
 
   Student({
     required this.id,
@@ -75,8 +75,7 @@ class Student {
     this.canEditProfile = false, // NEW: Default to false
     required this.userId, // NEW
     required this.registeredByUserId, // NEW
-
-
+    this.profileImageUrl, // NEW
   });
 
   // Factory constructor for creating a Student from a Firebase DataSnapshot
@@ -111,8 +110,7 @@ class Student {
       canEditProfile: data['canEditProfile'] ?? false, // NEW
       userId: data['userId'] ?? '', // NEW
       registeredByUserId: data['registeredByUserId'] ?? '', // NEW
-
-
+      profileImageUrl: data['profileImageUrl'], // NEW
     );
   }
 
@@ -140,7 +138,6 @@ class Student {
       'canEditProfile': canEditProfile, // NEW
       'userId': userId, // NEW
       'registeredByUserId': registeredByUserId, // NEW
-
-
+      'profileImageUrl': profileImageUrl, // NEW
     };
   }}
