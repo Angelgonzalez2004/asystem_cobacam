@@ -53,6 +53,16 @@ class LockService with ChangeNotifier {
     }
   }
 
+  Future<List<BiometricType>> getAvailableBiometrics() async {
+    try {
+      if (kIsWeb) return [];
+      return await _localAuth.getAvailableBiometrics();
+    } catch (e) {
+      debugPrint('Error getting available biometrics: $e');
+      return [];
+    }
+  }
+
   Future<bool> authenticateWithBiometrics() async {
     if (!_useBiometrics || !await isBiometricsAvailable()) return false;
     return authenticateWithBiometricsManually();

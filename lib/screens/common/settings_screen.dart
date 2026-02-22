@@ -6,6 +6,7 @@ import 'package:asystem_cobacam/utils/ui_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:intl/intl.dart';
@@ -24,6 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _currentDeviceId;
   bool _isLoadingSessions = true;
   bool _isBiometricsHardwareAvailable = false;
+  List<BiometricType> _availableBiometrics = [];
 
   @override
   void initState() {
@@ -36,9 +38,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _checkBiometrics() async {
     final lockService = Provider.of<LockService>(context, listen: false);
     final available = await lockService.isBiometricsAvailable();
+    final types = await lockService.getAvailableBiometrics();
     if (mounted) {
       setState(() {
         _isBiometricsHardwareAvailable = available;
+        _availableBiometrics = types;
       });
     }
   }
@@ -359,32 +363,58 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 : 'Configurar PIN de bloqueo',
             onTap: _handlePinManagement,
           ),
-          if (lockService.isPinSet && _isBiometricsHardwareAvailable)
-            _buildSettingsTile(
-              context,
-              icon: Icons.fingerprint_rounded,
-              title: 'Autenticación Biométrica',
-              subtitle: 'Usar huella o rostro para desbloquear',
-              trailing: Switch(
-                value: lockService.useBiometrics,
-                onChanged: (val) async {
-                  if (val) {
-                    // Si intenta activar, probar que funcione
-                    final success = await lockService.authenticateWithBiometricsManually();
-                    if (success) {
-                      await lockService.setUseBiometrics(true);
-                      if (mounted) UiHelpers.showSnackBar(context, 'Biometría activada.');
-                    } else {
-                      if (mounted) UiHelpers.showSnackBar(context, 'Autenticación fallida o cancelada.', isError: true);
-                    }
-                  } else {
-                    await lockService.setUseBiometrics(false);
-                    if (mounted) UiHelpers.showSnackBar(context, 'Biometría desactivada.');
-                  }
-                },
-                activeColor: theme.colorScheme.primary,
-              ),
+          
+          _buildSettingsTile(
+            context,
+            icon: Icons.fingerprint_rounded,
+            title: 'Autenticación Biométrica',
+            subtitle: () {
+              if (!_isBiometricsHardwareAvailable) {
+                return 'No disponible en este dispositivo';
+              }
+              if (!lockService.isPinSet) {
+                return 'Primero debes configurar un PIN';
+              }
+              
+              final typeNames = <String>[];
+              if (_availableBiometrics.contains(BiometricType.face)) {
+                typeNames.add('rostro');
+              }
+              if (_availableBiometrics.contains(BiometricType.fingerprint)) {
+                typeNames.add('huella digital');
+              }
+              if (_availableBiometrics.contains(BiometricType.iris)) {
+                typeNames.add('iris');
+              }
+              
+              if (typeNames.isEmpty) {
+                return 'Usar biometría para desbloquear'; 
+              }
+              
+              return 'Usar ${typeNames.join(' o ')} para desbloquear';
+            }(),
+            trailing: Switch(
+              value: lockService.useBiometrics,
+              onChanged: !lockService.isPinSet || !_isBiometricsHardwareAvailable
+                  ? null
+                  : (val) async {
+                      if (val) {
+                        final success = await lockService.authenticateWithBiometricsManually();
+                        if (success) {
+                          await lockService.setUseBiometrics(true);
+                          if (mounted) UiHelpers.showSnackBar(context, 'Biometría activada.');
+                        } else {
+                          if (mounted) UiHelpers.showSnackBar(context, 'Autenticación fallida o cancelada.', isError: true);
+                        }
+                      } else {
+                        await lockService.setUseBiometrics(false);
+                        if (mounted) UiHelpers.showSnackBar(context, 'Biometría desactivada.');
+                      }
+                    },
+              activeColor: theme.colorScheme.primary,
             ),
+          ),
+
           if (lockService.isPinSet)
             _buildSettingsTile(
               context,

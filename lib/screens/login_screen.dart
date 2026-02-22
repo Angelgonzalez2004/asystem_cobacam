@@ -4,6 +4,7 @@ import 'package:asystem_cobacam/screens/dashboards/campus_admin/campus_admin_das
 import 'package:asystem_cobacam/screens/dashboards/general_admin/general_admin_dashboard_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_dashboard_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/student/student_dashboard_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/tutor/tutor_dashboard_screen.dart';
 import 'package:asystem_cobacam/screens/forgot_password_screen.dart';
 import 'package:asystem_cobacam/screens/signup_screen.dart';
 import 'package:asystem_cobacam/services/session_service.dart';
@@ -196,6 +197,9 @@ class _LoginScreenState extends State<LoginScreen> {
     switch (role) {
       case 'Alumno':
         dashboard = const StudentDashboardScreen();
+        break;
+      case 'Tutor':
+        dashboard = const TutorDashboardScreen();
         break;
       case 'Academica':
         dashboard = const AcademicDashboardScreen();

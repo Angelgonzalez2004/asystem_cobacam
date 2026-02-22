@@ -10,7 +10,9 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class SchoolCycleManagementScreen extends StatefulWidget {
-  const SchoolCycleManagementScreen({super.key});
+  final bool isReadOnly;
+
+  const SchoolCycleManagementScreen({super.key, this.isReadOnly = false});
 
   @override
   _SchoolCycleManagementScreenState createState() =>
@@ -245,35 +247,43 @@ class _SchoolCycleManagementScreenState
                                       ],
                                     ),
                                   ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(Icons.edit_outlined,
-                                            color: theme.colorScheme.primary),
-                                        onPressed: () => _showSchoolCycleDialog(
-                                            cycle: cycle),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(Icons.delete_outline,
-                                            color: theme.colorScheme.error),
-                                        onPressed: () async {
-                                          final confirm = await UiHelpers
-                                              .showConfirmationDialog(context,
-                                                  title: 'Eliminar Ciclo',
-                                                  content: '¿Estás seguro?',
-                                                  isDestructive: true);
-                                          if (confirm) {
-                                            _deleteSchoolCycle(cycle.id);
-                                            if (mounted) {
-                                              UiHelpers.showSnackBar(
-                                                  context, 'Ciclo eliminado.');
-                                            }
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  ),
+                                  trailing: widget.isReadOnly
+                                      ? null
+                                      : Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: Icon(Icons.edit_outlined,
+                                                  color:
+                                                      theme.colorScheme.primary),
+                                              onPressed: () =>
+                                                  _showSchoolCycleDialog(
+                                                      cycle: cycle),
+                                            ),
+                                            IconButton(
+                                              icon: Icon(Icons.delete_outline,
+                                                  color:
+                                                      theme.colorScheme.error),
+                                              onPressed: () async {
+                                                final confirm = await UiHelpers
+                                                    .showConfirmationDialog(
+                                                        context,
+                                                        title: 'Eliminar Ciclo',
+                                                        content:
+                                                            '¿Estás seguro?',
+                                                        isDestructive: true);
+                                                if (confirm) {
+                                                  _deleteSchoolCycle(cycle.id);
+                                                  if (mounted) {
+                                                    UiHelpers.showSnackBar(
+                                                        context,
+                                                        'Ciclo eliminado.');
+                                                  }
+                                                }
+                                              },
+                                            ),
+                                          ],
+                                        ),
                                 ),
                               ),
                             );
@@ -282,11 +292,13 @@ class _SchoolCycleManagementScreenState
                 ),
               );
             }),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showSchoolCycleDialog(),
-        backgroundColor: theme.colorScheme.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      floatingActionButton: widget.isReadOnly
+          ? null
+          : FloatingActionButton(
+              onPressed: () => _showSchoolCycleDialog(),
+              backgroundColor: theme.colorScheme.primary,
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
     );
   }
 

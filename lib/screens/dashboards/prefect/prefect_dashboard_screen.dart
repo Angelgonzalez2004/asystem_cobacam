@@ -154,7 +154,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
     }
   }
 
-  void _onNavigate(String route) {
+  void _onNavigate(String route, {Object? arguments}) {
     int index = 0;
     switch (route) {
       case 'home':

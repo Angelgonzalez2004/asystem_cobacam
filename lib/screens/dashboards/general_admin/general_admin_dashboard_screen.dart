@@ -9,7 +9,7 @@ class GeneralAdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ResponsiveDashboard(
       role: 'Admin General',
-      bodyBuilder: (onNavigate) => GeneralAdminHomeScreen(onNavigate: onNavigate),
+      bodyBuilder: (onNavigate, _, __, ___) => GeneralAdminHomeScreen(onNavigate: onNavigate),
     );
   }
 }

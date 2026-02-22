@@ -1,5 +1,4 @@
 import 'package:asystem_cobacam/models/announcement_model.dart';
-import 'package:asystem_cobacam/screens/dashboards/student/student_credential_screen.dart';
 import 'package:asystem_cobacam/services/announcement_service.dart';
 import 'package:asystem_cobacam/widgets/announcement_widgets.dart';
 import 'package:asystem_cobacam/widgets/welcome_header.dart';
@@ -77,26 +76,49 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
-                    Center(
-                      child: Column(
-                        children: [
-                          _buildDashboardCard(
-                            context,
-                            index: 0,
-                            icon: Icons.badge_rounded,
-                            label: 'Mi Credencial',
-                            color: Colors.orange.shade500,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const StudentCredentialScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
+                    GridView(
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 180,
+                        childAspectRatio: 1,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
                       ),
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _buildDashboardCard(
+                          context,
+                          index: 0,
+                          icon: Icons.badge_rounded,
+                          label: 'Mi Credencial',
+                          color: Colors.orange.shade500,
+                          onTap: () => widget.onNavigate?.call('credencial_alumno'),
+                        ),
+                        _buildDashboardCard(
+                          context,
+                          index: 1,
+                          icon: Icons.calendar_month_outlined,
+                          label: 'Ciclos Escolares',
+                          color: Colors.blue.shade500,
+                          onTap: () => widget.onNavigate?.call('ciclos_escolares'),
+                        ),
+                        _buildDashboardCard(
+                          context,
+                          index: 2,
+                          icon: Icons.event_busy_rounded,
+                          label: 'Días Inhábiles',
+                          color: Colors.red.shade400,
+                          onTap: () => widget.onNavigate?.call('dias_no_lectivos'),
+                        ),
+                        _buildDashboardCard(
+                          context,
+                          index: 3,
+                          icon: Icons.person_rounded,
+                          label: 'Mi Perfil',
+                          color: Colors.green.shade500,
+                          onTap: () => widget.onNavigate?.call('profile'),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 32),
                     Row(

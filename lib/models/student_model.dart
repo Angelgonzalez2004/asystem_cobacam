@@ -51,6 +51,8 @@ class Student {
   String registeredByUserId; // User ID of the prefect who registered the student
   @HiveField(22)
   String? profileImageUrl; // NEW
+  @HiveField(23)
+  List<String>? guardianUserIds; // NEW: List of linked guardian UIDs
 
   Student({
     required this.id,
@@ -76,6 +78,7 @@ class Student {
     required this.userId, // NEW
     required this.registeredByUserId, // NEW
     this.profileImageUrl, // NEW
+    this.guardianUserIds, // NEW
   });
 
   // Factory constructor for creating a Student from a Firebase DataSnapshot
@@ -111,6 +114,7 @@ class Student {
       userId: data['userId'] ?? '', // NEW
       registeredByUserId: data['registeredByUserId'] ?? '', // NEW
       profileImageUrl: data['profileImageUrl'], // NEW
+      guardianUserIds: data['guardianUserIds'] != null ? List<String>.from(data['guardianUserIds']) : null, // NEW
     );
   }
 
@@ -139,5 +143,8 @@ class Student {
       'userId': userId, // NEW
       'registeredByUserId': registeredByUserId, // NEW
       'profileImageUrl': profileImageUrl, // NEW
+      'guardianUserIds': guardianUserIds, // NEW
     };
-  }}
+  }
+}
+

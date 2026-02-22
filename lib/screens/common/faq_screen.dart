@@ -1,3 +1,4 @@
+import 'package:asystem_cobacam/services/faq_service.dart';
 import 'package:flutter/material.dart';
 
 class FaqScreen extends StatefulWidget {
@@ -8,10 +9,15 @@ class FaqScreen extends StatefulWidget {
 }
 
 class _FaqScreenState extends State<FaqScreen> {
+  // State variables for UI controls
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedCategory = 'Todas';
 
+  // Service instance
+  final FaqService _faqService = FaqService();
+
+  // Data lists
   final List<String> _categories = [
     'Todas',
     'Alumnos',
@@ -19,718 +25,6 @@ class _FaqScreenState extends State<FaqScreen> {
     'Prefectura',
     'Administrativo',
     'Sistema'
-  ];
-
-  final List<Map<String, dynamic>> _faqList = [
-    // ROL: ALUMNOS
-    {
-      'q': '¿Cuál es la tolerancia de entrada?',
-      'a':
-          '15 minutos. De 16 a 20 min es retardo. Más de 20 min requiere pase de dirección.',
-      'c': 'Alumnos',
-      'icon': Icons.timer_outlined
-    },
-    {
-      'q': '¿Puedo usar mi celular en clase?',
-      'a':
-          'Prohibido, salvo con permiso del docente para fines didácticos. El incumplimiento genera un reporte.',
-      'c': 'Alumnos',
-      'icon': Icons.phone_android_outlined
-    },
-    {
-      'q': '¿Cómo justifico una inasistencia?',
-      'a':
-          'Tu padre o tutor debe acudir a Prefectura en un plazo no mayor a 48 horas hábiles tras la ausencia.',
-      'c': 'Alumnos',
-      'icon': Icons.event_busy_outlined
-    },
-    {
-      'q': '¿Qué pasa si olvido mi credencial?',
-      'a':
-          'Debes solicitar un pase de acceso temporal en la Dirección del plantel para poder ingresar.',
-      'c': 'Alumnos',
-      'icon': Icons.badge_outlined
-    },
-    {
-      'q': '¿Hay un código de vestimenta?',
-      'a':
-          'Sí, el porte del uniforme completo es obligatorio. Zapatos escolares, falda a la rodilla y cabello recogido en laboratorios.',
-      'c': 'Alumnos',
-      'icon': Icons.checkroom_outlined
-    },
-    {
-      'q': '¿Dónde puedo consultar mis calificaciones?',
-      'a':
-          'Las calificaciones parciales y finales se publican en el portal oficial del colegio. Algunos docentes también las comparten por medios digitales.',
-      'c': 'Alumnos',
-      'icon': Icons.grading_outlined
-    },
-    {
-      'q': '¿Qué hago si tengo un problema con un maestro?',
-      'a':
-          'Habla primero con el maestro. Si no se resuelve, acude con tu orientador educativo o el coordinador académico.',
-      'c': 'Alumnos',
-      'icon': Icons.record_voice_over_outlined
-    },
-    {
-      'q': '¿Puedo salir del plantel en horario de clases?',
-      'a':
-          'No, a menos que sea una emergencia médica o un permiso especial gestionado por tus padres en Dirección.',
-      'c': 'Alumnos',
-      'icon': Icons.exit_to_app_outlined
-    },
-    {
-      'q': '¿Cómo funcionan los exámenes de regularización?',
-      'a':
-          'Son exámenes para acreditar materias reprobadas. Las fechas y costos se publican al final de cada semestre.',
-      'c': 'Alumnos',
-      'icon': Icons.rule_outlined
-    },
-    {
-      'q': '¿Qué son las actividades paraescolares?',
-      'a':
-          'Son talleres deportivos y culturales que complementan tu formación. Inscribirte en una es requisito para ciertas becas.',
-      'c': 'Alumnos',
-      'icon': Icons.sports_basketball_outlined
-    },
-    {
-      'q': '¿Cómo solicito una beca?',
-      'a':
-          'Las convocatorias de becas (Benito Juárez, etc.) se anuncian en los medios oficiales del plantel. Debes estar atento a los requisitos.',
-      'c': 'Alumnos',
-      'icon': Icons.school_outlined
-    },
-    {
-      'q': '¿Qué hago en caso de ciberacoso?',
-      'a':
-          'Guarda toda la evidencia (capturas de pantalla) y repórtalo inmediatamente a Prefectura o a tu orientador. No respondas a las agresiones.',
-      'c': 'Alumnos',
-      'icon': Icons.shield_outlined
-    },
-    {
-      'q': '¿Puedo comer dentro del salón?',
-      'a':
-          'No, el consumo de alimentos está restringido a la cafetería y áreas designadas durante el receso.',
-      'c': 'Alumnos',
-      'icon': Icons.fastfood_outlined
-    },
-    {
-      'q': '¿El servicio social es obligatorio?',
-      'a':
-          'Sí, es un requisito indispensable para poder titularte. Se realiza en el último año de bachillerato.',
-      'c': 'Alumnos',
-      'icon': Icons.work_history_outlined
-    },
-    {
-      'q': '¿Cómo me uno al equipo de fútbol?',
-      'a':
-          'Acércate al entrenador o al departamento de actividades paraescolares al inicio del semestre para conocer las fechas de las visorías.',
-      'c': 'Alumnos',
-      'icon': Icons.sports_soccer_outlined
-    },
-    {
-      'q': '¿Qué pasa si daño el mobiliario?',
-      'a':
-          'Serás responsable de cubrir el costo de la reparación o reposición del bien dañado y recibirás una sanción disciplinaria.',
-      'c': 'Alumnos',
-      'icon': Icons.chair_outlined
-    },
-    {
-      'q': '¿Cómo tramito mi constancia de estudios?',
-      'a':
-          'Debes solicitarla en el departamento de Control Escolar. El trámite tiene un costo y tarda unos días hábiles.',
-      'c': 'Alumnos',
-      'icon': Icons.description_outlined
-    },
-    {
-      'q': '¿Hay casilleros disponibles?',
-      'a':
-          'Algunos planteles cuentan con casilleros. Su asignación y costo se gestionan en la administración del plantel al inicio del ciclo escolar.',
-      'c': 'Alumnos',
-      'icon': Icons.lock_outline
-    },
-    {
-      'q': '¿A quién acudo si me siento mal?',
-      'a':
-          'Informa a tu profesor o a cualquier prefecto. Ellos te dirigirán al servicio médico del plantel para una valoración.',
-      'c': 'Alumnos',
-      'icon': Icons.sick_outlined
-    },
-    {
-      'q': '¿Puedo usar piercings o tintes de cabello?',
-      'a':
-          'Se pide discreción. Piercings pequeños y tintes de colores naturales suelen ser permitidos, pero evita los que sean muy llamativos.',
-      'c': 'Alumnos',
-      'icon': Icons.face_retouching_natural_outlined
-    },
-
-    // ROL: ACADÉMICA
-    {
-      'q': '¿Cómo registro las calificaciones en el sistema?',
-      'a':
-          'Las calificaciones se capturan en el portal docente en las fechas estipuladas en el calendario de evaluación emitido por Control Escolar.',
-      'c': 'Académica',
-      'icon': Icons.edit_calendar_outlined
-    },
-    {
-      'q': '¿Qué procede si un alumno es sorprendido copiando?',
-      'a':
-          'Se debe anular el examen, levantar un acta de hechos y reportar el incidente a la coordinación académica para la sanción correspondiente.',
-      'c': 'Académica',
-      'icon': Icons.visibility_off_outlined
-    },
-    {
-      'q': '¿Cómo solicito material didáctico?',
-      'a':
-          'La solicitud de proyectores, equipo de audio, etc., se realiza vía formato oficial con el encargado de recursos materiales de tu plantel.',
-      'c': 'Académica',
-      'icon': Icons.build_circle_outlined
-    },
-    {
-      'q': '¿Cuál es el procedimiento para faltar a mis labores?',
-      'a':
-          'Debes notificar a tu jefe inmediato y presentar un justificante médico del ISSSTE o la justificación pertinente a Recursos Humanos.',
-      'c': 'Académica',
-      'icon': Icons.medical_information_outlined
-    },
-    {
-      'q': '¿Cómo se gestiona una visita escolar o excursión?',
-      'a':
-          'Se debe presentar un proyecto detallado a la Dirección Académica con al menos un mes de anticipación, incluyendo objetivos y permisos de padres.',
-      'c': 'Académica',
-      'icon': Icons.directions_bus_outlined
-    },
-    {
-      'q': '¿Dónde consulto el plan de estudios vigente?',
-      'a':
-          'Los planes y programas de estudio de todas las asignaturas están disponibles en el portal de la Dirección General Académica.',
-      'c': 'Académica',
-      'icon': Icons.menu_book_outlined
-    },
-    {
-      'q': '¿Puedo cambiar la fecha de un examen parcial?',
-      'a':
-          'Cualquier modificación al calendario de evaluación debe ser consensuada con el grupo y autorizada por la coordinación académica.',
-      'c': 'Académica',
-      'icon': Icons.event_repeat_outlined
-    },
-    {
-      'q': '¿Qué hago si un grupo no tiene aula asignada?',
-      'a':
-          'Reporta la situación inmediatamente al área de planeación o a la subdirección del plantel para que se asigne un espacio a la brevedad.',
-      'c': 'Académica',
-      'icon': Icons.no_meeting_room_outlined
-    },
-    {
-      'q': '¿Cómo se reporta a un alumno por mal comportamiento?',
-      'a':
-          'Puedes usar la función "Reporte de Incidencias" en esta misma app o enviar un reporte escrito a Prefectura con los detalles del caso.',
-      'c': 'Académica',
-      'icon': Icons.report_problem_outlined
-    },
-    {
-      'q': '¿Existen cursos de formación docente?',
-      'a':
-          'Sí, la Dirección Académica ofrece un programa de formación continua. Las convocatorias se publican vía correo institucional.',
-      'c': 'Académica',
-      'icon': Icons.model_training_outlined
-    },
-    {
-      'q': '¿Puedo dar clases particulares a mis alumnos?',
-      'a':
-          'No, es considerado un conflicto de interés. Se deben ofrecer asesorías académicas gratuitas dentro del plantel como parte de tus funciones.',
-      'c': 'Académica',
-      'icon': Icons.money_off_outlined
-    },
-    {
-      'q': '¿Cómo se maneja la evaluación de alumnos con necesidades especiales?',
-      'a':
-          'Se debe trabajar en conjunto con el departamento psicopedagógico para establecer adecuaciones curriculares y de evaluación pertinentes.',
-      'c': 'Académica',
-      'icon': Icons.psychology_alt_outlined
-    },
-    {
-      'q': '¿Qué porcentaje de asistencia necesita un alumno para acreditar?',
-      'a':
-          'Generalmente, se requiere un mínimo del 80% de asistencia a clases para tener derecho a la evaluación ordinaria.',
-      'c': 'Académica',
-      'icon': Icons.percent_outlined
-    },
-    {
-      'q': '¿A quién recurro si falla mi equipo de cómputo en el aula?',
-      'a':
-          'Reporta el fallo al departamento de soporte técnico o informática del plantel para que envíen a un técnico a revisar el equipo.',
-      'c': 'Académica',
-      'icon': Icons.computer_outlined
-    },
-    {
-      'q': '¿Cómo se organizan las reuniones de padres de familia?',
-      'a':
-          'Son coordinadas por el departamento de orientación educativa. Recibirás una calendarización para citar a los padres de tus grupos.',
-      'c': 'Académica',
-      'icon': Icons.groups_outlined
-    },
-    {
-      'q': '¿Cuál es el protocolo ante una emergencia médica en el aula?',
-      'a':
-          'Mantén la calma, no muevas al alumno si es una caída y envía a un estudiante a buscar al prefecto o al servicio médico urgentemente.',
-      'c': 'Académica',
-      'icon': Icons.emergency_outlined
-    },
-    {
-      'q': '¿Puedo usar material de internet para mis clases?',
-      'a':
-          'Sí, siempre y cuando se respeten los derechos de autor y se utilice como un complemento a los programas de estudio oficiales.',
-      'c': 'Académica',
-      'icon': Icons.public_outlined
-    },
-    {
-      'q': '¿Quién autoriza los proyectos de investigación?',
-      'a':
-          'Los proyectos de investigación o participación en ferias de ciencias deben ser registrados y aprobados por la academia correspondiente.',
-      'c': 'Académica',
-      'icon': Icons.science_outlined
-    },
-    {
-      'q': '¿Es obligatorio asistir a los consejos técnicos?',
-      'a':
-          'Sí, la asistencia a las reuniones de academia y consejos técnicos es parte de las obligaciones del personal docente.',
-      'c': 'Académica',
-      'icon': Icons.business_center_outlined
-    },
-    {
-      'q': '¿Cómo se elige al jefe de grupo?',
-      'a':
-          'La elección del jefe y subjefe de grupo se realiza de forma democrática por los propios alumnos durante la primera semana de clases.',
-      'c': 'Académica',
-      'icon': Icons.how_to_vote_outlined
-    },
-
-    // ROL: PREFECTURA
-    {
-      'q': '¿Cuál es mi principal función en el cambio de clase?',
-      'a':
-          'Asegurar que los pasillos se despejen rápidamente y que los alumnos ingresen a su siguiente clase de manera ordenada y puntual.',
-      'c': 'Prefectura',
-      'icon': Icons.transfer_within_a_station_outlined
-    },
-    {
-      'q': '¿Cómo debo actuar ante una riña de alumnos?',
-      'a':
-          'Separa a los involucrados sin ponerte en riesgo, solicita apoyo por radio si es necesario y condúcelos a la oficina para el reporte.',
-      'c': 'Prefectura',
-      'icon': Icons.sports_kabaddi_outlined
-    },
-    {
-      'q': '¿Puedo decomisar un celular?',
-      'a':
-          'Sí. Si un alumno incumple el reglamento, el celular se retiene, se etiqueta y se entrega al final del día al padre o tutor, no al alumno.',
-      'c': 'Prefectura',
-      'icon': Icons.phone_locked_outlined
-    },
-    {
-      'q': '¿Qué información debe contener un reporte de incidencia?',
-      'a':
-          'Debe incluir fecha, hora, lugar, nombres completos de los involucrados, descripción detallada de los hechos y la firma del prefecto.',
-      'c': 'Prefectura',
-      'icon': Icons.edit_note_outlined
-    },
-    {
-      'q': '¿Cómo procedo con un alumno con aliento alcohólico?',
-      'a':
-          'Retíralo discretamente a un lugar seguro, notifica a Dirección, contacta a su tutor y no permitas que se retire solo del plantel.',
-      'c': 'Prefectura',
-      'icon': Icons.no_drinks_outlined
-    },
-    {
-      'q': '¿Qué hago si un padre de familia se presenta de forma agresiva?',
-      'a':
-          'Mantén una actitud profesional, escúchalo en un lugar privado y, si la situación escala, solicita la presencia de un directivo.',
-      'c': 'Prefectura',
-      'icon': Icons.security_outlined
-    },
-    {
-      'q': '¿Cuál es el protocolo para un "operativo mochila"?',
-      'a':
-          'Se realiza de forma sorpresiva, con presencia de directivos y padres de familia, respetando siempre la integridad y derechos del alumno.',
-      'c': 'Prefectura',
-      'icon': Icons.backpack_outlined
-    },
-    {
-      'q': '¿Puedo autorizar la salida de un alumno?',
-      'a':
-          'No. Únicamente el Director o Subdirector del plantel pueden autorizar salidas anticipadas, y debe quedar registro en el sistema.',
-      'c': 'Prefectura',
-      'icon': Icons.lock_person_outlined
-    },
-    {
-      'q': '¿Cómo se supervisa a los grupos sin maestro?',
-      'a':
-          'Se debe pasar lista, asignarles una actividad académica o canalizarlos a la biblioteca, permaneciendo cerca para vigilar el orden.',
-      'c': 'Prefectura',
-      'icon': Icons.supervisor_account_outlined
-    },
-    {
-      'q': '¿Cuándo debo realizar rondines?',
-      'a':
-          'Constantemente, especialmente durante el receso y en los cambios de hora. Presta especial atención a baños, canchas y zonas aisladas.',
-      'c': 'Prefectura',
-      'icon': Icons.tour_outlined
-    },
-    {
-      'q': '¿Qué hago si encuentro un objeto perdido?',
-      'a':
-          'Recógelo y llévalo a la oficina de Prefectura. Si es de valor, regístralo en la bitácora de objetos encontrados.',
-      'c': 'Prefectura',
-      'icon': Icons.find_in_page_outlined
-    },
-    {
-      'q': '¿Cómo se aplica una sanción de suspensión?',
-      'a':
-          'La suspensión es determinada por el Consejo Disciplinario. Tu función es notificar al padre de familia y registrar la sanción en el sistema.',
-      'c': 'Prefectura',
-      'icon': Icons.gavel_outlined
-    },
-    {
-      'q': '¿Un alumno puede justificar sus propias faltas?',
-      'a':
-          'No, el trámite es estrictamente personal y debe realizarlo el padre, madre o tutor legal del estudiante.',
-      'c': 'Prefectura',
-      'icon': Icons.person_off_outlined
-    },
-    {
-      'q': '¿Cómo identifico a personas ajenas al plantel?',
-      'a':
-          'Cualquier persona sin uniforme o gafete de empleado debe ser abordada cortésmente y dirigida a la recepción para que se identifique.',
-      'c': 'Prefectura',
-      'icon': Icons.help_outline
-    },
-    {
-      'q': '¿Qué hago en caso de un sismo o incendio?',
-      'a':
-          'Sigue el protocolo de Protección Civil: activa la alarma, guía a los alumnos a las zonas de seguridad y pasa lista para confirmar que todos salieron.',
-      'c': 'Prefectura',
-      'icon': Icons.local_fire_department_outlined
-    },
-    {
-      'q': '¿Es mi responsabilidad el control de la puerta?',
-      'a':
-          'Sí, el control de acceso y salida del plantel es una de las funciones primordiales para garantizar la seguridad de la comunidad escolar.',
-      'c': 'Prefectura',
-      'icon': Icons.sensor_door_outlined
-    },
-    {
-      'q': '¿Cómo debo dirigirme a los alumnos?',
-      'a':
-          'Siempre con respeto, utilizando un lenguaje firme pero asertivo. Evita apodos, gritos o cualquier trato que pueda ser considerado humillante.',
-      'c': 'Prefectura',
-      'icon': Icons.support_agent_outlined
-    },
-    {
-      'q': '¿Puedo revisar las mochilas de los alumnos a diario?',
-      'a':
-          'No de forma aleatoria e individual. La revisión debe estar justificada por un protocolo ("Operativo Mochila") o una sospecha fundada y reportada.',
-      'c': 'Prefectura',
-      'icon': Icons.policy_outlined
-    },
-    {
-      'q': '¿Qué se considera una falta grave al uniforme?',
-      'a':
-          'Portar el uniforme de otro colegio, usar prendas no autorizadas (shorts, sandalias) o modificaciones intencionales que alteren el diseño original.',
-      'c': 'Prefectura',
-      'icon': Icons.style_outlined
-    },
-    {
-      'q': '¿Cómo se maneja el acceso de proveedores?',
-      'a':
-          'Deben registrarse en la entrada, portar un gafete de visitante y ser escoltados al área correspondiente. No deben deambular por el plantel.',
-      'c': 'Prefectura',
-      'icon': Icons.local_shipping_outlined
-    },
-
-    // ROL: ADMINISTRATIVO
-    {
-      'q': '¿Cómo genero una nueva llave de registro?',
-      'a':
-          'En el panel de administrador, ve a "Llaves de Registro", selecciona el rol y campus, y el sistema generará un nuevo código de acceso único.',
-      'c': 'Administrativo',
-      'icon': Icons.vpn_key_outlined
-    },
-    {
-      'q': '¿Dónde puedo ver las estadísticas de uso de la app?',
-      'a':
-          'El rol de Administrador General tiene acceso a un dashboard de métricas con datos de asistencia, incidencias y uso general por campus.',
-      'c': 'Administrativo',
-      'icon': Icons.analytics_outlined
-    },
-    {
-      'q': '¿Cómo se publica un comunicado general?',
-      'a':
-          'Desde la sección "Gestionar Avisos", puedes redactar un nuevo comunicado y elegir si será visible para todos los roles o solo para algunos.',
-      'c': 'Administrativo',
-      'icon': Icons.campaign_outlined
-    },
-    {
-      'q': '¿Qué hago si un usuario olvida su contraseña?',
-      'a':
-          'El usuario debe usar la opción "¿Olvidaste tu contraseña?" en la pantalla de login. El sistema le enviará un correo para restablecerla.',
-      'c': 'Administrativo',
-      'icon': Icons.password_outlined
-    },
-    {
-      'q': '¿Puedo editar el rol de un usuario existente?',
-      'a':
-          'Sí, el Administrador General puede modificar el rol y el campus de un usuario desde el panel de gestión de usuarios en la base de datos.',
-      'c': 'Administrativo',
-      'icon': Icons.manage_accounts_outlined
-    },
-    {
-      'q': '¿Cómo se realiza un respaldo de la base de datos?',
-      'a':
-          'Los respaldos se gestionan desde la consola de Firebase. Se pueden programar exportaciones automáticas en formato JSON.',
-      'c': 'Administrativo',
-      'icon': Icons.backup_outlined
-    },
-    {
-      'q': '¿Es posible dar de baja a un usuario?',
-      'a':
-          'Sí, se puede desactivar o eliminar completamente a un usuario desde la consola de autenticación de Firebase y su registro en la base de datos.',
-      'c': 'Administrativo',
-      'icon': Icons.person_remove_outlined
-    },
-    {
-      'q': '¿Cómo se crea un nuevo ciclo escolar en el sistema?',
-      'a':
-          'En la sección "Gestión de Ciclos Escolares", puedes definir las fechas de inicio y fin del nuevo ciclo, el cual servirá como base para los horarios.',
-      'c': 'Administrativo',
-      'icon': Icons.date_range_outlined
-    },
-    {
-      'q': '¿Cómo asigno los permisos para un administrador de plantel?',
-      'a':
-          'Al crear la llave de registro, asigna el rol "Personal Administrativo por Plantel" y selecciona el campus que le corresponde gestionar.',
-      'c': 'Administrativo',
-      'icon': Icons.admin_panel_settings_outlined
-    },
-    {
-      'q': '¿Puedo ver un historial de incidencias de un alumno?',
-      'a':
-          'Sí, en la ficha del alumno dentro de la gestión de alumnos, hay una pestaña para consultar todo el historial de reportes disciplinarios.',
-      'c': 'Administrativo',
-      'icon': Icons.history_edu_outlined
-    },
-    {
-      'q': '¿El sistema permite la reinscripción en línea?',
-      'a':
-          'Actualmente, el sistema gestiona la información académica, pero el proceso de reinscripción y pago se maneja por el sistema financiero del colegio.',
-      'c': 'Administrativo',
-      'icon': Icons.payment_outlined
-    },
-    {
-      'q': '¿Cómo se exporta la lista de asistencia de un grupo?',
-      'a':
-          'En la sección "Consulta de Asistencia", puedes filtrar por grupo y rango de fechas para generar un reporte exportable en formato Excel.',
-      'c': 'Administrativo',
-      'icon': Icons.file_download_outlined
-    },
-    {
-      'q': '¿Qué hago si hay un error en los datos de un alumno?',
-      'a':
-          'El personal administrativo puede corregir nombres, CURP o cualquier otro dato directamente en la ficha del alumno en la base de datos.',
-      'c': 'Administrativo',
-      'icon': Icons.edit_outlined
-    },
-    {
-      'q': '¿Cómo se configura un día como no lectivo?',
-      'a':
-          'En "Días No Lectivos", puedes agregar una fecha o un rango de fechas y un motivo (suspensión, feriado, etc.) que aplicará para todo el plantel.',
-      'c': 'Administrativo',
-      'icon': Icons.event_available_outlined
-    },
-    {
-      'q': '¿Puedo enviar una notificación push a los usuarios?',
-      'a':
-          'La funcionalidad de notificaciones push se gestiona a través de Firebase Cloud Messaging y se puede integrar para enviar alertas masivas.',
-      'c': 'Administrativo',
-      'icon': Icons.notifications_active_outlined
-    },
-    {
-      'q': '¿El sistema es compatible con la firma electrónica?',
-      'a':
-          'Actualmente no, los documentos que requieren firma (actas, etc.) se generan en PDF para ser firmados de manera autógrafa.',
-      'c': 'Administrativo',
-      'icon': Icons.draw_outlined
-    },
-    {
-      'q': '¿Cómo se da de alta una nueva materia?',
-      'a':
-          'Las materias se gestionan desde un catálogo central en la base de datos. El Administrador General puede agregar nuevas asignaturas.',
-      'c': 'Administrativo',
-      'icon': Icons.add_to_photos_outlined
-    },
-    {
-      'q': '¿Cómo se clona un horario de un ciclo a otro?',
-      'a':
-          'El sistema permite usar un horario existente como plantilla al crear uno nuevo, facilitando la transición entre ciclos escolares.',
-      'c': 'Administrativo',
-      'icon': Icons.copy_all_outlined
-    },
-    {
-      'q': '¿Puedo limitar el acceso por IP?',
-      'a':
-          'No directamente en la app, pero se pueden implementar reglas de seguridad a nivel de Firebase o Cloud Functions para restringir el acceso.',
-      'c': 'Administrativo',
-      'icon': Icons.lan_outlined
-    },
-    {
-      'q': '¿Cómo audito los cambios hechos por otros administradores?',
-      'a':
-          'Se puede implementar un sistema de logs (registros) en la base de datos que guarde quién hizo qué cambio y cuándo, para fines de auditoría.',
-      'c': 'Administrativo',
-      'icon': Icons.fact_check_outlined
-    },
-
-    // ROL: SISTEMA
-    {
-      'q': '¿Qué hago si no tengo internet?',
-      'a':
-          'La app entra en "Modo Offline". Sigue trabajando normal. Los datos se sincronizarán automáticamente cuando recuperes la conexión.',
-      'c': 'Sistema',
-      'icon': Icons.wifi_off_outlined
-    },
-    {
-      'q': '¿La app consume muchos datos móviles?',
-      'a':
-          'No, la app está optimizada para consumir la menor cantidad de datos posible, sincronizando solo la información necesaria.',
-      'c': 'Sistema',
-      'icon': Icons.signal_cellular_alt_outlined
-    },
-    {
-      'q': '¿Cómo actualizo la aplicación?',
-      'a':
-          'Recibirás una notificación o podrás actualizarla directamente desde la Play Store (Android) o App Store (iOS) cuando haya una nueva versión.',
-      'c': 'Sistema',
-      'icon': Icons.system_update_alt_outlined
-    },
-    {
-      'q': '¿Qué tan segura es mi información?',
-      'a':
-          'Toda la comunicación está encriptada y tu cuenta está protegida por contraseña. Además, usamos los servicios de seguridad de Google.',
-      'c': 'Sistema',
-      'icon': Icons.verified_user_outlined
-    },
-    {
-      'q': '¿Puedo usar la app en una tablet?',
-      'a':
-          'Sí, la interfaz es responsiva y se adapta a los diferentes tamaños de pantalla de teléfonos y tablets.',
-      'c': 'Sistema',
-      'icon': Icons.tablet_mac_outlined
-    },
-    {
-      'q': '¿Cómo cambio el tema de la app (claro/oscuro)?',
-      'a':
-          'En la pantalla de "Ajustes", encontrarás la opción para cambiar entre el tema claro, oscuro o el que siga la configuración de tu sistema.',
-      'c': 'Sistema',
-      'icon': Icons.brightness_6_outlined
-    },
-    {
-      'q': '¿Qué hago si la app se congela o cierra?',
-      'a':
-          'Intenta cerrar la aplicación completamente y volver a abrirla. Si el problema persiste, reinicia tu dispositivo.',
-      'c': 'Sistema',
-      'icon': Icons.sync_problem_outlined
-    },
-    {
-      'q': '¿Cómo libero espacio de caché de la app?',
-      'a':
-          'En los ajustes de tu teléfono, busca la app "Asystem" y selecciona "Borrar caché". Esto no eliminará tus datos importantes.',
-      'c': 'Sistema',
-      'icon': Icons.cleaning_services_outlined
-    },
-    {
-      'q': '¿El Asistente IA guarda mis conversaciones?',
-      'a':
-          'No. Las conversaciones con el Asistente IA son temporales y no se almacenan para proteger tu privacidad.',
-      'c': 'Sistema',
-      'icon': Icons.psychology_outlined
-    },
-    {
-      'q': '¿Por qué la app me pide permisos de cámara o archivos?',
-      'a':
-          'Los permisos son necesarios para funciones como escanear códigos QR, subir tu foto de perfil o exportar reportes en PDF/Excel.',
-      'c': 'Sistema',
-      'icon': Icons.perm_device_information_outlined
-    },
-    {
-      'q': '¿Puedo tener la misma cuenta abierta en dos dispositivos?',
-      'a':
-          'Sí, puedes iniciar sesión en múltiples dispositivos, pero por seguridad, se recomienda cerrar la sesión cuando termines de usar uno.',
-      'c': 'Sistema',
-      'icon': Icons.devices_other_outlined
-    },
-    {
-      'q': '¿Qué significa el ícono de nube en la app?',
-      'a':
-          'El ícono de nube indica el estado de la sincronización. Una nube con una palomita significa que todos tus datos están respaldados en línea.',
-      'c': 'Sistema',
-      'icon': Icons.cloud_done_outlined
-    },
-    {
-      'q': '¿Cómo puedo dar retroalimentación sobre la app?',
-      'a':
-          'En la sección de "Ajustes" hay una opción para "Reportar un problema" o "Sugerir una mejora". Tus comentarios son bienvenidos.',
-      'c': 'Sistema',
-      'icon': Icons.feedback_outlined
-    },
-    {
-      'q': '¿El "Modo Offline" tiene limitaciones?',
-      'a':
-          'En modo offline no podrás ver datos en tiempo real de otros usuarios (ej. nuevos avisos), pero todo lo que tú generes se guardará sin problemas.',
-      'c': 'Sistema',
-      'icon': Icons.airplanemode_active_outlined
-    },
-    {
-      'q': '¿La app funciona en computadoras de escritorio?',
-      'a':
-          'Sí, la aplicación web está diseñada para funcionar en navegadores modernos como Chrome, Firefox o Safari en tu computadora.',
-      'c': 'Sistema',
-      'icon': Icons.desktop_windows_outlined
-    },
-    {
-      'q': '¿Por qué me pide mi huella dactilar para abrir la app?',
-      'a':
-          'Es una capa de seguridad opcional que puedes activar en "Ajustes" para proteger tu sesión, incluso si tu teléfono está desbloqueado.',
-      'c': 'Sistema',
-      'icon': Icons.fingerprint_outlined
-    },
-    {
-      'q': '¿Qué versión de Android/iOS necesito?',
-      'a':
-          'Se recomienda tener Android 8.0 (Oreo) o superior, o iOS 12 o superior para un rendimiento óptimo de la aplicación.',
-      'c': 'Sistema',
-      'icon': Icons.phone_iphone_outlined
-    },
-    {
-      'q': '¿La app se puede usar en modo horizontal?',
-      'a':
-          'Algunas pantallas, como los visores de horarios, están optimizadas para el modo horizontal en tablets y web, pero el uso general es en vertical.',
-      'c': 'Sistema',
-      'icon': Icons.screen_rotation_outlined
-    },
-    {
-      'q': '¿Cómo desactivo las notificaciones por correo?',
-      'a':
-          'En "Ajustes" > "Notificaciones", puedes personalizar qué tipo de alertas quieres recibir por correo electrónico y cuáles no.',
-      'c': 'Sistema',
-      'icon': Icons.mail_outline
-    },
-    {
-      'q': '¿Quién desarrolló esta aplicación?',
-      'a':
-          'Asystem es una solución desarrollada a la medida para optimizar la gestión y comunicación en la comunidad del Colegio de Bachilleres de Campeche.',
-      'c': 'Sistema',
-      'icon': Icons.code_outlined
-    },
   ];
 
   @override
@@ -751,20 +45,118 @@ class _FaqScreenState extends State<FaqScreen> {
     super.dispose();
   }
 
+  IconData _getIconData(String? iconName) {
+    // This function remains the same as before
+    switch (iconName) {
+      case 'timer_outlined': return Icons.timer_outlined;
+      case 'phone_android_outlined': return Icons.phone_android_outlined;
+      case 'event_busy_outlined': return Icons.event_busy_outlined;
+      case 'badge_outlined': return Icons.badge_outlined;
+      case 'checkroom_outlined': return Icons.checkroom_outlined;
+      case 'grading_outlined': return Icons.grading_outlined;
+      case 'record_voice_over_outlined': return Icons.record_voice_over_outlined;
+      case 'exit_to_app_outlined': return Icons.exit_to_app_outlined;
+      case 'rule_outlined': return Icons.rule_outlined;
+      case 'sports_basketball_outlined': return Icons.sports_basketball_outlined;
+      case 'school_outlined': return Icons.school_outlined;
+      case 'shield_outlined': return Icons.shield_outlined;
+      case 'fastfood_outlined': return Icons.fastfood_outlined;
+      case 'work_history_outlined': return Icons.work_history_outlined;
+      case 'sports_soccer_outlined': return Icons.sports_soccer_outlined;
+      case 'chair_outlined': return Icons.chair_outlined;
+      case 'description_outlined': return Icons.description_outlined;
+      case 'lock_outline': return Icons.lock_outline;
+      case 'sick_outlined': return Icons.sick_outlined;
+      case 'face_retouching_natural_outlined': return Icons.face_retouching_natural_outlined;
+      case 'edit_calendar_outlined': return Icons.edit_calendar_outlined;
+      case 'visibility_off_outlined': return Icons.visibility_off_outlined;
+      case 'build_circle_outlined': return Icons.build_circle_outlined;
+      case 'medical_information_outlined': return Icons.medical_information_outlined;
+      case 'directions_bus_outlined': return Icons.directions_bus_outlined;
+      case 'menu_book_outlined': return Icons.menu_book_outlined;
+      case 'event_repeat_outlined': return Icons.event_repeat_outlined;
+      case 'no_meeting_room_outlined': return Icons.no_meeting_room_outlined;
+      case 'report_problem_outlined': return Icons.report_problem_outlined;
+      case 'model_training_outlined': return Icons.model_training_outlined;
+      case 'money_off_outlined': return Icons.money_off_outlined;
+      case 'psychology_alt_outlined': return Icons.psychology_alt_outlined;
+      case 'percent_outlined': return Icons.percent_outlined;
+      case 'computer_outlined': return Icons.computer_outlined;
+      case 'groups_outlined': return Icons.groups_outlined;
+      case 'emergency_outlined': return Icons.emergency_outlined;
+      case 'public_outlined': return Icons.public_outlined;
+      case 'science_outlined': return Icons.science_outlined;
+      case 'business_center_outlined': return Icons.business_center_outlined;
+      case 'how_to_vote_outlined': return Icons.how_to_vote_outlined;
+      case 'transfer_within_a_station_outlined': return Icons.transfer_within_a_station_outlined;
+      case 'sports_kabaddi_outlined': return Icons.sports_kabaddi_outlined;
+      case 'phone_locked_outlined': return Icons.phone_locked_outlined;
+      case 'edit_note_outlined': return Icons.edit_note_outlined;
+      case 'no_drinks_outlined': return Icons.no_drinks_outlined;
+      case 'security_outlined': return Icons.security_outlined;
+      case 'backpack_outlined': return Icons.backpack_outlined;
+      case 'lock_person_outlined': return Icons.lock_person_outlined;
+      case 'supervisor_account_outlined': return Icons.supervisor_account_outlined;
+      case 'tour_outlined': return Icons.tour_outlined;
+      case 'find_in_page_outlined': return Icons.find_in_page_outlined;
+      case 'gavel_outlined': return Icons.gavel_outlined;
+      case 'person_off_outlined': return Icons.person_off_outlined;
+      case 'local_fire_department_outlined': return Icons.local_fire_department_outlined;
+      case 'sensor_door_outlined': return Icons.sensor_door_outlined;
+      case 'support_agent_outlined': return Icons.support_agent_outlined;
+      case 'policy_outlined': return Icons.policy_outlined;
+      case 'style_outlined': return Icons.style_outlined;
+      case 'local_shipping_outlined': return Icons.local_shipping_outlined;
+      case 'vpn_key_outlined': return Icons.vpn_key_outlined;
+      case 'analytics_outlined': return Icons.analytics_outlined;
+      case 'campaign_outlined': return Icons.campaign_outlined;
+      case 'password_outlined': return Icons.password_outlined;
+      case 'manage_accounts_outlined': return Icons.manage_accounts_outlined;
+      case 'backup_outlined': return Icons.backup_outlined;
+      case 'person_remove_outlined': return Icons.person_remove_outlined;
+      case 'date_range_outlined': return Icons.date_range_outlined;
+      case 'admin_panel_settings_outlined': return Icons.admin_panel_settings_outlined;
+      case 'history_edu_outlined': return Icons.history_edu_outlined;
+      case 'payment_outlined': return Icons.payment_outlined;
+      case 'file_download_outlined': return Icons.file_download_outlined;
+      case 'edit_outlined': return Icons.edit_outlined;
+      case 'event_available_outlined': return Icons.event_available_outlined;
+      case 'notifications_active_outlined': return Icons.notifications_active_outlined;
+      case 'draw_outlined': return Icons.draw_outlined;
+      case 'add_to_photos_outlined': return Icons.add_to_photos_outlined;
+      case 'copy_all_outlined': return Icons.copy_all_outlined;
+      case 'lan_outlined': return Icons.lan_outlined;
+      case 'fact_check_outlined': return Icons.fact_check_outlined;
+      case 'wifi_off_outlined': return Icons.wifi_off_outlined;
+      case 'signal_cellular_alt_outlined': return Icons.signal_cellular_alt_outlined;
+      case 'system_update_alt_outlined': return Icons.system_update_alt_outlined;
+      case 'verified_user_outlined': return Icons.verified_user_outlined;
+      case 'tablet_mac_outlined': return Icons.tablet_mac_outlined;
+      case 'brightness_6_outlined': return Icons.brightness_6_outlined;
+      case 'sync_problem_outlined': return Icons.sync_problem_outlined;
+      case 'cleaning_services_outlined': return Icons.cleaning_services_outlined;
+      case 'psychology_outlined': return Icons.psychology_outlined;
+      case 'perm_device_information_outlined': return Icons.perm_device_information_outlined;
+      case 'devices_other_outlined': return Icons.devices_other_outlined;
+      case 'cloud_done_outlined': return Icons.cloud_done_outlined;
+      case 'feedback_outlined': return Icons.feedback_outlined;
+      case 'airplanemode_active_outlined': return Icons.airplanemode_active_outlined;
+      case 'desktop_windows_outlined': return Icons.desktop_windows_outlined;
+      case 'fingerprint_outlined': return Icons.fingerprint_outlined;
+      case 'phone_iphone_outlined': return Icons.phone_iphone_outlined;
+      case 'screen_rotation_outlined': return Icons.screen_rotation_outlined;
+      case 'mail_outline': return Icons.mail_outline;
+      case 'code_outlined': return Icons.code_outlined;
+      default: return Icons.help_outline;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final filteredList = _faqList.where((faq) {
-      final categoryMatch =
-          _selectedCategory == 'Todas' || faq['c'] == _selectedCategory;
-      final queryMatch = _searchQuery.isEmpty ||
-          faq['q'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          faq['a'].toLowerCase().contains(_searchQuery.toLowerCase());
-      return categoryMatch && queryMatch;
-    }).toList();
-
     return Scaffold(
       body: Column(
         children: [
+          // Search and Filter UI remains the same
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: TextField(
@@ -778,9 +170,7 @@ class _FaqScreenState extends State<FaqScreen> {
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                        },
+                        onPressed: () => _searchController.clear(),
                       )
                     : null,
               ),
@@ -795,11 +185,7 @@ class _FaqScreenState extends State<FaqScreen> {
                 return ChoiceChip(
                   label: Text(category),
                   selected: _selectedCategory == category,
-                  onSelected: (selected) {
-                    setState(() {
-                      _selectedCategory = category;
-                    });
-                  },
+                  onSelected: (selected) => setState(() => _selectedCategory = category),
                   selectedColor: Theme.of(context).colorScheme.primaryContainer,
                   labelStyle: TextStyle(
                     color: _selectedCategory == category
@@ -811,50 +197,71 @@ class _FaqScreenState extends State<FaqScreen> {
             ),
           ),
           const Divider(height: 20, thickness: 1, indent: 12, endIndent: 12),
+          
+          // StreamBuilder to get live data from Firebase
           Expanded(
-            child: filteredList.isEmpty
-                ? const Center(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _faqService.getFaqsStream(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No hay preguntas en el manual.'));
+                }
+
+                final faqList = snapshot.data!;
+                final filteredList = faqList.where((faq) {
+                  final categoryMatch = _selectedCategory == 'Todas' || faq['c'] == _selectedCategory;
+                  final queryMatch = _searchQuery.isEmpty ||
+                      (faq['q'] as String).toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                      (faq['a'] as String).toLowerCase().contains(_searchQuery.toLowerCase());
+                  return categoryMatch && queryMatch;
+                }).toList();
+
+                if (filteredList.isEmpty) {
+                  return const Center(
                     child: Text(
                       'No se encontraron resultados.',
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: filteredList.length,
-                    itemBuilder: (context, index) {
-                      final faq = filteredList[index];
-                      // Simple animation for list items
-                      return AnimatedSize(
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.easeInOut,
-                        child: Card(
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 12.0, vertical: 6.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.0),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: filteredList.length,
+                  itemBuilder: (context, index) {
+                    final faq = filteredList[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                      elevation: 2,
+                      child: ExpansionTile(
+                        shape: Border.all(color: Colors.transparent),
+                        leading: Icon(_getIconData(faq['icon'] as String?),
+                            color: Theme.of(context).colorScheme.secondary),
+                        title: Text('${index + 1}. ${faq['q']}',
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            child: Text(
+                              faq['a'],
+                              textAlign: TextAlign.justify,
+                            ),
                           ),
-                          elevation: 2,
-                          child: ExpansionTile(
-                            shape: Border.all(color: Colors.transparent),
-                            leading: Icon(faq['icon'] ?? Icons.help_outline,
-                                color: Theme.of(context).colorScheme.secondary),
-                            title: Text('${index + 1}. ${faq['q']}',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                                child: Text(
-                                  faq['a'],
-                                  textAlign: TextAlign.justify,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),

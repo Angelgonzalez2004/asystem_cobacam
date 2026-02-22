@@ -39,13 +39,15 @@ class StudentAdapter extends TypeAdapter<Student> {
       canEditProfile: fields[19] as bool,
       userId: fields[20] as String,
       registeredByUserId: fields[21] as String,
+      profileImageUrl: fields[22] as String?,
+      guardianUserIds: (fields[23] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Student obj) {
     writer
-      ..writeByte(22)
+      ..writeByte(24)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -89,7 +91,11 @@ class StudentAdapter extends TypeAdapter<Student> {
       ..writeByte(20)
       ..write(obj.userId)
       ..writeByte(21)
-      ..write(obj.registeredByUserId);
+      ..write(obj.registeredByUserId)
+      ..writeByte(22)
+      ..write(obj.profileImageUrl)
+      ..writeByte(23)
+      ..write(obj.guardianUserIds);
   }
 
   @override

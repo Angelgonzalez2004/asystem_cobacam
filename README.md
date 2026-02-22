@@ -14,27 +14,29 @@ Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cad
 ### 🚀 Últimas Actualizaciones (Febrero 2026)
 
 #### 🔐 Seguridad y Autenticación Biométrica
-*   **Desbloqueo por Huella/Rostro:** Implementación de autenticación biométrica nativa. Los usuarios pueden proteger el acceso a la aplicación utilizando los sensores de su dispositivo (huella dactilar o reconocimiento facial), complementando el bloqueo por PIN existente.
-*   **Gestión de Sesiones:** Visualización y control de sesiones activas en múltiples dispositivos, con opción de cierre de sesión remoto por seguridad.
+*   **Desbloqueo por Huella/Rostro:** Implementación de autenticación biométrica nativa.
+*   **Gestión de Sesiones:** Control de sesiones activas y cierre remoto.
+
+#### 👨‍👩‍👦 Rol de Tutor: Supervisión Integral (Nuevo)
+*   **Vinculación Dinámica:** Acceso inmediato a la información del alumno mediante matrícula vinculada.
+*   **Seguimiento de Asistencia:** Panel exclusivo para consultar el historial de asistencias, retardos e incidencias en tiempo real.
+*   **Consulta por Ciclos:** Selector de ciclos escolares para visualizar datos históricos y credenciales de periodos anteriores.
+*   **Interfaz Adaptada:** Dashboard optimizado para el seguimiento académico y comunicación de avisos institucionales.
 
 #### 🪪 Credencialización Digital Inteligente
-*   **Generador de Alta Resolución:** Módulo de credencialización capaz de generar identificaciones digitales y para impresión en alta definición (1030x666 px).
-*   **Sincronización Automática:**
-    *   **Foto de Perfil:** La foto que el alumno sube a su perfil se sincroniza automáticamente con su credencial digital.
-    *   **Fallback de Género:** Si el alumno no tiene foto, la credencial muestra automáticamente un icono representativo según su género.
-*   **Descarga Controlada:** Los alumnos pueden descargar su credencial digital (formato PNG) directamente a su dispositivo, con un límite de seguridad de **3 descargas por mes**.
+*   **Generador de Alta Resolución:** Módulo de credencialización capaz de generar identificaciones digitales (1030x666 px).
+*   **Sincronización Automática:** Foto de perfil y datos académicos actualizados al instante.
+*   **Descarga Controlada:** Límite de seguridad de **3 descargas por mes** para alumnos.
+*   **Visor de Tutor:** Los tutores pueden visualizar la credencial del alumno para cualquier ciclo escolar registrado.
 
 #### 🧑‍🎓 Perfil del Alumno: Control y Autonomía
-*   **Edición Condicional:** Los alumnos pueden editar sus datos personales (excluyendo matrícula y ciclo escolar) solo bajo autorización expresa de la Prefectura.
-*   **Permiso de Un Solo Uso:** Una vez que el alumno guarda sus cambios, el permiso de edición se revoca automáticamente para garantizar la integridad de los datos institucionales.
-*   **Gestión de Foto de Perfil:**
-    *   Los alumnos pueden actualizar su foto de perfil (y por ende, su credencial) con un límite de **3 cambios por mes**.
-    *   La eliminación de la foto es ilimitada y revierte la credencial al icono por defecto.
-*   **Campo NSS Unificado:** Estandarización del campo "Número de Seguro Social" (NSS) en todas las vistas (Prefectura y Alumno) para asegurar la consistencia de la información médica.
+*   **Edición Condicional:** Actualización de datos bajo permiso expreso de Prefectura.
+*   **Campo NSS Unificado:** Estandarización de información médica crítica.
+*   **Gestión de Foto:** Límite de 3 cambios mensuales para mantener la integridad de la identificación.
 
 #### 👩‍🏫 Herramientas para Prefectura
-*   **Autorización por Lotes:** Capacidad para autorizar la edición de perfil a todos los alumnos de un ciclo escolar con un solo clic.
-*   **Visor de Ciclos:** Gestión completa de ciclos escolares, grupos y asignación de docentes.
+*   **Autorización por Lotes:** Gestión masiva de permisos de edición de perfil.
+*   **Visor de Ciclos:** Administración completa de grupos, horarios y personal docente.
 
 ### 📊 Gestión de Asistencia Avanzada
 *   **Pase de Lista Flexible:** Registro mediante escaneo de credenciales QR, entrada manual o registro masivo.
@@ -46,24 +48,27 @@ Integración con **Gemini 1.5 Flash** para proporcionar asistencia contextual y 
 
 ---
 
-## 🏛️ Arquitectura y Tecnologías Clave
+## 🛠️ Stack Tecnológico Detallado
 
-*   **Frontend:** [Flutter](https://flutter.dev/) (Dart) para una experiencia nativa en Web, Android e iOS.
-*   **Backend & Cloud:**
-    *   **Firebase Realtime Database:** Sincronización de datos en tiempo real.
-    *   **Firebase Authentication:** Gestión segura de identidades.
-    *   **Firebase Hosting:** Despliegue de alto rendimiento para la versión web.
-    *   **Cloud Functions:** Lógica de negocio segura y conexión con APIs de IA.
-*   **Almacenamiento Local:** [Hive](https://pub.dev/packages/hive) para persistencia offline rápida.
-*   **Seguridad Local:** `local_auth` y `flutter_secure_storage` para biometría y encriptación de datos sensibles.
+### Frontend (Multiplataforma)
+*   **Flutter 3.22+**: Framework principal para garantizar una interfaz fluida y nativa.
+*   **Provider**: Gestión de estado eficiente y reactiva.
+*   **Hive**: Base de datos local para soporte *Offline-First*.
+*   **Local Auth**: Integración con hardware biométrico (Huella/Rostro).
+
+### Backend & Infraestructura
+*   **Firebase Realtime DB**: Estructura de datos NoSQL en tiempo real.
+*   **Firebase Authentication**: Manejo de identidades seguro.
+*   **Cloud Functions**: Lógica de servidor segura para procesamiento de datos.
+*   **Gemini AI API**: Inteligencia artificial generativa para el asistente contextual.
 
 ---
 
-## 📜 Historia del Desarrollo
-
-El sistema **ASYSTEM** inició su desarrollo entre **Mayo y Agosto de 2024** como un proyecto de estadía profesional impulsado por alumnos de la **UTCAM** (Universidad Tecnológica de Campeche).
-
-Actualmente, el proyecto se encuentra en sus **etapas finales de desarrollo**, preparándose para pruebas piloto en el **Plantel 05 Atasta** para el ciclo escolar **Marzo 2026**. El liderazgo técnico está a cargo de **Ángel del Carmen González Alcocer**.
+## 📈 Roadmap de Implementación (Ciclo 2026A)
+1.  **Fase 1:** Migración de datos históricos y validación de matrículas.
+2.  **Fase 2:** Despliegue de la versión Web para personal administrativo.
+3.  **Fase 3:** Lanzamiento de las apps móviles para alumnos y tutores.
+4.  **Fase 4:** Activación del módulo de IA para asistencia en tiempo real.
 
 ---
 

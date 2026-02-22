@@ -1,3 +1,4 @@
+import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_faq_screen.dart';
 import 'package:asystem_cobacam/screens/common/general_user_profile_screen.dart';
 import 'package:asystem_cobacam/screens/common/about_us_screen.dart'; // NEW IMPORT
 import 'package:asystem_cobacam/screens/common/settings_screen.dart';
@@ -11,8 +12,7 @@ class AppDrawer extends StatelessWidget {
   final String userName;
   final String userEmail;
   final String? profileImageUrl;
-  // Callback for Prefect tools or other specific navigations
-  final Function(String route)? onNavigate;
+  final Function(String route, {Object? arguments})? onNavigate;
 
   const AppDrawer({
     super.key,
@@ -188,6 +188,26 @@ class AppDrawer extends StatelessWidget {
                   ),
                 ],
 
+                // --- GENERAL ADMIN SPECIFIC TOOLS ---
+                if (role == 'Personal Administrativo General') ...[
+                  const Divider(),
+                   Padding(
+                    padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+                    child: Text('CONTENIDO',
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: Colors.grey)),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.integration_instructions_outlined,
+                    title: 'Gestionar Manual',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageFaqScreen()));
+                    },
+                  ),
+                ],
+
 
 
                 // --- ACADÉMICA SPECIFIC TOOLS ---
@@ -229,9 +249,67 @@ class AppDrawer extends StatelessWidget {
                   const Divider(),
                 ],
 
+                // --- TUTOR SPECIFIC TOOLS ---
+                if (role == 'Tutor') ...[
+                  const Divider(),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+                    child: Text('SEGUIMIENTO',
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: Colors.grey)),
+                  ),
+                  _buildDrawerItem(context,
+                      icon: Icons.person_search_rounded,
+                      title: 'Datos del Alumno',
+                      onTap: () => onNavigate?.call('tutor_view_student_profile')),
+                  _buildDrawerItem(context,
+                      icon: Icons.checklist_rtl_rounded,
+                      title: 'Asistencia del Alumno',
+                      onTap: () => onNavigate?.call('tutor_view_attendance')),
+                  _buildDrawerItem(context,
+                      icon: Icons.badge_rounded,
+                      title: 'Credencial del Alumno',
+                      onTap: () => onNavigate?.call('tutor_view_credential')),
+                  const Divider(),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+                    child: Text('INFORMACIÓN ESCOLAR',
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: Colors.grey)),
+                  ),
+                  _buildDrawerItem(context,
+                      icon: Icons.calendar_month_outlined,
+                      title: 'Ciclos Escolares',
+                      onTap: () => onNavigate?.call('ciclos_escolares')),
+                  _buildDrawerItem(context,
+                      icon: Icons.event_busy_rounded,
+                      title: 'Días Inhábiles',
+                      onTap: () => onNavigate?.call('dias_no_lectivos')),
+                  const Divider(),
+                  _buildDrawerItem(context,
+                      icon: Icons.help_outline_rounded,
+                      title: 'Manual Operativo (FAQ)',
+                      onTap: () => onNavigate?.call('faq')),
+                  const Divider(),
+                ],
 
                 // --- ALUMNO SPECIFIC TOOLS ---
                 if (role == 'Alumno') ...[
+                  const Divider(),
+                   Padding(
+                    padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+                    child: Text('INFORMACIÓN ESCOLAR',
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: Colors.grey)),
+                  ),
+                  _buildDrawerItem(context,
+                      icon: Icons.calendar_month_outlined,
+                      title: 'Ciclos Escolares',
+                      onTap: () => onNavigate?.call('ciclos_escolares')),
+                  _buildDrawerItem(context,
+                      icon: Icons.event_busy_rounded,
+                      title: 'Días Inhábiles',
+                      onTap: () => onNavigate?.call('dias_no_lectivos')),
                   const Divider(),
                   _buildDrawerItem(context,
                       icon: Icons.badge_rounded,

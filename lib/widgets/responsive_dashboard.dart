@@ -1,18 +1,22 @@
-import 'package:asystem_cobacam/screens/dashboards/student/student_credential_screen.dart'; // NEW IMPORT
+import 'package:asystem_cobacam/screens/dashboards/tutor/tutor_view_attendance_screen.dart';
+import 'package:asystem_cobacam/models/student_model.dart';
+import 'package:asystem_cobacam/screens/common/view_student_profile_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/student/student_credential_screen.dart';
 import 'package:asystem_cobacam/screens/common/general_user_profile_screen.dart';
 import 'package:asystem_cobacam/screens/common/settings_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_access_codes_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_announcements_screen.dart';
-
+import 'package:asystem_cobacam/screens/dashboards/prefect/non_attendance_management_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/prefect/school_cycle_management_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_schedule_viewer_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/teacher_schedule_viewer_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/manage_cycle_teachers_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_schedule_management_screen.dart';
-import 'package:asystem_cobacam/screens/common/faq_screen.dart'; // New import // New import // New import
-import 'package:asystem_cobacam/screens/common/about_us_screen.dart'; // NEW IMPORT
-import 'package:asystem_cobacam/services/app_settings_service.dart'; // New import
-import 'package:asystem_cobacam/services/hive_service.dart'; // New import
-import 'package:asystem_cobacam/services/connectivity_service.dart'; // New import
+import 'package:asystem_cobacam/screens/common/faq_screen.dart';
+import 'package:asystem_cobacam/screens/common/about_us_screen.dart';
+import 'package:asystem_cobacam/services/app_settings_service.dart';
+import 'package:asystem_cobacam/services/hive_service.dart';
+import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/slide_transition.dart';
 import 'package:asystem_cobacam/widgets/app_drawer.dart';
@@ -20,14 +24,19 @@ import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // New import
+import 'package:provider/provider.dart';
 
 class ResponsiveDashboard extends StatefulWidget {
   final String role;
-  final Widget Function(Function(String route) onNavigate) bodyBuilder; // Changed from Widget body
+  final Widget Function(
+    Function(String route, {Object? arguments}) onNavigate,
+    Student? linkedStudent,
+    String? userName,
+    String? userCampus,
+  ) bodyBuilder;
 
   const ResponsiveDashboard(
-      {super.key, required this.role, required this.bodyBuilder}); // Updated constructor
+      {super.key, required this.role, required this.bodyBuilder});
 
   @override
   State<ResponsiveDashboard> createState() => _ResponsiveDashboardState();
@@ -43,9 +52,11 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
 
   late AppSettingsService _appSettingsService;
 
-  // Control de sub-pantallas internas
   Widget? _activeSubScreen;
   String _currentTitle = '';
+
+  // State for Tutor's linked student
+  Student? _linkedStudent;
 
   @override
   void initState() {
@@ -65,8 +76,7 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
       _userRef!.onValue.listen((event) {
         if (event.snapshot.exists && event.snapshot.value != null) {
           try {
-            final data =
-                Map<Object?, Object?>.from(event.snapshot.value as Map);
+            final data = Map<Object?, Object?>.from(event.snapshot.value as Map);
             if (mounted) {
               setState(() {
                 _userName = data['fullName']?.toString() ?? 'Usuario';
@@ -74,6 +84,10 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
                 _userProfileUrl = data['profileImageUrl']?.toString();
                 _userCampus = data['campus']?.toString();
               });
+              // If user is a tutor, find their linked student
+              if (_userRole == 'Tutor' && _linkedStudent == null) {
+                _loadLinkedStudentData(user.uid);
+              }
             }
           } catch (e) {
             debugPrint("Error parsing user data in dashboard: $e");
@@ -83,7 +97,58 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
     }
   }
 
-  void _onNavigate(String route) {
+  Future<void> _loadLinkedStudentData(String tutorId) async {
+    if (_userCampus == null) return;
+    try {
+      final currentSchoolCycleId = await _appSettingsService.getCurrentSchoolCycleId();
+      Student? foundStudent;
+
+      if (currentSchoolCycleId.isNotEmpty) {
+        final activeCycleRef = FirebaseDatabase.instance.ref('planteles/$_userCampus/students/$currentSchoolCycleId');
+        final activeCycleSnapshot = await activeCycleRef.get();
+        if (activeCycleSnapshot.exists) {
+          for (final studentSnapshot in activeCycleSnapshot.children) {
+            final studentData = Map<String, dynamic>.from(studentSnapshot.value as Map);
+            final guardianIds = studentData['guardianUserIds'] != null ? List<String>.from(studentData['guardianUserIds']) : [];
+            if (guardianIds.contains(tutorId)) {
+              foundStudent = Student.fromSnapshot(studentSnapshot);
+              break;
+            }
+          }
+        }
+      }
+
+      if (foundStudent == null) {
+        final allStudentsRef = FirebaseDatabase.instance.ref('planteles/$_userCampus/students');
+        final allCyclesSnapshot = await allStudentsRef.get();
+        if (allCyclesSnapshot.exists) {
+          for (final cycleSnapshot in allCyclesSnapshot.children) {
+            for (final studentSnapshot in cycleSnapshot.children) {
+              final studentData = Map<String, dynamic>.from(studentSnapshot.value as Map);
+              final guardianIds = studentData['guardianUserIds'] != null ? List<String>.from(studentData['guardianUserIds']) : [];
+              if (guardianIds.contains(tutorId)) {
+                foundStudent = Student.fromSnapshot(studentSnapshot);
+                break;
+              }
+            }
+            if (foundStudent != null) break;
+          }
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _linkedStudent = foundStudent;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error finding linked student: $e");
+    }
+  }
+
+  void _onNavigate(String route, {Object? arguments}) {
+    // For tutor-specific routes that need the student object, pass it from here
+    final Object? finalArguments = (arguments ?? _linkedStudent);
+
     setState(() {
       if (route == 'home') {
         _activeSubScreen = null;
@@ -95,62 +160,63 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
         _activeSubScreen = const SettingsScreen(isEmbedded: true);
         _currentTitle = 'Ajustes';
       } else if (route == 'manage_announcements') {
-        Navigator.push(
-            context,
-            SlideRightRoute(
-                page: ManageAnnouncementsScreen(
-              campus: _userCampus,
-              isGeneralAdmin: _userRole.contains('General'),
-            )));
+        Navigator.push(context, SlideRightRoute(page: ManageAnnouncementsScreen(campus: _userCampus, isGeneralAdmin: _userRole.contains('General'))));
       } else if (route == 'manage_access_codes') {
-        Navigator.push(
-            context,
-            SlideRightRoute(
-                page: ManageAccessCodesScreen(
-              campus: _userCampus,
-              isGeneralAdmin: _userRole.contains('General'),
-            )));
+        Navigator.push(context, SlideRightRoute(page: ManageAccessCodesScreen(campus: _userCampus, isGeneralAdmin: _userRole.contains('General'))));
       } else if (route == 'horarios') {
-        // Prefecta's view of GroupScheduleManagementScreen (read-only)
         _activeSubScreen = const GroupScheduleManagementScreen(isReadOnlyUser: true);
         _currentTitle = 'Horarios';
       } else if (route == 'manage_group_schedules') {
-        // Académica's view of GroupScheduleManagementScreen (editable)
         _activeSubScreen = const GroupScheduleManagementScreen(isReadOnlyUser: false);
         _currentTitle = 'Gestión de Horarios';
       } else if (route == 'visor_grupo') {
-        // Académica's/Prefecta's Group Schedule Viewer
         _activeSubScreen = const GroupScheduleViewerScreen();
         _currentTitle = 'Visor de Horario (Grupo)';
       } else if (route == 'visor_maestro') {
-        // Académica's/Prefecta's Teacher Schedule Viewer
         _activeSubScreen = const TeacherScheduleViewerScreen();
         _currentTitle = 'Visor de Horario (Maestro)';
       } else if (route == 'manage_teachers') {
-        // Académica's Teacher Management
         if (_userCampus != null) {
           _appSettingsService.getCurrentSchoolCycleId().then((schoolCycleId) {
-            Navigator.push(
-                context,
-                SlideRightRoute(
-                    page: ManageCycleTeachersScreen(
-                  campusId: _userCampus!,
-                  schoolCycleId: schoolCycleId,
-                )));
+            Navigator.push(context, SlideRightRoute(page: ManageCycleTeachersScreen(campusId: _userCampus!, schoolCycleId: schoolCycleId)));
           });
           _currentTitle = 'Gestionar Personal Docente';
         }
       } else if (route == 'faq') {
         _activeSubScreen = const FaqScreen();
         _currentTitle = 'Manual Operativo (FAQ)';
-      } else if (route == 'about_us') { // NEW ROUTE FOR ABOUT US
+      } else if (route == 'about_us') {
         _activeSubScreen = const AboutUsScreen();
         _currentTitle = 'Sobre Nosotros';
-      } else if (route == 'credencial_alumno') { // NEW ROUTE FOR STUDENT CREDENTIAL
+      } else if (route == 'credencial_alumno') {
         _activeSubScreen = const StudentCredentialScreen();
         _currentTitle = 'Mi Credencial';
-      } // Correctly close this else if block
-    }); // Correctly close the setState block
+      } else if (route == 'ciclos_escolares') {
+        _activeSubScreen = const SchoolCycleManagementScreen(isReadOnly: true);
+        _currentTitle = 'Ciclos Escolares';
+      } else if (route == 'dias_no_lectivos') {
+        _activeSubScreen = const NonAttendanceManagementScreen(isReadOnly: true);
+        _currentTitle = 'Días Inhábiles';
+      } else if (route == 'tutor_view_credential') {
+        final student = finalArguments as Student?;
+        if (student != null) {
+          _activeSubScreen = StudentCredentialScreen(student: student, campusId: _userCampus);
+          _currentTitle = 'Credencial de ${student.fullName.split(' ').first}';
+        }
+      } else if (route == 'tutor_view_student_profile') {
+        final student = finalArguments as Student?;
+        if (student != null) {
+          _activeSubScreen = ViewStudentProfileScreen(student: student);
+          _currentTitle = 'Perfil de ${student.fullName.split(' ').first}';
+        }
+      } else if (route == 'tutor_view_attendance') {
+        final student = finalArguments as Student?;
+        if (student != null) {
+          _activeSubScreen = TutorViewAttendanceScreen(student: student, campusId: _userCampus);
+          _currentTitle = 'Asistencia de ${student.fullName.split(' ').first}';
+        }
+      }
+    });
   }
 
   @override
@@ -182,10 +248,8 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
         onNavigate: _onNavigate,
       ),
       body: FadeInUp(
-        key: ValueKey(_activeSubScreen == null
-            ? 'home'
-            : _activeSubScreen.runtimeType.toString()),
-        child: _activeSubScreen ?? widget.bodyBuilder(_onNavigate),
+        key: ValueKey(_activeSubScreen == null ? 'home' : _activeSubScreen.runtimeType.toString()),
+        child: _activeSubScreen ?? widget.bodyBuilder(_onNavigate, _linkedStudent, _userName, _userCampus),
       ),
     );
   }

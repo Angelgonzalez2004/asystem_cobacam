@@ -9,7 +9,7 @@ class CampusAdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ResponsiveDashboard(
       role: 'Admin por Plantel',
-      bodyBuilder: (onNavigate) => CampusAdminHomeScreen(onNavigate: onNavigate),
+      bodyBuilder: (onNavigate, _, __, ___) => CampusAdminHomeScreen(onNavigate: onNavigate),
     );
   }
 }

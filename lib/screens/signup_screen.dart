@@ -22,7 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isPasswordObscured = true;
-  bool _isAccessCodeObscured = true; // NEW
+  bool _isAccessCodeObscured = true;
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -40,6 +40,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   XFile? _profileImage;
 
   final List<String> _roles = [
+    'Tutor',
     'Alumno',
     'Academica',
     'Prefecta',
@@ -56,17 +57,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   void _onMatriculaFocus() {
     if (_matriculaFocus.hasFocus) {
+      String message = _selectedRole == 'Tutor'
+          ? "Ingrese la matrícula del alumno/a que desea vincular a su cuenta."
+          : "¡ADVERTENCIA! Favor de ingresar su matrícula VERDADERA. El sistema detecta intentos de suplantación.";
+      
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.orange),
-              SizedBox(width: 12),
+              const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  "¡ADVERTENCIA! Favor de ingresar su matrícula VERDADERA. El sistema detecta intentos de suplantación.",
-                  style: TextStyle(fontSize: 13, color: Colors.white),
+                  message,
+                  style: const TextStyle(fontSize: 13, color: Colors.white),
                 ),
               ),
             ],
@@ -98,7 +103,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   void _onAccessCodeFocus() {
     if (_accessCodeFocus.hasFocus) {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Clean previous
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Row(
@@ -107,18 +112,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
               SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  "Si usted es el administrador correspondiente favor de escribirla, sino por favor pídasela al personal correspondiente para la creación de esta cuenta.",
+                  "Este código es proporcionado por la administración del plantel para validar su rol.",
                   style: TextStyle(fontSize: 13),
                 ),
               ),
             ],
           ),
-          duration: const Duration(seconds: 4), // Un poco más para leer
+          duration: const Duration(seconds: 4),
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          backgroundColor:
-              Theme.of(context).colorScheme.primary.withOpacity(0.9),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.9),
           elevation: 6,
           margin: const EdgeInsets.all(16),
         ),
@@ -130,9 +133,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      setState(() {
-        _profileImage = image;
-      });
+      setState(() => _profileImage = image);
     }
   }
 
@@ -142,173 +143,128 @@ class _SignUpScreenState extends State<SignUpScreen> {
       initialDate: DateTime.now(),
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-                  surface: Theme.of(context).cardColor,
-                ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null) {
-      setState(() {
-        _dobController.text = DateFormat('yyyy-MM-dd').format(picked);
-      });
+      setState(() => _dobController.text = DateFormat('yyyy-MM-dd').format(picked));
     }
   }
 
   Future<void> _handleSignUp() async {
     if (!_formKey.currentState!.validate()) {
-      UiHelpers.showSnackBar(
-          context, 'Por favor, completa los campos requeridos.',
-          isError: true);
+      UiHelpers.showSnackBar(context, 'Por favor, completa los campos requeridos.', isError: true);
       return;
     }
 
     setState(() => _isLoading = true);
 
-    final String? role = _selectedRole;
-    final String code = _accessCodeController.text;
-
-    if (role == null) {
-      UiHelpers.showSnackBar(context, 'Por favor, selecciona un rol.',
-          isError: true);
-      setState(() => _isLoading = false);
-      return;
-    }
-
-    if (role == 'Personal Administrativo General') {
-      if (code != generalAdminCode) {
-        UiHelpers.showSnackBar(
-            context, 'Código de Administrador General incorrecto.',
-            isError: true);
-        setState(() => _isLoading = false);
-        return;
-      }
-    } else {
-      final String? campus = _selectedCampus;
-      if (campus == null) {
-        UiHelpers.showSnackBar(context, 'Por favor, selecciona un plantel.',
-            isError: true);
-        setState(() => _isLoading = false);
-        return;
-      }
-      final String? correctCode = campusRoleCodes[campus]?[role];
-      if (correctCode == null || code != correctCode) {
-        UiHelpers.showSnackBar(
-            context, 'Código de Acceso incorrecto para este plantel.',
-            isError: true);
-        setState(() => _isLoading = false);
-        return;
-      }
-    }
-
     try {
-      UserCredential userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      // --- VALIDATION ---
+      final String? role = _selectedRole;
+      if (role == null) throw Exception('Por favor, selecciona un rol.');
+
+      if (role == 'Personal Administrativo General') {
+        if (_accessCodeController.text != generalAdminCode) {
+          throw Exception('Código de Administrador General incorrecto.');
+        }
+      } else {
+        final String? campus = _selectedCampus;
+        if (campus == null) throw Exception('Por favor, selecciona un plantel.');
+        if (_accessCodeController.text != campusRoleCodes[campus]?[role]) {
+          throw Exception('Código de Acceso incorrecto para este plantel y rol.');
+        }
+      }
+
+      if ((role == 'Alumno' || role == 'Tutor') && _matriculaController.text.trim().isEmpty) {
+        throw Exception('La matrícula del alumno es requerida para este rol.');
+      }
+
+      // --- USER CREATION ---
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
+      User? user = userCredential.user;
+      if (user == null) throw Exception("No se pudo crear el usuario.");
       if (!mounted) return;
 
-      User? user = userCredential.user;
-      if (user != null) {
-        String? profileImageUrl;
-        if (_profileImage != null) {
-          final storageRef = FirebaseStorage.instance
-              .ref()
-              .child('profile_pictures/${user.uid}');
-
-          if (kIsWeb) {
-            final bytes = await _profileImage!.readAsBytes();
-            await storageRef.putData(
-                bytes, SettableMetadata(contentType: 'image/jpeg'));
-          } else {
-            await storageRef.putFile(File(_profileImage!.path));
-          }
-
-          if (!mounted) return;
-          profileImageUrl = await storageRef.getDownloadURL();
-          if (!mounted) return;
+      // --- PROFILE PICTURE UPLOAD ---
+      String? profileImageUrl;
+      if (_profileImage != null) {
+        final storageRef = FirebaseStorage.instance.ref().child('profile_pictures/${user.uid}');
+        if (kIsWeb) {
+          await storageRef.putData(await _profileImage!.readAsBytes(), SettableMetadata(contentType: 'image/jpeg'));
+        } else {
+          await storageRef.putFile(File(_profileImage!.path));
         }
+        profileImageUrl = await storageRef.getDownloadURL();
+      }
+      if (!mounted) return;
 
-        DatabaseReference userRef =
-            FirebaseDatabase.instance.ref('users/${user.uid}');
-        
-        final userData = {
-          'fullName': _nameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'role': _selectedRole,
-          'campus': _selectedRole == 'Personal Administrativo General'
-              ? 'General'
-              : _selectedCampus,
-          'dateOfBirth': _dobController.text,
-          'location': _locationController.text.trim(),
-          'profileImageUrl': profileImageUrl,
-        };
+      // --- USER DATA CREATION ---
+      final userData = {
+        'fullName': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'role': role,
+        'campus': role == 'Personal Administrativo General' ? 'General' : _selectedCampus,
+        'dateOfBirth': _dobController.text,
+        'location': _locationController.text.trim(),
+        'profileImageUrl': profileImageUrl,
+      };
+      if (role == 'Alumno') {
+        userData['studentId'] = _matriculaController.text.trim();
+      }
+      await FirebaseDatabase.instance.ref('users/${user.uid}').set(userData);
 
-        if (_selectedRole == 'Alumno') {
-          userData['studentId'] = _matriculaController.text.trim();
-        }
+      // --- LINKING LOGIC ---
+      final studentId = _matriculaController.text.trim();
+      final campus = _selectedCampus!;
+      
+      bool linkSuccessful = false;
+      String? successMessage;
+      
+      // Find student reference to update
+      final studentsRef = FirebaseDatabase.instance.ref('planteles/$campus/students');
+      final allCyclesSnapshot = await studentsRef.get();
 
-        await userRef.set(userData);
-
-        // NEW LOGIC: If the user is a student, link their Firebase UID to their student record
-        if (_selectedRole == 'Alumno') {
-          final studentId = _matriculaController.text.trim();
-          final campus = _selectedCampus!; // Already validated to be not null for Alumno role
-
-          // Search for the student record across all school cycles for the given campus
-          final studentsRef = FirebaseDatabase.instance.ref('planteles/$campus/students');
-          final allStudentsSnapshot = await studentsRef.get();
-
-          if (allStudentsSnapshot.exists) {
-            String? foundSchoolCycle;
-            String? foundStudentFirebaseId; // This is the child key (student.id in model)
-
-            // Iterate through each school cycle (child node)
-            for (final cycleSnapshot in allStudentsSnapshot.children) {
-              // Iterate through each student in the current school cycle
-              for (final studentSnapshot in cycleSnapshot.children) {
-                final studentData = Map<String, dynamic>.from(studentSnapshot.value as Map);
-                if (studentData['studentId'] == studentId) {
-                  foundSchoolCycle = cycleSnapshot.key;
-                  foundStudentFirebaseId = studentSnapshot.key;
-                  break; // Found the student, no need to search further in this cycle
+      if (allCyclesSnapshot.exists) {
+        for (final cycleSnapshot in allCyclesSnapshot.children) {
+          for (final studentSnapshot in cycleSnapshot.children) {
+            if (studentSnapshot.value is Map) {
+              final studentData = Map<String, dynamic>.from(studentSnapshot.value as Map);
+              if (studentData['studentId'] == studentId) {
+                final studentRecordRef = studentSnapshot.ref;
+                
+                if (role == 'Alumno') {
+                  await studentRecordRef.update({'userId': user.uid});
+                  successMessage = 'Cuenta de alumno vinculada exitosamente.';
+                } else if (role == 'Tutor') {
+                  List<String> guardianIds = List<String>.from(studentData['guardianUserIds'] ?? []);
+                  if (!guardianIds.contains(user.uid)) {
+                    guardianIds.add(user.uid);
+                    await studentRecordRef.update({'guardianUserIds': guardianIds});
+                  }
+                  successMessage = 'Cuenta de tutor vinculada exitosamente al alumno ${studentData['fullName']}.';
                 }
-              }
-              if (foundSchoolCycle != null) {
-                break; // Found student in a cycle, no need to check other cycles
+                linkSuccessful = true;
+                break;
               }
             }
-
-            if (foundSchoolCycle != null && foundStudentFirebaseId != null) {
-              // Update the student record with the new Firebase UID
-              final studentRecordRef = FirebaseDatabase.instance
-                  .ref('planteles/$campus/students/$foundSchoolCycle/$foundStudentFirebaseId');
-              await studentRecordRef.update({'userId': user.uid});
-              debugPrint('Vinculación exitosa: Student ID $studentId con Firebase UID ${user.uid}');
-            } else {
-              debugPrint('Advertencia: No se encontró el registro del alumno con matrícula $studentId en Firebase para vincular el UID.');
-            }
-          } else {
-              debugPrint('Advertencia: No hay registros de estudiantes en Firebase para el campus $campus.');
           }
-        }
-
-        if (mounted) {
-          UiHelpers.showSnackBar(context, '¡Cuenta creada exitosamente!');
-          await Future.delayed(const Duration(seconds: 1));
-          if (!mounted) return;
-          Navigator.pop(context);
+          if (linkSuccessful) break;
         }
       }
+
+      if (!linkSuccessful && (role == 'Alumno' || role == 'Tutor')) {
+         UiHelpers.showSnackBar(context, 'Advertencia: No se encontró el alumno con matrícula $studentId para vincular la cuenta.', isError: true, duration: const Duration(seconds: 5));
+      } else {
+        UiHelpers.showSnackBar(context, successMessage ?? '¡Cuenta creada exitosamente!');
+      }
+
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) Navigator.pop(context);
+
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
       String message = 'Ocurrió un error.';
       if (e.code == 'weak-password') {
         message = 'La contraseña es muy débil.';
@@ -317,13 +273,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
       UiHelpers.showSnackBar(context, message, isError: true);
     } catch (e) {
-      if (!mounted) return;
-      UiHelpers.showSnackBar(context, 'Error inesperado: ${e.toString()}',
-          isError: true);
+      UiHelpers.showSnackBar(context, e.toString(), isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -332,6 +284,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isGeneralAdmin = _selectedRole == 'Personal Administrativo General';
+    final needsMatricula = _selectedRole == 'Alumno' || _selectedRole == 'Tutor';
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -372,7 +325,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Cabecera: Foto
                               Center(
                                 child: Stack(
                                   children: [
@@ -433,31 +385,71 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                               const SizedBox(height: 32),
 
-                              // Formulario Grid
-                              _buildFormGrid(isWide, isGeneralAdmin, theme),
+                              _buildSectionTitle(theme, 'Información Personal', Icons.person_outline),
+                              _buildStyledField(controller: _nameController, label: 'Nombre Completo', icon: Icons.badge_outlined),
+                              _buildDateSelector(),
+                              _buildStyledField(controller: _locationController, label: 'Lugar de Residencia', icon: Icons.location_on_outlined),
+                              
+                              const SizedBox(height: 24),
+                              _buildSectionTitle(theme, 'Datos Institucionales', Icons.school_outlined),
+
+                              _buildStyledDropdown(
+                                items: _roles,
+                                label: 'Rol Institucional',
+                                icon: Icons.work_outline,
+                                onChanged: (val) => setState(() {
+                                  _selectedRole = val;
+                                  _selectedCampus = null;
+                                }),
+                              ),
+
+                              if (_selectedRole != null && !isGeneralAdmin)
+                                _buildStyledDropdown(
+                                  items: cobacamCampuses,
+                                  label: 'Selecciona tu Plantel',
+                                  icon: Icons.apartment_rounded,
+                                  onChanged: (val) => setState(() => _selectedCampus = val),
+                                ),
+                              
+                              if (needsMatricula)
+                                _buildStyledField(
+                                  controller: _matriculaController,
+                                  label: 'Matrícula del Alumno',
+                                  icon: Icons.badge_outlined,
+                                  keyboardType: TextInputType.text,
+                                  focusNode: _matriculaFocus,
+                                ),
+
+                              const SizedBox(height: 24),
+                              _buildSectionTitle(theme, 'Seguridad', Icons.lock_outline),
+
+                              _buildStyledField(controller: _emailController, label: 'Correo Institucional', icon: Icons.email_outlined, keyboardType: TextInputType.emailAddress),
+                              _buildStyledField(controller: _passwordController, label: 'Contraseña', icon: Icons.vpn_key_outlined, isPassword: true),
+                              
+                              if (isGeneralAdmin || (_selectedRole != null && _selectedCampus != null))
+                                _buildStyledField(
+                                    controller: _accessCodeController,
+                                    label: 'Código de Validación',
+                                    icon: Icons.security_rounded,
+                                    isAccessCode: true,
+                                    focusNode: _accessCodeFocus),
 
                               const SizedBox(height: 40),
 
                               _isLoading
-                                  ? const Center(
-                                      child: CircularProgressIndicator())
+                                  ? const Center(child: CircularProgressIndicator())
                                   : SizedBox(
                                       height: 56,
                                       child: ElevatedButton(
                                         onPressed: _handleSignUp,
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              theme.colorScheme.primary,
+                                          backgroundColor: theme.colorScheme.primary,
                                           foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(16)),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                           elevation: 2,
                                         ),
                                         child: const Text('CREAR CUENTA',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                letterSpacing: 1.0)),
+                                            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.0)),
                                       ),
                                     ),
                             ],
@@ -475,152 +467,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildFormGrid(bool isWide, bool isGeneralAdmin, ThemeData theme) {
-    List<Widget> children = [
-      // Info Personal
-      _buildSectionTitle(theme, 'Información Personal', Icons.person_outline),
-      _buildStyledField(
-          controller: _nameController,
-          label: 'Nombre Completo',
-          icon: Icons.badge_outlined),
-
-      if (isWide)
-        Row(
-          children: [
-            Expanded(child: _buildDateSelector()),
-            const SizedBox(width: 16),
-            Expanded(
-                child: _buildStyledField(
-                    controller: _locationController,
-                    label: 'Lugar de Residencia',
-                    icon: Icons.location_on_outlined)),
-          ],
-        )
-      else ...[
-        _buildDateSelector(),
-        const SizedBox(height: 16),
-        _buildStyledField(
-            controller: _locationController,
-            label: 'Lugar de Residencia',
-            icon: Icons.location_on_outlined),
-      ],
-
-      const SizedBox(height: 24),
-      _buildSectionTitle(theme, 'Datos Institucionales', Icons.school_outlined),
-
-      _buildStyledDropdown(
-        items: _roles,
-        label: 'Rol Institucional',
-        icon: Icons.work_outline,
-        onChanged: (val) {
-          setState(() {
-            _selectedRole = val;
-            _selectedCampus = null;
-          });
-        },
-      ),
-
-      if (_selectedRole != null && !isGeneralAdmin) ...[
-        const SizedBox(height: 16),
-        _buildStyledDropdown(
-          items: cobacamCampuses,
-          label: 'Selecciona tu Plantel',
-          icon: Icons.apartment_rounded,
-          onChanged: (val) => setState(() => _selectedCampus = val),
-        ),
-      ],
-
-      if (_selectedRole == 'Alumno') ...[
-        const SizedBox(height: 16),
-        _buildStyledField(
-          controller: _matriculaController,
-          label: 'Matrícula',
-          icon: Icons.badge_outlined,
-          keyboardType: TextInputType.text,
-          focusNode: _matriculaFocus,
-        ),
-      ],
-
-      const SizedBox(height: 24),
-      _buildSectionTitle(theme, 'Seguridad', Icons.lock_outline),
-
-      _buildStyledField(
-        controller: _emailController,
-        label: 'Correo Institucional',
-        icon: Icons.email_outlined,
-        keyboardType: TextInputType.emailAddress,
-      ),
-      const SizedBox(height: 16),
-
-      if (isWide)
-        Row(
-          children: [
-            Expanded(
-                child: _buildStyledField(
-                    controller: _passwordController,
-                    label: 'Contraseña',
-                    icon: Icons.vpn_key_outlined,
-                    isPassword: true)),
-            if (isGeneralAdmin ||
-                (_selectedRole != null && _selectedCampus != null)) ...[
-              const SizedBox(width: 16),
-              Expanded(
-                  child: _buildStyledField(
-                      controller: _accessCodeController,
-                      label: 'Código de Validación',
-                      icon: Icons.security_rounded,
-                      isAccessCode: true, // NEW
-                      focusNode: _accessCodeFocus)),
-            ]
-          ],
-        )
-      else ...[
-        _buildStyledField(
-            controller: _passwordController,
-            label: 'Contraseña',
-            icon: Icons.vpn_key_outlined,
-            isPassword: true),
-        if (isGeneralAdmin ||
-            (_selectedRole != null && _selectedCampus != null)) ...[
-          const SizedBox(height: 16),
-          _buildStyledField(
-              controller: _accessCodeController,
-              label: 'Código de Validación',
-              icon: Icons.security_rounded,
-              isAccessCode: true, // NEW
-              focusNode: _accessCodeFocus),
-        ]
-      ]
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: children
-          .expand((element) => [
-                element,
-                if (element is! SizedBox && element is! Row)
-                  const SizedBox(height: 16)
-              ])
-          .toList(),
-    );
-  }
-
   Widget _buildSectionTitle(ThemeData theme, String title, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0, top: 8.0),
+      padding: const EdgeInsets.only(bottom: 8.0, top: 16.0),
       child: Row(
         children: [
           Icon(icon, size: 18, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-              letterSpacing: 1.2,
-            ),
-          ),
+          Text(title.toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.colorScheme.primary, letterSpacing: 1.2)),
           const SizedBox(width: 8),
           Expanded(child: Divider(color: theme.dividerColor.withOpacity(0.5))),
         ],
@@ -633,93 +487,47 @@ class _SignUpScreenState extends State<SignUpScreen> {
     required String label,
     required IconData icon,
     bool isPassword = false,
-    bool isAccessCode = false, // NEW PARAMETER
+    bool isAccessCode = false,
     TextInputType? keyboardType,
     FocusNode? focusNode,
   }) {
     final theme = Theme.of(context);
+    bool currentObscuredState = isPassword ? _isPasswordObscured : (isAccessCode ? _isAccessCodeObscured : false);
+    VoidCallback? toggleObscuredState = isPassword 
+      ? () => setState(() => _isPasswordObscured = !_isPasswordObscured)
+      : (isAccessCode ? () => setState(() => _isAccessCodeObscured = !_isAccessCodeObscured) : null);
 
-    // Determine the obscureText state and the toggle function
-    bool currentObscuredState;
-    VoidCallback? toggleObscuredState;
-
-    if (isPassword) {
-      currentObscuredState = _isPasswordObscured;
-      toggleObscuredState = () => setState(() => _isPasswordObscured = !_isPasswordObscured);
-    } else if (isAccessCode) { // Handle for access code
-      currentObscuredState = _isAccessCodeObscured;
-      toggleObscuredState = () => setState(() => _isAccessCodeObscured = !_isAccessCodeObscured);
-    } else {
-      currentObscuredState = false;
-      toggleObscuredState = null;
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TextFormField(
+    return TextFormField(
         controller: controller,
         focusNode: focusNode,
-        obscureText: currentObscuredState, // Use dynamic state
+        obscureText: currentObscuredState,
         keyboardType: keyboardType,
         style: TextStyle(color: theme.colorScheme.onSurface),
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon:
-              Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.5)),
-          border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          prefixIcon: Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
           suffixIcon: toggleObscuredState != null
               ? IconButton(
-                  icon: Icon(
-                    currentObscuredState
-                        ? Icons.visibility_off
-                        : Icons.visibility,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
-                  ),
-                  onPressed: toggleObscuredState, // Use dynamic toggle
+                  icon: Icon(currentObscuredState ? Icons.visibility_off : Icons.visibility, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                  onPressed: toggleObscuredState,
                 )
               : null,
         ),
         validator: (val) => val!.isEmpty ? 'Requerido' : null,
-      ),
-    );
+      );
   }
 
   Widget _buildDateSelector() {
-    final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: _selectDate,
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(
-          children: [
-            Icon(Icons.calendar_today_outlined,
-                color: theme.colorScheme.onSurface.withOpacity(0.5)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                _dobController.text.isEmpty
-                    ? 'Fecha de Nacimiento'
-                    : _dobController.text,
-                style: TextStyle(
-                  color: _dobController.text.isEmpty
-                      ? theme.colorScheme.onSurface.withOpacity(0.6)
-                      : theme.colorScheme.onSurface,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return TextFormField(
+      controller: _dobController, 
+      onTap: _selectDate, 
+      readOnly: true, 
+      decoration: InputDecoration(
+        labelText: 'Fecha de Nacimiento', 
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)), 
+        prefixIcon: const Icon(Icons.calendar_today)
+      )
     );
   }
 
@@ -729,47 +537,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     required IconData icon,
     required Function(String?) onChanged,
   }) {
-    final theme = Theme.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: DropdownButtonFormField<String>(
-        isExpanded: true,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon:
-              Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.5)),
-          border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        ),
-        items: items.map((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(
-              value,
-              style: TextStyle(color: theme.colorScheme.onSurface),
-              overflow: TextOverflow.ellipsis,
-            ),
-          );
-        }).toList(),
-        selectedItemBuilder: (BuildContext context) {
-          return items.map<Widget>((String item) {
-            return Text(
-              item,
-              style: TextStyle(color: theme.colorScheme.onSurface),
-              overflow: TextOverflow.ellipsis,
-            );
-          }).toList();
-        },
-        onChanged: onChanged,
-        dropdownColor: theme.cardColor,
-        icon: Icon(Icons.arrow_drop_down_circle_outlined,
-            color: theme.colorScheme.onSurface.withOpacity(0.5)),
-      ),
+    return DropdownButtonFormField<String>(
+      items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), 
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label, 
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)), 
+        prefixIcon: Icon(icon)
+      )
     );
   }
 }
