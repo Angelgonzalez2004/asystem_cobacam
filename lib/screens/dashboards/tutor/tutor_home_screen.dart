@@ -84,6 +84,9 @@ class _TutorHomeScreenState extends State<TutorHomeScreen> {
       );
     }
 
+    final isFemenino = widget.linkedStudent?.gender.toLowerCase() == 'femenino';
+    final labelViendo = isFemenino ? 'de la alumna' : 'del alumno';
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,7 +94,7 @@ class _TutorHomeScreenState extends State<TutorHomeScreen> {
           WelcomeHeader(
             userName: widget.tutorName ?? 'Tutor',
             role: 'TUTOR',
-            subtitle: 'Visualizando datos de: ${widget.linkedStudent!.fullName}',
+            subtitle: 'Visualizando datos $labelViendo: ${widget.linkedStudent!.fullName}',
           ),
           Padding(
             padding: const EdgeInsets.all(24.0),

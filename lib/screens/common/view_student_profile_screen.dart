@@ -88,7 +88,6 @@ class _ViewStudentProfileScreenState extends State<ViewStudentProfileScreen> {
 
   Future<void> _fetchStudentData(String selectedCycle) async {
     if (_userCampusId == null) {
-      // Re-intentar encontrar campus si es nulo
       _userCampusId = await _findStudentCampus(widget.student.studentId);
       if (_userCampusId == null) {
         setState(() => _errorMessage = "No se pudo determinar el plantel del alumno.");
@@ -109,7 +108,17 @@ class _ViewStudentProfileScreenState extends State<ViewStudentProfileScreen> {
       if (studentSnap.exists) {
         final data = Map<String, dynamic>.from(studentSnap.value as Map);
         data['id'] = studentSnap.key;
-        setState(() => _currentStudentData = Student.fromMap(data));
+        final student = Student.fromMap(data);
+        
+        // VALIDACIÓN: Si el registro existe pero no tiene nombre o grupo, se considera incompleto
+        if (student.fullName.trim().isEmpty || student.group.trim().isEmpty) {
+          setState(() {
+            _currentStudentData = null;
+            _errorMessage = "Los datos para el ciclo escolar $selectedCycle están incompletos o no fueron registrados correctamente.";
+          });
+        } else {
+          setState(() => _currentStudentData = student);
+        }
       } else {
         setState(() {
           _currentStudentData = null;
@@ -132,13 +141,7 @@ class _ViewStudentProfileScreenState extends State<ViewStudentProfileScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Datos del Alumno', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        foregroundColor: theme.colorScheme.onSurface,
-      ),
+      // SE QUITÓ EL APPBAR DE AQUÍ PARA EVITAR DOBLE TÍTULO
       body: Column(
         children: [
           // Selector de Ciclo

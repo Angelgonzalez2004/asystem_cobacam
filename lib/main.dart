@@ -12,6 +12,7 @@ import 'firebase_options.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:asystem_cobacam/services/app_settings_service.dart';
+import 'package:asystem_cobacam/services/notification_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -49,6 +50,9 @@ void main() async {
       } else {
         debugPrint("ℹ️ Firebase ya estaba activo.");
       }
+
+      // 2.5 Notificaciones (FCM)
+      await NotificationService.initialize();
 
       // Configuración de persistencia (segura para web)
       try {

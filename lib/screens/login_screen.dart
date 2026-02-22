@@ -8,6 +8,7 @@ import 'package:asystem_cobacam/screens/dashboards/tutor/tutor_dashboard_screen.
 import 'package:asystem_cobacam/screens/forgot_password_screen.dart';
 import 'package:asystem_cobacam/screens/signup_screen.dart';
 import 'package:asystem_cobacam/services/session_service.dart';
+import 'package:asystem_cobacam/services/notification_service.dart';
 import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/utils/slide_transition.dart';
 import 'package:asystem_cobacam/utils/ui_helpers.dart';
@@ -131,8 +132,10 @@ class _LoginScreenState extends State<LoginScreen> {
             // Registrar sesión
             try {
               SessionService().registerCurrentSession();
+              // Guardar Token de Notificaciones (FCM)
+              NotificationService.saveDeviceToken();
             } catch (e) {
-              debugPrint("Error registrando sesión: $e");
+              debugPrint("Error registrando sesión/token: $e");
             }
 
             _navigateToDashboard(role);

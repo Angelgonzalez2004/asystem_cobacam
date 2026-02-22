@@ -56,6 +56,8 @@ dependencies:
   dropdown_search: ^5.0.6
   async: ^2.13.0
   collection: ^1.18.0
+  firebase_messaging: ^16.1.1
+  flutter_local_notifications: ^20.1.0
 
 dev_dependencies:
   flutter_test:
