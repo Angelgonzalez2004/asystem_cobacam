@@ -9,7 +9,7 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   static Future<void> initialize() async {
-    // 1. Pedir permisos (necesario en iOS y Android 13+)
+    // 1. Pedir permisos
     NotificationSettings settings = await _messaging.requestPermission(
       alert: true,
       badge: true,
@@ -20,15 +20,23 @@ class NotificationService {
       if (kDebugMode) print('Permiso concedido para notificaciones.');
     }
 
-    // 2. Configurar notificaciones locales para mostrar avisos cuando la app esté abierta
-    const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
-    await _localNotifications.initialize(settings: initializationSettings);
+    // 2. Configurar notificaciones locales (solo para móviles)
+    if (!kIsWeb) {
+      const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
+      await _localNotifications.initialize(settings: initializationSettings);
+    }
 
     // 3. Escuchar notificaciones en primer plano (Foreground)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
-        _showLocalNotification(message.notification!);
+        if (kIsWeb) {
+          // En web, el navegador suele manejar esto si tiene permiso, 
+          // pero podemos mostrar un aviso visual extra si queremos.
+          if (kDebugMode) print('Notificación recibida en web: ${message.notification!.title}');
+        } else {
+          _showLocalNotification(message.notification!);
+        }
       }
     });
 
@@ -41,7 +49,11 @@ class NotificationService {
     if (user == null) return;
 
     try {
-      String? token = await _messaging.getToken();
+      // Para Web, necesitas la clave VAPID de la consola de Firebase (Cloud Messaging -> Web Push certificates)
+      String? token = await _messaging.getToken(
+        vapidKey: kIsWeb ? 'TU_CLAVE_VAPID_AQUI' : null,
+      );
+      
       if (token != null) {
         // Guardamos el token en una subcolección para permitir múltiples dispositivos
         final tokenHash = token.hashCode.toString();
