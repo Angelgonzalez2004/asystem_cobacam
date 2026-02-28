@@ -1,102 +1,80 @@
-# 🎓 Asystem Cobacam - Plataforma de Gestión Académica Integral
+# 🎓 ASYSTEM COBACAM - Plataforma de Excelencia Académica
 
-**Asystem Cobacam** es una avanzada plataforma digital en continua evolución, diseñada para el **Colegio de Bachilleres del Estado de Campeche (COBACAM)**. Su misión es modernizar, centralizar y optimizar los procesos académicos y administrativos, creando un ecosistema seguro y eficiente que conecta a estudiantes, docentes, prefectos y personal directivo.
-
----
-
-## ✨ Características Principales y Novedades
-
-Asystem Cobacam se enfoca en proporcionar una experiencia integral y eficiente, integrando funcionalidades clave para la gestión educativa moderna y en constante mejora.
-
-### 👥 Gestión de Usuarios y Roles (RBAC)
-Un robusto sistema de control de acceso basado en roles (`RBAC`) asegura que cada usuario (Alumno, Prefecto, Académico, Administrador de Plantel, Administrador General) acceda a una interfaz y funcionalidades personalizadas, adaptadas a sus necesidades específicas.
-
-### 🚀 Últimas Actualizaciones (Febrero 2026)
-
-#### 🔐 Seguridad y Autenticación Biométrica
-*   **Desbloqueo por Huella/Rostro:** Implementación de autenticación biométrica nativa.
-*   **Gestión de Sesiones:** Control de sesiones activas y cierre remoto.
-
-#### 👨‍👩‍👦 Rol de Tutor: Supervisión Integral (Nuevo)
-*   **Vinculación Dinámica:** Acceso inmediato a la información del alumno mediante matrícula vinculada.
-*   **Seguimiento de Asistencia:** Panel exclusivo para consultar el historial de asistencias, retardos e incidencias en tiempo real.
-*   **Consulta por Ciclos:** Selector de ciclos escolares para visualizar datos históricos y credenciales de periodos anteriores.
-*   **Interfaz Adaptada:** Dashboard optimizado para el seguimiento académico y comunicación de avisos institucionales.
-
-#### 🪪 Credencialización Digital Inteligente
-*   **Generador de Alta Resolución:** Módulo de credencialización capaz de generar identificaciones digitales (1030x666 px).
-*   **Sincronización Automática:** Foto de perfil y datos académicos actualizados al instante.
-*   **Descarga Controlada:** Límite de seguridad de **3 descargas por mes** para alumnos.
-*   **Visor de Tutor:** Los tutores pueden visualizar la credencial del alumno para cualquier ciclo escolar registrado.
-
-#### 🧑‍🎓 Perfil del Alumno: Control y Autonomía
-*   **Edición Condicional:** Actualización de datos bajo permiso expreso de Prefectura.
-*   **Campo NSS Unificado:** Estandarización de información médica crítica.
-*   **Gestión de Foto:** Límite de 3 cambios mensuales para mantener la integridad de la identificación.
-
-#### 👩‍🏫 Herramientas para Prefectura
-*   **Autorización por Lotes:** Gestión masiva de permisos de edición de perfil.
-*   **Visor de Ciclos:** Administración completa de grupos, horarios y personal docente.
-
-### 📊 Gestión de Asistencia Avanzada
-*   **Pase de Lista Flexible:** Registro mediante escaneo de credenciales QR, entrada manual o registro masivo.
-*   **Reportes en Excel:** Exportación detallada de asistencias e incidencias con fórmulas automáticas para el cálculo de retardos y justificaciones.
-*   **Modo Offline-First:** Funcionalidad completa sin conexión a internet, sincronizando los datos con Firebase cuando la conexión se restablece.
-
-### 🧠 Asistencia con IA (AsystemBot)
-Integración con **Gemini 1.5 Flash** para proporcionar asistencia contextual y respuestas en lenguaje natural sobre el funcionamiento de la plataforma y reglamentos institucionales.
+**ASYSTEM COBACAM** es la evolución digital del **Colegio de Bachilleres del Estado de Campeche**. Una plataforma integral de alto nivel diseñada para centralizar, automatizar y asegurar el control escolar mediante una experiencia de usuario premium, moderna y ultra-profesional.
 
 ---
 
-## 🛠️ Stack Tecnológico Detallado
+## ✨ Experiencia de Usuario Premium (Novedad)
 
-### Frontend (Multiplataforma)
-*   **Flutter 3.22+**: Framework principal para garantizar una interfaz fluida y nativa.
-*   **Provider**: Gestión de estado eficiente y reactiva.
-*   **Hive**: Base de datos local para soporte *Offline-First*.
-*   **Local Auth**: Integración con hardware biométrico (Huella/Rostro).
+Hemos elevado la estética del sistema a un nivel institucional superior, adoptando una filosofía de diseño **Premium Glassmorphism**:
 
-### Backend & Infraestructura
-*   **Firebase Realtime DB**: Estructura de datos NoSQL en tiempo real.
-*   **Firebase Authentication**: Manejo de identidades seguro.
-*   **Cloud Functions**: Lógica de servidor segura para procesamiento de datos.
-*   **Gemini AI API**: Inteligencia artificial generativa para el asistente contextual.
+*   **Interfaz Glassmorphism Refinada**: Pantallas de acceso (Login, Registro, Recuperación) con efectos de cristal esmerilado sobre un gradiente de malla institucional.
+*   **Fondo Institucional Dinámico**: Uso de gradientes profundos (Deep Slate & Royal Blue) con iluminación ambiental para una sensación de tecnología y seriedad.
+*   **Visibilidad de Alto Contraste**: Tipografía blanca sólida (`FontWeight.w900`) y etiquetas inteligentes que garantizan una legibilidad perfecta en cualquier condición lumínica.
+*   **Totalmente Responsiva**: El sistema se adapta inteligentemente a monitores 4K, laptops, tablets y móviles, reordenando los formularios para mantener la elegancia.
 
 ---
 
-## 📈 Roadmap de Implementación (Ciclo 2026A)
-1.  **Fase 1:** Migración de datos históricos y validación de matrículas.
-2.  **Fase 2:** Despliegue de la versión Web para personal administrativo.
-3.  **Fase 3:** Lanzamiento de las apps móviles para alumnos y tutores.
-4.  **Fase 4:** Activación del módulo de IA para asistencia en tiempo real.
+## 🚀 Funcionalidades Críticas Actualizadas
+
+### 🔔 Notificaciones en Tiempo Real (FCM)
+Sistema de alerta inmediata para padres de familia y tutores:
+*   **Notificación Automática**: El servidor detecta instantáneamente el registro de entrada o salida realizado por Prefectura.
+*   **Seguridad Total**: Alerta en el dispositivo del tutor informando: *"El alumno [Nombre] acaba de ingresar/salir del plantel a las [Hora]"*.
+*   **Omnicanal**: Funciona en Android, iOS y Navegadores Web (PWA).
+
+### 👨‍👩‍👦 Control Total para Tutores
+*   **Vinculación Inteligente**: El sistema vincula automáticamente al tutor con el alumno durante el registro mediante validación de matrícula.
+*   **Dashboard de Asistencia Premium**: 
+    *   Estadísticas mensuales: Conteo en tiempo real de Asistencias, Retardos e Inasistencias.
+    *   **Banner de Rango Académico**: El sistema avisa dinámicamente si el mes consultado está fuera de las fechas oficiales del ciclo escolar.
+    *   **Historial Histórico**: Selector de ciclos pasados para consultar años anteriores con un solo clic.
+*   **Identidad Médica**: Visualización de alertas de salud (distintivo de pulso cardiaco) para un seguimiento preventivo.
+
+### 📊 Gestión Administrativa y de Prefectura
+*   **Pase de Lista Inteligente**: Escaneo QR de alta velocidad con sincronización Offline-First.
+*   **Motor de Ciclos Escolares**: Gestión de periodos A/B con validación de fechas de inicio y término para la integridad de los datos.
+*   **Generador de Credenciales HD**: Exportación de identificaciones oficiales en alta resolución vinculadas al historial del alumno.
 
 ---
 
-## ⚙️ Despliegue y Configuración
+## 🛠️ Arquitectura Tecnológica
 
-### 1. Requisitos
-*   Flutter SDK (v3.22 o superior)
-*   Firebase CLI
+### Core System
+*   **Flutter 3.22+**: Motor multiplatforma de alto rendimiento.
+*   **Firebase Cloud Messaging (FCM)**: Infraestructura de notificaciones push.
+*   **Firebase Functions (V2)**: Lógica de servidor para procesamiento de señales de asistencia.
+*   **Hive DB**: Almacenamiento local persistente para máxima velocidad y trabajo sin internet.
 
-### 2. Instalación
+### Inteligencia Artificial
+*   **AsystemBot (Gemini 1.5 Flash)**: Asistente integrado para soporte técnico y consultas de reglamento institucional en lenguaje natural.
+
+---
+
+## ⚙️ Implementación y Despliegue
+
+### 1. Preparación de Entorno
 ```bash
 git clone https://github.com/Angelgonzalez2004/asystem_cobacam.git
 cd asystem_cobacam
 flutter pub get
 ```
 
-### 3. Compilación para Web
+### 2. Compilación para Producción (Web)
 ```bash
+# Genera la versión final optimizada
 flutter build web --release
 ```
 
-### 4. Despliegue
+### 3. Lanzamiento al Hosting
 ```bash
+# Despliegue directo en Firebase
 firebase deploy --only hosting
 ```
 
 ---
 
-## 📄 Licencia y Créditos
+## 📄 Licencia e Identidad
 © 2026 **Colegio de Bachilleres del Estado de Campeche (COBACAM)**.
-Desarrollado para la innovación y excelencia educativa. Todos los derechos reservados.
+*Gestión Escolar Inteligente, Excelencia Educativa.*
+Desarrollado para la innovación y el control total de la comunidad académica.

@@ -19,6 +19,7 @@ import 'package:intl/intl.dart';
 import 'package:asystem_cobacam/services/hive_service.dart';
 import 'package:asystem_cobacam/services/connectivity_service.dart';
 import 'package:asystem_cobacam/models/attendance_record_model.dart';
+import 'package:asystem_cobacam/services/notification_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -519,11 +520,22 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     DateTime scheduledExit =
         DateTime(now.year, now.month, now.day, 14, 0); 
 
-    if (groupSchedule != null &&
-        groupSchedule.dailySchedules.containsKey(todayDayOfWeek)) {
-      final List<ClassSession> todaySessions =
-          groupSchedule.dailySchedules[todayDayOfWeek]!;
-      if (todaySessions.isNotEmpty) {
+    // Check for capitalized day name (e.g. "Viernes") as stored in DB
+    final String capitalizedDay = todayDayOfWeek.isNotEmpty
+        ? todayDayOfWeek[0].toUpperCase() + todayDayOfWeek.substring(1)
+        : todayDayOfWeek;
+
+    List<ClassSession>? todaySessions;
+    if (groupSchedule != null) {
+      if (groupSchedule.dailySchedules.containsKey(todayDayOfWeek)) {
+        todaySessions = groupSchedule.dailySchedules[todayDayOfWeek];
+      } else if (groupSchedule.dailySchedules.containsKey(capitalizedDay)) {
+        todaySessions = groupSchedule.dailySchedules[capitalizedDay];
+      }
+    }
+
+    if (todaySessions != null && todaySessions.isNotEmpty) {
+      if (true) { // Wrapper to maintain indentation or just simplify
         final earliestSession = todaySessions.reduce(
             (a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
         final latestSession = todaySessions
@@ -619,6 +631,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             .put(attendanceRecord.uniqueKey, attendanceRecord);
       } else {
         await _attendanceRef!.child(student.studentId).set(record);
+        
+        // --- ENVÍO DE NOTIFICACIÓN AL TUTOR ---
+        if (student.guardianUserIds != null && student.guardianUserIds!.isNotEmpty) {
+          NotificationService.sendAttendanceNotification(
+            studentName: student.fullName,
+            guardianIds: student.guardianUserIds!,
+            type: scanType == 'entry' ? 'entrada' : 'salida',
+            time: currentTime,
+            campusName: _campus ?? 'Cobacam',
+          ).catchError((e) => debugPrint('Error enviando notificación: $e'));
+        }
+        
         final key = '${student.studentId}_$_todayDate';
         if (_hiveService.attendanceRecordsBox.containsKey(key)) {
           await _hiveService.attendanceRecordsBox.delete(key);
@@ -1042,39 +1066,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Asistencia'),
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'download') _showDownloadOptionsDialog();
-              if (value == 'upload') _showImportOptionsDialog();
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'download',
-                child: Row(
-                  children: [
-                    Icon(Icons.download, color: Colors.grey),
-                    SizedBox(width: 8),
-                    Text('Descargar Plantilla'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'upload',
-                child: Row(
-                  children: [
-                    Icon(Icons.upload_file, color: Colors.grey),
-                    SizedBox(width: 8),
-                    Text('Importar Excel'),
-                  ],
-                ),
-              ),
-            ],
-          )
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showMassAttendanceDialog,
         icon: const Icon(Icons.groups_rounded),
@@ -1087,6 +1078,42 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 16.0, top: 8.0),
+                    child: PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert),
+                      tooltip: 'Opciones',
+                      onSelected: (value) {
+                        if (value == 'download') _showDownloadOptionsDialog();
+                        if (value == 'upload') _showImportOptionsDialog();
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'download',
+                          child: Row(
+                            children: [
+                              Icon(Icons.download, color: Colors.grey),
+                              SizedBox(width: 8),
+                              Text('Descargar Plantilla'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'upload',
+                          child: Row(
+                            children: [
+                              Icon(Icons.upload_file, color: Colors.grey),
+                              SizedBox(width: 8),
+                              Text('Importar Excel'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 _buildStatsDashboard(theme),
                 Expanded(
                   flex: 4,
@@ -1645,7 +1672,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (groupSchedule == null) return '';
 
     List<ClassSession>? todaySessions;
-    List<String> weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+    // Use Spanish capitalized days to match DB keys
+    List<String> weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
     for (var day in weekdays) {
       if (groupSchedule.dailySchedules.containsKey(day) && groupSchedule.dailySchedules[day]!.isNotEmpty) {
@@ -2165,11 +2193,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     DateTime? scheduledExit;
     final GroupSchedule? groupSchedule = _groupSchedulesMap[student.group];
 
-    if (groupSchedule != null &&
-        groupSchedule.dailySchedules.containsKey(todayDayOfWeek)) {
-      final List<ClassSession> todaySessions =
-          groupSchedule.dailySchedules[todayDayOfWeek]!;
-      if (todaySessions.isNotEmpty) {
+    final String capitalizedDay = todayDayOfWeek.isNotEmpty
+        ? todayDayOfWeek[0].toUpperCase() + todayDayOfWeek.substring(1)
+        : todayDayOfWeek;
+
+    List<ClassSession>? todaySessions;
+    if (groupSchedule != null) {
+      if (groupSchedule.dailySchedules.containsKey(todayDayOfWeek)) {
+        todaySessions = groupSchedule.dailySchedules[todayDayOfWeek];
+      } else if (groupSchedule.dailySchedules.containsKey(capitalizedDay)) {
+        todaySessions = groupSchedule.dailySchedules[capitalizedDay];
+      }
+    }
+
+    if (todaySessions != null && todaySessions.isNotEmpty) {
+      if (true) {
         final earliestSession = todaySessions.reduce(
             (a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
         final latestSession = todaySessions

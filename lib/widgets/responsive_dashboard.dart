@@ -98,50 +98,96 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
   }
 
   Future<void> _loadLinkedStudentData(String tutorId) async {
-    if (_userCampus == null) return;
+    // Si no hay campus definido en el perfil del tutor, no podemos saber dónde buscar alumnos
+    if (_userCampus == null || _userCampus!.isEmpty) {
+      debugPrint("⚠️ No se puede buscar alumno: Campus del tutor es nulo o vacío.");
+      return;
+    }
+
     try {
+      debugPrint("🔍 Buscando alumno vinculado para Tutor UID: $tutorId en plantel: $_userCampus");
       final currentSchoolCycleId = await _appSettingsService.getCurrentSchoolCycleId();
       Student? foundStudent;
 
+      // 1. INTENTO EN EL CICLO ACTUAL (MÁS RÁPIDO)
       if (currentSchoolCycleId.isNotEmpty) {
         final activeCycleRef = FirebaseDatabase.instance.ref('planteles/$_userCampus/students/$currentSchoolCycleId');
         final activeCycleSnapshot = await activeCycleRef.get();
+        
         if (activeCycleSnapshot.exists) {
           for (final studentSnapshot in activeCycleSnapshot.children) {
-            final studentData = Map<String, dynamic>.from(studentSnapshot.value as Map);
-            final guardianIds = studentData['guardianUserIds'] != null ? List<String>.from(studentData['guardianUserIds']) : [];
-            if (guardianIds.contains(tutorId)) {
-              foundStudent = Student.fromSnapshot(studentSnapshot);
-              break;
+            try {
+              final val = studentSnapshot.value;
+              if (val == null || val is! Map) {
+                debugPrint("⏭️ Saltando nodo no válido (posible 'Ninguna'): $val");
+                continue;
+              }
+              final studentData = Map<dynamic, dynamic>.from(val);
+              final rawGuardianIds = studentData['guardianUserIds'];
+              
+              List<String> guardianIds = [];
+              if (rawGuardianIds is List) {
+                guardianIds = List<String>.from(rawGuardianIds);
+              } else if (rawGuardianIds is Map) {
+                guardianIds = rawGuardianIds.values.map((e) => e.toString()).toList();
+              }
+
+              if (guardianIds.contains(tutorId)) {
+                foundStudent = Student.fromSnapshot(studentSnapshot);
+                debugPrint("✅ Alumno encontrado en ciclo actual: ${foundStudent.fullName}");
+                break;
+              }
+            } catch (e) {
+              continue;
             }
           }
         }
       }
 
+      // 2. BÚSQUEDA GLOBAL EN TODOS LOS CICLOS DEL PLANTEL (FALLBACK)
       if (foundStudent == null) {
+        debugPrint("⏳ Buscando en todos los ciclos del plantel...");
         final allStudentsRef = FirebaseDatabase.instance.ref('planteles/$_userCampus/students');
         final allCyclesSnapshot = await allStudentsRef.get();
+        
         if (allCyclesSnapshot.exists) {
           for (final cycleSnapshot in allCyclesSnapshot.children) {
             for (final studentSnapshot in cycleSnapshot.children) {
-              final studentData = Map<String, dynamic>.from(studentSnapshot.value as Map);
-              final guardianIds = studentData['guardianUserIds'] != null ? List<String>.from(studentData['guardianUserIds']) : [];
-              if (guardianIds.contains(tutorId)) {
-                foundStudent = Student.fromSnapshot(studentSnapshot);
-                break;
+              try {
+                final studentData = Map<dynamic, dynamic>.from(studentSnapshot.value as Map);
+                final rawGuardianIds = studentData['guardianUserIds'];
+                
+                List<String> guardianIds = [];
+                if (rawGuardianIds is List) {
+                  guardianIds = List<String>.from(rawGuardianIds);
+                } else if (rawGuardianIds is Map) {
+                  guardianIds = rawGuardianIds.values.map((e) => e.toString()).toList();
+                }
+
+                if (guardianIds.contains(tutorId)) {
+                  foundStudent = Student.fromSnapshot(studentSnapshot);
+                  debugPrint("✅ Alumno encontrado en ciclo histórico: ${foundStudent.fullName}");
+                  break;
+                }
+              } catch (e) {
+                continue;
               }
             }
             if (foundStudent != null) break;
           }
         }
       }
+
       if (mounted) {
         setState(() {
           _linkedStudent = foundStudent;
         });
+        if (foundStudent == null) {
+          debugPrint("❌ No se encontró ningún alumno vinculado para el tutor $tutorId");
+        }
       }
     } catch (e) {
-      debugPrint("Error finding linked student: $e");
+      debugPrint("🚨 Error crítico buscando alumno: $e");
     }
   }
 

@@ -223,14 +223,38 @@
       "Prefecta": "XPU-PRE-24"
     }
   },
+  "faqs": {
+    "-Om4mf4nKwgTjrICflOf": {
+      "a": "Maximo 15 minutos de entrada",
+      "c": "Prefectura",
+      "icon": "timer_outlined",
+      "q": "Minimo permitidos de tolerancia?"
+    }
+  },
   "planteles": {
     "Atasta": {
+      "attendance": {
+        "2026-A": {
+          "2026-02-20": {
+            "4222010297": {
+              "campusId": "Atasta",
+              "date": "2026-02-20",
+              "entryTime": "06:53",
+              "group": "201",
+              "schoolCycle": "2026-A",
+              "status": "presente",
+              "studentFullName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+              "studentId": "4222010297"
+            }
+          }
+        }
+      },
       "groups": {
         "-OlYm2dhbWJh0gEDIl_q": {
           "name": "201",
           "schoolCycleId": "2026-A",
           "semester": 2,
-          "studentCount": 1
+          "studentCount": 3
         },
         "-OlYm2dkC7aDrUOVOp1T": {
           "name": "202",
@@ -281,43 +305,87 @@
           "studentCount": 2
         }
       },
-      "nonAttendanceDays": {
-        "2026-02-02": {
-          "campusId": "Atasta",
-          "date": "2026-02-02",
-          "reason": "Suspensión Oficial (SEP)"
-        },
-        "2026-02-16": {
-          "campusId": "Atasta",
-          "date": "2026-02-16",
-          "reason": "Carnaval en campeche"
-        },
-        "2026-02-17": {
-          "campusId": "Atasta",
-          "date": "2026-02-17",
-          "reason": "Carnaval en campeche"
-        },
-        "2026-02-18": {
-          "campusId": "Atasta",
-          "date": "2026-02-18",
-          "reason": "Carnaval en campeche"
+      "schedules": {
+        "2026-A": {
+          "-OlYm2dhbWJh0gEDIl_q": {
+            "dailySchedules": {
+              "Jueves": [
+                {
+                  "endTime": "07:50",
+                  "startTime": "07:00",
+                  "subjectId": "QUIMICA I",
+                  "subjectName": "QUIMICA I",
+                  "teacherId": "-Om6yqUa2sWvbBx1EwBr",
+                  "teacherName": "GUADALUPE"
+                },
+                {
+                  "endTime": "14:00",
+                  "startTime": "13:10",
+                  "subjectId": "QUIMICA I",
+                  "subjectName": "QUIMICA I",
+                  "teacherId": "-Om6yqUa2sWvbBx1EwBr",
+                  "teacherName": "GUADALUPE"
+                }
+              ],
+              "Viernes": [
+                {
+                  "endTime": "07:50",
+                  "startTime": "07:00",
+                  "subjectId": "QUIMICA I",
+                  "subjectName": "QUIMICA I",
+                  "teacherId": "-Om6yqUa2sWvbBx1EwBr",
+                  "teacherName": "GUADALUPE"
+                },
+                {
+                  "endTime": "14:00",
+                  "startTime": "13:10",
+                  "subjectId": "QUIMICA I",
+                  "subjectName": "QUIMICA I",
+                  "teacherId": "-Om6yqUa2sWvbBx1EwBr",
+                  "teacherName": "GUADALUPE"
+                }
+              ]
+            },
+            "groupId": "-OlYm2dhbWJh0gEDIl_q",
+            "schoolCycle": "2026-A"
+          }
+        }
+      },
+      "school_cycles": {
+        "2026-A": {
+          "teachers": {
+            "-Om6yqUa2sWvbBx1EwBr": {
+              "name": "GUADALUPE",
+              "subjects": [
+                "QUIMICA I"
+              ]
+            }
+          }
         }
       },
       "students": {
         "2025-B": {
           "4222010297": {
             "canEditProfile": true
-          }
+          },
+          "allergies": "Ninguna",
+          "gender": "",
+          "generalHealthStatus": "Sano",
+          "guardianFullName": "",
+          "guardianPhone": "",
+          "healthConditions": "Ninguna",
+          "medicalAlert": false,
+          "placeOfResidence": ""
         },
         "2026-A": {
           "4222010297": {
             "age": 19,
             "allergies": "Polen",
-            "canEditProfile": false,
+            "canEditProfile": true,
             "fullName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
             "gender": "Masculino",
             "generalHealthStatus": "En tratamiento médico",
-            "group": "603",
+            "group": "201",
             "guardianFullName": "GLADYS DEL CARMEN ALCOCER PERALTA",
             "guardianPhone": "0000000000",
             "healthConditions": "Ninguna",
@@ -331,61 +399,122 @@
             "studentId": "4222010297",
             "studentPhone": "9381321268",
             "userId": ""
+          },
+          "4222010298": {
+            "age": 20,
+            "allergies": "Ninguna",
+            "canEditProfile": false,
+            "fullName": "Carmen Gonzalez",
+            "gender": "Masculino",
+            "generalHealthStatus": "Bueno",
+            "group": "201",
+            "guardianFullName": "Carmen Perez",
+            "guardianPhone": "5656555555",
+            "healthConditions": "Ninguna",
+            "institutionalEmail": "",
+            "isActive": true,
+            "medicalAlert": false,
+            "nss": "34545455454",
+            "placeOfResidence": "",
+            "registeredByUserId": "maYEASJoR3a5oeipfPCIvRSVQ4H3",
+            "schoolCycle": "2026-A",
+            "studentId": "4222010298",
+            "userId": ""
           }
         }
       }
     }
   },
   "school_cycles": {
-    "2025-A": {
-      "endDate": "2025-07-18",
-      "startDate": "2025-02-03",
-      "type": "A"
-    },
-    "2025-B": {
-      "endDate": "2026-02-20",
-      "startDate": "2025-09-01",
-      "type": "B"
-    },
-    "2025-P": {
-      "endDate": "2025-08-21",
-      "startDate": "2025-08-04",
-      "type": "Propedéutico"
-    },
     "2026-A": {
-      "endDate": "2026-07-24",
-      "startDate": "2026-03-02",
+      "endDate": "2026-07-17",
+      "startDate": "2026-02-16",
       "type": "A"
-    },
-    "2026-P": {
-      "endDate": "2026-08-28",
-      "startDate": "2026-08-03",
-      "type": "Propedéutico"
     }
   },
   "users": {
+    "PlFZskyLdscdg0TzjMRNNqH7PT02": {
+      "campus": "Atasta",
+      "dateOfBirth": "2026-02-22",
+      "email": "servicioseimpresionesancar@gmail.com",
+      "fullName": "CARMEN ALCOCER",
+      "location": "ATASTA",
+      "role": "Tutor",
+      "sessions": {
+        "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Mobile Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Mobile Safari_537_36",
+          "ip": "187.154.103.152",
+          "isWeb": true,
+          "lastActive": 1771814424156,
+          "location": "Centro, Tabasco",
+          "model": "chrome on Linux armv81",
+          "platform": "Web"
+        },
+        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36",
+          "ip": "187.154.103.152",
+          "isWeb": true,
+          "lastActive": 1771814545911,
+          "location": "Centro, Tabasco",
+          "model": "chrome on Win32",
+          "platform": "Web"
+        },
+        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Code_1_109_5 Chrome_142_0_7444_265 Electron_39_3_0 Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Code_1_109_5 Chrome_142_0_7444_265 Electron_39_3_0 Safari_537_36",
+          "ip": "2806:10a6:28:c2d5:7137:85be:801a:e271",
+          "isWeb": true,
+          "lastActive": 1772320446974,
+          "location": "Centro, Tabasco",
+          "model": "chrome on Win32",
+          "platform": "Web"
+        }
+      }
+    },
+    "RJjSGgJby8RC4qFviQqJ2n6qTfx1": {
+      "campus": "General",
+      "dateOfBirth": "2026-02-22",
+      "email": "gonzalezalcocera6@gmail.com",
+      "fullName": "ANGEL GONZALEZ",
+      "location": "ATASTA",
+      "role": "Personal Administrativo General",
+      "sessions": {
+        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36",
+          "ip": "187.175.13.75",
+          "isWeb": true,
+          "lastActive": 1771771036741,
+          "location": "Centro, Tabasco",
+          "model": "chrome on Win32",
+          "platform": "Web"
+        }
+      }
+    },
     "iwzA3MjU5FYYueP1AVTKKtiDdEu1": {
       "campus": "Atasta",
       "dateOfBirth": "2004-03-04",
       "email": "TI_4222010297@UTCAM.EDU.MX",
       "fullName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+      "hasEditedProfileOnce": true,
       "location": "ATASTA",
+      "phone": "",
+      "profileImageLastUpdated": 1771210100131,
+      "profileImageUrl": "https://firebasestorage.googleapis.com/v0/b/asystemcobacam.firebasestorage.app/o/profile_pictures%2FiwzA3MjU5FYYueP1AVTKKtiDdEu1?alt=media&token=e7682ebb-e716-455e-9dc5-60b0433ad351",
       "role": "Alumno",
       "sessions": {
-        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Safari_537_36": {
-          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_144_0_0_0 Safari_537_36",
-          "ip": "187.154.156.223",
+        "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Mobile Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Mobile Safari_537_36",
+          "ip": "187.154.103.152",
           "isWeb": true,
-          "lastActive": 1771204769872,
+          "lastActive": 1771814457580,
           "location": "Centro, Tabasco",
-          "model": "chrome on Win32",
+          "model": "chrome on Linux armv81",
           "platform": "Web"
         },
         "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36": {
           "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36",
-          "ip": "187.154.156.223",
+          "ip": "187.154.103.152",
           "isWeb": true,
-          "lastActive": 1771199569862,
+          "lastActive": 1771807722379,
           "location": "Centro, Tabasco",
           "model": "chrome on Win32",
           "platform": "Web"
@@ -403,9 +532,37 @@
       "sessions": {
         "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36": {
           "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36",
-          "ip": "187.154.156.223",
+          "ip": "187.154.103.152",
           "isWeb": true,
-          "lastActive": 1771205376611,
+          "lastActive": 1771814091748,
+          "location": "Centro, Tabasco",
+          "model": "chrome on Win32",
+          "platform": "Web"
+        },
+        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Code_1_109_5 Chrome_142_0_7444_265 Electron_39_3_0 Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Code_1_109_5 Chrome_142_0_7444_265 Electron_39_3_0 Safari_537_36",
+          "ip": "2806:10a6:28:c2d5:7137:85be:801a:e271",
+          "isWeb": true,
+          "lastActive": 1772320017739,
+          "location": "Centro, Tabasco",
+          "model": "chrome on Win32",
+          "platform": "Web"
+        }
+      }
+    },
+    "uCAJ03Cj5OguS24izaJlbSOPvvx1": {
+      "campus": "Atasta",
+      "dateOfBirth": "2026-02-22",
+      "email": "gonzalezalcocera5@gmail.com",
+      "fullName": "CARMEN GONZALEZ",
+      "location": "ATASTA",
+      "role": "Academica",
+      "sessions": {
+        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36": {
+          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36",
+          "ip": "187.154.103.152",
+          "isWeb": true,
+          "lastActive": 1771808298156,
           "location": "Centro, Tabasco",
           "model": "chrome on Win32",
           "platform": "Web"

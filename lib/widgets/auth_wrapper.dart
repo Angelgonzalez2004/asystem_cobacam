@@ -5,7 +5,6 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/prefect_dashboard_scr
 import 'package:asystem_cobacam/screens/dashboards/student/student_dashboard_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/tutor/tutor_dashboard_screen.dart';
 import 'package:asystem_cobacam/screens/welcome_screen.dart';
-import 'package:asystem_cobacam/utils/animations.dart';
 import 'package:asystem_cobacam/services/session_service.dart';
 import 'package:asystem_cobacam/widgets/session_guard.dart';
 import 'package:asystem_cobacam/data/access_codes.dart';
@@ -35,7 +34,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
       // Inicializar códigos de acceso
       AccessCodeService().initializeCodes(campusRoleCodes);
 
-      await Future.delayed(const Duration(seconds: 2));
+      // Eliminado el delay de 2 segundos para carga inmediata
       final user = FirebaseAuth.instance.currentUser;
 
       if (!mounted) return;
@@ -45,7 +44,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         return;
       }
 
-      // Registrar sesión
+      // Registrar sesión (en segundo plano, no bloqueante)
       SessionService()
           .registerCurrentSession()
           .catchError((e) => debugPrint("Session error: $e"));
@@ -73,7 +72,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   void _goToWelcome() {
     Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const WelcomeScreen()));
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => const WelcomeScreen(),
+          transitionDuration: Duration.zero, // Transición instantánea
+        )
+    );
   }
 
   void _navigateToDashboard(String? role) {
@@ -106,36 +109,20 @@ class _AuthWrapperState extends State<AuthWrapper> {
       dashboard = SessionGuard(child: dashboard);
     }
 
-    Navigator.of(context)
-        .pushReplacement(MaterialPageRoute(builder: (context) => dashboard));
+    Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => dashboard,
+          transitionDuration: Duration.zero, // Transición instantánea
+        )
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: Center(
-        child: FadeIn(
-          duration: const Duration(seconds: 1),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset('assets/images/logo1.png', height: 120),
-              const SizedBox(height: 40),
-              const CircularProgressIndicator(strokeWidth: 3),
-              const SizedBox(height: 24),
-              Text(
-                "Iniciando Asystem Cobacam",
-                style: TextStyle(
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.5),
-              ),
-            ],
-          ),
-        ),
-      ),
+    // Pantalla de transición minimalista mientras se decide la ruta (milisegundos)
+    return const Scaffold(
+      backgroundColor: Color(0xFF0F172A), // Mismo fondo que el gradiente de bienvenida
+      body: SizedBox.shrink(),
     );
   }
 }

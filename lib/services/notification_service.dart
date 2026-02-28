@@ -44,6 +44,43 @@ class NotificationService {
     await saveDeviceToken();
   }
 
+  /// Envía una solicitud de notificación de asistencia a la base de datos.
+  /// Los tutores vinculados recibirán esta alerta en sus dispositivos.
+  static Future<void> sendAttendanceNotification({
+    required String studentName,
+    required List<String> guardianIds,
+    required String type, // 'entrada' o 'salida'
+    required String time,
+    required String campusName,
+  }) async {
+    if (guardianIds.isEmpty) return;
+
+    try {
+      final notificationsRef = FirebaseDatabase.instance.ref('notifications_queue');
+      final newNotificationRef = notificationsRef.push();
+
+      final String title = '🔔 ASISTENCIA ASYSTEM';
+      final String body = 'El alumno $studentName ha registrado su ${type.toUpperCase()} en el plantel $campusName a las $time.';
+
+      await newNotificationRef.set({
+        'title': title,
+        'body': body,
+        'recipients': guardianIds, // Lista de UIDs de tutores
+        'timestamp': ServerValue.timestamp,
+        'type': 'attendance_alert',
+        'data': {
+          'studentName': studentName,
+          'type': type,
+          'time': time,
+        }
+      });
+      
+      if (kDebugMode) print('Solicitud de notificación enviada a la cola para $studentName');
+    } catch (e) {
+      if (kDebugMode) print('Error al solicitar notificación: $e');
+    }
+  }
+
   static Future<void> saveDeviceToken() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -51,7 +88,7 @@ class NotificationService {
     try {
       // Para Web, necesitas la clave VAPID de la consola de Firebase (Cloud Messaging -> Web Push certificates)
       String? token = await _messaging.getToken(
-        vapidKey: kIsWeb ? 'TU_CLAVE_VAPID_AQUI' : null,
+        vapidKey: kIsWeb ? 'BO4q2r-Pexrs-mXjXkxhdnzXbelHi2jY3EDBY-dmTFm--FQAdvLzvTR35bdMjnwG_9mtAuYFknPeYLGQppcF7_w' : null,
       );
       
       if (token != null) {

@@ -8,12 +8,12 @@ admin.initializeApp();
 
 /**
  * Función que se dispara cuando se crea un registro de asistencia en cualquier plantel.
- * Ruta: /planteles/{campusId}/attendance/{cycleId}/{studentId}/{dateId}
+ * Ruta corregida: /planteles/{campusId}/attendance/{cycleId}/{dateId}/{studentId}
  */
 exports.sendAttendanceNotification = onValueCreated(
-  "/planteles/{campusId}/attendance/{cycleId}/{studentId}/{dateId}",
+  "/planteles/{campusId}/attendance/{cycleId}/{dateId}/{studentId}",
   async (event) => {
-    const { campusId, studentId, cycleId } = event.params;
+    const { campusId, studentId, cycleId, dateId } = event.params;
     const attendanceData = event.data.val();
 
     try {
@@ -23,7 +23,7 @@ exports.sendAttendanceNotification = onValueCreated(
         .get();
 
       if (!studentSnap.exists()) {
-        console.log(`Alumno ${studentId} no encontrado.`);
+        console.log(`Alumno ${studentId} no encontrado en cycle ${cycleId}.`);
         return;
       }
 
@@ -33,20 +33,23 @@ exports.sendAttendanceNotification = onValueCreated(
       const studentName = student.fullName || "Estudiante";
 
       // 2. Determinar si es Entrada o Salida
+      // Si tiene exitTime es salida, si solo tiene entryTime es entrada
       let actionType = "ingresar al";
-      if (attendanceData.exitTime && !attendanceData.entryTime) {
+      if (attendanceData.exitTime) {
         actionType = "salir del";
-      } else if (attendanceData.exitTime && attendanceData.entryTime) {
-        actionType = "salir del";
+      } else if (attendanceData.entryTime) {
+        actionType = "ingresar al";
+      } else {
+        return; // No hay tiempo registrado
       }
 
-      const messageTitle = "Aviso de Asistencia";
-      const messageBody = `${labelAlumno} ${studentName} acaba de ${actionType} plantel.`;
+      const messageTitle = "🔔 ASISTENCIA ASYSTEM";
+      const messageBody = `${labelAlumno} ${studentName} acaba de ${actionType} plantel (${attendanceData.entryTime || attendanceData.exitTime}).`;
 
       // 3. Obtener los IDs de los tutores vinculados
       const guardianUserIds = student.guardianUserIds || [];
       if (guardianUserIds.length === 0) {
-        console.log("No hay tutores vinculados a este alumno.");
+        console.log(`No hay tutores vinculados al alumno ${studentName}.`);
         return;
       }
 
@@ -57,38 +60,35 @@ exports.sendAttendanceNotification = onValueCreated(
         if (userSnap.exists()) {
           const userData = userSnap.val();
           if (userData.fcmTokens) {
+            // fcmTokens es un mapa de hash -> token
             Object.values(userData.fcmTokens).forEach(token => {
-              if (token) tokens.push(token);
+              if (token && typeof token === 'string') tokens.push(token);
             });
           }
         }
       }
 
       if (tokens.length === 0) {
-        console.log("No se encontraron dispositivos registrados para los tutores.");
+        console.log(`No se encontraron tokens para los tutores de ${studentName}.`);
         return;
       }
 
-      // 5. Enviar las notificaciones
-      const payload = {
+      // 5. Enviar las notificaciones (limitar a 500 tokens por envío según FCM)
+      const uniqueTokens = [...new Set(tokens)];
+      const response = await admin.messaging().sendEachForMulticast({
+        tokens: uniqueTokens,
         notification: {
           title: messageTitle,
           body: messageBody,
         },
         data: {
           studentId: studentId,
-          type: "attendance",
+          type: "attendance_alert",
           click_action: "FLUTTER_NOTIFICATION_CLICK"
         }
-      };
-
-      const response = await admin.messaging().sendEachForMulticast({
-        tokens: tokens,
-        notification: payload.notification,
-        data: payload.data
       });
 
-      console.log(`Notificaciones enviadas: ${response.successCount}. Errores: ${response.failureCount}`);
+      console.log(`Notificaciones enviadas para ${studentName}: ${response.successCount} exitosas.`);
 
     } catch (error) {
       console.error("Error enviando notificación:", error);

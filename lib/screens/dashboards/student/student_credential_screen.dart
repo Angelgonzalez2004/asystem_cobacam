@@ -212,10 +212,6 @@ class _StudentCredentialScreenState extends State<StudentCredentialScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (!isViewerMode && _errorMessage != null && _credentialData == null) {
-        return _buildFeedbackMessage(_errorMessage!, isError: true);
-    }
-
     final downloadsLeft = _maxDownloads - _downloadCount;
     final canDownload = downloadsLeft > 0 && !isViewerMode;
 
