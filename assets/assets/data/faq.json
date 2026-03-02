@@ -1,0 +1,602 @@
+[
+    {
+        "q": "¿Cuál es la tolerancia de entrada?",
+        "a": "15 minutos. De 16 a 20 min es retardo. Más de 20 min requiere pase de dirección.",
+        "c": "Alumnos",
+        "icon": "timer_outlined"
+    },
+    {
+        "q": "¿Puedo usar mi celular en clase?",
+        "a": "Prohibido, salvo con permiso del docente para fines didácticos. El incumplimiento genera un reporte.",
+        "c": "Alumnos",
+        "icon": "phone_android_outlined"
+    },
+    {
+        "q": "¿Cómo justifico una inasistencia?",
+        "a": "Tu padre o tutor debe acudir a Prefectura en un plazo no mayor a 48 horas hábiles tras la ausencia.",
+        "c": "Alumnos",
+        "icon": "event_busy_outlined"
+    },
+    {
+        "q": "¿Qué pasa si olvido mi credencial?",
+        "a": "Debes solicitar un pase de acceso temporal en la Dirección del plantel para poder ingresar.",
+        "c": "Alumnos",
+        "icon": "badge_outlined"
+    },
+    {
+        "q": "¿Hay un código de vestimenta?",
+        "a": "Sí, el porte del uniforme completo es obligatorio. Zapatos escolares, falda a la rodilla y cabello recogido en laboratorios.",
+        "c": "Alumnos",
+        "icon": "checkroom_outlined"
+    },
+    {
+        "q": "¿Dónde puedo consultar mis calificaciones?",
+        "a": "Las calificaciones parciales y finales se publican en el portal oficial del colegio. Algunos docentes también las comparten por medios digitales.",
+        "c": "Alumnos",
+        "icon": "grading_outlined"
+    },
+    {
+        "q": "¿Qué hago si tengo un problema con un maestro?",
+        "a": "Habla primero con el maestro. Si no se resuelve, acude con tu orientador educativo o el coordinador académico.",
+        "c": "Alumnos",
+        "icon": "record_voice_over_outlined"
+    },
+    {
+        "q": "¿Puedo salir del plantel en horario de clases?",
+        "a": "No, a menos que sea una emergencia médica o un permiso especial gestionado por tus padres en Dirección.",
+        "c": "Alumnos",
+        "icon": "exit_to_app_outlined"
+    },
+    {
+        "q": "¿Cómo funcionan los exámenes de regularización?",
+        "a": "Son exámenes para acreditar materias reprobadas. Las fechas y costos se publican al final de cada semestre.",
+        "c": "Alumnos",
+        "icon": "rule_outlined"
+    },
+    {
+        "q": "¿Qué son las actividades paraescolares?",
+        "a": "Son talleres deportivos y culturales que complementan tu formación. Inscribirte en una es requisito para ciertas becas.",
+        "c": "Alumnos",
+        "icon": "sports_basketball_outlined"
+    },
+    {
+        "q": "¿Cómo solicito una beca?",
+        "a": "Las convocatorias de becas (Benito Juárez, etc.) se anuncian en los medios oficiales del plantel. Debes estar atento a los requisitos.",
+        "c": "Alumnos",
+        "icon": "school_outlined"
+    },
+    {
+        "q": "¿Qué hago en caso de ciberacoso?",
+        "a": "Guarda toda la evidencia (capturas de pantalla) y repórtalo inmediatamente a Prefectura o a tu orientador. No respondas a las agresiones.",
+        "c": "Alumnos",
+        "icon": "shield_outlined"
+    },
+    {
+        "q": "¿Puedo comer dentro del salón?",
+        "a": "No, el consumo de alimentos está restringido a la cafetería y áreas designadas durante el receso.",
+        "c": "Alumnos",
+        "icon": "fastfood_outlined"
+    },
+    {
+        "q": "¿El servicio social es obligatorio?",
+        "a": "Sí, es un requisito indispensable para poder titularte. Se realiza en el último año de bachillerato.",
+        "c": "Alumnos",
+        "icon": "work_history_outlined"
+    },
+    {
+        "q": "¿Cómo me uno al equipo de fútbol?",
+        "a": "Acércate al entrenador o al departamento de actividades paraescolares al inicio del semestre para conocer las fechas de las visorías.",
+        "c": "Alumnos",
+        "icon": "sports_soccer_outlined"
+    },
+    {
+        "q": "¿Qué pasa si daño el mobiliario?",
+        "a": "Serás responsable de cubrir el costo de la reparación o reposición del bien dañado y recibirás una sanción disciplinaria.",
+        "c": "Alumnos",
+        "icon": "chair_outlined"
+    },
+    {
+        "q": "¿Cómo tramito mi constancia de estudios?",
+        "a": "Debes solicitarla en el departamento de Control Escolar. El trámite tiene un costo y tarda unos días hábiles.",
+        "c": "Alumnos",
+        "icon": "description_outlined"
+    },
+    {
+        "q": "¿Hay casilleros disponibles?",
+        "a": "Algunos planteles cuentan con casilleros. Su asignación y costo se gestionan en la administración del plantel al inicio del ciclo escolar.",
+        "c": "Alumnos",
+        "icon": "lock_outline"
+    },
+    {
+        "q": "¿A quién acudo si me siento mal?",
+        "a": "Informa a tu profesor o a cualquier prefecto. Ellos te dirigirán al servicio médico del plantel para una valoración.",
+        "c": "Alumnos",
+        "icon": "sick_outlined"
+    },
+    {
+        "q": "¿Puedo usar piercings o tintes de cabello?",
+        "a": "Se pide discreción. Piercings pequeños y tintes de colores naturales suelen ser permitidos, pero evita los que sean muy llamativos.",
+        "c": "Alumnos",
+        "icon": "face_retouching_natural_outlined"
+    },
+    {
+        "q": "¿Cómo registro las calificaciones en el sistema?",
+        "a": "Las calificaciones se capturan en el portal docente en las fechas estipuladas en el calendario de evaluación emitido por Control Escolar.",
+        "c": "Académica",
+        "icon": "edit_calendar_outlined"
+    },
+    {
+        "q": "¿Qué procede si un alumno es sorprendido copiando?",
+        "a": "Se debe anular el examen, levantar un acta de hechos y reportar el incidente a la coordinación académica para la sanción correspondiente.",
+        "c": "Académica",
+        "icon": "visibility_off_outlined"
+    },
+    {
+        "q": "¿Cómo solicito material didáctico?",
+        "a": "La solicitud de proyectores, equipo de audio, etc., se realiza vía formato oficial con el encargado de recursos materiales de tu plantel.",
+        "c": "Académica",
+        "icon": "build_circle_outlined"
+    },
+    {
+        "q": "¿Cuál es el procedimiento para faltar a mis labores?",
+        "a": "Debes notificar a tu jefe inmediato y presentar un justificante médico del ISSSTE o la justificación pertinente a Recursos Humanos.",
+        "c": "Académica",
+        "icon": "medical_information_outlined"
+    },
+    {
+        "q": "¿Cómo se gestiona una visita escolar o excursión?",
+        "a": "Se debe presentar un proyecto detallado a la Dirección Académica con al menos un mes de anticipación, incluyendo objetivos y permisos de padres.",
+        "c": "Académica",
+        "icon": "directions_bus_outlined"
+    },
+    {
+        "q": "¿Dónde consulto el plan de estudios vigente?",
+        "a": "Los planes y programas de estudio de todas las asignaturas están disponibles en el portal de la Dirección General Académica.",
+        "c": "Académica",
+        "icon": "menu_book_outlined"
+    },
+    {
+        "q": "¿Puedo cambiar la fecha de un examen parcial?",
+        "a": "Cualquier modificación al calendario de evaluación debe ser consensuada con el grupo y autorizada por la coordinación académica.",
+        "c": "Académica",
+        "icon": "event_repeat_outlined"
+    },
+    {
+        "q": "¿Qué hago si un grupo no tiene aula asignada?",
+        "a": "Reporta la situación inmediatamente al área de planeación o a la subdirección del plantel para que se asigne un espacio a la brevedad.",
+        "c": "Académica",
+        "icon": "no_meeting_room_outlined"
+    },
+    {
+        "q": "¿Cómo se reporta a un alumno por mal comportamiento?",
+        "a": "Puedes usar la función \"Reporte de Incidencias\" en esta misma app o enviar un reporte escrito a Prefectura con los detalles del caso.",
+        "c": "Académica",
+        "icon": "report_problem_outlined"
+    },
+    {
+        "q": "¿Existen cursos de formación docente?",
+        "a": "Sí, la Dirección Académica ofrece un programa de formación continua. Las convocatorias se publican vía correo institucional.",
+        "c": "Académica",
+        "icon": "model_training_outlined"
+    },
+    {
+        "q": "¿Puedo dar clases particulares a mis alumnos?",
+        "a": "No, es considerado un conflicto de interés. Se deben ofrecer asesorías académicas gratuitas dentro del plantel como parte de tus funciones.",
+        "c": "Académica",
+        "icon": "money_off_outlined"
+    },
+    {
+        "q": "¿Cómo se maneja la evaluación de alumnos con necesidades especiales?",
+        "a": "Se debe trabajar en conjunto con el departamento psicopedagógico para establecer adecuaciones curriculares y de evaluación pertinentes.",
+        "c": "Académica",
+        "icon": "psychology_alt_outlined"
+    },
+    {
+        "q": "¿Qué porcentaje de asistencia necesita un alumno para acreditar?",
+        "a": "Generalmente, se requiere un mínimo del 80% de asistencia a clases para tener derecho a la evaluación ordinaria.",
+        "c": "Académica",
+        "icon": "percent_outlined"
+    },
+    {
+        "q": "¿A quién recurro si falla mi equipo de cómputo en el aula?",
+        "a": "Reporta el fallo al departamento de soporte técnico o informática del plantel para que envíen a un técnico a revisar el equipo.",
+        "c": "Académica",
+        "icon": "computer_outlined"
+    },
+    {
+        "q": "¿Cómo se organizan las reuniones de padres de familia?",
+        "a": "Son coordinadas por el departamento de orientación educativa. Recibirás una calendarización para citar a los padres de tus grupos.",
+        "c": "Académica",
+        "icon": "groups_outlined"
+    },
+    {
+        "q": "¿Cuál es el protocolo ante una emergencia médica en el aula?",
+        "a": "Mantén la calma, no muevas al alumno si es una caída y envía a un estudiante a buscar al prefecto o al servicio médico urgentemente.",
+        "c": "Académica",
+        "icon": "emergency_outlined"
+    },
+    {
+        "q": "¿Puedo usar material de internet para mis clases?",
+        "a": "Sí, siempre y cuando se respeten los derechos de autor y se utilice como un complemento a los programas de estudio oficiales.",
+        "c": "Académica",
+        "icon": "public_outlined"
+    },
+    {
+        "q": "¿Quién autoriza los proyectos de investigación?",
+        "a": "Los proyectos de investigación o participación en ferias de ciencias deben ser registrados y aprobados por la academia correspondiente.",
+        "c": "Académica",
+        "icon": "science_outlined"
+    },
+    {
+        "q": "¿Es obligatorio asistir a los consejos técnicos?",
+        "a": "Sí, la asistencia a las reuniones de academia y consejos técnicos es parte de las obligaciones del personal docente.",
+        "c": "Académica",
+        "icon": "business_center_outlined"
+    },
+    {
+        "q": "¿Cómo se elige al jefe de grupo?",
+        "a": "La elección del jefe y subjefe de grupo se realiza de forma democrática por los propios alumnos durante la primera semana de clases.",
+        "c": "Académica",
+        "icon": "how_to_vote_outlined"
+    },
+    {
+        "q": "¿Cuál es mi principal función en el cambio de clase?",
+        "a": "Asegurar que los pasillos se despejen rápidamente y que los alumnos ingresen a su siguiente clase de manera ordenada y puntual.",
+        "c": "Prefectura",
+        "icon": "transfer_within_a_station_outlined"
+    },
+    {
+        "q": "¿Cómo debo actuar ante una riña de alumnos?",
+        "a": "Separa a los involucrados sin ponerte en riesgo, solicita apoyo por radio si es necesario y condúcelos a la oficina para el reporte.",
+        "c": "Prefectura",
+        "icon": "sports_kabaddi_outlined"
+    },
+    {
+        "q": "¿Puedo decomisar un celular?",
+        "a": "Sí. Si un alumno incumple el reglamento, el celular se retiene, se etiqueta y se entrega al final del día al padre o tutor, no al alumno.",
+        "c": "Prefectura",
+        "icon": "phone_locked_outlined"
+    },
+    {
+        "q": "¿Qué información debe contener un reporte de incidencia?",
+        "a": "Debe incluir fecha, hora, lugar, nombres completos de los involucrados, descripción detallada de los hechos y la firma del prefecto.",
+        "c": "Prefectura",
+        "icon": "edit_note_outlined"
+    },
+    {
+        "q": "¿Cómo procedo con un alumno con aliento alcohólico?",
+        "a": "Retíralo discretamente a un lugar seguro, notifica a Dirección, contacta a su tutor y no permitas que se retire solo del plantel.",
+        "c": "Prefectura",
+        "icon": "no_drinks_outlined"
+    },
+    {
+        "q": "¿Qué hago si un padre de familia se presenta de forma agresiva?",
+        "a": "Mantén una actitud profesional, escúchalo en un lugar privado y, si la situación escala, solicita la presencia de un directivo.",
+        "c": "Prefectura",
+        "icon": "security_outlined"
+    },
+    {
+        "q": "¿Cuál es el protocolo para un \"operativo mochila\"?",
+        "a": "Se realiza de forma sorpresiva, con presencia de directivos y padres de familia, respetando siempre la integridad y derechos del alumno.",
+        "c": "Prefectura",
+        "icon": "backpack_outlined"
+    },
+    {
+        "q": "¿Puedo autorizar la salida de un alumno?",
+        "a": "No. Únicamente el Director o Subdirector del plantel pueden autorizar salidas anticipadas, y debe quedar registro en el sistema.",
+        "c": "Prefectura",
+        "icon": "lock_person_outlined"
+    },
+    {
+        "q": "¿Cómo se supervisa a los grupos sin maestro?",
+        "a": "Se debe pasar lista, asignarles una actividad académica o canalizarlos a la biblioteca, permaneciendo cerca para vigilar el orden.",
+        "c": "Prefectura",
+        "icon": "supervisor_account_outlined"
+    },
+    {
+        "q": "¿Cuándo debo realizar rondines?",
+        "a": "Constantemente, especialmente durante el receso y en los cambios de hora. Presta especial atención a baños, canchas y zonas aisladas.",
+        "c": "Prefectura",
+        "icon": "tour_outlined"
+    },
+    {
+        "q": "¿Qué hago si encuentro un objeto perdido?",
+        "a": "Recógelo y llévalo a la oficina de Prefectura. Si es de valor, regístralo en la bitácora de objetos encontrados.",
+        "c": "Prefectura",
+        "icon": "find_in_page_outlined"
+    },
+    {
+        "q": "¿Cómo se aplica una sanción de suspensión?",
+        "a": "La suspensión es determinada por el Consejo Disciplinario. Tu función es notificar al padre de familia y registrar la sanción en el sistema.",
+        "c": "Prefectura",
+        "icon": "gavel_outlined"
+    },
+    {
+        "q": "¿Un alumno puede justificar sus propias faltas?",
+        "a": "No, el trámite es estrictamente personal y debe realizarlo el padre, madre o tutor legal del estudiante.",
+        "c": "Prefectura",
+        "icon": "person_off_outlined"
+    },
+    {
+        "q": "¿Cómo identifico a personas ajenas al plantel?",
+        "a": "Cualquier persona sin uniforme o gafete de empleado debe ser abordada cortésmente y dirigida a la recepción para que se identifique.",
+        "c": "Prefectura",
+        "icon": "help_outline"
+    },
+    {
+        "q": "¿Qué hago en caso de un sismo o incendio?",
+        "a": "Sigue el protocolo de Protección Civil: activa la alarma, guía a los alumnos a las zonas de seguridad y pasa lista para confirmar que todos salieron.",
+        "c": "Prefectura",
+        "icon": "local_fire_department_outlined"
+    },
+    {
+        "q": "¿Es mi responsabilidad el control de la puerta?",
+        "a": "Sí, el control de acceso y salida del plantel es una de las funciones primordiales para garantizar la seguridad de la comunidad escolar.",
+        "c": "Prefectura",
+        "icon": "sensor_door_outlined"
+    },
+    {
+        "q": "¿Cómo debo dirigirme a los alumnos?",
+        "a": "Siempre con respeto, utilizando un lenguaje firme pero asertivo. Evita apodos, gritos o cualquier trato que pueda ser considerado humillante.",
+        "c": "Prefectura",
+        "icon": "support_agent_outlined"
+    },
+    {
+        "q": "¿Puedo revisar las mochilas de los alumnos a diario?",
+        "a": "No de forma aleatoria e individual. La revisión debe estar justificada por un protocolo (\"Operativo Mochila\") o una sospecha fundada y reportada.",
+        "c": "Prefectura",
+        "icon": "policy_outlined"
+    },
+    {
+        "q": "¿Qué se considera una falta grave al uniforme?",
+        "a": "Portar el uniforme de otro colegio, usar prendas no autorizadas (shorts, sandalias) o modificaciones intencionales que alteren el diseño original.",
+        "c": "Prefectura",
+        "icon": "style_outlined"
+    },
+    {
+        "q": "¿Cómo se maneja el acceso de proveedores?",
+        "a": "Deben registrarse en la entrada, portar un gafete de visitante y ser escoltados al área correspondiente. No deben deambular por el plantel.",
+        "c": "Prefectura",
+        "icon": "local_shipping_outlined"
+    },
+    {
+        "q": "¿Cómo genero una nueva llave de registro?",
+        "a": "En el panel de administrador, ve a \"Llaves de Registro\", selecciona el rol y campus, y el sistema generará un nuevo código de acceso único.",
+        "c": "Administrativo",
+        "icon": "vpn_key_outlined"
+    },
+    {
+        "q": "¿Dónde puedo ver las estadísticas de uso de la app?",
+        "a": "El rol de Administrador General tiene acceso a un dashboard de métricas con datos de asistencia, incidencias y uso general por campus.",
+        "c": "Administrativo",
+        "icon": "analytics_outlined"
+    },
+    {
+        "q": "¿Cómo se publica un comunicado general?",
+        "a": "Desde la sección \"Gestionar Avisos\", puedes redactar un nuevo comunicado y elegir si será visible para todos los roles o solo para algunos.",
+        "c": "Administrativo",
+        "icon": "campaign_outlined"
+    },
+    {
+        "q": "¿Qué hago si un usuario olvida su contraseña?",
+        "a": "El usuario debe usar la opción \"¿Olvidaste tu contraseña?\" en la pantalla de login. El sistema le enviará un correo para restablecerla.",
+        "c": "Administrativo",
+        "icon": "password_outlined"
+    },
+    {
+        "q": "¿Puedo editar el rol de un usuario existente?",
+        "a": "Sí, el Administrador General puede modificar el rol y el campus de un usuario desde el panel de gestión de usuarios en la base de datos.",
+        "c": "Administrativo",
+        "icon": "manage_accounts_outlined"
+    },
+    {
+        "q": "¿Cómo se realiza un respaldo de la base de datos?",
+        "a": "Los respaldos se gestionan desde la consola de Firebase. Se pueden programar exportaciones automáticas en formato JSON.",
+        "c": "Administrativo",
+        "icon": "backup_outlined"
+    },
+    {
+        "q": "¿Es posible dar de baja a un usuario?",
+        "a": "Sí, se puede desactivar o eliminar completamente a un usuario desde la consola de autenticación de Firebase y su registro en la base de datos.",
+        "c": "Administrativo",
+        "icon": "person_remove_outlined"
+    },
+    {
+        "q": "¿Cómo se crea un nuevo ciclo escolar en el sistema?",
+        "a": "En la sección \"Gestión de Ciclos Escolares\", puedes definir las fechas de inicio y fin del nuevo ciclo, el cual servirá como base para los horarios.",
+        "c": "Administrativo",
+        "icon": "date_range_outlined"
+    },
+    {
+        "q": "¿Cómo asigno los permisos para un administrador de plantel?",
+        "a": "Al crear la llave de registro, asigna el rol \"Personal Administrativo por Plantel\" y selecciona el campus que le corresponde gestionar.",
+        "c": "Administrativo",
+        "icon": "admin_panel_settings_outlined"
+    },
+    {
+        "q": "¿Puedo ver un historial de incidencias de un alumno?",
+        "a": "Sí, en la ficha del alumno dentro de la gestión de alumnos, hay una pestaña para consultar todo el historial de reportes disciplinarios.",
+        "c": "Administrativo",
+        "icon": "history_edu_outlined"
+    },
+    {
+        "q": "¿El sistema permite la reinscripción en línea?",
+        "a": "Actualmente, el sistema gestiona la información académica, pero el proceso de reinscripción y pago se maneja por el sistema financiero del colegio.",
+        "c": "Administrativo",
+        "icon": "payment_outlined"
+    },
+    {
+        "q": "¿Cómo se exporta la lista de asistencia de un grupo?",
+        "a": "En la sección \"Consulta de Asistencia\", puedes filtrar por grupo y rango de fechas para generar un reporte exportable en formato Excel.",
+        "c": "Administrativo",
+        "icon": "file_download_outlined"
+    },
+    {
+        "q": "¿Qué hago si hay un error en los datos de un alumno?",
+        "a": "El personal administrativo puede corregir nombres, CURP o cualquier otro dato directamente en la ficha del alumno en la base de datos.",
+        "c": "Administrativo",
+        "icon": "edit_outlined"
+    },
+    {
+        "q": "¿Cómo se configura un día como no lectivo?",
+        "a": "En \"Días No Lectivos\", puedes agregar una fecha o un rango de fechas y un motivo (suspensión, feriado, etc.) que aplicará para todo el plantel.",
+        "c": "Administrativo",
+        "icon": "event_available_outlined"
+    },
+    {
+        "q": "¿Puedo enviar una notificación push a los usuarios?",
+        "a": "La funcionalidad de notificaciones push se gestiona a través de Firebase Cloud Messaging y se puede integrar para enviar alertas masivas.",
+        "c": "Administrativo",
+        "icon": "notifications_active_outlined"
+    },
+    {
+        "q": "¿El sistema es compatible con la firma electrónica?",
+        "a": "Actualmente no, los documentos que requieren firma (actas, etc.) se generan en PDF para ser firmados de manera autógrafa.",
+        "c": "Administrativo",
+        "icon": "draw_outlined"
+    },
+    {
+        "q": "¿Cómo se da de alta una nueva materia?",
+        "a": "Las materias se gestionan desde un catálogo central en la base de datos. El Administrador General puede agregar nuevas asignaturas.",
+        "c": "Administrativo",
+        "icon": "add_to_photos_outlined"
+    },
+    {
+        "q": "¿Cómo se clona un horario de un ciclo a otro?",
+        "a": "El sistema permite usar un horario existente como plantilla al crear uno nuevo, facilitando la transición entre ciclos escolares.",
+        "c": "Administrativo",
+        "icon": "copy_all_outlined"
+    },
+    {
+        "q": "¿Puedo limitar el acceso por IP?",
+        "a": "No directamente en la app, pero se pueden implementar reglas de seguridad a nivel de Firebase o Cloud Functions para restringir el acceso.",
+        "c": "Administrativo",
+        "icon": "lan_outlined"
+    },
+    {
+        "q": "¿Cómo audito los cambios hechos por otros administradores?",
+        "a": "Se puede implementar un sistema de logs (registros) en la base de datos que guarde quién hizo qué cambio y cuándo, para fines de auditoría.",
+        "c": "Administrativo",
+        "icon": "fact_check_outlined"
+    },
+    {
+        "q": "¿Qué hago si no tengo internet?",
+        "a": "La app entra en \"Modo Offline\". Sigue trabajando normal. Los datos se sincronizarán automáticamente cuando recuperes la conexión.",
+        "c": "Sistema",
+        "icon": "wifi_off_outlined"
+    },
+    {
+        "q": "¿La app consume muchos datos móviles?",
+        "a": "No, la app está optimizada para consumir la menor cantidad de datos posible, sincronizando solo la información necesaria.",
+        "c": "Sistema",
+        "icon": "signal_cellular_alt_outlined"
+    },
+    {
+        "q": "¿Cómo actualizo la aplicación?",
+        "a": "Recibirás una notificación o podrás actualizarla directamente desde la Play Store (Android) o App Store (iOS) cuando haya una nueva versión.",
+        "c": "Sistema",
+        "icon": "system_update_alt_outlined"
+    },
+    {
+        "q": "¿Qué tan segura es mi información?",
+        "a": "Toda la comunicación está encriptada y tu cuenta está protegida por contraseña. Además, usamos los servicios de seguridad de Google.",
+        "c": "Sistema",
+        "icon": "verified_user_outlined"
+    },
+    {
+        "q": "¿Puedo usar la app en una tablet?",
+        "a": "Sí, la interfaz es responsiva y se adapta a los diferentes tamaños de pantalla de teléfonos y tablets.",
+        "c": "Sistema",
+        "icon": "tablet_mac_outlined"
+    },
+    {
+        "q": "¿Cómo cambio el tema de la app (claro/oscuro)?",
+        "a": "En la pantalla de \"Ajustes\", encontrarás la opción para cambiar entre el tema claro, oscuro o el que siga la configuración de tu sistema.",
+        "c": "Sistema",
+        "icon": "brightness_6_outlined"
+    },
+    {
+        "q": "¿Qué hago si la app se congela o cierra?",
+        "a": "Intenta cerrar la aplicación completamente y volver a abrirla. Si el problema persiste, reinicia tu dispositivo.",
+        "c": "Sistema",
+        "icon": "sync_problem_outlined"
+    },
+    {
+        "q": "¿Cómo libero espacio de caché de la app?",
+        "a": "En los ajustes de tu teléfono, busca la app \"Asystem\" y selecciona \"Borrar caché\". Esto no eliminará tus datos importantes.",
+        "c": "Sistema",
+        "icon": "cleaning_services_outlined"
+    },
+    {
+        "q": "¿El Asistente IA guarda mis conversaciones?",
+        "a": "No. Las conversaciones con el Asistente IA son temporales y no se almacenan para proteger tu privacidad.",
+        "c": "Sistema",
+        "icon": "psychology_outlined"
+    },
+    {
+        "q": "¿Por qué la app me pide permisos de cámara o archivos?",
+        "a": "Los permisos son necesarios para funciones como escanear códigos QR, subir tu foto de perfil o exportar reportes en PDF/Excel.",
+        "c": "Sistema",
+        "icon": "perm_device_information_outlined"
+    },
+    {
+        "q": "¿Puedo tener la misma cuenta abierta en dos dispositivos?",
+        "a": "Sí, puedes iniciar sesión en múltiples dispositivos, pero por seguridad, se recomienda cerrar la sesión cuando termines de usar uno.",
+        "c": "Sistema",
+        "icon": "devices_other_outlined"
+    },
+    {
+        "q": "¿Qué significa el ícono de nube en la app?",
+        "a": "El ícono de nube indica el estado de la sincronización. Una nube con una palomita significa que todos tus datos están respaldados en línea.",
+        "c": "Sistema",
+        "icon": "cloud_done_outlined"
+    },
+    {
+        "q": "¿Cómo puedo dar retroalimentación sobre la app?",
+        "a": "En la sección de \"Ajustes\" hay una opción para \"Reportar un problema\" o \"Sugerir una mejora\". Tus comentarios son bienvenidos.",
+        "c": "Sistema",
+        "icon": "feedback_outlined"
+    },
+    {
+        "q": "¿El \"Modo Offline\" tiene limitaciones?",
+        "a": "En modo offline no podrás ver datos en tiempo real de otros usuarios (ej. nuevos avisos), pero todo lo que tú generes se guardará sin problemas.",
+        "c": "Sistema",
+        "icon": "airplanemode_active_outlined"
+    },
+    {
+        "q": "¿La app funciona en computadoras de escritorio?",
+        "a": "Sí, la aplicación web está diseñada para funcionar en navegadores modernos como Chrome, Firefox o Safari en tu computadora.",
+        "c": "Sistema",
+        "icon": "desktop_windows_outlined"
+    },
+    {
+        "q": "¿Por qué me pide mi huella dactilar para abrir la app?",
+        "a": "Es una capa de seguridad opcional que puedes activar en \"Ajustes\" para proteger tu sesión, incluso si tu teléfono está desbloqueado.",
+        "c": "Sistema",
+        "icon": "fingerprint_outlined"
+    },
+    {
+        "q": "¿Qué versión de Android/iOS necesito?",
+        "a": "Se recomienda tener Android 8.0 (Oreo) o superior, o iOS 12 o superior para un rendimiento óptimo de la aplicación.",
+        "c": "Sistema",
+        "icon": "phone_iphone_outlined"
+    },
+    {
+        "q": "¿La app se puede usar en modo horizontal?",
+        "a": "Algunas pantallas, como los visores de horarios, están optimizadas para el modo horizontal en tablets y web, pero el uso general es en vertical.",
+        "c": "Sistema",
+        "icon": "screen_rotation_outlined"
+    },
+    {
+        "q": "¿Cómo desactivo las notificaciones por correo?",
+        "a": "En \"Ajustes\" > \"Notificaciones\", puedes personalizar qué tipo de alertas quieres recibir por correo electrónico y cuáles no.",
+        "c": "Sistema",
+        "icon": "mail_outline"
+    },
+    {
+        "q": "¿Quién desarrolló esta aplicación?",
+        "a": "Asystem es una solución desarrollada a la medida para optimizar la gestión y comunicación en la comunidad del Colegio de Bachilleres de Campeche.",
+        "c": "Sistema",
+        "icon": "code_outlined"
+    }
+]
