@@ -12,10 +12,10 @@ class GroupScheduleService {
 
   GroupScheduleService(this._hiveService, this._connectivityService);
 
-  // Firebase reference for group schedules
+  // Firebase reference for group schedules - ACTUALIZADO A RUTA REAL
   DatabaseReference _getGroupSchedulesRef(String campusId, String schoolCycleId) {
     return FirebaseDatabase.instance
-        .ref('planteles/$campusId/school_cycles/$schoolCycleId/group_schedules');
+        .ref('planteles/$campusId/schedules/$schoolCycleId');
   }
 
   /// Fetches all group schedules for a given campus and school cycle,

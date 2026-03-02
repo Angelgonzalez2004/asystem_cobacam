@@ -18,6 +18,7 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/incidence_report_scre
 import 'package:asystem_cobacam/screens/dashboards/prefect/ai_assistant_screen.dart';
 import 'package:asystem_cobacam/screens/common/faq_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/statistics_screen.dart'; // Importado
+import 'package:asystem_cobacam/screens/dashboards/prefect/mass_attendance_test_screen.dart'; // NUEVO IMPORT
 import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_schedule_viewer_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/teacher_schedule_viewer_screen.dart';
@@ -71,6 +72,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       const GroupScheduleViewerScreen(), // Opción 16
       const TeacherScheduleViewerScreen(), // Opción 17
       const AboutUsScreen(), // NEW - Opción 18
+      MassAttendanceTestScreen(campus: _userCampus), // Opción 19
     ];
 
     _screenTitles = [
@@ -93,6 +95,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       'Visor de Horarios (Grupo)',
       'Visor de Horarios (Maestro)',
       'Sobre Nosotros', // NEW - Opción 18
+      'Test de Asistencia Masiva', // Opción 19
     ];
   }
 
@@ -210,6 +213,9 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         break;
       case 'about_us': // NEW
         index = 18;
+        break;
+      case 'test_asistencia': // NUEVO
+        index = 19;
         break;
       default:
         index = 0;

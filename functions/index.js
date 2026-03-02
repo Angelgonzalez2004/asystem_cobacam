@@ -73,13 +73,28 @@ exports.sendAttendanceNotification = onValueCreated(
         return;
       }
 
-      // 5. Enviar las notificaciones (limitar a 500 tokens por envío según FCM)
+      // 5. Enviar las notificaciones con configuración de alta prioridad
       const uniqueTokens = [...new Set(tokens)];
       const response = await admin.messaging().sendEachForMulticast({
         tokens: uniqueTokens,
         notification: {
           title: messageTitle,
           body: messageBody,
+        },
+        android: {
+          notification: {
+            channelId: "attendance_alerts_channel", // ID del canal que creamos en la app
+            priority: "high",
+            sound: "default",
+          }
+        },
+        apns: {
+          payload: {
+            aps: {
+              sound: "default",
+              badge: 1,
+            }
+          }
         },
         data: {
           studentId: studentId,

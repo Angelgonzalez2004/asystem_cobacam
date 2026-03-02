@@ -4,9 +4,31 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
 
+/// Manejador de mensajes en segundo plano. 
+/// Debe ser una función top-level (fuera de cualquier clase).
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // No es necesario inicializar Firebase aquí si ya se hizo en el main,
+  // pero es una buena práctica si vas a acceder a servicios.
+  if (kDebugMode) {
+    print("Manejando mensaje en segundo plano: ${message.messageId}");
+  }
+}
+
 class NotificationService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+
+  // Definición del canal para Android (Alta prioridad)
+  static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
+    'attendance_alerts_channel', // id
+    'Alertas de Asistencia COBACAM', // title
+    description: 'Canal para notificaciones críticas de entrada y salida de alumnos.', // description
+    importance: Importance.max,
+    playSound: true,
+    enableVibration: true,
+    showBadge: true,
+  );
 
   static Future<void> initialize() async {
     // 1. Pedir permisos
@@ -14,33 +36,66 @@ class NotificationService {
       alert: true,
       badge: true,
       sound: true,
+      provisional: false,
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       if (kDebugMode) print('Permiso concedido para notificaciones.');
     }
 
-    // 2. Configurar notificaciones locales (solo para móviles)
+    // 2. Configurar el manejador de fondo
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // 3. Configurar notificaciones locales y canal de Android
     if (!kIsWeb) {
-      const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-      const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
-      await _localNotifications.initialize(settings: initializationSettings);
+      // Crear el canal en Android
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_channel);
+
+      const AndroidInitializationSettings initializationSettingsAndroid = 
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      
+      const InitializationSettings initializationSettings = 
+          InitializationSettings(android: initializationSettingsAndroid);
+          
+      await _localNotifications.initialize(
+        settings: initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse details) {
+          // Aquí puedes manejar qué pasa cuando el usuario toca la notificación
+        },
+      );
     }
 
-    // 3. Escuchar notificaciones en primer plano (Foreground)
+    // 4. Escuchar notificaciones en primer plano (Foreground)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (message.notification != null) {
-        if (kIsWeb) {
-          // En web, el navegador suele manejar esto si tiene permiso, 
-          // pero podemos mostrar un aviso visual extra si queremos.
-          if (kDebugMode) print('Notificación recibida en web: ${message.notification!.title}');
-        } else {
-          _showLocalNotification(message.notification!);
-        }
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
+
+      if (notification != null && !kIsWeb) {
+        // Mostramos la notificación local usando el canal de alta importancia
+        _localNotifications.show(
+          id: notification.hashCode,
+          title: notification.title,
+          body: notification.body,
+          notificationDetails: NotificationDetails(
+            android: AndroidNotificationDetails(
+              _channel.id,
+              _channel.name,
+              channelDescription: _channel.description,
+              importance: _channel.importance,
+              priority: Priority.high,
+              icon: android?.smallIcon ?? '@mipmap/ic_launcher',
+              playSound: true,
+              enableVibration: true,
+            ),
+          ),
+          payload: message.data.toString(),
+        );
       }
     });
 
-    // 4. Guardar el token si hay un usuario logueado
+    // 5. Guardar el token si hay un usuario logueado
     await saveDeviceToken();
   }
 
@@ -86,37 +141,34 @@ class NotificationService {
     if (user == null) return;
 
     try {
-      // Para Web, necesitas la clave VAPID de la consola de Firebase (Cloud Messaging -> Web Push certificates)
-      String? token = await _messaging.getToken(
-        vapidKey: kIsWeb ? 'BO4q2r-Pexrs-mXjXkxhdnzXbelHi2jY3EDBY-dmTFm--FQAdvLzvTR35bdMjnwG_9mtAuYFknPeYLGQppcF7_w' : null,
-      );
+      // 1. Obtener el Token (Con soporte para Web)
+      String? token;
+      if (kIsWeb) {
+        token = await _messaging.getToken(
+          vapidKey: 'BO4q2r-Pexrs-mXjXkxhdnzXbelHi2jY3EDBY-dmTFm--FQAdvLzvTR35bdMjnwG_9mtAuYFknPeYLGQppcF7_w',
+        );
+      } else {
+        token = await _messaging.getToken();
+      }
       
       if (token != null) {
-        // Guardamos el token en una subcolección para permitir múltiples dispositivos
+        if (kDebugMode) print('Token FCM obtenido: $token');
+        
+        // 2. Guardar en la base de datos del usuario
+        // Usamos un hash del token como llave para permitir múltiples dispositivos por usuario
         final tokenHash = token.hashCode.toString();
         await FirebaseDatabase.instance
             .ref('users/${user.uid}/fcmTokens/$tokenHash')
-            .set(token);
+            .set({
+              'token': token,
+              'lastUpdated': ServerValue.timestamp,
+              'platform': kIsWeb ? 'Web' : (defaultTargetPlatform == TargetPlatform.android ? 'Android' : 'iOS'),
+            });
+            
+        if (kDebugMode) print('Token FCM guardado exitosamente en Firebase.');
       }
     } catch (e) {
-      if (kDebugMode) print('Error guardando token FCM: $e');
+      if (kDebugMode) print('Error crítico guardando token FCM: $e');
     }
-  }
-
-  static Future<void> _showLocalNotification(RemoteNotification notification) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'attendance_channel',
-      'Notificaciones de Asistencia',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
-
-    await _localNotifications.show(
-      id: notification.hashCode,
-      title: notification.title,
-      body: notification.body,
-      notificationDetails: platformDetails,
-    );
   }
 }

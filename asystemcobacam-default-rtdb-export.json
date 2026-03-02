@@ -231,6 +231,106 @@
       "q": "Minimo permitidos de tolerancia?"
     }
   },
+  "notifications_queue": {
+    "-OmOz3KM-9wX-s-7TSmU": {
+      "body": "El alumno ANGEL DEL CARMEN GONZALEZ ALCOCER ha registrado su ENTRADA en el plantel Atasta a las 06:46.",
+      "data": {
+        "studentName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+        "time": "06:46",
+        "type": "entrada"
+      },
+      "recipients": [
+        "PlFZskyLdscdg0TzjMRNNqH7PT02"
+      ],
+      "timestamp": 1772329952052,
+      "title": "🔔 ASISTENCIA ASYSTEM",
+      "type": "attendance_alert"
+    },
+    "-OmaueZ3tSpwyqUmaBlo": {
+      "body": "El alumno ANGEL DEL CARMEN GONZALEZ ALCOCER ha registrado su ENTRADA en el plantel Atasta a las 06:47.",
+      "data": {
+        "studentName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+        "time": "06:47",
+        "type": "entrada"
+      },
+      "recipients": [
+        "PlFZskyLdscdg0TzjMRNNqH7PT02"
+      ],
+      "timestamp": 1772326922569,
+      "title": "🔔 ASISTENCIA ASYSTEM",
+      "type": "attendance_alert"
+    },
+    "-Omav4-BX4QtsqXPEJxk": {
+      "body": "El alumno ANGEL DEL CARMEN GONZALEZ ALCOCER ha registrado su SALIDA en el plantel Atasta a las 14:06.",
+      "data": {
+        "studentName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+        "time": "14:06",
+        "type": "salida"
+      },
+      "recipients": [
+        "PlFZskyLdscdg0TzjMRNNqH7PT02"
+      ],
+      "timestamp": 1772327030865,
+      "title": "🔔 ASISTENCIA ASYSTEM",
+      "type": "attendance_alert"
+    },
+    "-Omb5fCMi6t7OVXuQDIQ": {
+      "body": "El alumno ANGEL DEL CARMEN GONZALEZ ALCOCER ha registrado su ENTRADA en el plantel Atasta a las 06:48.",
+      "data": {
+        "studentName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+        "time": "06:48",
+        "type": "entrada"
+      },
+      "recipients": [
+        "PlFZskyLdscdg0TzjMRNNqH7PT02"
+      ],
+      "timestamp": 1772330070944,
+      "title": "🔔 ASISTENCIA ASYSTEM",
+      "type": "attendance_alert"
+    },
+    "-Omb5nZqvzTtEdqLMKpl": {
+      "body": "El alumno ANGEL DEL CARMEN GONZALEZ ALCOCER ha registrado su SALIDA en el plantel Atasta a las 14:21.",
+      "data": {
+        "studentName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+        "time": "14:21",
+        "type": "salida"
+      },
+      "recipients": [
+        "PlFZskyLdscdg0TzjMRNNqH7PT02"
+      ],
+      "timestamp": 1772330105398,
+      "title": "🔔 ASISTENCIA ASYSTEM",
+      "type": "attendance_alert"
+    },
+    "-Omb8ycjglX-j9iVcGjP": {
+      "body": "El alumno ANGEL DEL CARMEN GONZALEZ ALCOCER ha registrado su ENTRADA en el plantel Atasta a las 06:51.",
+      "data": {
+        "studentName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+        "time": "06:51",
+        "type": "entrada"
+      },
+      "recipients": [
+        "PlFZskyLdscdg0TzjMRNNqH7PT02"
+      ],
+      "timestamp": 1772330936946,
+      "title": "🔔 ASISTENCIA ASYSTEM",
+      "type": "attendance_alert"
+    },
+    "-OmbBI9qIj7Aw1SaWrfM": {
+      "body": "El alumno ANGEL DEL CARMEN GONZALEZ ALCOCER ha registrado su SALIDA en el plantel Atasta a las 14:11.",
+      "data": {
+        "studentName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+        "time": "14:11",
+        "type": "salida"
+      },
+      "recipients": [
+        "PlFZskyLdscdg0TzjMRNNqH7PT02"
+      ],
+      "timestamp": 1772331545350,
+      "title": "🔔 ASISTENCIA ASYSTEM",
+      "type": "attendance_alert"
+    }
+  },
   "planteles": {
     "Atasta": {
       "attendance": {
@@ -240,6 +340,57 @@
               "campusId": "Atasta",
               "date": "2026-02-20",
               "entryTime": "06:53",
+              "group": "201",
+              "schoolCycle": "2026-A",
+              "status": "presente",
+              "studentFullName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+              "studentId": "4222010297"
+            }
+          },
+          "2026-02-25": {
+            "4222010297": {
+              "campusId": "Atasta",
+              "date": "2026-02-25",
+              "entryTime": "06:51",
+              "exitTime": "14:11",
+              "group": "201",
+              "schoolCycle": "2026-A",
+              "status": "presente",
+              "studentFullName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+              "studentId": "4222010297"
+            }
+          },
+          "2026-02-26": {
+            "4222010297": {
+              "campusId": "Atasta",
+              "date": "2026-02-26",
+              "entryTime": "06:48",
+              "exitTime": "14:21",
+              "group": "201",
+              "schoolCycle": "2026-A",
+              "status": "presente",
+              "studentFullName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+              "studentId": "4222010297"
+            }
+          },
+          "2026-02-27": {
+            "4222010297": {
+              "campusId": "Atasta",
+              "date": "2026-02-27",
+              "entryTime": "06:47",
+              "exitTime": "14:06",
+              "group": "201",
+              "schoolCycle": "2026-A",
+              "status": "presente",
+              "studentFullName": "ANGEL DEL CARMEN GONZALEZ ALCOCER",
+              "studentId": "4222010297"
+            }
+          },
+          "2026-02-28": {
+            "4222010297": {
+              "campusId": "Atasta",
+              "date": "2026-02-28",
+              "entryTime": "06:46",
               "group": "201",
               "schoolCycle": "2026-A",
               "status": "presente",
@@ -327,6 +478,24 @@
                   "teacherName": "GUADALUPE"
                 }
               ],
+              "Miércoles": [
+                {
+                  "endTime": "07:50",
+                  "startTime": "07:00",
+                  "subjectId": "QUIMICA I",
+                  "subjectName": "QUIMICA I",
+                  "teacherId": "-Om6yqUa2sWvbBx1EwBr",
+                  "teacherName": "GUADALUPE"
+                },
+                {
+                  "endTime": "14:00",
+                  "startTime": "13:10",
+                  "subjectId": "QUIMICA I",
+                  "subjectName": "QUIMICA I",
+                  "teacherId": "-Om6yqUa2sWvbBx1EwBr",
+                  "teacherName": "GUADALUPE"
+                }
+              ],
               "Viernes": [
                 {
                   "endTime": "07:50",
@@ -388,6 +557,9 @@
             "group": "201",
             "guardianFullName": "GLADYS DEL CARMEN ALCOCER PERALTA",
             "guardianPhone": "0000000000",
+            "guardianUserIds": [
+              "PlFZskyLdscdg0TzjMRNNqH7PT02"
+            ],
             "healthConditions": "Ninguna",
             "institutionalEmail": "TI_4222010297@UTCAM.EDU.MX",
             "isActive": true,
@@ -443,27 +615,18 @@
       "sessions": {
         "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Mobile Safari_537_36": {
           "deviceId": "Web_Google Inc__Mozilla_5_0 (Linux; Android 10; K) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Mobile Safari_537_36",
-          "ip": "187.154.103.152",
+          "ip": "2806:10a6:28:c2d5:637a:6551:cfc:8026",
           "isWeb": true,
-          "lastActive": 1771814424156,
+          "lastActive": 1772331577090,
           "location": "Centro, Tabasco",
           "model": "chrome on Linux armv81",
           "platform": "Web"
         },
-        "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36": {
-          "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36",
-          "ip": "187.154.103.152",
-          "isWeb": true,
-          "lastActive": 1771814545911,
-          "location": "Centro, Tabasco",
-          "model": "chrome on Win32",
-          "platform": "Web"
-        },
         "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Code_1_109_5 Chrome_142_0_7444_265 Electron_39_3_0 Safari_537_36": {
           "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Code_1_109_5 Chrome_142_0_7444_265 Electron_39_3_0 Safari_537_36",
-          "ip": "2806:10a6:28:c2d5:7137:85be:801a:e271",
+          "ip": "2806:10a6:28:c2d5:4dd7:911:9f9b:8c7b",
           "isWeb": true,
-          "lastActive": 1772320446974,
+          "lastActive": 1772331641726,
           "location": "Centro, Tabasco",
           "model": "chrome on Win32",
           "platform": "Web"
@@ -532,9 +695,9 @@
       "sessions": {
         "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36": {
           "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36",
-          "ip": "187.154.103.152",
+          "ip": "2806:10a6:28:c2d5:4dd7:911:9f9b:8c7b",
           "isWeb": true,
-          "lastActive": 1771814091748,
+          "lastActive": 1772331552619,
           "location": "Centro, Tabasco",
           "model": "chrome on Win32",
           "platform": "Web"
@@ -560,9 +723,9 @@
       "sessions": {
         "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36": {
           "deviceId": "Web_Google Inc__Mozilla_5_0 (Windows NT 10_0; Win64; x64) AppleWebKit_537_36 (KHTML, like Gecko) Chrome_145_0_0_0 Safari_537_36",
-          "ip": "187.154.103.152",
+          "ip": "2806:10a6:28:c2d5:4dd7:911:9f9b:8c7b",
           "isWeb": true,
-          "lastActive": 1771808298156,
+          "lastActive": 1772330808581,
           "location": "Centro, Tabasco",
           "model": "chrome on Win32",
           "platform": "Web"

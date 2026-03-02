@@ -121,6 +121,13 @@ class AppDrawer extends StatelessWidget {
                       icon: Icons.people_outline_rounded,
                       title: 'Alumnos',
                       onTap: () => onNavigate?.call('alumnos')),
+                  
+                  // ITEM TEMPORAL DE PRUEBAS
+                  _buildDrawerItem(context,
+                      icon: Icons.bolt_rounded,
+                      title: 'Test de Asistencia (PRUEBAS)',
+                      iconColor: Colors.orange,
+                      onTap: () => onNavigate?.call('test_asistencia')),
 
                   const Divider(),
                   Padding(

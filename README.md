@@ -4,50 +4,56 @@
 
 ---
 
-## ✨ Experiencia de Usuario Premium (Novedad)
+## ✨ Novedad: Herramienta de Digitalización Masiva (Beta de Pruebas)
 
-Hemos elevado la estética del sistema a un nivel institucional superior, adoptando una filosofía de diseño **Premium Glassmorphism**:
+Hemos desarrollado un módulo especializado para la **Prefectura**, diseñado para cerrar la brecha entre el papel y lo digital. Esta herramienta permite digitalizar hojas de asistencia físicas en cuestión de segundos:
 
-*   **Interfaz Glassmorphism Refinada**: Pantallas de acceso (Login, Registro, Recuperación) con efectos de cristal esmerilado sobre un gradiente de malla institucional.
-*   **Fondo Institucional Dinámico**: Uso de gradientes profundos (Deep Slate & Royal Blue) con iluminación ambiental para una sensación de tecnología y seriedad.
-*   **Visibilidad de Alto Contraste**: Tipografía blanca sólida (`FontWeight.w900`) y etiquetas inteligentes que garantizan una legibilidad perfecta en cualquier condición lumínica.
-*   **Totalmente Responsiva**: El sistema se adapta inteligentemente a monitores 4K, laptops, tablets y móviles, reordenando los formularios para mantener la elegancia.
+*   **Digitalización de Listas Físicas**: Ideal para cuando se tiene un control en papel con "puntos" de asistencia. Permite marcar o desmarcar alumnos individualmente tras un filtro rápido.
+*   **Asignación de Horarios Inteligente**: 
+    *   **Modo Automático**: La app consulta el horario oficial del grupo y asigna automáticamente la hora de la primera clase (entrada) o última clase (salida) según el día de la semana seleccionado.
+    *   **Modo Manual**: Permite elegir una hora fija para todos los alumnos seleccionados.
+*   **Calendario Histórico**: Soporte para registrar asistencias en fechas pasadas dentro del rango del ciclo escolar seleccionado.
+*   **Buscador Dual**: Filtrado instantáneo por **Nombre** o **Matrícula** del alumno.
+*   **Zona de Peligro (Reset)**: Función protegida con doble confirmación para limpiar la base de datos de asistencias de un ciclo completo durante fases de prueba.
 
 ---
 
-## 🚀 Funcionalidades Críticas Actualizadas
+## ✨ Experiencia de Usuario Premium
+
+Hemos elevado la estética del sistema a un nivel institucional superior, adoptando una filosofía de diseño **Premium Glassmorphism**:
+
+*   **Interfaz Glassmorphism Refinada**: Pantallas de acceso con efectos de cristal esmerilado sobre gradientes institucionales.
+*   **Fondo Institucional Dinámico**: Uso de gradientes profundos (Deep Slate & Royal Blue) con iluminación ambiental.
+*   **Visibilidad de Alto Contraste**: Tipografía blanca sólida (`FontWeight.w900`) para una legibilidad perfecta.
+*   **Totalmente Responsiva**: Adaptación inteligente a monitores 4K, laptops, tablets y móviles.
+
+---
+
+## 🚀 Funcionalidades Críticas
 
 ### 🔔 Notificaciones en Tiempo Real (FCM)
-Sistema de alerta inmediata para padres de familia y tutores:
-*   **Notificación Automática**: El servidor detecta instantáneamente el registro de entrada o salida realizado por Prefectura.
-*   **Seguridad Total**: Alerta en el dispositivo del tutor informando: *"El alumno [Nombre] acaba de ingresar/salir del plantel a las [Hora]"*.
-*   **Omnicanal**: Funciona en Android, iOS y Navegadores Web (PWA).
+*   **Alerta Inmediata**: Notificación push automática al dispositivo del tutor al momento del registro.
+*   **Seguridad Estudiantil**: Informa exactamente el tipo de movimiento (Entrada/Salida) y la hora registrada.
+*   **Multiplataforma**: Soporte nativo en Android, iOS y PWA.
 
 ### 👨‍👩‍👦 Control Total para Tutores
-*   **Vinculación Inteligente**: El sistema vincula automáticamente al tutor con el alumno durante el registro mediante validación de matrícula.
-*   **Dashboard de Asistencia Premium**: 
-    *   Estadísticas mensuales: Conteo en tiempo real de Asistencias, Retardos e Inasistencias.
-    *   **Banner de Rango Académico**: El sistema avisa dinámicamente si el mes consultado está fuera de las fechas oficiales del ciclo escolar.
-    *   **Historial Histórico**: Selector de ciclos pasados para consultar años anteriores con un solo clic.
-*   **Identidad Médica**: Visualización de alertas de salud (distintivo de pulso cardiaco) para un seguimiento preventivo.
+*   **Vinculación Automática**: Asociación inmediata tutor-alumno mediante validación de matrícula.
+*   **Dashboard de Asistencia**: Estadísticas mensuales, conteo de inasistencias y banners de estado académico en tiempo real.
+*   **Alertas Médicas**: Visualización de condiciones de salud críticas para seguimiento preventivo.
 
-### 📊 Gestión Administrativa y de Prefectura
-*   **Pase de Lista Inteligente**: Escaneo QR de alta velocidad con sincronización Offline-First.
-*   **Motor de Ciclos Escolares**: Gestión de periodos A/B con validación de fechas de inicio y término para la integridad de los datos.
-*   **Generador de Credenciales HD**: Exportación de identificaciones oficiales en alta resolución vinculadas al historial del alumno.
+### 📊 Gestión de Prefectura y Administración
+*   **Pase de Lista QR**: Escaneo de alta velocidad con motor de sincronización Offline-First.
+*   **Gestor de Ciclos y Horarios**: Control total sobre periodos escolares, materias y personal docente.
+*   **Generador de Credenciales**: Exportación de identificaciones en alta resolución con vinculación de datos dinámica.
 
 ---
 
 ## 🛠️ Arquitectura Tecnológica
 
-### Core System
-*   **Flutter 3.22+**: Motor multiplatforma de alto rendimiento.
-*   **Firebase Cloud Messaging (FCM)**: Infraestructura de notificaciones push.
-*   **Firebase Functions (V2)**: Lógica de servidor para procesamiento de señales de asistencia.
-*   **Hive DB**: Almacenamiento local persistente para máxima velocidad y trabajo sin internet.
-
-### Inteligencia Artificial
-*   **AsystemBot (Gemini 1.5 Flash)**: Asistente integrado para soporte técnico y consultas de reglamento institucional en lenguaje natural.
+*   **Flutter 3.22+**: Framework principal multiplataforma.
+*   **Firebase Ecosystem**: Realtime Database para datos vivos, FCM para notificaciones y Functions (V2) para lógica de backend.
+*   **Hive DB**: Base de datos local ultra-rápida para persistencia offline.
+*   **Gemini 1.5 Flash (IA)**: Asistente bot integrado para soporte y consultas reglamentarias.
 
 ---
 
@@ -62,13 +68,13 @@ flutter pub get
 
 ### 2. Compilación para Producción (Web)
 ```bash
-# Genera la versión final optimizada
+# Genera la versión final optimizada para despliegue
 flutter build web --release
 ```
 
 ### 3. Lanzamiento al Hosting
 ```bash
-# Despliegue directo en Firebase
+# Despliegue en Firebase Hosting
 firebase deploy --only hosting
 ```
 
