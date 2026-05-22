@@ -217,6 +217,7 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         centerTitle: true,
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
@@ -311,13 +312,14 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
   Widget _buildSingleScheduleView() {
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
-        : Column(
-            children: [
-              _buildGroupSelectionCard(), // Now only contains multi-selection and export buttons
-              Expanded(
-                child: _buildEmptyState('Utiliza las casillas de selección para elegir grupos a visualizar o exportar.'),
-              ),
-            ],
+        : SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                _buildGroupSelectionCard(), // Now only contains multi-selection and export buttons
+                _buildEmptyState('Utiliza las casillas de selección para elegir grupos a visualizar o exportar.'),
+              ],
+            ),
           );
   }
 
@@ -361,9 +363,9 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
 
   Widget _buildGroupSelectionCard() {
     return Card(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
           children: [
 
@@ -414,13 +416,13 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               // Moved "Opciones de exportación y visualización" here to be closer to buttons
               Text(
                 'Opciones:',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -671,17 +673,19 @@ class _GroupScheduleViewerScreenState extends State<GroupScheduleViewerScreen> {
   }
 
   Widget _buildEmptyState(String message) {
-    return Expanded(
-      child: Center(
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.info_outline, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
+            const Icon(Icons.info_outline, size: 48, color: Colors.grey),
+            const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
             ),
           ],
         ),

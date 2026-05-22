@@ -176,6 +176,13 @@ class _PrefectHomeScreenState extends State<PrefectHomeScreen> {
                       color: Colors.cyan,
                       onTap: () => widget.onNavigate?.call('alumnos'),
                     ),
+                    _buildQuickAction(
+                      context,
+                      icon: Icons.timer_outlined,
+                      label: 'Horarios Gral',
+                      color: Colors.orange.shade800,
+                      onTap: () => widget.onNavigate?.call('prefecta_horarios_generales'),
+                    ),
                   ],
                 ),
 

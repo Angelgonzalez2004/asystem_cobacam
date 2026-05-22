@@ -94,7 +94,7 @@ class WelcomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
     
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40.0),
+      padding: EdgeInsets.symmetric(horizontal: isWide ? 60.0 : 40.0),
       child: FadeInDown(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -103,64 +103,65 @@ class WelcomeScreen extends StatelessWidget {
             Hero(
               tag: 'app_logo_main',
               child: Container(
-                padding: const EdgeInsets.all(25),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.4),
-                      blurRadius: 50,
-                      spreadRadius: 10,
+                      color: const Color(0xFF1E3A8A).withOpacity(0.3),
+                      blurRadius: 40,
+                      spreadRadius: 5,
                     ),
                   ],
                 ),
                 child: Image.asset(
                   'assets/images/logo1.png',
-                  height: isWide ? 180 : 120,
+                  height: isWide ? 160 : 100,
                 ),
               ),
             ),
-            const SizedBox(height: 56),
+            const SizedBox(height: 48),
             Text(
               'ASYSTEM',
               style: theme.textTheme.displayMedium?.copyWith(
                 color: Colors.white,
-                fontWeight: FontWeight.w200, // Estilo ultra-moderno
-                letterSpacing: 12,
-                fontSize: isWide ? 42 : 32,
+                fontWeight: FontWeight.w100,
+                letterSpacing: 10,
+                fontSize: isWide ? 36 : 24,
               ),
             ),
             Text(
               'COBACAM',
+              textAlign: isWide ? TextAlign.left : TextAlign.center,
               style: theme.textTheme.displayLarge?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
-                height: 0.85,
-                letterSpacing: -1.5,
-                fontSize: isWide ? 80 : 56,
+                height: 0.9,
+                letterSpacing: -1,
+                fontSize: isWide ? 72 : 48,
               ),
             ),
             const SizedBox(height: 24),
             Container(
-              height: 6,
-              width: 120,
+              height: 4,
+              width: 80,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(3),
-                gradient: LinearGradient(
-                  colors: [theme.colorScheme.secondary, theme.colorScheme.tertiary],
+                borderRadius: BorderRadius.circular(2),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFACC15), Color(0xFFEAB308)], // Dorado Institucional
                 ),
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
             Text(
-              'GESTIÓN ESCOLAR INTELIGENTE',
+              'PLATAFORMA INTEGRAL DE GESTIÓN ACADÉMICA',
               textAlign: isWide ? TextAlign.left : TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 4.0,
+                color: Colors.white.withOpacity(0.9),
+                fontSize: isWide ? 14 : 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 3.5,
               ),
             ),
           ],
@@ -175,43 +176,50 @@ class WelcomeScreen extends StatelessWidget {
         delay: const Duration(milliseconds: 300),
         child: Container(
           margin: const EdgeInsets.all(24),
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 64),
-          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+          constraints: const BoxConstraints(maxWidth: 400),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
-            borderRadius: BorderRadius.circular(40),
-            border: Border.all(color: Colors.white.withOpacity(0.15)),
+            color: Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.4),
-                blurRadius: 60,
-                offset: const Offset(0, 25),
+                blurRadius: 40,
+                offset: const Offset(0, 20),
               ),
             ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Icon(
+                Icons.account_balance_rounded,
+                color: Color(0xFFFACC15),
+                size: 40,
+              ),
+              const SizedBox(height: 24),
               const Text(
-                'Bienvenido',
+                'Portal de Acceso',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w200,
-                  letterSpacing: 1.5,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 12),
               Text(
-                'Acceso al Portal Institucional',
+                'Servicios Digitales Exclusivos para la Comunidad COBACAM',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.4),
-                  fontSize: 16,
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
+                  height: 1.4,
                 ),
               ),
-              const SizedBox(height: 56),
+              const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -221,27 +229,38 @@ class WelcomeScreen extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF0F172A),
-                  minimumSize: const Size(double.infinity, 65),
+                  foregroundColor: const Color(0xFF1E3A8A),
+                  minimumSize: const Size(double.infinity, 60),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(18),
                   ),
-                  elevation: 0,
+                  elevation: 12,
+                  shadowColor: Colors.black.withOpacity(0.5),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'INICIAR SESIÓN',
+                      'INGRESAR AL PORTAL',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                        fontSize: 17,
+                        letterSpacing: 1.2,
+                        fontSize: 15,
                       ),
                     ),
-                    SizedBox(width: 16),
-                    Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                    SizedBox(width: 12),
+                    Icon(Icons.arrow_forward_rounded, size: 20),
                   ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'SISTEMA DE EXCELENCIA ACADÉMICA v2026',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.4),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
                 ),
               ),
             ],

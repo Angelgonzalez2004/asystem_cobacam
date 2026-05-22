@@ -100,13 +100,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 440),
                     child: Container(
-                      padding: const EdgeInsets.all(40.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(40),
-                        border: Border.all(color: Colors.white.withOpacity(0.15)),
+                        color: Colors.white.withOpacity(0.07),
+                        borderRadius: BorderRadius.circular(32),
+                        border: Border.all(color: Colors.white.withOpacity(0.12)),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 60, offset: const Offset(0, 30)),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 40,
+                            offset: const Offset(0, 20),
+                          ),
                         ],
                       ),
                       child: Column(
@@ -116,28 +120,43 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           Center(
                             child: Container(
                               padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle),
-                              child: const Icon(Icons.lock_reset_rounded, size: 50, color: Colors.white),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFACC15).withOpacity(0.1),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: const Color(0xFFFACC15).withOpacity(0.3)),
+                              ),
+                              child: const Icon(Icons.lock_reset_rounded, size: 48, color: Color(0xFFFACC15)),
                             ),
                           ),
                           const SizedBox(height: 32),
                           const Text(
-                            'RECUPERAR CUENTA',
+                            'RECUPERACIÓN DE ACCESO',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w200, letterSpacing: 1.5),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.0,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Ingresa tu correo institucional registrado para recibir las instrucciones de recuperación.',
+                            'Favor de ingresar su correo electrónico institucional registrado. Le enviaremos un enlace seguro para restablecer su clave de acceso.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14, height: 1.5),
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 14,
+                              height: 1.5,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
-                          const SizedBox(height: 48),
+                          const SizedBox(height: 40),
 
                           _buildPremiumTextField(
                             controller: _emailController,
-                            label: 'CORREO INSTITUCIONAL',
-                            icon: Icons.email_outlined,
+                            label: 'CORREO ELECTRÓNICO INSTITUCIONAL',
+                            icon: Icons.alternate_email_rounded,
+                            hint: 'ejemplo@cobacam.edu.mx',
                           ),
 
                           const SizedBox(height: 40),
@@ -148,26 +167,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   onPressed: _handlePasswordReset,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
-                                    foregroundColor: const Color(0xFF0F172A),
-                                    minimumSize: const Size(double.infinity, 65),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                    elevation: 0,
+                                    foregroundColor: const Color(0xFF1E3A8A),
+                                    minimumSize: const Size(double.infinity, 60),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    elevation: 8,
+                                    shadowColor: Colors.black.withOpacity(0.4),
                                   ),
                                   child: const Text(
-                                    'ENVIAR ENLACE',
-                                    style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5),
+                                    'SOLICITAR RESTABLECIMIENTO',
+                                    style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2, fontSize: 14),
                                   ),
                                 ),
 
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 32),
                           Center(
                             child: TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: Text(
-                                'Volver al inicio de sesión',
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFFFACC15),
+                              ),
+                              child: const Text(
+                                'Retornar al inicio de sesión',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                  decoration: TextDecoration.underline,
                                 ),
                               ),
                             ),
@@ -182,8 +206,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
 
           Positioned(
-            top: 50,
-            left: 20,
+            top: 40,
+            left: 16,
             child: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
               onPressed: () => Navigator.pop(context),
@@ -198,26 +222,47 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    String? hint,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
         Container(
-          decoration: BoxDecoration(color: Colors.black.withOpacity(0.4), borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.white.withOpacity(0.2))),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.95),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
           child: TextField(
             controller: controller,
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
-            cursorColor: Colors.white,
+            style: const TextStyle(color: Color(0xFF0F172A), fontSize: 15, fontWeight: FontWeight.w600),
+            cursorColor: const Color(0xFF1E3A8A),
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
-              filled: false,
-              prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.8), size: 20),
+              prefixIcon: Icon(icon, color: const Color(0xFF1E3A8A).withOpacity(0.7), size: 20),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              hintText: 'ejemplo@cobacam.edu.mx',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              hintText: hint,
+              hintStyle: TextStyle(color: const Color(0xFF0F172A).withOpacity(0.3), fontSize: 14),
             ),
           ),
         ),

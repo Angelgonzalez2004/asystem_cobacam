@@ -534,29 +534,32 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
     }
 
-    if (todaySessions != null && todaySessions.isNotEmpty) {
-      if (true) { // Wrapper to maintain indentation or just simplify
-        final earliestSession = todaySessions.reduce(
-            (a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
-        final latestSession = todaySessions
-            .reduce((a, b) => a.endTime.compareTo(b.endTime) > 0 ? a : b);
+    List<ClassSession>? generalSessions;
+    if (todaySessions != null) {
+      generalSessions = todaySessions.where((session) => session.subjectId == 'GENERAL').toList();
+    }
 
-        try {
-          final entryParts = earliestSession.startTime.split(':');
-          scheduledEntry = DateTime(now.year, now.month, now.day,
-              int.parse(entryParts[0]), int.parse(entryParts[1]));
-        } catch (_) {}
-        try {
-          final exitParts = latestSession.endTime.split(':');
-          scheduledExit = DateTime(now.year, now.month, now.day,
-              int.parse(exitParts[0]), int.parse(exitParts[1]));
-        } catch (_) {}
-      }
+    if (generalSessions != null && generalSessions.isNotEmpty) {
+      final earliestSession = generalSessions.reduce(
+          (a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
+      final latestSession = generalSessions
+          .reduce((a, b) => a.endTime.compareTo(b.endTime) > 0 ? a : b);
+
+      try {
+        final entryParts = earliestSession.startTime.split(':');
+        scheduledEntry = DateTime(now.year, now.month, now.day,
+            int.parse(entryParts[0]), int.parse(entryParts[1]));
+      } catch (_) {}
+      try {
+        final exitParts = latestSession.endTime.split(':');
+        scheduledExit = DateTime(now.year, now.month, now.day,
+            int.parse(exitParts[0]), int.parse(exitParts[1]));
+      } catch (_) {}
     } else {
-      _triggerFeedback(false);
-      UiHelpers.showSnackBar(context, 'Grupo ${student.group} sin horario hoy.',
-          isError: true);
-      return;
+      // Fallback a horario general matutino por defecto (07:00 - 14:00) si no hay configuración
+      // de la prefecta, evitando que se bloquee el escaneo por falta de horario.
+      scheduledEntry = DateTime(now.year, now.month, now.day, 7, 0);
+      scheduledExit = DateTime(now.year, now.month, now.day, 14, 0);
     }
 
     final String currentTime = DateFormat('HH:mm').format(now);
@@ -1658,7 +1661,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   String _getScheduledTimeForStudent(Student student, String type) {
-    if (_groupSchedulesMap.isEmpty) return '';
+    if (_groupSchedulesMap.isEmpty) {
+      return type == 'entry' ? '07:00' : '14:00';
+    }
 
     String targetGroupId = student.group;
     try {
@@ -1669,7 +1674,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     final GroupSchedule? groupSchedule = _groupSchedulesMap[targetGroupId];
 
-    if (groupSchedule == null) return '';
+    if (groupSchedule == null) {
+      return type == 'entry' ? '07:00' : '14:00';
+    }
 
     List<ClassSession>? todaySessions;
     // Use Spanish capitalized days to match DB keys
@@ -1682,14 +1689,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
     }
 
-    if (todaySessions == null || todaySessions.isEmpty) return '';
+    List<ClassSession>? generalSessions;
+    if (todaySessions != null) {
+      generalSessions = todaySessions.where((session) => session.subjectId == 'GENERAL').toList();
+    }
+
+    if (generalSessions == null || generalSessions.isEmpty) {
+      return type == 'entry' ? '07:00' : '14:00';
+    }
 
     if (type == 'entry') {
-      final earliestSession = todaySessions.reduce(
+      final earliestSession = generalSessions.reduce(
           (a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
       return earliestSession.startTime;
     } else {
-      final latestSession = todaySessions
+      final latestSession = generalSessions
           .reduce((a, b) => a.endTime.compareTo(b.endTime) > 0 ? a : b);
       return latestSession.endTime;
     }
@@ -2206,28 +2220,36 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
     }
 
-    if (todaySessions != null && todaySessions.isNotEmpty) {
-      if (true) {
-        final earliestSession = todaySessions.reduce(
-            (a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
-        final latestSession = todaySessions
-            .reduce((a, b) => a.endTime.compareTo(b.endTime) > 0 ? a : b);
+    List<ClassSession>? generalSessions;
+    if (todaySessions != null) {
+      generalSessions = todaySessions.where((session) => session.subjectId == 'GENERAL').toList();
+    }
 
-        try {
-          final entryParts = earliestSession.startTime.split(':');
-          scheduledEntry = DateTime(recordDate.year, recordDate.month,
-              recordDate.day, int.parse(entryParts[0]), int.parse(entryParts[1]));
-        } catch (e) {
-          debugPrint('Error parsing scheduled entry time: $e');
-        }
-        try {
-          final exitParts = latestSession.endTime.split(':');
-          scheduledExit = DateTime(recordDate.year, recordDate.month,
-              recordDate.day, int.parse(exitParts[0]), int.parse(exitParts[1]));
-        } catch (e) {
-          debugPrint('Error parsing scheduled exit time: $e');
-        }
+    if (generalSessions != null && generalSessions.isNotEmpty) {
+      final earliestSession = generalSessions.reduce(
+          (a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
+      final latestSession = generalSessions
+          .reduce((a, b) => a.endTime.compareTo(b.endTime) > 0 ? a : b);
+
+      try {
+        final entryParts = earliestSession.startTime.split(':');
+        scheduledEntry = DateTime(recordDate.year, recordDate.month,
+            recordDate.day, int.parse(entryParts[0]), int.parse(entryParts[1]));
+      } catch (e) {
+        debugPrint('Error parsing scheduled entry time: $e');
       }
+      try {
+        final exitParts = latestSession.endTime.split(':');
+        scheduledExit = DateTime(recordDate.year, recordDate.month,
+            recordDate.day, int.parse(exitParts[0]), int.parse(exitParts[1]));
+      } catch (e) {
+        debugPrint('Error parsing scheduled exit time: $e');
+      }
+    } else {
+      // Fallback a horario general matutino por defecto (07:00 - 14:00) si no hay configuración
+      // de la prefecta.
+      scheduledEntry = DateTime(recordDate.year, recordDate.month, recordDate.day, 7, 0);
+      scheduledExit = DateTime(recordDate.year, recordDate.month, recordDate.day, 14, 0);
     }
 
     if (isEntryProvided) {

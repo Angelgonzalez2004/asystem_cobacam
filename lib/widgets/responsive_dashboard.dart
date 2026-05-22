@@ -2,6 +2,7 @@ import 'package:asystem_cobacam/screens/dashboards/tutor/tutor_view_attendance_s
 import 'package:asystem_cobacam/models/student_model.dart';
 import 'package:asystem_cobacam/screens/common/view_student_profile_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/student/student_credential_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/student/student_schedule_screen.dart';
 import 'package:asystem_cobacam/screens/common/general_user_profile_screen.dart';
 import 'package:asystem_cobacam/screens/common/settings_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/admin_common/manage_access_codes_screen.dart';
@@ -243,6 +244,9 @@ class _ResponsiveDashboardState extends State<ResponsiveDashboard> {
       } else if (route == 'dias_no_lectivos') {
         _activeSubScreen = const NonAttendanceManagementScreen(isReadOnly: true);
         _currentTitle = 'Días Inhábiles';
+      } else if (route == 'horario_general') {
+        _activeSubScreen = const StudentScheduleScreen();
+        _currentTitle = 'Horario General';
       } else if (route == 'tutor_view_credential') {
         final student = finalArguments as Student?;
         if (student != null) {

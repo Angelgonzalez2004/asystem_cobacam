@@ -141,11 +141,13 @@ class _MassAttendanceTestScreenState extends State<MassAttendanceTestScreen> {
     try {
       groupId = _groups.firstWhere((g) => g.name == student.group).key;
     } catch (_) {
-      return null;
+      return type == 'entry' ? '07:00' : '14:00';
     }
 
     final schedule = _groupSchedulesMap[groupId];
-    if (schedule == null) return null;
+    if (schedule == null) {
+      return type == 'entry' ? '07:00' : '14:00';
+    }
 
     final dayNames = {
       DateTime.monday: 'lunes',
@@ -156,16 +158,28 @@ class _MassAttendanceTestScreenState extends State<MassAttendanceTestScreen> {
     };
     
     final String? dayName = dayNames[date.weekday];
-    if (dayName == null) return null;
+    if (dayName == null) {
+      return type == 'entry' ? '07:00' : '14:00';
+    }
 
     final List<ClassSession>? daySessions = schedule.dailySchedules[dayName];
-    if (daySessions == null || daySessions.isEmpty) return null;
+    if (daySessions == null || daySessions.isEmpty) {
+      return type == 'entry' ? '07:00' : '14:00';
+    }
+
+    final List<ClassSession> generalSessions = daySessions
+        .where((session) => session.subjectId == 'GENERAL')
+        .toList();
+
+    if (generalSessions.isEmpty) {
+      return type == 'entry' ? '07:00' : '14:00';
+    }
 
     if (type == 'entry') {
-      final first = daySessions.reduce((a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
+      final first = generalSessions.reduce((a, b) => a.startTime.compareTo(b.startTime) < 0 ? a : b);
       return first.startTime;
     } else {
-      final last = daySessions.reduce((a, b) => a.endTime.compareTo(b.endTime) > 0 ? a : b);
+      final last = generalSessions.reduce((a, b) => a.endTime.compareTo(b.endTime) > 0 ? a : b);
       return last.endTime;
     }
   }

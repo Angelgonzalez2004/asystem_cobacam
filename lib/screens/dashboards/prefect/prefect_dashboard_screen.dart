@@ -22,6 +22,7 @@ import 'package:asystem_cobacam/screens/dashboards/prefect/mass_attendance_test_
 import 'package:asystem_cobacam/widgets/refresh_app_button.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/group_schedule_viewer_screen.dart';
 import 'package:asystem_cobacam/screens/dashboards/prefect/teacher_schedule_viewer_screen.dart';
+import 'package:asystem_cobacam/screens/dashboards/prefect/general_schedule_management_screen.dart';
 import 'package:asystem_cobacam/screens/common/about_us_screen.dart'; // NEW IMPORT
 
 class PrefectDashboardScreen extends StatefulWidget {
@@ -73,6 +74,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       const TeacherScheduleViewerScreen(), // Opción 17
       const AboutUsScreen(), // NEW - Opción 18
       MassAttendanceTestScreen(campus: _userCampus), // Opción 19
+      const GeneralScheduleManagementScreen(), // Opción 20
     ];
 
     _screenTitles = [
@@ -96,6 +98,7 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       'Visor de Horarios (Maestro)',
       'Sobre Nosotros', // NEW - Opción 18
       'Test de Asistencia Masiva', // Opción 19
+      'Horarios Generales (Entrada/Salida)', // Opción 20
     ];
   }
 
@@ -217,6 +220,9 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
       case 'test_asistencia': // NUEVO
         index = 19;
         break;
+      case 'prefecta_horarios_generales':
+        index = 20;
+        break;
       default:
         index = 0;
     }
@@ -266,20 +272,6 @@ class _PrefectDashboardScreenState extends State<PrefectDashboardScreen> {
         onNavigate: _onNavigate,
       ),
       body: _screens[safeIndex],
-      floatingActionButton: safeIndex == 0
-          ? FloatingActionButton.extended(
-              onPressed: () => _onNavigate('ia'),
-              backgroundColor: theme.colorScheme.tertiary,
-              foregroundColor: Colors.white,
-              icon: const Icon(
-                  Icons.psychology_rounded), // Psychology icon looks more "AI"
-              label: const Text(
-                'Asistente IA',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              elevation: 6,
-            )
-          : null,
     );
   }
 }

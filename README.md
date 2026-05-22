@@ -4,11 +4,26 @@
 
 ---
 
-## ✨ Novedad: Herramienta de Digitalización Masiva (Beta de Pruebas)
+## ✨ Novedad: Visor de Horarios Generales para Alumnos (100% Solo Lectura)
 
-Hemos desarrollado un módulo especializado para la **Prefectura**, diseñado para cerrar la brecha entre el papel y lo digital. Esta herramienta permite digitalizar hojas de asistencia físicas en cuestión de segundos:
+Hemos incorporado un módulo de consulta de horarios sumamente intuitivo y seguro, adaptado especialmente para el rol de **Alumno**:
 
-*   **Digitalización de Listas Físicas**: Ideal para cuando se tiene un control en papel con "puntos" de asistencia. Permite marcar o desmarcar alumnos individualmente tras un filtro rápido.
+*   **Acceso Centralizado**: Disponible directamente desde el menú lateral (`AppDrawer`) en la sección *INFORMACIÓN ESCOLAR*, y a través de una tarjeta de acceso rápido con diseño dinámico en el Dashboard principal.
+*   **Lógica Inteligente de Contingencia (Fallback)**:
+    *   Si el área académica o prefectura aún no ha registrado un horario personalizado para el grupo del alumno, la aplicación activa un respaldo automático mostrando el **Horario Matutino Estándar (07:00 AM - 02:00 PM)**.
+    *   Evita pantallas vacías o fallos técnicos, informando claramente al alumno a través de una etiqueta azul que indica **"Matutino Estándar"** y una tarjeta de advertencia oficial en la parte inferior.
+*   **Gestión de Horarios Especiales**: Cuando el plantel registra un horario específico, el sistema lo mapea automáticamente en tiempo real usando la ruta de Firebase `planteles/${campusId}/schedules/${cycleId}/${groupId}`, mostrando etiquetas en verde esmeralda que indican **"Especial"**.
+*   **Consultas Históricas Multi-Ciclo**: Integra un selector dinámico de Ciclos Escolares que permite al alumno revisar con retroactividad sus horarios de grupos en periodos escolares anteriores.
+*   **Diseño Premium con Micro-Animaciones**: Cada día de la semana (Lunes a Viernes) tiene una coloración institucional curada y una presentación secuencial animada mediante efectos `FadeInUp` para brindar una sensación de fluidez y modernidad.
+*   **Seguridad Inquebrantable**: El panel es completamente de **Solo Lectura** (Read-Only). No contiene botones de alteración, formularios de guardado, ni selectores editables, garantizando la inmutabilidad de los datos por parte de los estudiantes.
+
+---
+
+## ✨ Herramienta de Digitalización Masiva para Prefectura
+
+Diseñada para cerrar la brecha entre el papel y lo digital, esta herramienta permite digitalizar hojas de asistencia físicas en cuestión de segundos:
+
+*   **Digitalización de Listas Físicas**: Ideal para cuando se lleva un control en papel con "puntos" de asistencia. Permite marcar o desmarcar alumnos individualmente tras un filtro rápido.
 *   **Asignación de Horarios Inteligente**: 
     *   **Modo Automático**: La app consulta el horario oficial del grupo y asigna automáticamente la hora de la primera clase (entrada) o última clase (salida) según el día de la semana seleccionado.
     *   **Modo Manual**: Permite elegir una hora fija para todos los alumnos seleccionados.
@@ -18,18 +33,15 @@ Hemos desarrollado un módulo especializado para la **Prefectura**, diseñado pa
 
 ---
 
-## ✨ Experiencia de Usuario Premium
+## ⚡ Robustez Offline-First (Resistencia a cortes de Internet)
 
-Hemos elevado la estética del sistema a un nivel institucional superior, adoptando una filosofía de diseño **Premium Glassmorphism**:
-
-*   **Interfaz Glassmorphism Refinada**: Pantallas de acceso con efectos de cristal esmerilado sobre gradientes institucionales.
-*   **Fondo Institucional Dinámico**: Uso de gradientes profundos (Deep Slate & Royal Blue) con iluminación ambiental.
-*   **Visibilidad de Alto Contraste**: Tipografía blanca sólida (`FontWeight.w900`) para una legibilidad perfecta.
-*   **Totalmente Responsiva**: Adaptación inteligente a monitores 4K, laptops, tablets y móviles.
+La aplicación implementa una arquitectura altamente tolerante a fallos de conectividad, ideal para planteles con señal de red inestable o nula:
+*   **Persistencia Local Inmediata**: En caso de pérdida de internet o datos móviles durante el pase de lista (QR o manual), los eventos se resguardan de manera segura en la base de datos local cifrada del dispositivo a través de `Hive`.
+*   **Sincronización Transparente**: Una vez detectada la restauración de la red por el `ConnectivityService`, la aplicación sincroniza en segundo plano las asistencias locales pendientes hacia Firebase Realtime Database sin interrumpir la operación del prefecto.
 
 ---
 
-## 🚀 Funcionalidades Críticas
+## 🚀 Funcionalidades Críticas de la Plataforma
 
 ### 🔔 Notificaciones en Tiempo Real (FCM)
 *   **Alerta Inmediata**: Notificación push automática al dispositivo del tutor al momento del registro.
@@ -50,9 +62,9 @@ Hemos elevado la estética del sistema a un nivel institucional superior, adopta
 
 ## 🛠️ Arquitectura Tecnológica
 
-*   **Flutter 3.22+**: Framework principal multiplataforma.
-*   **Firebase Ecosystem**: Realtime Database para datos vivos, FCM para notificaciones y Functions (V2) para lógica de backend.
-*   **Hive DB**: Base de datos local ultra-rápida para persistencia offline.
+*   **Flutter 3.22+**: Framework principal multiplataforma para Web, Android e iOS.
+*   **Firebase Ecosystem**: Realtime Database para datos vivos, FCM para notificaciones, Firebase Hosting para despliegue web y Functions (V2) para lógica de backend.
+*   **Hive DB**: Base de datos local ultra-rápida para persistencia offline y caché de configuraciones.
 *   **Gemini 1.5 Flash (IA)**: Asistente bot integrado para soporte y consultas reglamentarias.
 
 ---
@@ -81,6 +93,6 @@ firebase deploy --only hosting
 ---
 
 ## 📄 Licencia e Identidad
-© 2026 **Colegio de Bachilleres del Estado de Campeche (COBACAM)**.
-*Gestión Escolar Inteligente, Excelencia Educativa.*
+© 2026 **Colegio de Bachilleres del Estado de Campeche (COBACAM)**.  
+*Gestión Escolar Inteligente, Excelencia Educativa.*  
 Desarrollado para la innovación y el control total de la comunidad académica.

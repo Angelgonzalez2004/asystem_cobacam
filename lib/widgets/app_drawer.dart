@@ -31,39 +31,101 @@ class AppDrawer extends StatelessWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
       child: Column(
         children: [
-          // Header
-          UserAccountsDrawerHeader(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              image: const DecorationImage(
-                image: AssetImage(
-                    'assets/images/logo2.jpg'), // Fallback/Background pattern
+          // Header Institucional Premium Personalizado
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF1E3A8A), Color(0xFF1E293B)],
+              ),
+              image: DecorationImage(
+                image: AssetImage('assets/images/logo2.jpg'),
                 fit: BoxFit.cover,
-                opacity: 0.1,
+                opacity: 0.05,
               ),
             ),
-            accountName: Text(
-              userName,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            accountEmail: Text(userEmail),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
-              child: ClipOval(
-                child: profileImageUrl != null
-                    ? Image.network(
-                        profileImageUrl!,
-                        width: 90,
-                        height: 90,
-                        fit: BoxFit.cover,
-                        errorBuilder: (c, e, s) => Icon(Icons.person,
-                            size: 40, color: theme.colorScheme.primary),
-                      )
-                    : Text(
-                        userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-                        style: TextStyle(
-                            fontSize: 24, color: theme.colorScheme.primary),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Hero(
+                      tag: 'drawer_profile_pic',
+                      child: Container(
+                        padding: const EdgeInsets.all(2.5),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: CircleAvatar(
+                          radius: 28,
+                          backgroundColor: Colors.white,
+                          child: ClipOval(
+                            child: profileImageUrl != null
+                                ? Image.network(
+                                    profileImageUrl!,
+                                    width: 56,
+                                    height: 56,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (c, e, s) => Icon(Icons.person,
+                                        size: 28, color: theme.colorScheme.primary),
+                                  )
+                                : Text(
+                                    userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                                    style: TextStyle(
+                                        fontSize: 22, color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                                  ),
+                          ),
+                        ),
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      userName.toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        letterSpacing: 0.5,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFACC15),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Text(
+                            role.toUpperCase(),
+                            style: const TextStyle(
+                              color: Color(0xFF1E3A8A),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 9,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      userEmail,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -112,11 +174,7 @@ class AppDrawer extends StatelessWidget {
                       icon: Icons.bar_chart_rounded,
                       title: 'Estadísticas y Métricas',
                       onTap: () => onNavigate?.call('stats')),
-                  _buildDrawerItem(context,
-                      icon: Icons.auto_awesome_rounded,
-                      title: 'Asistente IA',
-                      iconColor: Colors.amber,
-                      onTap: () => onNavigate?.call('ia')),
+
                   _buildDrawerItem(context,
                       icon: Icons.people_outline_rounded,
                       title: 'Alumnos',
@@ -149,6 +207,13 @@ class AppDrawer extends StatelessWidget {
                       onTap: () {
                         Navigator.pop(context); // Close drawer
                         onNavigate?.call('no_lectivos');
+                      }),
+                  _buildDrawerItem(context,
+                      icon: Icons.timer_outlined,
+                      title: 'Horarios Generales (Entrada/Salida)',
+                      onTap: () {
+                        Navigator.pop(context); // Close drawer
+                        onNavigate?.call('prefecta_horarios_generales');
                       }),
 
                   const Divider(),
@@ -303,7 +368,7 @@ class AppDrawer extends StatelessWidget {
                 // --- ALUMNO SPECIFIC TOOLS ---
                 if (role == 'Alumno') ...[
                   const Divider(),
-                   Padding(
+                  Padding(
                     padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
                     child: Text('INFORMACIÓN ESCOLAR',
                         style: theme.textTheme.labelSmall
@@ -317,6 +382,10 @@ class AppDrawer extends StatelessWidget {
                       icon: Icons.event_busy_rounded,
                       title: 'Días Inhábiles',
                       onTap: () => onNavigate?.call('dias_no_lectivos')),
+                  _buildDrawerItem(context,
+                      icon: Icons.schedule_rounded,
+                      title: 'Horario General',
+                      onTap: () => onNavigate?.call('horario_general')),
                   const Divider(),
                   _buildDrawerItem(context,
                       icon: Icons.badge_rounded,

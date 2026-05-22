@@ -228,6 +228,17 @@ class _GroupScheduleManagementScreenState
     super.dispose();
   }
 
+  double _parseTimeToDouble(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      final double hour = double.parse(parts[0]);
+      final double minute = double.parse(parts[1]);
+      return hour + (minute / 60.0);
+    } catch (_) {
+      return 0.0;
+    }
+  }
+
   Future<void> _editClassSession(Group group, String day, ClassSession session) async {
     if (_isReadOnly || widget.isReadOnlyUser) {
       UiHelpers.showSnackBar(context, 'No se pueden modificar horarios en este modo.', isError: true);
@@ -243,6 +254,81 @@ class _GroupScheduleManagementScreenState
     );
 
     if (result != null) {
+      // Validate teacher conflicts if assigning a teacher
+      if (result.subjectId != 'DELETE_SESSION' && result.teacherId != null) {
+        String? conflictingGroup;
+        String? conflictingTime;
+
+        final double rStart = _parseTimeToDouble(result.startTime);
+        final double rEnd = _parseTimeToDouble(result.endTime);
+
+        for (var entry in _groupSchedules.entries) {
+          if (entry.key == group.key) continue; // Skip the group currently being edited
+          final dailySessions = entry.value.dailySchedules[day] ?? [];
+          for (var s in dailySessions) {
+            if (s.teacherId == result.teacherId) {
+              final double sStart = _parseTimeToDouble(s.startTime);
+              final double sEnd = _parseTimeToDouble(s.endTime);
+
+              // Check for overlap: rStart < sEnd && sStart < rEnd
+              if (rStart < sEnd && sStart < rEnd) {
+                final groupObj = _allGroups.firstWhere(
+                  (g) => g.key == entry.key,
+                  orElse: () => Group(
+                    key: '',
+                    name: 'Otro Grupo',
+                    semester: 0,
+                    schoolCycleId: '',
+                    studentCount: 0,
+                  ),
+                );
+                conflictingGroup = groupObj.name;
+                conflictingTime = '${s.startTime} - ${s.endTime}';
+                break;
+              }
+            }
+          }
+          if (conflictingGroup != null) break;
+        }
+
+        if (conflictingGroup != null) {
+          final confirmConflict = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                  SizedBox(width: 8),
+                  Text('Conflicto de Docente'),
+                ],
+              ),
+              content: Text(
+                'El docente ${result.teacherName} ya está asignado al grupo "$conflictingGroup" el día $day en el horario $conflictingTime.\n\n¿Deseas guardar de todos modos y generar esta coincidencia (por ejemplo, para clases compartidas o co-docencia)?'
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange.shade800,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Guardar de todos modos'),
+                ),
+              ],
+            ),
+          );
+
+          if (confirmConflict != true) {
+            return; // Abort saving
+          }
+        }
+      }
+
       GroupSchedule schedule = _groupSchedules[group.key] ??
           GroupSchedule(
             id: group.key,

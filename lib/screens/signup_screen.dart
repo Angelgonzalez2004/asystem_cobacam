@@ -244,48 +244,67 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 const Text(
-                                  'ASYSTEM COBACAM',
+                                  'REGISTRO DE NUEVO USUARIO',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 3.0),
+                                  style: TextStyle(color: Color(0xFFFACC15), fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: 1.0),
                                 ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'REGISTRO DE USUARIO',
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Complete el formulario institucional para dar de alta su cuenta en el sistema.',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w200, letterSpacing: 1.5),
+                                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13, fontWeight: FontWeight.w400),
                                 ),
                                 const SizedBox(height: 40),
 
                                 Center(child: _buildImagePicker()),
                                 const SizedBox(height: 48),
 
-                                _buildSectionTitle('INFORMACIÓN PERSONAL', Icons.person_rounded),
+                                _buildSectionTitle('IDENTIDAD PERSONAL', Icons.person_add_alt_1_rounded),
                                 _buildResponsiveRow(isWide, [
-                                  _buildPremiumField(controller: _nameController, label: 'NOMBRE COMPLETO', icon: Icons.badge_outlined),
+                                  _buildPremiumField(controller: _nameController, label: 'NOMBRE COMPLETO', icon: Icons.badge_rounded),
                                   _buildDateSelector(),
                                 ]),
-                                _buildPremiumField(controller: _locationController, label: 'LUGAR DE RESIDENCIA', icon: Icons.location_on_outlined),
+                                _buildPremiumField(controller: _locationController, label: 'MUNICIPIO / LOCALIDAD', icon: Icons.map_rounded),
                                 
                                 const SizedBox(height: 32),
-                                _buildSectionTitle('DATOS INSTITUCIONALES', Icons.school_rounded),
+                                _buildSectionTitle('ADSCRIPCIÓN INSTITUCIONAL', Icons.account_balance_rounded),
                                 _buildResponsiveRow(isWide, [
-                                  _buildDropdown(items: _roles, label: 'ROL INSTITUCIONAL', icon: Icons.work_outline, onChanged: (v) => setState(() => _selectedRole = v)),
+                                  _buildDropdown(
+                                    items: _roles, 
+                                    label: 'CARGO O ROL', 
+                                    icon: Icons.assignment_ind_rounded, 
+                                    onChanged: (v) => setState(() => _selectedRole = v),
+                                    itemIcons: {
+                                      'Tutor': Icons.family_restroom_rounded,
+                                      'Alumno': Icons.school_rounded,
+                                      'Academica': Icons.menu_book_rounded,
+                                      'Prefecta': Icons.verified_user_rounded,
+                                      'Personal Administrativo por Plantel': Icons.admin_panel_settings_rounded,
+                                      'Personal Administrativo General': Icons.account_balance_rounded,
+                                    },
+                                  ),
                                   if (_selectedRole != null && _selectedRole != 'Personal Administrativo General')
-                                    _buildDropdown(items: cobacamCampuses, label: 'SELECCIONA TU PLANTEL', icon: Icons.apartment_rounded, onChanged: (v) => setState(() => _selectedCampus = v)),
+                                    _buildDropdown(
+                                      items: cobacamCampuses, 
+                                      label: 'PLANTEL / EMSAD', 
+                                      icon: Icons.location_city_rounded, 
+                                      onChanged: (v) => setState(() => _selectedCampus = v),
+                                      itemIcons: { for (var item in cobacamCampuses) item : Icons.business_rounded },
+                                    ),
                                 ]),
                                 
                                 if (_selectedRole == 'Alumno' || _selectedRole == 'Tutor')
-                                  _buildPremiumField(controller: _matriculaController, label: 'MATRÍCULA DEL ALUMNO', icon: Icons.badge_outlined, focusNode: _matriculaFocus),
+                                  _buildPremiumField(controller: _matriculaController, label: 'MATRÍCULA DE CONTROL', icon: Icons.pin_rounded, focusNode: _matriculaFocus),
 
                                 const SizedBox(height: 32),
-                                _buildSectionTitle('SEGURIDAD', Icons.lock_rounded),
+                                _buildSectionTitle('CREDENCIALES DE ACCESO', Icons.security_rounded),
                                 _buildResponsiveRow(isWide, [
-                                  _buildPremiumField(controller: _emailController, label: 'CORREO INSTITUCIONAL', icon: Icons.email_outlined, keyboardType: TextInputType.emailAddress),
-                                  _buildPremiumField(controller: _passwordController, label: 'CONTRASEÑA', icon: Icons.vpn_key_outlined, isPassword: true),
+                                  _buildPremiumField(controller: _emailController, label: 'CORREO ELECTRÓNICO', icon: Icons.email_rounded, keyboardType: TextInputType.emailAddress),
+                                  _buildPremiumField(controller: _passwordController, label: 'CONTRASEÑA DEL SISTEMA', icon: Icons.password_rounded, isPassword: true),
                                 ]),
                                 
                                 if (_selectedRole != null && (_selectedCampus != null || _selectedRole == 'Personal Administrativo General'))
-                                  _buildPremiumField(controller: _accessCodeController, label: 'CÓDIGO DE VALIDACIÓN', icon: Icons.security_rounded, isAccessCode: true, focusNode: _accessCodeFocus),
+                                  _buildPremiumField(controller: _accessCodeController, label: 'CÓDIGO DE VALIDACIÓN LABORAL', icon: Icons.verified_user_rounded, isAccessCode: true, focusNode: _accessCodeFocus),
 
                                 const SizedBox(height: 56),
 
@@ -298,20 +317,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                           foregroundColor: const Color(0xFF0F172A),
                                           minimumSize: const Size(double.infinity, 65),
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                          elevation: 10,
                                         ),
-                                        child: const Text('REGISTRAR EN EL SISTEMA', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                                        child: const Text('PROCESAR REGISTRO INSTITUCIONAL', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0, fontSize: 15)),
                                       ),
 
                                 const SizedBox(height: 40),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text('¿Ya tienes cuenta? ', style: TextStyle(color: Colors.white.withOpacity(0.5))),
-                                    GestureDetector(
-                                      onTap: () => Navigator.pop(context),
-                                      child: const Text('Inicia sesión', style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w900)),
-                                    ),
-                                  ],
+                                Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text('¿Ya dispone de una cuenta? ', style: TextStyle(color: Colors.white.withOpacity(0.9))),
+                                      GestureDetector(
+                                        onTap: () => Navigator.pop(context),
+                                        child: const Text('Iniciar Sesión', style: TextStyle(color: Color(0xFFFACC15), fontWeight: FontWeight.w900, decoration: TextDecoration.underline)),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -340,52 +367,108 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Widget _buildSectionTitle(String title, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24, top: 16),
+      padding: const EdgeInsets.only(bottom: 20, top: 12),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: Colors.white.withOpacity(0.4)),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFACC15).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: const Color(0xFFFACC15)),
+          ),
           const SizedBox(width: 12),
-          Text(title, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 2)),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
+            ),
+          ),
           const SizedBox(width: 16),
-          Expanded(child: Divider(color: Colors.white.withOpacity(0.1))),
+          Expanded(child: Divider(color: Colors.white.withOpacity(0.2), thickness: 1)),
         ],
       ),
     );
   }
 
   Widget _buildResponsiveRow(bool isWide, List<Widget> children) {
-    if (!isWide) return Column(children: children.map((c) => Padding(padding: const EdgeInsets.only(bottom: 20), child: c)).toList());
+    if (!isWide) return Column(children: children.map((c) => Padding(padding: const EdgeInsets.only(bottom: 16), child: c)).toList());
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: children.map((c) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: c))).toList(),
+        children: children.map((c) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: c))).toList(),
       ),
     );
   }
 
-  Widget _buildPremiumField({required TextEditingController controller, required String label, required IconData icon, bool isPassword = false, bool isAccessCode = false, TextInputType? keyboardType, FocusNode? focusNode}) {
+  Widget _buildPremiumField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isPassword = false,
+    bool isAccessCode = false,
+    TextInputType? keyboardType,
+    FocusNode? focusNode,
+    String? hint,
+  }) {
     bool obscure = isPassword ? _isPasswordObscured : (isAccessCode ? _isAccessCodeObscured : false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-        const SizedBox(height: 10),
-        Container(
-          decoration: BoxDecoration(color: Colors.black.withOpacity(0.4), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.15))),
-          child: TextFormField(
-            controller: controller, focusNode: focusNode, obscureText: obscure, keyboardType: keyboardType,
-            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
-            cursorColor: Colors.white,
-            decoration: InputDecoration(
-              filled: false,
-              prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.7), size: 18),
-              border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-              suffixIcon: (isPassword || isAccessCode) ? IconButton(icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, color: Colors.white.withOpacity(0.4), size: 18), onPressed: () => setState(() { if(isPassword) _isPasswordObscured = !_isPasswordObscured; if(isAccessCode) _isAccessCodeObscured = !_isAccessCodeObscured; })) : null,
-              hintText: 'Escribe aquí...',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 13),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
-            validator: (v) => v!.isEmpty ? 'Requerido' : null,
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.95),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            focusNode: focusNode,
+            obscureText: obscure,
+            keyboardType: keyboardType,
+            style: const TextStyle(color: Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.w600),
+            cursorColor: const Color(0xFF1E3A8A),
+            decoration: InputDecoration(
+              prefixIcon: Icon(icon, color: const Color(0xFF1E3A8A).withOpacity(0.7), size: 18),
+              suffixIcon: (isPassword || isAccessCode)
+                  ? IconButton(
+                      icon: Icon(
+                        obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                        color: const Color(0xFF1E3A8A).withOpacity(0.5),
+                        size: 18,
+                      ),
+                      onPressed: () => setState(() {
+                        if (isPassword) _isPasswordObscured = !_isPasswordObscured;
+                        if (isAccessCode) _isAccessCodeObscured = !_isAccessCodeObscured;
+                      }),
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              hintText: hint ?? 'Completar campo...',
+              hintStyle: TextStyle(color: const Color(0xFF0F172A).withOpacity(0.3), fontSize: 13),
+            ),
+            validator: (v) => v!.isEmpty ? 'Dato requerido' : null,
           ),
         ),
       ],
@@ -396,14 +479,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('FECHA DE NACIMIENTO', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-        const SizedBox(height: 10),
+        const Padding(
+          padding: EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            'FECHA DE NACIMIENTO',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
         Container(
-          decoration: BoxDecoration(color: Colors.black.withOpacity(0.4), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.15))),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.95),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
+          ),
           child: TextFormField(
-            controller: _dobController, onTap: _selectDate, readOnly: true,
-            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
-            decoration: const InputDecoration(filled: false, prefixIcon: Icon(Icons.calendar_today_rounded, color: Colors.white, size: 18), border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 18)),
+            controller: _dobController,
+            onTap: _selectDate,
+            readOnly: true,
+            style: const TextStyle(color: Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              prefixIcon: Icon(Icons.calendar_month_rounded, color: const Color(0xFF1E3A8A).withOpacity(0.7), size: 18),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              hintText: 'Seleccionar fecha...',
+              hintStyle: TextStyle(color: const Color(0xFF0F172A).withOpacity(0.3), fontSize: 13),
+            ),
             validator: (v) => v!.isEmpty ? 'Requerido' : null,
           ),
         ),
@@ -411,21 +518,61 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildDropdown({required List<String> items, required String label, required IconData icon, required Function(String?) onChanged}) {
+  Widget _buildDropdown({
+    required List<String> items,
+    required String label,
+    required IconData icon,
+    required Function(String?) onChanged,
+    Map<String, IconData>? itemIcons,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(color: Colors.black.withOpacity(0.4), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.15))),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.95),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
+          ),
           child: DropdownButtonFormField<String>(
-            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(color: Colors.black87, fontSize: 13)))).toList(),
-            onChanged: onChanged, dropdownColor: Colors.white,
-            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
-            decoration: InputDecoration(filled: false, prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.7), size: 18), border: InputBorder.none),
-            validator: (v) => v == null ? 'Requerido' : null,
+            items: items
+                .map((e) => DropdownMenuItem(
+                      value: e,
+                      child: Row(
+                        children: [
+                          if (itemIcons != null && itemIcons.containsKey(e))
+                            Icon(itemIcons[e], size: 18, color: const Color(0xFF1E3A8A).withOpacity(0.7)),
+                          if (itemIcons != null && itemIcons.containsKey(e))
+                            const SizedBox(width: 12),
+                          Text(e, style: const TextStyle(color: Color(0xFF1E293B), fontSize: 13, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ))
+                .toList(),
+            onChanged: onChanged,
+            dropdownColor: Colors.white,
+            iconEnabledColor: const Color(0xFF1E3A8A).withOpacity(0.7),
+            style: const TextStyle(color: Color(0xFF0F172A), fontSize: 14),
+            decoration: InputDecoration(
+              prefixIcon: Icon(icon, color: const Color(0xFF1E3A8A).withOpacity(0.7), size: 18),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            ),
+            validator: (v) => v == null ? 'Seleccione una opción' : null,
           ),
         ),
       ],
@@ -435,10 +582,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget _buildImagePicker() {
     return GestureDetector(
       onTap: _pickImage,
-      child: CircleAvatar(
-        radius: 60, backgroundColor: Colors.white.withOpacity(0.1),
-        backgroundImage: _profileImage != null ? (kIsWeb ? NetworkImage(_profileImage!.path) : FileImage(File(_profileImage!.path))) as ImageProvider : null,
-        child: _profileImage == null ? const Icon(Icons.camera_enhance_rounded, size: 40, color: Colors.white) : null,
+      child: Stack(
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.black.withOpacity(0.3),
+              border: Border.all(color: const Color(0xFFFACC15).withOpacity(0.5), width: 2),
+              image: _profileImage != null
+                  ? DecorationImage(
+                      image: (kIsWeb ? NetworkImage(_profileImage!.path) : FileImage(File(_profileImage!.path))) as ImageProvider,
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: _profileImage == null
+                ? Icon(Icons.add_a_photo_rounded, size: 32, color: Colors.white.withOpacity(0.5))
+                : null,
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFACC15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.edit_rounded, size: 14, color: Color(0xFF1E3A8A)),
+            ),
+          ),
+        ],
       ),
     );
   }

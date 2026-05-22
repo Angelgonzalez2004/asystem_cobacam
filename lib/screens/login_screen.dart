@@ -211,13 +211,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 440),
                     child: Container(
-                      padding: const EdgeInsets.all(40.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(40),
-                        border: Border.all(color: Colors.white.withOpacity(0.15)),
+                        color: Colors.white.withOpacity(0.07),
+                        borderRadius: BorderRadius.circular(32),
+                        border: Border.all(color: Colors.white.withOpacity(0.12)),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 60, offset: const Offset(0, 30)),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 40,
+                            offset: const Offset(0, 20),
+                          ),
                         ],
                       ),
                       child: Column(
@@ -228,58 +232,83 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Hero(
                               tag: 'app_logo_main',
                               child: Container(
-                                padding: const EdgeInsets.all(15),
-                                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                                child: Image.asset('assets/images/logo1.png', height: 70),
+                                padding: const EdgeInsets.all(12),
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Image.asset('assets/images/logo1.png', height: 60),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 24),
                           const Text(
                             'ASYSTEM COBACAM',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 3.0),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 2.5,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            isLocked ? 'ACCESO RESTRINGIDO' : 'INICIAR SESIÓN',
+                            isLocked ? 'ACCESO TEMPORALMENTE BLOQUEADO' : 'AUTENTICACIÓN DE USUARIO',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: isLocked ? colors.error : colors.secondary,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w200,
-                              letterSpacing: 1.5,
+                              color: isLocked ? colors.error : const Color(0xFFFACC15),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.0,
                             ),
                           ),
-                          const SizedBox(height: 48),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Favor de ingresar sus credenciales institucionales para acceder a su panel de gestión.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 32),
 
                           _buildPremiumTextField(
                             controller: _emailController,
-                            label: 'CORREO INSTITUCIONAL',
+                            label: 'CORREO ELECTRÓNICO INSTITUCIONAL',
                             icon: Icons.alternate_email_rounded,
                             enabled: !isLocked,
+                            hint: 'ejemplo@cobacam.edu.mx',
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
                           _buildPremiumTextField(
                             controller: _passwordController,
-                            label: 'CONTRASEÑA',
+                            label: 'CLAVE DE ACCESO (CONTRASEÑA)',
                             icon: Icons.lock_person_rounded,
                             isPassword: true,
                             enabled: !isLocked,
+                            hint: 'Ingrese su clave...',
                           ),
 
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: isLocked ? null : () => Navigator.push(context, SlideRightRoute(page: const ForgotPasswordScreen())),
-                              child: Text(
-                                '¿Olvidaste tu contraseña?',
-                                style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFFFACC15),
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                              ),
+                              child: const Text(
+                                '¿Dificultades para acceder?',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                               ),
                             ),
                           ),
 
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 24),
 
                           _isLoading
                               ? const Center(child: CircularProgressIndicator(color: Colors.white))
@@ -287,27 +316,46 @@ class _LoginScreenState extends State<LoginScreen> {
                                   onPressed: isLocked ? null : _handleLogin,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: isLocked ? Colors.white24 : Colors.white,
-                                    foregroundColor: const Color(0xFF0F172A),
-                                    minimumSize: const Size(double.infinity, 65),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                    elevation: 0,
+                                    foregroundColor: const Color(0xFF1E3A8A),
+                                    minimumSize: const Size(double.infinity, 60),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    elevation: 8,
+                                    shadowColor: Colors.black.withOpacity(0.4),
                                   ),
                                   child: Text(
-                                    isLocked ? _lockoutMessage.toUpperCase() : 'INGRESAR',
-                                    style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2.0),
+                                    isLocked ? _lockoutMessage.toUpperCase() : 'VERIFICAR Y ENTRAR',
+                                    style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 15),
                                   ),
                                 ),
 
-                          const SizedBox(height: 40),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('¿No tienes cuenta? ', style: TextStyle(color: Colors.white.withOpacity(0.5))),
-                              GestureDetector(
-                                onTap: isLocked ? null : () => Navigator.push(context, SlideRightRoute(page: const SignUpScreen())),
-                                child: Text('Regístrate', style: TextStyle(color: colors.secondary, fontWeight: FontWeight.w900)),
-                              ),
-                            ],
+                          const SizedBox(height: 32),
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '¿Nuevo en la comunidad? ',
+                                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13),
+                                ),
+                                GestureDetector(
+                                  onTap: isLocked ? null : () => Navigator.push(context, SlideRightRoute(page: const SignUpScreen())),
+                                  child: const Text(
+                                    'Solicitar Registro',
+                                    style: TextStyle(
+                                      color: Color(0xFFFACC15),
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 14,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -321,9 +369,39 @@ class _LoginScreenState extends State<LoginScreen> {
           Positioned(
             top: 50,
             left: 20,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-              onPressed: () => Navigator.pop(context),
+            child: FadeInDown(
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 14),
+                      SizedBox(width: 10),
+                      Text(
+                        'VOLVER AL INICIO',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -337,37 +415,58 @@ class _LoginScreenState extends State<LoginScreen> {
     required IconData icon,
     bool isPassword = false,
     bool enabled = true,
+    String? hint,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white.withOpacity(0.15)),
+            color: Colors.white.withOpacity(0.95),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: TextField(
             controller: controller,
             obscureText: isPassword ? _isPasswordObscured : false,
             enabled: enabled,
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
-            cursorColor: Colors.white,
+            style: const TextStyle(color: Color(0xFF0F172A), fontSize: 15, fontWeight: FontWeight.w600),
+            cursorColor: const Color(0xFF1E3A8A),
             decoration: InputDecoration(
-              filled: false,
-              prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.6), size: 20),
+              prefixIcon: Icon(icon, color: const Color(0xFF1E3A8A).withOpacity(0.7), size: 20),
               suffixIcon: isPassword
                   ? IconButton(
-                      icon: Icon(_isPasswordObscured ? Icons.visibility_off_rounded : Icons.visibility_rounded, color: Colors.white.withOpacity(0.4), size: 20),
+                      icon: Icon(
+                        _isPasswordObscured ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                        color: const Color(0xFF1E3A8A).withOpacity(0.5),
+                        size: 20,
+                      ),
                       onPressed: () => setState(() => _isPasswordObscured = !_isPasswordObscured),
                     )
                   : null,
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              hintText: 'Escribe aquí...',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              hintText: hint,
+              hintStyle: TextStyle(color: const Color(0xFF0F172A).withOpacity(0.3), fontSize: 14),
             ),
           ),
         ),
